@@ -23,7 +23,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
+	"path/filepath"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/stringset"
@@ -74,9 +74,8 @@ func Data(clusterInfo *cluster.Info, status reporter.Interface, options Options)
 		Deduplicate: true,
 	}))
 
-	if options.Directory == "" {
-		options.Directory = "submariner-" + time.Now().UTC().Format("20060102150405") // submariner-YYYYMMDDHHMMSS
-	}
+	// concatenate the name of the cluster with the root gather directory
+	options.Directory = filepath.Join(options.Directory, clusterInfo.Name)
 
 	if _, err := os.Stat(options.Directory); os.IsNotExist(err) {
 		err := os.MkdirAll(options.Directory, 0o700)
