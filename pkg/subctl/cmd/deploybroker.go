@@ -24,7 +24,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/stringset"
-	submarinerv1a1 "github.com/submariner-io/subctl/api/submariner/v1alpha1"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/internal/image"
@@ -36,6 +35,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/subctl/cmd/utils"
 	"github.com/submariner-io/subctl/pkg/subctl/datafile"
 	"github.com/submariner-io/subctl/pkg/subctl/operator/submarinerop"
+	submarinerv1a1 "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 )
 

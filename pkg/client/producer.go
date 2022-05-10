@@ -19,7 +19,7 @@ limitations under the License.
 package client
 
 import (
-	operatorClientset "github.com/submariner-io/subctl/pkg/client/clientset/versioned"
+	operatorClientset "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned"
 	submarinerClientset "github.com/submariner-io/submariner/pkg/client/clientset/versioned"
 	apiextClient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/dynamic"
