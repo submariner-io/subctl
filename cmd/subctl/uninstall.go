@@ -23,11 +23,11 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
-	"github.com/submariner-io/submariner-operator/internal/cli"
-	"github.com/submariner-io/submariner-operator/internal/constants"
-	"github.com/submariner-io/submariner-operator/internal/exit"
-	"github.com/submariner-io/submariner-operator/pkg/client"
-	"github.com/submariner-io/submariner-operator/pkg/uninstall"
+	"github.com/submariner-io/subctl/internal/cli"
+	"github.com/submariner-io/subctl/internal/constants"
+	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/pkg/client"
+	"github.com/submariner-io/subctl/pkg/uninstall"
 )
 
 var uninstallOptions struct {

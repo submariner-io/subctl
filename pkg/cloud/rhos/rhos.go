@@ -32,7 +32,7 @@ import (
 	"github.com/submariner-io/cloud-prepare/pkg/k8s"
 	"github.com/submariner-io/cloud-prepare/pkg/ocp"
 	"github.com/submariner-io/cloud-prepare/pkg/rhos"
-	"github.com/submariner-io/submariner-operator/internal/restconfig"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )

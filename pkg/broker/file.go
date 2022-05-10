@@ -28,9 +28,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/stringset"
-	"github.com/submariner-io/submariner-operator/internal/component"
-	"github.com/submariner-io/submariner-operator/internal/constants"
-	"github.com/submariner-io/submariner-operator/internal/rbac"
+	"github.com/submariner-io/subctl/internal/component"
+	"github.com/submariner-io/subctl/internal/constants"
+	"github.com/submariner-io/subctl/internal/rbac"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )

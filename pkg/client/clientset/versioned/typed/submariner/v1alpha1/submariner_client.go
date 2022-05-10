@@ -19,8 +19,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	v1alpha1 "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
-	"github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned/scheme"
+	v1alpha1 "github.com/submariner-io/subctl/api/submariner/v1alpha1"
+	"github.com/submariner-io/subctl/pkg/client/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

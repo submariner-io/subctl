@@ -20,14 +20,14 @@ package prepare
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/submariner-io/submariner-operator/internal/cli"
-	"github.com/submariner-io/submariner-operator/internal/exit"
-	"github.com/submariner-io/submariner-operator/internal/restconfig"
-	"github.com/submariner-io/submariner-operator/pkg/cloud"
-	cloudaws "github.com/submariner-io/submariner-operator/pkg/cloud/aws"
-	"github.com/submariner-io/submariner-operator/pkg/cloud/prepare"
-	"github.com/submariner-io/submariner-operator/pkg/subctl/cmd/cloud/aws"
-	"github.com/submariner-io/submariner-operator/pkg/subctl/cmd/utils"
+	"github.com/submariner-io/subctl/internal/cli"
+	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/cloud"
+	cloudaws "github.com/submariner-io/subctl/pkg/cloud/aws"
+	"github.com/submariner-io/subctl/pkg/cloud/prepare"
+	"github.com/submariner-io/subctl/pkg/subctl/cmd/cloud/aws"
+	"github.com/submariner-io/subctl/pkg/subctl/cmd/utils"
 )
 
 var config cloudaws.Config

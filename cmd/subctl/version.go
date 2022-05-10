@@ -22,7 +22,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/submariner-io/submariner-operator/pkg/version"
+	"github.com/submariner-io/subctl/pkg/version"
 )
 
 var VersionCmd = &cobra.Command{

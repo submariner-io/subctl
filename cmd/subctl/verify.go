@@ -35,8 +35,8 @@ import (
 	_ "github.com/submariner-io/lighthouse/test/e2e/framework"
 	"github.com/submariner-io/shipyard/test/e2e"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
-	"github.com/submariner-io/submariner-operator/internal/component"
-	"github.com/submariner-io/submariner-operator/internal/exit"
+	"github.com/submariner-io/subctl/internal/component"
+	"github.com/submariner-io/subctl/internal/exit"
 	_ "github.com/submariner-io/submariner/test/e2e/dataplane"
 	_ "github.com/submariner-io/submariner/test/e2e/redundancy"
 )

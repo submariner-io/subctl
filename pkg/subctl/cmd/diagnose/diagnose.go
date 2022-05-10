@@ -20,8 +20,8 @@ package diagnose
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/submariner-io/submariner-operator/internal/restconfig"
-	"github.com/submariner-io/submariner-operator/pkg/subctl/cmd"
+	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/subctl/cmd"
 )
 
 var (

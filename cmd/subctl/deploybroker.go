@@ -24,13 +24,13 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/stringset"
-	"github.com/submariner-io/submariner-operator/internal/cli"
-	"github.com/submariner-io/submariner-operator/internal/component"
-	"github.com/submariner-io/submariner-operator/internal/constants"
-	"github.com/submariner-io/submariner-operator/internal/exit"
-	"github.com/submariner-io/submariner-operator/pkg/broker"
-	"github.com/submariner-io/submariner-operator/pkg/client"
-	"github.com/submariner-io/submariner-operator/pkg/deploy"
+	"github.com/submariner-io/subctl/internal/cli"
+	"github.com/submariner-io/subctl/internal/component"
+	"github.com/submariner-io/subctl/internal/constants"
+	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/pkg/broker"
+	"github.com/submariner-io/subctl/pkg/client"
+	"github.com/submariner-io/subctl/pkg/deploy"
 )
 
 var (

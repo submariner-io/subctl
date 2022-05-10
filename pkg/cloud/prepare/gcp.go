@@ -21,10 +21,10 @@ package prepare
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
-	"github.com/submariner-io/submariner-operator/internal/cli"
-	"github.com/submariner-io/submariner-operator/internal/restconfig"
-	"github.com/submariner-io/submariner-operator/pkg/cloud"
-	"github.com/submariner-io/submariner-operator/pkg/cloud/gcp"
+	"github.com/submariner-io/subctl/internal/cli"
+	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/cloud"
+	"github.com/submariner-io/subctl/pkg/cloud/gcp"
 )
 
 func GCP(restConfigProducer *restconfig.Producer, ports *cloud.Ports, config *gcp.Config, status reporter.Interface) error {

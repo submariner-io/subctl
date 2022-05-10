@@ -21,11 +21,11 @@ package subctl
 import (
 	"github.com/spf13/cobra"
 	cpaws "github.com/submariner-io/cloud-prepare/pkg/aws"
-	"github.com/submariner-io/submariner-operator/internal/cli"
-	"github.com/submariner-io/submariner-operator/internal/exit"
-	cloudaws "github.com/submariner-io/submariner-operator/pkg/cloud/aws"
-	"github.com/submariner-io/submariner-operator/pkg/cloud/cleanup"
-	"github.com/submariner-io/submariner-operator/pkg/cloud/prepare"
+	"github.com/submariner-io/subctl/internal/cli"
+	"github.com/submariner-io/subctl/internal/exit"
+	cloudaws "github.com/submariner-io/subctl/pkg/cloud/aws"
+	"github.com/submariner-io/subctl/pkg/cloud/cleanup"
+	"github.com/submariner-io/subctl/pkg/cloud/prepare"
 )
 
 var (

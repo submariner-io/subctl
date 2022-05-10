@@ -20,8 +20,8 @@ package lighthouseop
 
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/submariner-operator/pkg/subctl/operator/lighthouse/scc"
-	"github.com/submariner-io/submariner-operator/pkg/subctl/operator/lighthouse/serviceaccount"
+	"github.com/submariner-io/subctl/pkg/subctl/operator/lighthouse/scc"
+	"github.com/submariner-io/subctl/pkg/subctl/operator/lighthouse/serviceaccount"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )

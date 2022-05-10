@@ -20,10 +20,10 @@ package show
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/submariner-io/submariner-operator/cmd/subctl/execute"
-	"github.com/submariner-io/submariner-operator/internal/restconfig"
-	"github.com/submariner-io/submariner-operator/internal/show"
-	"github.com/submariner-io/submariner-operator/pkg/subctl/cmd"
+	"github.com/submariner-io/subctl/cmd/subctl/execute"
+	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/internal/show"
+	"github.com/submariner-io/subctl/pkg/subctl/cmd"
 )
 
 var (

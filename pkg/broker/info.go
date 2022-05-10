@@ -27,7 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/stringset"
-	"github.com/submariner-io/submariner-operator/internal/component"
+	"github.com/submariner-io/subctl/internal/component"
 	submarinerClientset "github.com/submariner-io/submariner/pkg/client/clientset/versioned"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

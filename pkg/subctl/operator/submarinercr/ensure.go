@@ -24,9 +24,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/util"
-	submariner "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
-	operatorclient "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned"
-	operatorv1alpha1client "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned/typed/submariner/v1alpha1"
+	submariner "github.com/submariner-io/subctl/api/submariner/v1alpha1"
+	operatorclient "github.com/submariner-io/subctl/pkg/client/clientset/versioned"
+	operatorv1alpha1client "github.com/submariner-io/subctl/pkg/client/clientset/versioned/typed/submariner/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )

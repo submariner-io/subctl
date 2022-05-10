@@ -19,9 +19,9 @@ limitations under the License.
 package fake
 
 import (
-	clientset "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned"
-	submarinerv1alpha1 "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned/typed/submariner/v1alpha1"
-	fakesubmarinerv1alpha1 "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned/typed/submariner/v1alpha1/fake"
+	clientset "github.com/submariner-io/subctl/pkg/client/clientset/versioned"
+	submarinerv1alpha1 "github.com/submariner-io/subctl/pkg/client/clientset/versioned/typed/submariner/v1alpha1"
+	fakesubmarinerv1alpha1 "github.com/submariner-io/subctl/pkg/client/clientset/versioned/typed/submariner/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

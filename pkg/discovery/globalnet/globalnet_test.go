@@ -21,7 +21,7 @@ package globalnet_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
+	"github.com/submariner-io/subctl/pkg/discovery/globalnet"
 )
 
 var _ = Describe("CheckOverlappingCidrs", func() {
