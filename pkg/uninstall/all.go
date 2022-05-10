@@ -26,7 +26,6 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/util"
-	"github.com/submariner-io/submariner-operator/controllers/uninstall"
 	"github.com/submariner-io/submariner-operator/internal/constants"
 	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/names"
@@ -39,6 +38,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
+
+const componentReadyTimeout time.Duration = time.Minute * 2
 
 func All(clients client.Producer, clusterName, submarinerNamespace string, status reporter.Interface) error {
 	found, brokerNS, err := ensureSubmarinerDeleted(clients, clusterName, submarinerNamespace, status)
@@ -231,7 +232,7 @@ func ensureServiceDiscoveryDeleted(clients client.Producer, clusterName, namespa
 }
 
 func ensureDeleted(resourceInterface resource.Interface, name string) error {
-	const maxWait = uninstall.ComponentReadyTimeout + time.Second*30
+	const maxWait = componentReadyTimeout + time.Second*30
 	const checkInterval = 2 * time.Second
 
 	// nolint:wrapcheck // Let the caller wrap errors
