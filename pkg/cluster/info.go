@@ -22,9 +22,9 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	"github.com/submariner-io/subctl/api/submariner/v1alpha1"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/client"
+	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

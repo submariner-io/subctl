@@ -24,9 +24,9 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/submariner-io/subctl/api/submariner/v1alpha1"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/subctl/cmd/utils"
+	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	subClientsetv1 "github.com/submariner-io/submariner/pkg/client/clientset/versioned"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

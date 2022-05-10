@@ -22,8 +22,8 @@ import (
 	"context"
 
 	"github.com/submariner-io/admiral/pkg/resource"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	resourceutil "github.com/submariner-io/subctl/pkg/resource"
+	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/client-go/kubernetes"
 )

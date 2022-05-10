@@ -24,8 +24,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	resourceutil "github.com/submariner-io/subctl/pkg/resource"
+	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

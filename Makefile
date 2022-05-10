@@ -17,8 +17,6 @@ endif
 
 ifneq (,$(DAPPER_HOST_ARCH))
 
-CONTROLLER_GEN := $(CURDIR)/bin/controller-gen
-
 # Running in Dapper
 
 IMAGES = subctl
@@ -131,22 +129,6 @@ cmd/bin/subctl-%: $(shell find cmd/ -name "*.go") $(VENDOR_MODULES)
         --noupx $@ ./cmd $(BUILD_ARGS)
 
 ci: golangci-lint markdownlint unit build images
-
-# Operator CRDs
-$(CONTROLLER_GEN): $(VENDOR_MODULES)
-	mkdir -p $(@D)
-	$(GO) build -o $@ sigs.k8s.io/controller-tools/cmd/controller-gen
-
-# Generate the clientset for the Submariner APIs
-# It needs to be run when the Submariner APIs change
-generate-clientset: $(VENDOR_MODULES)
-	git clone https://github.com/kubernetes/code-generator -b kubernetes-1.19.10 $${GOPATH}/src/k8s.io/code-generator
-	cd $${GOPATH}/src/k8s.io/code-generator && $(GO) mod vendor
-	GO111MODULE=on $${GOPATH}/src/k8s.io/code-generator/generate-groups.sh \
-		client,deepcopy \
-		github.com/submariner-io/submariner-operator/pkg/client \
-		github.com/submariner-io/submariner-operator/api \
-		submariner:v1alpha1
 
 # Test as many of the config/context-dependent subctl commands as possible
 test-subctl: bin/subctl deploy
