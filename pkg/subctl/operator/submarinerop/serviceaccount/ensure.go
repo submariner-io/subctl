@@ -23,7 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/submariner-io/subctl/pkg/clusterrole"
 	"github.com/submariner-io/subctl/pkg/clusterrolebinding"
-	"github.com/submariner-io/subctl/pkg/embeddedyamls"
+	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	"github.com/submariner-io/subctl/pkg/role"
 	"github.com/submariner-io/subctl/pkg/rolebinding"
 	"github.com/submariner-io/subctl/pkg/serviceaccount"
