@@ -20,7 +20,7 @@ package subctl
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/submariner-io/submariner-operator/pkg/cloud"
+	"github.com/submariner-io/subctl/pkg/cloud"
 )
 
 const (

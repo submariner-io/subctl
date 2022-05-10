@@ -22,7 +22,7 @@ package aws
 import (
 	"github.com/spf13/cobra"
 	cpaws "github.com/submariner-io/cloud-prepare/pkg/aws"
-	"github.com/submariner-io/submariner-operator/pkg/cloud/aws"
+	"github.com/submariner-io/subctl/pkg/cloud/aws"
 )
 
 const (

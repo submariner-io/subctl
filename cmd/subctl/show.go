@@ -20,8 +20,8 @@ package subctl
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/submariner-io/submariner-operator/cmd/subctl/execute"
-	"github.com/submariner-io/submariner-operator/internal/show"
+	"github.com/submariner-io/subctl/cmd/subctl/execute"
+	"github.com/submariner-io/subctl/internal/show"
 )
 
 var (

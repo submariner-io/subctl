@@ -20,7 +20,7 @@ package cleanup
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/submariner-io/submariner-operator/internal/restconfig"
+	"github.com/submariner-io/subctl/internal/restconfig"
 )
 
 var parentRestConfigProducer *restconfig.Producer

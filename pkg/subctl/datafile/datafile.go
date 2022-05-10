@@ -27,9 +27,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/stringset"
-	"github.com/submariner-io/submariner-operator/internal/component"
-	"github.com/submariner-io/submariner-operator/internal/constants"
-	"github.com/submariner-io/submariner-operator/internal/rbac"
+	"github.com/submariner-io/subctl/internal/component"
+	"github.com/submariner-io/subctl/internal/constants"
+	"github.com/submariner-io/subctl/internal/rbac"
 	submarinerClientset "github.com/submariner-io/submariner/pkg/client/clientset/versioned"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -47,7 +47,7 @@ type SubctlData struct {
 	CustomDomains    *[]string  `omitempty,json:"customDomains"`
 	// Todo (revisit): The following values are moved from the broker-info.subm file to configMap
 	// on the Broker. This needs to be revisited to support seamless upgrades.
-	// https://github.com/submariner-io/submariner-operator/issues/504
+	// https://github.com/submariner-io/subctl/issues/504
 	// GlobalnetCidrRange   string `omitempty,json:"globalnetCidrRange"`
 	// GlobalnetClusterSize uint   `omitempty,json:"globalnetClusterSize"`
 }

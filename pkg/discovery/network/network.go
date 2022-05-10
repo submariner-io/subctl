@@ -24,8 +24,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	operatorclientset "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned"
-	"github.com/submariner-io/submariner-operator/pkg/subctl/operator/submarinercr"
+	operatorclientset "github.com/submariner-io/subctl/pkg/client/clientset/versioned"
+	"github.com/submariner-io/subctl/pkg/subctl/operator/submarinercr"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"

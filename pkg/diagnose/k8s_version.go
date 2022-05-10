@@ -20,7 +20,7 @@ package diagnose
 
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/submariner-operator/pkg/version"
+	"github.com/submariner-io/subctl/pkg/version"
 	"k8s.io/client-go/kubernetes"
 )
 

@@ -14,7 +14,7 @@ limitations under the License.
 
 package main
 
-import "github.com/submariner-io/submariner-operator/cmd/subctl"
+import "github.com/submariner-io/subctl/cmd/subctl"
 
 func main() {
 	subctl.Execute()

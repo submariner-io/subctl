@@ -24,7 +24,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
-	"github.com/submariner-io/submariner-operator/pkg/subctl/benchmark"
+	"github.com/submariner-io/subctl/pkg/subctl/benchmark"
 )
 
 var (

@@ -25,7 +25,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/submariner-io/submariner-operator/internal/exit"
+	"github.com/submariner-io/subctl/internal/exit"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	mcsclient "sigs.k8s.io/mcs-api/pkg/client/clientset/versioned/typed/apis/v1alpha1"
 )

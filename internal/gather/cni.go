@@ -19,7 +19,7 @@ limitations under the License.
 package gather
 
 import (
-	"github.com/submariner-io/submariner-operator/internal/pods"
+	"github.com/submariner-io/subctl/internal/pods"
 	v1 "k8s.io/api/core/v1"
 )
 

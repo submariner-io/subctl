@@ -20,10 +20,10 @@ package serviceaccount
 
 import (
 	"github.com/pkg/errors"
-	"github.com/submariner-io/submariner-operator/pkg/clusterrole"
-	"github.com/submariner-io/submariner-operator/pkg/clusterrolebinding"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
-	"github.com/submariner-io/submariner-operator/pkg/serviceaccount"
+	"github.com/submariner-io/subctl/pkg/clusterrole"
+	"github.com/submariner-io/subctl/pkg/clusterrolebinding"
+	"github.com/submariner-io/subctl/pkg/embeddedyamls"
+	"github.com/submariner-io/subctl/pkg/serviceaccount"
 	"k8s.io/client-go/kubernetes"
 )
 

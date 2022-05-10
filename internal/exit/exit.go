@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/submariner-io/submariner-operator/pkg/version"
+	"github.com/submariner-io/subctl/pkg/version"
 )
 
 // OnError exits in case of error.

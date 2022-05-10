@@ -23,7 +23,7 @@ import (
 	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/submariner-operator/pkg/cluster"
+	"github.com/submariner-io/subctl/pkg/cluster"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"github.com/submariner-io/submariner/pkg/globalnet/constants"
 	corev1 "k8s.io/api/core/v1"

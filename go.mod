@@ -1,4 +1,4 @@
-module github.com/submariner-io/submariner-operator
+module github.com/submariner-io/subctl
 
 go 1.16
 

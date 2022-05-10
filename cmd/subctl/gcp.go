@@ -24,11 +24,11 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/submariner-io/submariner-operator/internal/cli"
-	"github.com/submariner-io/submariner-operator/internal/exit"
-	"github.com/submariner-io/submariner-operator/pkg/cloud/cleanup"
-	"github.com/submariner-io/submariner-operator/pkg/cloud/gcp"
-	"github.com/submariner-io/submariner-operator/pkg/cloud/prepare"
+	"github.com/submariner-io/subctl/internal/cli"
+	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/pkg/cloud/cleanup"
+	"github.com/submariner-io/subctl/pkg/cloud/gcp"
+	"github.com/submariner-io/subctl/pkg/cloud/prepare"
 )
 
 var (

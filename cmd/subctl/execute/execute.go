@@ -23,11 +23,11 @@ import (
 	"os"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/submariner-operator/internal/cli"
-	"github.com/submariner-io/submariner-operator/internal/constants"
-	"github.com/submariner-io/submariner-operator/internal/restconfig"
-	"github.com/submariner-io/submariner-operator/pkg/client"
-	"github.com/submariner-io/submariner-operator/pkg/cluster"
+	"github.com/submariner-io/subctl/internal/cli"
+	"github.com/submariner-io/subctl/internal/constants"
+	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/client"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
 type OnClusterFn func(*cluster.Info, reporter.Interface) bool

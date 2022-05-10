@@ -21,7 +21,7 @@ package network_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/submariner-io/submariner-operator/pkg/discovery/network"
+	"github.com/submariner-io/subctl/pkg/discovery/network"
 	"github.com/submariner-io/submariner/pkg/routeagent_driver/constants"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"

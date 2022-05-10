@@ -23,7 +23,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/submariner-io/submariner-operator/pkg/serviceaccount"
+	"github.com/submariner-io/subctl/pkg/serviceaccount"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	fakeclientset "k8s.io/client-go/kubernetes/fake"
