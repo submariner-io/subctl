@@ -24,10 +24,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
-	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/diagnose"
 	"github.com/submariner-io/subctl/pkg/subctl/cmd"
+	"github.com/submariner-io/submariner-operator/pkg/client"
 )
 
 func init() {

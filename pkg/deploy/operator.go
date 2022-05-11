@@ -23,8 +23,8 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/image"
-	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/subctl/operator/submarinerop"
+	"github.com/submariner-io/submariner-operator/pkg/client"
 )
 
 func Operator(status reporter.Interface, version, repository string, imageOverrideArr []string, debug bool,

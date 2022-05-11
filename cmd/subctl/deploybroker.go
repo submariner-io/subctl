@@ -29,8 +29,8 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/pkg/broker"
-	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/deploy"
+	"github.com/submariner-io/submariner-operator/pkg/client"
 )
 
 var (

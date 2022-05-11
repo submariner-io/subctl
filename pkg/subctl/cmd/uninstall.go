@@ -26,8 +26,8 @@ import (
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
-	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/uninstall"
+	"github.com/submariner-io/submariner-operator/pkg/client"
 )
 
 var noPrompt bool
