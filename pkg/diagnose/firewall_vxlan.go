@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/submariner-operator/pkg/cluster"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
 const (

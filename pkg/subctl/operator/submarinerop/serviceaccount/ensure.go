@@ -21,12 +21,12 @@ package serviceaccount
 
 import (
 	"github.com/pkg/errors"
-	"github.com/submariner-io/submariner-operator/pkg/clusterrole"
-	"github.com/submariner-io/submariner-operator/pkg/clusterrolebinding"
+	"github.com/submariner-io/subctl/pkg/clusterrole"
+	"github.com/submariner-io/subctl/pkg/clusterrolebinding"
+	"github.com/submariner-io/subctl/pkg/role"
+	"github.com/submariner-io/subctl/pkg/rolebinding"
+	"github.com/submariner-io/subctl/pkg/serviceaccount"
 	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
-	"github.com/submariner-io/submariner-operator/pkg/role"
-	"github.com/submariner-io/submariner-operator/pkg/rolebinding"
-	"github.com/submariner-io/submariner-operator/pkg/serviceaccount"
 	"k8s.io/client-go/kubernetes"
 )
 

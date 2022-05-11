@@ -23,7 +23,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/submariner-io/submariner-operator/internal/cluster"
+	"github.com/submariner-io/subctl/internal/cluster"
 )
 
 var _ = Describe("TestClusterIDs", func() {

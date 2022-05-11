@@ -21,7 +21,7 @@ package rhos
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/submariner-io/submariner-operator/pkg/cloud/rhos"
+	"github.com/submariner-io/subctl/pkg/cloud/rhos"
 )
 
 const (

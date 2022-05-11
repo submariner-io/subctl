@@ -22,7 +22,7 @@ import (
 	"context"
 
 	"github.com/submariner-io/admiral/pkg/resource"
-	resourceutil "github.com/submariner-io/submariner-operator/pkg/resource"
+	resourceutil "github.com/submariner-io/subctl/pkg/resource"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/client-go/kubernetes"
 )

@@ -25,8 +25,8 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/submariner-io/submariner-operator/internal/exit"
-	cloudgcp "github.com/submariner-io/submariner-operator/pkg/cloud/gcp"
+	"github.com/submariner-io/subctl/internal/exit"
+	cloudgcp "github.com/submariner-io/subctl/pkg/cloud/gcp"
 )
 
 const (

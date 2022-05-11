@@ -25,10 +25,10 @@ import (
 	"github.com/onsi/ginkgo/config"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
-	"github.com/submariner-io/submariner-operator/internal/benchmark"
-	"github.com/submariner-io/submariner-operator/internal/constants"
-	"github.com/submariner-io/submariner-operator/internal/exit"
-	"github.com/submariner-io/submariner-operator/internal/restconfig"
+	"github.com/submariner-io/subctl/internal/benchmark"
+	"github.com/submariner-io/subctl/internal/constants"
+	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/internal/restconfig"
 )
 
 var (

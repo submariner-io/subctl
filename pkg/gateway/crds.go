@@ -22,7 +22,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	"github.com/submariner-io/submariner-operator/pkg/crd"
+	"github.com/submariner-io/subctl/pkg/crd"
 	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )

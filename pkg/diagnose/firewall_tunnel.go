@@ -23,8 +23,8 @@ import (
 	"strings"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
-	"github.com/submariner-io/submariner-operator/pkg/cluster"
 	subv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"k8s.io/apimachinery/pkg/util/uuid"
 )

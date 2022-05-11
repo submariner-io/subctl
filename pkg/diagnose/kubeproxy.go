@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/submariner-operator/internal/pods"
+	"github.com/submariner-io/subctl/internal/pods"
 	"k8s.io/client-go/kubernetes"
 )
 

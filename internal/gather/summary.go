@@ -28,7 +28,7 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
-	subctlversion "github.com/submariner-io/submariner-operator/pkg/version"
+	subctlversion "github.com/submariner-io/subctl/pkg/version"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"

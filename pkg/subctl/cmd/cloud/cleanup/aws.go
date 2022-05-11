@@ -20,12 +20,12 @@ package cleanup
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/submariner-io/submariner-operator/internal/cli"
-	"github.com/submariner-io/submariner-operator/internal/exit"
-	"github.com/submariner-io/submariner-operator/internal/restconfig"
-	cloudaws "github.com/submariner-io/submariner-operator/pkg/cloud/aws"
-	"github.com/submariner-io/submariner-operator/pkg/cloud/cleanup"
-	"github.com/submariner-io/submariner-operator/pkg/subctl/cmd/cloud/aws"
+	"github.com/submariner-io/subctl/internal/cli"
+	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/internal/restconfig"
+	cloudaws "github.com/submariner-io/subctl/pkg/cloud/aws"
+	"github.com/submariner-io/subctl/pkg/cloud/cleanup"
+	"github.com/submariner-io/subctl/pkg/subctl/cmd/cloud/aws"
 )
 
 // NewCommand returns a new cobra.Command used to prepare a cloud infrastructure.

@@ -24,10 +24,10 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/submariner-io/subctl/pkg/subctl/operator/submarinercr"
+	"github.com/submariner-io/subctl/pkg/version"
 	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	subOperatorClientset "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned"
-	"github.com/submariner-io/submariner-operator/pkg/subctl/operator/submarinercr"
-	"github.com/submariner-io/submariner-operator/pkg/version"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1opts "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"

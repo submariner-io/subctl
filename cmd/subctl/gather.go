@@ -24,10 +24,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/submariner-operator/cmd/subctl/execute"
-	"github.com/submariner-io/submariner-operator/internal/exit"
-	"github.com/submariner-io/submariner-operator/internal/gather"
-	"github.com/submariner-io/submariner-operator/pkg/cluster"
+	"github.com/submariner-io/subctl/cmd/subctl/execute"
+	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/internal/gather"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
 var options gather.Options

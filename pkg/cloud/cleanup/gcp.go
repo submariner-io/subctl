@@ -21,8 +21,8 @@ package cleanup
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
-	"github.com/submariner-io/submariner-operator/internal/restconfig"
-	"github.com/submariner-io/submariner-operator/pkg/cloud/gcp"
+	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/cloud/gcp"
 )
 
 func GCP(restConfigProducer *restconfig.Producer, config *gcp.Config, status reporter.Interface) error {

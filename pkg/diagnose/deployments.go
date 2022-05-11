@@ -22,8 +22,8 @@ import (
 	"context"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/submariner-operator/internal/constants"
-	"github.com/submariner-io/submariner-operator/pkg/cluster"
+	"github.com/submariner-io/subctl/internal/constants"
+	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner/pkg/cidr"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

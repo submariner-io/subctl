@@ -24,8 +24,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/submariner-operator/internal/env"
-	"github.com/submariner-io/submariner-operator/internal/log"
+	"github.com/submariner-io/subctl/internal/env"
+	"github.com/submariner-io/subctl/internal/log"
 )
 
 type Result int

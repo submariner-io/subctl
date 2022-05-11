@@ -21,7 +21,7 @@ package network_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/submariner-io/submariner-operator/pkg/discovery/network"
+	"github.com/submariner-io/subctl/pkg/discovery/network"
 	"k8s.io/client-go/kubernetes/fake"
 )
 

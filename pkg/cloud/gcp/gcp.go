@@ -33,7 +33,7 @@ import (
 	gcpClientIface "github.com/submariner-io/cloud-prepare/pkg/gcp/client"
 	"github.com/submariner-io/cloud-prepare/pkg/k8s"
 	"github.com/submariner-io/cloud-prepare/pkg/ocp"
-	"github.com/submariner-io/submariner-operator/internal/restconfig"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/dns/v1"
 	"google.golang.org/api/option"
