@@ -26,8 +26,8 @@ import (
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/restconfig"
-	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	"github.com/submariner-io/submariner-operator/pkg/client"
 )
 
 type OnClusterFn func(*cluster.Info, reporter.Interface) bool
