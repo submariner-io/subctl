@@ -19,6 +19,7 @@ limitations under the License.
 package restconfig
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -28,11 +29,14 @@ import (
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/stringset"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
+	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
-	"github.com/submariner-io/subctl/pkg/subctl/cmd/utils"
 	"github.com/submariner-io/subctl/pkg/version"
 	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
+	subOperatorClientset "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned"
 	subv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1opts "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -315,7 +319,16 @@ func (rcp *Producer) CheckVersionMismatch(cmd *cobra.Command, args []string) err
 	config, err := rcp.ForCluster()
 	exit.OnErrorWithMessage(err, "The provided kubeconfig is invalid")
 
-	submariner := utils.GetSubmarinerResource(config.Config)
+	operatorClient, err := subOperatorClientset.NewForConfig(config.Config)
+	exit.OnErrorWithMessage(err, "Error creating operator clientset")
+
+	submariner, err := operatorClient.SubmarinerV1alpha1().Submariners(constants.OperatorNamespace).
+		Get(context.TODO(), constants.SubmarinerName, v1opts.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
+
+	exit.OnErrorWithMessage(err, fmt.Sprintf("Error retrieving Submariner object %s", constants.SubmarinerName))
 
 	if submariner != nil && submariner.Spec.Version != "" {
 		subctlVer, _ := semver.NewVersion(version.Version)
