@@ -31,9 +31,9 @@ import (
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/nodes"
 	"github.com/submariner-io/subctl/pkg/broker"
-	"github.com/submariner-io/subctl/pkg/discovery/network"
 	"github.com/submariner-io/subctl/pkg/join"
 	"github.com/submariner-io/submariner-operator/pkg/client"
+	"github.com/submariner-io/submariner-operator/pkg/discovery/network"
 	"k8s.io/client-go/kubernetes"
 )
 
