@@ -27,9 +27,9 @@ import (
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/brokercr"
 	"github.com/submariner-io/subctl/pkg/crd"
-	"github.com/submariner-io/subctl/pkg/discovery/globalnet"
 	submarinerv1a1 "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/client"
+	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 )
 
 type BrokerOptions struct {
@@ -68,7 +68,7 @@ func Broker(options *BrokerOptions, clientProducer client.Producer, status repor
 		}
 	}
 
-	if err = broker.CreateGlobalnetConfigMap(clientProducer.ForKubernetes(), options.BrokerSpec.GlobalnetEnabled,
+	if err = globalnet.CreateConfigMap(clientProducer.ForKubernetes(), options.BrokerSpec.GlobalnetEnabled,
 		options.BrokerSpec.GlobalnetCIDRRange, options.BrokerSpec.DefaultGlobalnetClusterSize, options.BrokerNamespace); err != nil {
 		return status.Error(err, "error creating globalCIDR configmap on Broker")
 	}

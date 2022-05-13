@@ -5,7 +5,6 @@ go 1.16
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.4
 	github.com/coreos/go-semver v0.3.0
-	github.com/go-logr/logr v0.4.0
 	github.com/gophercloud/utils v0.0.0-20210909165623-d7085207ff6d
 	github.com/mattn/go-isatty v0.0.14
 	github.com/onsi/ginkgo v1.16.5
@@ -17,7 +16,7 @@ require (
 	github.com/submariner-io/lighthouse v0.13.0-m1
 	github.com/submariner-io/shipyard v0.13.0-m1
 	github.com/submariner-io/submariner v0.13.0-m1
-	github.com/submariner-io/submariner-operator v0.13.0-m1
+	github.com/submariner-io/submariner-operator v0.13.0-m1.0.20220512122943-01388394140f
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	google.golang.org/api v0.79.0

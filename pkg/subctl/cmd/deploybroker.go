@@ -30,12 +30,12 @@ import (
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/brokercr"
 	"github.com/submariner-io/subctl/pkg/crd"
-	"github.com/submariner-io/subctl/pkg/discovery/globalnet"
 	"github.com/submariner-io/subctl/pkg/subctl/cmd/utils"
 	"github.com/submariner-io/subctl/pkg/subctl/datafile"
 	"github.com/submariner-io/subctl/pkg/subctl/operator/submarinerop"
 	submarinerv1a1 "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/client"
+	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -175,7 +175,7 @@ var deployBroker = &cobra.Command{
 			utils.ExitOnError("Error validating existing globalCIDR configmap", err)
 		}
 
-		err = broker.CreateGlobalnetConfigMap(clientProducer.ForKubernetes(), globalnetEnable, globalnetCIDRRange,
+		err = globalnet.CreateConfigMap(clientProducer.ForKubernetes(), globalnetEnable, globalnetCIDRRange,
 			defaultGlobalnetClusterSize, brokerNamespace)
 		utils.ExitOnError("Error creating globalCIDR configmap on Broker", err)
 

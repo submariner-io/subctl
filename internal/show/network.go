@@ -24,7 +24,7 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	"github.com/submariner-io/subctl/pkg/discovery/network"
+	"github.com/submariner-io/submariner-operator/pkg/discovery/network"
 )
 
 func Network(clusterInfo *cluster.Info, status reporter.Interface) bool {
