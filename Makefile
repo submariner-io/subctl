@@ -33,8 +33,8 @@ endif
 include $(SHIPYARD_DIR)/Makefile.inc
 
 CROSS_TARGETS := linux-amd64 linux-arm64 linux-arm linux-s390x linux-ppc64le windows-amd64.exe darwin-amd64
-BINARIES := bin/subctl
-CROSS_BINARIES := $(foreach cross,$(CROSS_TARGETS),$(patsubst %,bin/subctl-$(VERSION)-%,$(cross)))
+BINARIES := cmd/bin/subctl
+CROSS_BINARIES := $(foreach cross,$(CROSS_TARGETS),$(patsubst %,cmd/bin/subctl-$(VERSION)-%,$(cross)))
 CROSS_TARBALLS := $(foreach cross,$(CROSS_TARGETS),$(patsubst %,dist/subctl-$(VERSION)-%.tar.xz,$(cross)))
 
 override E2E_ARGS += --settings $(SETTINGS) cluster1 cluster2
@@ -69,7 +69,7 @@ images: build
 
 # Build subctl before deploying to ensure we use that
 # (with the PATH set above)
-deploy: bin/subctl
+deploy: cmd/bin/subctl
 
 e2e: deploy
 	scripts/kind-e2e/e2e.sh $(E2E_ARGS)
@@ -89,32 +89,16 @@ bin/lichen: $(VENDOR_MODULES)
 	mkdir -p $(@D)
 	$(GO) build -o $@ github.com/uw-labs/lichen
 
-package/Dockerfile.subctl: bin/subctl
-
-bin/subctl: bin/subctl-$(VERSION)-$(GOOS)-$(GOARCH)$(GOEXE)
-	ln -sf $(<F) $@
+package/Dockerfile.subctl: cmd/bin/subctl
 
 cmd/bin/subctl: cmd/bin/subctl-$(VERSION)-$(GOOS)-$(GOARCH)$(GOEXE)
 	ln -sf $(<F) $@
 
-dist/subctl-%.tar.xz: bin/subctl-%
+dist/subctl-%.tar.xz: cmd/bin/subctl-%
 	mkdir -p dist
 	tar -cJf $@ --transform "s/^bin/subctl-$(VERSION)/" $<
 
 # Versions may include hyphens so it's easier to use $(VERSION) than to extract them from the target
-bin/subctl-%: $(shell find pkg/subctl/ -name "*.go") $(VENDOR_MODULES)
-	mkdir -p $(@D)
-	target=$@; \
-	target=$${target%.exe}; \
-	components=($$(echo $${target//-/ })); \
-	GOOS=$${components[-2]}; \
-	GOARCH=$${components[-1]}; \
-	export GOARCH GOOS; \
-	$(SCRIPTS_DIR)/compile.sh \
-		--ldflags "-X 'github.com/submariner-io/submariner-operator/pkg/version.Version=$(VERSION)' \
-			   -X 'github.com/submariner-io/submariner-operator/api/submariner/v1alpha1.DefaultSubmarinerOperatorVersion=$${DEFAULT_IMAGE_VERSION#v}'" \
-		--noupx $@ ./pkg/subctl $(BUILD_ARGS)
-
 cmd/bin/subctl-%: $(shell find cmd/ -name "*.go") $(VENDOR_MODULES)
 	mkdir -p cmd/bin
 	target=$@; \
@@ -124,37 +108,37 @@ cmd/bin/subctl-%: $(shell find cmd/ -name "*.go") $(VENDOR_MODULES)
 	GOARCH=$${components[-1]}; \
 	export GOARCH GOOS; \
 	$(SCRIPTS_DIR)/compile.sh \
-		--ldflags "-X 'github.com/submariner-io/submariner-operator/pkg/version.Version=$(VERSION)' \
+		--ldflags "-X 'github.com/submariner-io/subctl/pkg/version.Version=$(VERSION)' \
 		       -X 'github.com/submariner-io/submariner-operator/api/submariner/v1alpha1.DefaultSubmarinerOperatorVersion=$${DEFAULT_IMAGE_VERSION#v}'" \
         --noupx $@ ./cmd $(BUILD_ARGS)
 
 ci: golangci-lint markdownlint unit build images
 
 # Test as many of the config/context-dependent subctl commands as possible
-test-subctl: bin/subctl deploy
+test-subctl: cmd/bin/subctl deploy
 # benchmark
-	bin/subctl benchmark latency --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1:$(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster2 \
+	cmd/bin/subctl benchmark latency --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1:$(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster2 \
 		--kubecontexts cluster1,cluster2
-	bin/subctl benchmark latency --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 \
+	cmd/bin/subctl benchmark latency --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 \
 		--kubecontexts cluster1 --intra-cluster
-	bin/subctl benchmark throughput --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1:$(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster2 \
+	cmd/bin/subctl benchmark throughput --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1:$(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster2 \
 		--kubecontexts cluster1,cluster2
-	bin/subctl benchmark throughput --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 \
+	cmd/bin/subctl benchmark throughput --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 \
 		--kubecontexts cluster1 --intra-cluster
 # cloud
-	bin/subctl cloud prepare generic --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 --kubecontext cluster1
+	cmd/bin/subctl cloud prepare generic --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 --kubecontext cluster1
 # deploy-broker is tested by the deploy target
 # diagnose
-	bin/subctl diagnose all --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
-	bin/subctl diagnose firewall inter-cluster $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster2
+	cmd/bin/subctl diagnose all --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
+	cmd/bin/subctl diagnose firewall inter-cluster $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster2
 # export TBD
 # gather
-	bin/subctl gather $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
+	cmd/bin/subctl gather $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
 # join is tested by the deploy target
 # show
-	bin/subctl show all --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
+	cmd/bin/subctl show all --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
 # verify is tested by the e2e target (run elsewhere)
-	bin/subctl uninstall -y --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
+	cmd/bin/subctl uninstall -y --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
 
 .PHONY: build ci clean generate-clientset
 

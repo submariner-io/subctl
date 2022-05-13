@@ -11,7 +11,7 @@ function test_subctl_gather() {
   rm -rf $out_dir
   mkdir $out_dir
 
-  ${DAPPER_SOURCE}/bin/subctl gather --dir $out_dir
+  ${DAPPER_SOURCE}/cmd/bin/subctl gather --dir $out_dir
 
   ls $out_dir
 

@@ -22,8 +22,8 @@ import (
 	"strings"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/subctl/internal/show/table"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	"github.com/submariner-io/subctl/pkg/subctl/table"
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 )
 
