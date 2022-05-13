@@ -96,7 +96,7 @@ cmd/bin/subctl: cmd/bin/subctl-$(VERSION)-$(GOOS)-$(GOARCH)$(GOEXE)
 
 dist/subctl-%.tar.xz: cmd/bin/subctl-%
 	mkdir -p dist
-	tar -cJf $@ --transform "s/^bin/subctl-$(VERSION)/" $<
+	tar -cJf $@ --transform "s/^cmd.bin/subctl-$(VERSION)/" $<
 
 # Versions may include hyphens so it's easier to use $(VERSION) than to extract them from the target
 cmd/bin/subctl-%: $(shell find cmd/ -name "*.go") $(VENDOR_MODULES)
