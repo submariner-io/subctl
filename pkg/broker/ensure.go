@@ -32,6 +32,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/lighthouse"
 	"github.com/submariner-io/subctl/pkg/namespace"
 	"github.com/submariner-io/subctl/pkg/role"
+	"github.com/submariner-io/submariner-operator/pkg/names"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -109,7 +110,7 @@ func createBrokerClusterRoleAndDefaultSA(kubeClient kubernetes.Interface, inName
 
 // CreateSAForCluster creates a new SA, and binds it to the submariner cluster role.
 func CreateSAForCluster(kubeClient kubernetes.Interface, clusterID, inNamespace string) (*v1.Secret, error) {
-	saName := ClusterSAName(clusterID)
+	saName := names.ForClusterSA(clusterID)
 
 	_, err := CreateNewBrokerSA(kubeClient, saName, inNamespace)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
