@@ -20,7 +20,6 @@ package submarinerop
 
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/subctl/pkg/crd"
 	"github.com/submariner-io/subctl/pkg/namespace"
 	lighthouseop "github.com/submariner-io/subctl/pkg/subctl/operator/lighthouse"
 	opcrds "github.com/submariner-io/subctl/pkg/subctl/operator/submarinerop/crds"
@@ -28,6 +27,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/subctl/operator/submarinerop/scc"
 	"github.com/submariner-io/subctl/pkg/subctl/operator/submarinerop/serviceaccount"
 	"github.com/submariner-io/submariner-operator/pkg/client"
+	"github.com/submariner-io/submariner-operator/pkg/crd"
 )
 
 // nolint:wrapcheck // No need to wrap errors here.
