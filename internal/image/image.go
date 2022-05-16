@@ -23,8 +23,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/submariner-io/subctl/pkg/images"
 	submariner "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
+	"github.com/submariner-io/submariner-operator/pkg/images"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 )
 
