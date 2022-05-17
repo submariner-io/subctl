@@ -16,12 +16,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package lighthouseop
+package lighthouse
 
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/subctl/pkg/subctl/operator/lighthouse/scc"
-	"github.com/submariner-io/subctl/pkg/subctl/operator/lighthouse/serviceaccount"
+	"github.com/submariner-io/subctl/pkg/lighthouse/scc"
+	"github.com/submariner-io/subctl/pkg/lighthouse/serviceaccount"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )

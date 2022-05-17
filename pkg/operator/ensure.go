@@ -20,12 +20,12 @@ package operator
 
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/subctl/pkg/lighthouse"
 	"github.com/submariner-io/subctl/pkg/namespace"
 	opcrds "github.com/submariner-io/subctl/pkg/operator/crds"
 	"github.com/submariner-io/subctl/pkg/operator/deployment"
 	"github.com/submariner-io/subctl/pkg/operator/scc"
 	"github.com/submariner-io/subctl/pkg/operator/serviceaccount"
-	lighthouseop "github.com/submariner-io/subctl/pkg/subctl/operator/lighthouse"
 	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 )
@@ -56,7 +56,7 @@ func Ensure(status reporter.Interface, clientProducer client.Producer, operatorN
 		status.Success("Updated the privileged SCC")
 	}
 
-	if created, err := lighthouseop.Ensure(status, clientProducer.ForKubernetes(), clientProducer.ForDynamic(),
+	if created, err := lighthouse.Ensure(status, clientProducer.ForKubernetes(), clientProducer.ForDynamic(),
 		operatorNamespace); err != nil {
 		return err
 	} else if created {
