@@ -27,7 +27,7 @@ import (
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/util"
 	"github.com/submariner-io/subctl/internal/constants"
-	"github.com/submariner-io/subctl/pkg/subctl/operator/servicediscoverycr"
+	"github.com/submariner-io/subctl/pkg/servicediscoverycr"
 	"github.com/submariner-io/subctl/pkg/submarinercr"
 	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/names"
