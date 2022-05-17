@@ -26,6 +26,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/operator/deployment"
 	"github.com/submariner-io/subctl/pkg/operator/scc"
 	"github.com/submariner-io/subctl/pkg/operator/serviceaccount"
+	"github.com/submariner-io/subctl/pkg/submariner"
 	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 )
@@ -56,11 +57,12 @@ func Ensure(status reporter.Interface, clientProducer client.Producer, operatorN
 		status.Success("Updated the privileged SCC")
 	}
 
-	if created, err := lighthouse.Ensure(status, clientProducer.ForKubernetes(), clientProducer.ForDynamic(),
-		operatorNamespace); err != nil {
+	if err := submariner.Ensure(status, clientProducer.ForKubernetes(), clientProducer.ForDynamic(), operatorNamespace); err != nil {
 		return err
-	} else if created {
-		status.Success("Created Lighthouse service accounts and roles")
+	}
+
+	if err := lighthouse.Ensure(status, clientProducer.ForKubernetes(), clientProducer.ForDynamic(), operatorNamespace); err != nil {
+		return err
 	}
 
 	if created, err := deployment.Ensure(clientProducer.ForKubernetes(), operatorNamespace, operatorImage, debug); err != nil {

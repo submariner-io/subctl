@@ -31,44 +31,7 @@ func Ensure(dynClient dynamic.Interface, namespace string) (bool, error) {
 		return false, errors.Wrap(err, "error parsing the operator ServiceAccount resource")
 	}
 
-	gatewaySaName, err := embeddedyamls.GetObjectName(embeddedyamls.Config_rbac_submariner_gateway_service_account_yaml)
-	if err != nil {
-		return false, errors.Wrap(err, "error parsing the gateway ServiceAccount resource")
-	}
+	updated, err := scc.Update(dynClient, namespace, operatorSaName)
 
-	routeAgentSaName, err := embeddedyamls.GetObjectName(embeddedyamls.Config_rbac_submariner_route_agent_service_account_yaml)
-	if err != nil {
-		return false, errors.Wrap(err, "error parsing the route agent ServiceAccount resource")
-	}
-
-	globalnetSaName, err := embeddedyamls.GetObjectName(embeddedyamls.Config_rbac_submariner_globalnet_service_account_yaml)
-	if err != nil {
-		return false, errors.Wrap(err, "error parsing the globalnet ServiceAccount resource")
-	}
-
-	npSyncerSaName, err := embeddedyamls.GetObjectName(embeddedyamls.Config_rbac_networkplugin_syncer_service_account_yaml)
-	if err != nil {
-		return false, errors.Wrap(err, "error parsing the networkplugin syncer ServiceAccount resource")
-	}
-
-	diagnoseSaName, err := embeddedyamls.GetObjectName(embeddedyamls.Config_rbac_submariner_diagnose_service_account_yaml)
-	if err != nil {
-		return false, errors.Wrap(err, "error parsing the diagnose ServiceAccount resource")
-	}
-
-	saNames := []string{
-		operatorSaName, gatewaySaName, routeAgentSaName, globalnetSaName, npSyncerSaName, diagnoseSaName,
-	}
-	updateScc := false
-
-	for _, saName := range saNames {
-		result, err := scc.Update(dynClient, namespace, saName)
-		if err != nil {
-			return false, errors.Wrap(err, "error updating the SCC resource")
-		}
-
-		updateScc = updateScc || result
-	}
-
-	return updateScc, errors.Wrap(err, "error updating the SCC resource")
+	return updated, errors.Wrap(err, "error updating the SCC resource")
 }
