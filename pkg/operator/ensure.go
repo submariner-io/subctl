@@ -16,16 +16,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package submarinerop
+package operator
 
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/namespace"
+	opcrds "github.com/submariner-io/subctl/pkg/operator/crds"
+	"github.com/submariner-io/subctl/pkg/operator/deployment"
+	"github.com/submariner-io/subctl/pkg/operator/scc"
+	"github.com/submariner-io/subctl/pkg/operator/serviceaccount"
 	lighthouseop "github.com/submariner-io/subctl/pkg/subctl/operator/lighthouse"
-	opcrds "github.com/submariner-io/subctl/pkg/subctl/operator/submarinerop/crds"
-	"github.com/submariner-io/subctl/pkg/subctl/operator/submarinerop/deployment"
-	"github.com/submariner-io/subctl/pkg/subctl/operator/submarinerop/scc"
-	"github.com/submariner-io/subctl/pkg/subctl/operator/submarinerop/serviceaccount"
 	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 )
