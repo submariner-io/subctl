@@ -23,7 +23,7 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/image"
-	"github.com/submariner-io/subctl/pkg/subctl/operator/submarinerop"
+	"github.com/submariner-io/subctl/pkg/operator"
 	"github.com/submariner-io/submariner-operator/pkg/client"
 )
 
@@ -35,7 +35,7 @@ func Operator(status reporter.Interface, version, repository string, imageOverri
 		return errors.Wrap(err, "error overriding Operator Image")
 	}
 
-	err = submarinerop.Ensure(status, clientProducer, constants.OperatorNamespace, operatorImage, debug)
+	err = operator.Ensure(status, clientProducer, constants.OperatorNamespace, operatorImage, debug)
 	if err != nil {
 		return errors.Wrap(err, "error deploying Submariner operator")
 	}
