@@ -16,12 +16,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package lighthouse
+package submariner
 
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/subctl/pkg/lighthouse/scc"
-	"github.com/submariner-io/subctl/pkg/lighthouse/serviceaccount"
+	"github.com/submariner-io/subctl/pkg/submariner/scc"
+	"github.com/submariner-io/subctl/pkg/submariner/serviceaccount"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
@@ -32,7 +32,7 @@ func Ensure(status reporter.Interface, kubeClient kubernetes.Interface, dynClien
 	if created, err := serviceaccount.Ensure(kubeClient, operatorNamespace); err != nil {
 		return err // nolint:wrapcheck // No need to wrap here
 	} else if created {
-		status.Success("Created lighthouse service account and role")
+		status.Success("Created submariner service account and role")
 	}
 
 	if created, err := scc.Ensure(dynClient, operatorNamespace); err != nil {
