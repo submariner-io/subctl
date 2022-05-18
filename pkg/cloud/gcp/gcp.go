@@ -21,9 +21,7 @@ package gcp
 
 import (
 	"context"
-	"encoding/json"
 	"os"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -34,6 +32,7 @@ import (
 	"github.com/submariner-io/cloud-prepare/pkg/k8s"
 	"github.com/submariner-io/cloud-prepare/pkg/ocp"
 	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/cloud"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/dns/v1"
 	"google.golang.org/api/option"
@@ -59,8 +58,13 @@ func RunOn(restConfigProducer *restconfig.Producer, config *Config, status repor
 ) error {
 	var err error
 	if config.OcpMetadataFile != "" {
-		config.InfraID, config.Region, config.ProjectID, err = ReadFromFile(config.OcpMetadataFile)
-		return status.Error(err, "Failed to read GCP Cluster information from OCP metadata file")
+		config.InfraID, config.Region, config.ProjectID, err = readMetadataFile(config.OcpMetadataFile)
+		if err != nil {
+			return status.Error(err, "Failed to read GCP information from OCP metadata file %q", config.OcpMetadataFile)
+		}
+
+		status.Success("Obtained infra ID %q, region %q, and project ID %q from OCP metadata file %q", config.InfraID,
+			config.Region, config.ProjectID, config.OcpMetadataFile)
 	}
 
 	status.Start("Retrieving GCP credentials from your GCP configuration")
@@ -123,21 +127,7 @@ func RunOn(restConfigProducer *restconfig.Producer, config *Config, status repor
 	return function(gcpCloud, gwDeployer, status)
 }
 
-func ReadFromFile(metadataFile string) (string, string, string, error) {
-	fileInfo, err := os.Stat(metadataFile)
-	if err != nil {
-		return "", "", "", errors.Wrapf(err, "failed to stat file %q", metadataFile)
-	}
-
-	if fileInfo.IsDir() {
-		metadataFile = filepath.Join(metadataFile, "metadata.json")
-	}
-
-	data, err := os.ReadFile(metadataFile)
-	if err != nil {
-		return "", "", "", errors.Wrapf(err, "error reading file %q", metadataFile)
-	}
-
+func readMetadataFile(fileName string) (string, string, string, error) {
 	var metadata struct {
 		InfraID string `json:"infraID"`
 		GCP     struct {
@@ -146,12 +136,9 @@ func ReadFromFile(metadataFile string) (string, string, string, error) {
 		} `json:"gcp"`
 	}
 
-	err = json.Unmarshal(data, &metadata)
-	if err != nil {
-		return "", "", "", errors.Wrap(err, "error unmarshalling data")
-	}
+	err := cloud.ReadMetadataFile(fileName, &metadata)
 
-	return metadata.InfraID, metadata.GCP.Region, metadata.GCP.ProjectID, nil
+	return metadata.InfraID, metadata.GCP.Region, metadata.GCP.ProjectID, err // nolint:wrapcheck // No need to wrap here
 }
 
 func getCredentials(credentialsFile string) (*google.Credentials, error) {
