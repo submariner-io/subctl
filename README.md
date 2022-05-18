@@ -4,7 +4,6 @@
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4865/badge)](https://bestpractices.coreinfrastructure.org/projects/4865)
 [![Release Images](https://github.com/submariner-io/submariner-operator/workflows/Release%20Images/badge.svg)](https://github.com/submariner-io/submariner-operator/actions?query=workflow%3A%22Release+Images%22)
 [![Periodic](https://github.com/submariner-io/submariner-operator/workflows/Periodic/badge.svg)](https://github.com/submariner-io/submariner-operator/actions?query=workflow%3APeriodic)
-[![Flake Finder](https://github.com/submariner-io/submariner-operator/workflows/Flake%20Finder/badge.svg)](https://github.com/submariner-io/submariner-operator/actions?query=workflow%3A%22Flake+Finder%22)
 <!-- markdownlint-enable line-length -->
 
 The Submariner Operator installs the Submariner components on a Kubernetes cluster. It's also available on
