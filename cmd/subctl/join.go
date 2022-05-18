@@ -96,6 +96,7 @@ func addJoinFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&joinFlags.Repository, "repository", "", "image repository")
 	cmd.Flags().StringVar(&joinFlags.ImageVersion, "version", "", "image version")
 	cmd.Flags().IntVar(&joinFlags.NATTPort, "nattport", 4500, "IPsec NATT port")
+	cmd.Flags().UintVar(&joinFlags.NatDiscovery, "natdiscovery", 4490, "IPsec NAT Discovery port")
 	cmd.Flags().IntVar(&ignoredIkePort, "ikeport", 500, "IPsec IKE port")
 	_ = cmd.Flags().MarkDeprecated("ikeport", "the IKE port setting is ignored")
 	cmd.Flags().BoolVar(&joinFlags.NATTraversal, "natt", true, "enable NAT traversal for IPsec")
