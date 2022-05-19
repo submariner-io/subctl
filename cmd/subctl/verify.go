@@ -36,6 +36,7 @@ import (
 	"github.com/submariner-io/shipyard/test/e2e"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/component"
+	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
 	_ "github.com/submariner-io/submariner/test/e2e/dataplane"
 	_ "github.com/submariner-io/submariner/test/e2e/redundancy"
@@ -127,7 +128,8 @@ func addVerifyFlags(cmd *cobra.Command) {
 	cmd.Flags().UintVar(&connectionTimeout, "connection-timeout", 60, "timeout in seconds per connection attempt")
 	cmd.Flags().UintVar(&connectionAttempts, "connection-attempts", 2, "maximum number of connection attempts")
 	cmd.Flags().StringVar(&junitReport, "junit-report", "", "XML report path and report name")
-	cmd.Flags().StringVar(&submarinerNamespace, "submariner-namespace", "submariner-operator", "namespace in which submariner is deployed")
+	cmd.Flags().StringVar(&submarinerNamespace, "submariner-namespace", constants.OperatorNamespace,
+		"namespace in which submariner is deployed")
 	cmd.Flags().StringVar(&verifyOnly, "only", strings.Join(getAllVerifyKeys(), ","), "comma separated verifications to be performed")
 	cmd.Flags().BoolVar(&disruptiveTests, "disruptive-tests", false, "enable disruptive verifications like gateway-failover")
 }

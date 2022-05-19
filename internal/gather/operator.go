@@ -20,6 +20,7 @@ package gather
 
 import (
 	submarinerOp "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
+	"github.com/submariner-io/submariner-operator/pkg/names"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -43,7 +44,7 @@ func gatherServiceDiscoveries(info *Info, namespace string) {
 
 func gatherSubmarinerOperatorDeployment(info *Info, namespace string) {
 	gatherDeployment(info, namespace, metav1.ListOptions{FieldSelector: fields.Set(map[string]string{
-		"metadata.name": "submariner-operator",
+		"metadata.name": names.OperatorComponent,
 	}).String()})
 }
 

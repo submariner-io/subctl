@@ -27,18 +27,15 @@ import (
 	submariner "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	operatorclient "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned"
 	operatorv1alpha1client "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned/typed/submariner/v1alpha1"
+	"github.com/submariner-io/submariner-operator/pkg/names"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-)
-
-const (
-	SubmarinerName = "submariner"
 )
 
 func Ensure(client operatorclient.Interface, namespace string, submarinerSpec *submariner.SubmarinerSpec) error {
 	submarinerCR := &submariner.Submariner{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: SubmarinerName,
+			Name: names.SubmarinerCrName,
 		},
 		Spec: *submarinerSpec,
 	}
