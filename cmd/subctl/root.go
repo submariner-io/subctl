@@ -31,6 +31,7 @@ import (
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/submariner-operator/pkg/client"
+	"github.com/submariner-io/submariner-operator/pkg/names"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -59,7 +60,7 @@ func detectGlobalnet() {
 	operatorClient := clientProducer.ForOperator()
 
 	submariner, err := operatorClient.SubmarinerV1alpha1().Submariners(constants.OperatorNamespace).Get(
-		context.TODO(), constants.SubmarinerName, v1.GetOptions{})
+		context.TODO(), names.SubmarinerCrName, v1.GetOptions{})
 	if k8serrors.IsNotFound(err) {
 		exit.WithMessage("The Submariner resource was not found. Either submariner has not" +
 			"been deployed in this cluster or was deployed using helm. This command only supports submariner deployed" +

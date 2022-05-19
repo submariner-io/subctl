@@ -34,6 +34,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/version"
 	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	subOperatorClientset "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned"
+	"github.com/submariner-io/submariner-operator/pkg/names"
 	subv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1opts "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -323,12 +324,12 @@ func (rcp *Producer) CheckVersionMismatch(cmd *cobra.Command, args []string) err
 	exit.OnErrorWithMessage(err, "Error creating operator clientset")
 
 	submariner, err := operatorClient.SubmarinerV1alpha1().Submariners(constants.OperatorNamespace).
-		Get(context.TODO(), constants.SubmarinerName, v1opts.GetOptions{})
+		Get(context.TODO(), names.SubmarinerCrName, v1opts.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		return nil
 	}
 
-	exit.OnErrorWithMessage(err, fmt.Sprintf("Error retrieving Submariner object %s", constants.SubmarinerName))
+	exit.OnErrorWithMessage(err, fmt.Sprintf("Error retrieving Submariner object %s", names.SubmarinerCrName))
 
 	if submariner != nil && submariner.Spec.Version != "" {
 		subctlVer, _ := semver.NewVersion(version.Version)

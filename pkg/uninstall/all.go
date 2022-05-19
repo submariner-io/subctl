@@ -184,7 +184,7 @@ func ensureSubmarinerDeleted(clients client.Producer, clusterName, namespace str
 
 	submClient := clients.ForOperator().SubmarinerV1alpha1().Submariners(namespace)
 
-	submariner, err := submClient.Get(context.TODO(), submarinercr.SubmarinerName, metav1.GetOptions{})
+	submariner, err := submClient.Get(context.TODO(), names.SubmarinerCrName, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		status.Success("The connectivity component is not installed on cluster %q - skipping", clusterName)
 		return false, "", nil

@@ -26,7 +26,6 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	"github.com/submariner-io/subctl/pkg/submarinercr"
 	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	submarinerclientset "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned"
 	"github.com/submariner-io/submariner-operator/pkg/images"
@@ -51,7 +50,7 @@ func newVersionInfoFrom(repository, component, version string) versionImageInfo 
 }
 
 func getSubmarinerVersion(submariner *v1alpha1.Submariner, versions []versionImageInfo) []versionImageInfo {
-	versions = append(versions, newVersionInfoFrom(submariner.Spec.Repository, submarinercr.SubmarinerName, submariner.Spec.Version))
+	versions = append(versions, newVersionInfoFrom(submariner.Spec.Repository, names.SubmarinerCrName, submariner.Spec.Version))
 	return versions
 }
 
