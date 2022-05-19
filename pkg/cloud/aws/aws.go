@@ -20,17 +20,13 @@ limitations under the License.
 package aws
 
 import (
-	"encoding/json"
-	"os"
-	"path/filepath"
-
-	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/util"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
 	"github.com/submariner-io/cloud-prepare/pkg/aws"
 	"github.com/submariner-io/cloud-prepare/pkg/ocp"
 	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/cloud"
 	"k8s.io/client-go/dynamic"
 )
 
@@ -52,10 +48,12 @@ func RunOn(restConfigProducer *restconfig.Producer, config *Config, status repor
 	if config.OcpMetadataFile != "" {
 		var err error
 
-		config.InfraID, config.Region, err = ReadFromFile(config.OcpMetadataFile)
+		config.InfraID, config.Region, err = readMetadataFile(config.OcpMetadataFile)
 		if err != nil {
 			return status.Error(err, "Failed to read AWS information from OCP metadata file %q", config.OcpMetadataFile)
 		}
+
+		status.Success("Obtained infra ID %q and region %q from OCP metadata file %q", config.InfraID, config.Region, config.OcpMetadataFile)
 	}
 
 	status.Start("Initializing AWS connectivity")
@@ -92,21 +90,7 @@ func RunOn(restConfigProducer *restconfig.Producer, config *Config, status repor
 	return function(awsCloud, gwDeployer, status)
 }
 
-func ReadFromFile(metadataFile string) (string, string, error) {
-	fileInfo, err := os.Stat(metadataFile)
-	if err != nil {
-		return "", "", errors.Wrapf(err, "failed to stat file %q", metadataFile)
-	}
-
-	if fileInfo.IsDir() {
-		metadataFile = filepath.Join(metadataFile, "metadata.json")
-	}
-
-	data, err := os.ReadFile(metadataFile)
-	if err != nil {
-		return "", "", errors.Wrapf(err, "error reading file %q", metadataFile)
-	}
-
+func readMetadataFile(fileName string) (string, string, error) {
 	var metadata struct {
 		InfraID string `json:"infraID"`
 		AWS     struct {
@@ -114,10 +98,7 @@ func ReadFromFile(metadataFile string) (string, string, error) {
 		} `json:"aws"`
 	}
 
-	err = json.Unmarshal(data, &metadata)
-	if err != nil {
-		return "", "", errors.Wrap(err, "error unmarshalling data")
-	}
+	err := cloud.ReadMetadataFile(fileName, &metadata)
 
-	return metadata.InfraID, metadata.AWS.Region, nil
+	return metadata.InfraID, metadata.AWS.Region, err // nolint:wrapcheck // No need to wrap here
 }

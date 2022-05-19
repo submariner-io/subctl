@@ -20,12 +20,9 @@ limitations under the License.
 package rhos
 
 import (
-	"encoding/json"
 	"os"
-	"path/filepath"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
-	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/util"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
@@ -33,6 +30,7 @@ import (
 	"github.com/submariner-io/cloud-prepare/pkg/ocp"
 	"github.com/submariner-io/cloud-prepare/pkg/rhos"
 	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/cloud"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
@@ -56,10 +54,17 @@ func RunOn(restConfigProducer *restconfig.Producer, config *Config, status repor
 	if config.OcpMetadataFile != "" {
 		var err error
 
-		config.InfraID, config.ProjectID, err = ReadFromFile(config.OcpMetadataFile)
+		config.InfraID, config.ProjectID, err = readMetadataFile(config.OcpMetadataFile)
+		if err != nil {
+			return status.Error(err, "Failed to read RHOS information from OCP metadata file %q", config.OcpMetadataFile)
+		}
+
+		status.Success("Obtained infra ID %q and project ID %q from OCP metadata file %q", config.InfraID,
+			config.ProjectID, config.OcpMetadataFile)
+
 		config.Region = os.Getenv("OS_REGION_NAME")
 
-		return status.Error(err, "Failed to read RHOS Cluster information from OCP metadata file")
+		status.Success("Obtained region %q from environment variable OS_REGION_NAME", config.Region)
 	}
 
 	status.Start("Retrieving RHOS credentials from your RHOS configuration")
@@ -116,21 +121,7 @@ func RunOn(restConfigProducer *restconfig.Producer, config *Config, status repor
 	return function(rhosCloud, gwDeployer, status)
 }
 
-func ReadFromFile(metadataFile string) (string, string, error) {
-	fileInfo, err := os.Stat(metadataFile)
-	if err != nil {
-		return "", "", errors.Wrapf(err, "failed to stat file %q", metadataFile)
-	}
-
-	if fileInfo.IsDir() {
-		metadataFile = filepath.Join(metadataFile, "metadata.json")
-	}
-
-	data, err := os.ReadFile(metadataFile)
-	if err != nil {
-		return "", "", errors.Wrapf(err, "error reading file %q", metadataFile)
-	}
-
+func readMetadataFile(fileName string) (string, string, error) {
 	var metadata struct {
 		InfraID string `json:"infraID"`
 		RHOS    struct {
@@ -138,10 +129,7 @@ func ReadFromFile(metadataFile string) (string, string, error) {
 		} `json:"rhos"`
 	}
 
-	err = json.Unmarshal(data, &metadata)
-	if err != nil {
-		return "", "", errors.Wrap(err, "error unmarshalling data")
-	}
+	err := cloud.ReadMetadataFile(fileName, &metadata)
 
-	return metadata.InfraID, metadata.RHOS.ProjectID, nil
+	return metadata.InfraID, metadata.RHOS.ProjectID, err // nolint:wrapcheck // No need to wrap here
 }
