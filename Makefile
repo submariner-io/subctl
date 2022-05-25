@@ -19,8 +19,10 @@ ifneq (,$(DAPPER_HOST_ARCH))
 
 # Running in Dapper
 
+PLATFORMS ?= linux/amd64,linux/arm64
 IMAGES = subctl
 PRELOAD_IMAGES := $(IMAGES) submariner-operator submariner-gateway submariner-globalnet submariner-route-agent lighthouse-agent lighthouse-coredns nettest
+MULTIARCH_IMAGES := subctl
 undefine SKIP
 undefine FOCUS
 undefine E2E_TESTDIR
@@ -32,6 +34,9 @@ SETTINGS = $(DAPPER_SOURCE)/.shipyard.e2e.yml
 endif
 
 include $(SHIPYARD_DIR)/Makefile.inc
+
+gotodockerarch = $(patsubst arm,arm/v7,$(1))
+dockertogoarch = $(patsubst arm/v7,arm,$(1))
 
 CROSS_TARGETS := linux-amd64 linux-arm64 linux-arm linux-s390x linux-ppc64le windows-amd64.exe darwin-amd64
 BINARIES := cmd/bin/subctl
@@ -66,8 +71,6 @@ export PATH := $(CURDIR)/cmd/bin:$(PATH)
 
 # Targets to make
 
-images: build
-
 # Build subctl before deploying to ensure we use that
 # (with the PATH set above)
 deploy: cmd/bin/subctl
@@ -90,8 +93,6 @@ bin/lichen: $(VENDOR_MODULES)
 	mkdir -p $(@D)
 	$(GO) build -o $@ github.com/uw-labs/lichen
 
-package/Dockerfile.subctl: cmd/bin/subctl
-
 cmd/bin/subctl: cmd/bin/subctl-$(VERSION)-$(GOOS)-$(GOARCH)$(GOEXE)
 	ln -sf $(<F) $@
 
@@ -100,6 +101,16 @@ dist/subctl-%.tar.xz: cmd/bin/subctl-%
 	tar -cJf $@ --transform "s/^cmd.bin/subctl-$(VERSION)/" $<
 
 # Versions may include hyphens so it's easier to use $(VERSION) than to extract them from the target
+
+# Special case for Linux container builds
+# Our container builds look for cmd/bin/linux/{amd64,arm64}/subctl,
+# this builds the corresponding subctl using our distribution nomenclature
+# and links it to the name expected by the container build.
+cmd/bin/linux/%/subctl: cmd/bin/subctl-$(VERSION)-linux-%
+	mkdir -p $(dir $@)
+	ln -sf ../../$(<F) $@
+
+.PRECIOUS: cmd/bin/subctl-%
 cmd/bin/subctl-%: $(shell find . -name "*.go") $(VENDOR_MODULES)
 	mkdir -p cmd/bin
 	target=$@; \
