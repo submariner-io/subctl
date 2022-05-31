@@ -40,8 +40,14 @@ func AWS(restConfigProducer *restconfig.Producer, ports *cloud.Ports, config *aw
 	input := api.PrepareForSubmarinerInput{
 		InternalPorts: []api.PortSpec{
 			{Port: ports.Vxlan, Protocol: "udp"},
-			{Port: ports.Metrics, Protocol: "tcp"},
 		},
+	}
+
+	for i := range ports.Metrics {
+		port := api.PortSpec{
+			Port: ports.Metrics[i], Protocol: "tcp",
+		}
+		input.InternalPorts = append(input.InternalPorts, port)
 	}
 
 	// For load-balanced gateways we want these ports open internally to facilitate private-ip to pivate-ip gateways communications.

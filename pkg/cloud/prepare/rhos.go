@@ -39,8 +39,14 @@ func RHOS(restConfigProducer *restconfig.Producer, ports *cloud.Ports, config *r
 	input := api.PrepareForSubmarinerInput{
 		InternalPorts: []api.PortSpec{
 			{Port: ports.Vxlan, Protocol: "udp"},
-			{Port: ports.Metrics, Protocol: "tcp"},
 		},
+	}
+
+	for i := range ports.Metrics {
+		port := api.PortSpec{
+			Port: ports.Metrics[i], Protocol: "tcp",
+		}
+		input.InternalPorts = append(input.InternalPorts, port)
 	}
 
 	// nolint:wrapcheck // No need to wrap errors here.
