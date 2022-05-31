@@ -58,12 +58,14 @@ func init() {
 	restConfigProducer.AddKubeContextFlag(cloudCmd)
 	rootCmd.AddCommand(cloudCmd)
 
+	cloudPorts.Metrics = append(cloudPorts.Metrics, 8080, 8081)
+
 	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Natt, "natt-port", port.ExternalTunnel,
 		"IPSec NAT traversal port")
 	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.NatDiscovery, "nat-discovery-port",
 		port.NATTDiscovery, "NAT discovery port")
 	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Vxlan, "vxlan-port", port.IntraClusterVxLAN, "Internal VXLAN port")
-	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Metrics, "metrics-port", 8080, "Metrics port")
+	cloudPrepareCmd.PersistentFlags().Var(&cloudPorts.Metrics, "metrics-port", "Metrics port")
 
 	cloudCmd.AddCommand(cloudPrepareCmd)
 
