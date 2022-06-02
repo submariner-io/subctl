@@ -76,6 +76,15 @@ var (
 			execute.OnMultiCluster(restConfigProducer, show.Versions)
 		},
 	}
+	brokersCmd = &cobra.Command{
+		Use:     "brokers",
+		Short:   "Shows Broker information",
+		Long:    "This command shows information about the Broker in the cluster",
+		PreRunE: restConfigProducer.CheckVersionMismatch,
+		Run: func(command *cobra.Command, args []string) {
+			execute.OnMultiCluster(restConfigProducer, show.Brokers)
+		},
+	}
 	allCmd = &cobra.Command{
 		Use:   "all",
 		Short: "Show information related to a Submariner cluster",
@@ -96,5 +105,6 @@ func init() {
 	showCmd.AddCommand(gatewaysCmd)
 	showCmd.AddCommand(networksCmd)
 	showCmd.AddCommand(versionCmd)
+	showCmd.AddCommand(brokersCmd)
 	showCmd.AddCommand(allCmd)
 }
