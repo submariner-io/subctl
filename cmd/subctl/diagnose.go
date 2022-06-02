@@ -117,7 +117,7 @@ var (
 		Run: func(command *cobra.Command, args []string) {
 			execute.OnMultiCluster(restConfigProducer, execute.IfSubmarinerInstalled(
 				func(info *cluster.Info, status reporter.Interface) bool {
-					return diagnose.VxLANConfig(info, diagnoseFirewallOptions, status)
+					return diagnose.FirewallIntraVxLANConfig(info, diagnoseFirewallOptions, status)
 				}))
 		},
 	}
@@ -253,7 +253,7 @@ func diagnoseAll(clusterInfo *cluster.Info, status reporter.Interface) bool {
 
 	fmt.Println()
 
-	success = diagnose.VxLANConfig(clusterInfo, diagnoseFirewallOptions, status) && success
+	success = diagnose.FirewallIntraVxLANConfig(clusterInfo, diagnoseFirewallOptions, status) && success
 
 	fmt.Println()
 
