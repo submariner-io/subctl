@@ -30,10 +30,10 @@ const (
 	tcpSniffVxLANCommand = "tcpdump -ln -c 3 -i vx-submariner tcp and port 8080 and 'tcp[tcpflags] == tcp-syn'"
 )
 
-func VxLANConfig(clusterInfo *cluster.Info, options FirewallOptions, status reporter.Interface) bool {
+func FirewallIntraVxLANConfig(clusterInfo *cluster.Info, options FirewallOptions, status reporter.Interface) bool {
 	mustHaveSubmariner(clusterInfo)
 
-	status.Start("Checking the firewall configuration to determine if VXLAN traffic is allowed")
+	status.Start("Checking the firewall configuration to determine if intra-cluster VXLAN traffic is allowed")
 	defer status.End()
 
 	singleNode, err := clusterInfo.HasSingleNode()
@@ -55,7 +55,7 @@ func VxLANConfig(clusterInfo *cluster.Info, options FirewallOptions, status repo
 		return false
 	}
 
-	status.Success("The firewall configuration allows VXLAN traffic")
+	status.Success("The firewall configuration allows intra-cluster VXLAN traffic")
 
 	return true
 }
