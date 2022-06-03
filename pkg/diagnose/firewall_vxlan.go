@@ -78,8 +78,9 @@ func checkFWConfig(clusterInfo *cluster.Info, options FirewallOptions, status re
 		return
 	}
 
-	gwNodeName := getActiveGatewayNodeName(clusterInfo, localEndpoint.Spec.Hostname, status)
-	if gwNodeName == "" {
+	gwNodeName, err := getActiveGatewayNodeName(clusterInfo, localEndpoint.Spec.Hostname, status)
+	if err != nil {
+		status.Failure("Unable to obtain a gateway node: %v", err)
 		return
 	}
 

@@ -25,16 +25,16 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func TunnelConfigAcrossClusters(localClusterInfo, remoteClusterInfo *cluster.Info, options FirewallOptions,
+func NatDiscoveryConfigAcrossClusters(localClusterInfo, remoteClusterInfo *cluster.Info, options FirewallOptions,
 	status reporter.Interface,
 ) error {
-	message := fmt.Sprintf("Checking if tunnels can be setup on the gateway node of cluster %q", localClusterInfo.Name)
+	message := fmt.Sprintf("Checking if nat-discovery port is opened on the gateway node of cluster %q", localClusterInfo.Name)
 
-	err := verifyConnectivity(localClusterInfo, remoteClusterInfo, options, status, TunnelPort, message)
+	err := verifyConnectivity(localClusterInfo, remoteClusterInfo, options, status, NatDiscoveryPort, message)
 	if err != nil {
-		status.Failure("Could not determine if Tunnels can be established on the gateway node of cluster %q", localClusterInfo.Name)
+		status.Failure("Could not determine if nat-discovery port is allowed in the cluster %q", localClusterInfo.Name)
 	} else {
-		status.Success("Tunnels can be established on the gateway node of cluster %q", localClusterInfo.Name)
+		status.Success("nat-discovery port is allowed in the cluster %q", localClusterInfo.Name)
 	}
 
 	return err
