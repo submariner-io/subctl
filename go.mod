@@ -20,13 +20,13 @@ require (
 	github.com/submariner-io/cloud-prepare v0.13.0-m2
 	github.com/submariner-io/lighthouse v0.13.0-m2
 	github.com/submariner-io/shipyard v0.13.0-m2
-	github.com/submariner-io/submariner v0.13.0-m2
+	github.com/submariner-io/submariner v0.13.0-m2.0.20220604122746-a5aee59aaf28
 	github.com/submariner-io/submariner-operator v0.13.0-m2
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	google.golang.org/api v0.81.0
-	k8s.io/api v0.21.11
-	k8s.io/apimachinery v0.21.11
+	k8s.io/api v0.23.5
+	k8s.io/apimachinery v0.23.5
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/utils v0.0.0-20211116205334-6203023598ed
 	sigs.k8s.io/mcs-api v0.1.0
@@ -57,8 +57,8 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/go-logr/logr v0.4.0 // indirect
+	github.com/fsnotify/fsnotify v1.5.1 // indirect
+	github.com/go-logr/logr v1.2.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -72,7 +72,6 @@ require (
 	github.com/gophercloud/gophercloud v0.24.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -109,19 +108,17 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	k8s.io/apiextensions-apiserver v0.21.11 // indirect
+	k8s.io/apiextensions-apiserver v0.23.5 // indirect
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/klog/v2 v2.40.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 // indirect
-	sigs.k8s.io/controller-runtime v0.9.7 // indirect
+	sigs.k8s.io/controller-runtime v0.11.2 // indirect
+	sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 )
 
 // When changing pins, check the dependabot configuration too
 // in .github/dependabot.yml
 
-// Pinned to kubernetes-1.21.11
-replace (
-	k8s.io/client-go => k8s.io/client-go v0.21.11
-	k8s.io/klog/v2 => k8s.io/klog/v2 v2.9.0
-)
+// This can be removed when submariner-operator is bumped to K8s v0.23.5
+replace k8s.io/client-go => k8s.io/client-go v0.23.5
