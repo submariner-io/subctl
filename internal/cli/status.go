@@ -20,20 +20,18 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"unicode"
 
-	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/env"
 	"github.com/submariner-io/subctl/internal/log"
 )
 
-type Result int
+type resultType int
 
 const (
-	Success Result = iota
-	Failure
-	Warning
+	success resultType = iota
+	failure
+	warning
 )
 
 type (
@@ -42,9 +40,9 @@ type (
 	failureType string
 )
 
-// Status is used to track ongoing status in a CLI, with a nice loading spinner
+// status is used to track ongoing status in a CLI, with a nice loading spinner
 // when attached to a terminal.
-type Status struct {
+type status struct {
 	spinner *Spinner
 	status  string
 	logger  log.Logger
@@ -56,31 +54,25 @@ type Status struct {
 	messageQueue []interface{}
 }
 
-func NewStatus() *Status {
+func NewReporter() reporter.Interface {
 	var writer io.Writer = os.Stderr
 	if env.IsSmartTerminal(writer) {
 		writer = NewSpinner(writer)
 	}
 
-	return StatusForLogger(NewLogger(writer, 0))
-}
-
-// StatusForLogger returns a new status object for the logger l,
-// if l is the kind cli logger and the writer is a Spinner, that spinner
-// will be used for the status.
-func StatusForLogger(l log.Logger) *Status {
-	s := &Status{
-		logger:        l,
+	s := &status{
+		logger:        NewLogger(writer, 0),
 		successFormat: " ✓ %s\n",
 		failureFormat: " ✗ %s\n",
 		warningFormat: " ⚠ %s\n",
 		messageQueue:  []interface{}{},
 	}
+
 	// if we're using the CLI logger, check for if it has a spinner setup
 	// and wire the status to that.
-	if v, ok := l.(*Logger); ok {
-		if v2, ok := v.writer.(*Spinner); ok {
-			s.spinner = v2
+	if l, ok := s.logger.(*Logger); ok {
+		if w, ok := l.writer.(*Spinner); ok {
+			s.spinner = w
 			// use colored success / failure / warning messages.
 			s.successFormat = " \x1b[32m✓\x1b[0m %s\n"
 			s.failureFormat = " \x1b[31m✗\x1b[0m %s\n"
@@ -88,16 +80,44 @@ func StatusForLogger(l log.Logger) *Status {
 		}
 	}
 
-	return s
+	return &reporter.Adapter{Basic: s}
 }
 
-func NewReporter() reporter.Interface {
-	return NewStatus()
+func (s *status) hasFailureMessages() bool {
+	for _, message := range s.messageQueue {
+		if _, ok := message.(failureType); ok {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *status) hasWarningMessages() bool {
+	for _, message := range s.messageQueue {
+		if _, ok := message.(warningType); ok {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *status) resultFromMessages() resultType {
+	if s.hasFailureMessages() {
+		return failure
+	}
+
+	if s.hasWarningMessages() {
+		return warning
+	}
+
+	return success
 }
 
 // Start starts a new phase of the status, if attached to a terminal
 // there will be a loading spinner with this status.
-func (s *Status) Start(message string, args ...interface{}) {
+func (s *status) Start(message string, args ...interface{}) {
 	s.End()
 	s.status = fmt.Sprintf(message, args...)
 
@@ -109,9 +129,51 @@ func (s *Status) Start(message string, args ...interface{}) {
 	}
 }
 
-// EndWith completes the current status, ending any previous spinning and
+// Failure queues up a message, which will be displayed once
+// the status ends (using the failure format).
+func (s *status) Failure(message string, a ...interface{}) {
+	if message == "" {
+		return
+	}
+
+	if s.status != "" {
+		s.messageQueue = append(s.messageQueue, failureType(fmt.Sprintf(message, a...)))
+	} else {
+		s.logger.V(0).Infof(s.failureFormat, fmt.Sprintf(message, a...))
+	}
+}
+
+// Success queues up a message, which will be displayed once
+// the status ends (using the warning format).
+func (s *status) Success(message string, a ...interface{}) {
+	if message == "" {
+		return
+	}
+
+	if s.status != "" {
+		s.messageQueue = append(s.messageQueue, successType(fmt.Sprintf(message, a...)))
+	} else {
+		s.logger.V(0).Infof(s.successFormat, fmt.Sprintf(message, a...))
+	}
+}
+
+// Warning queues up a message, which will be displayed once
+// the status ends (using the warning format).
+func (s *status) Warning(message string, a ...interface{}) {
+	if message == "" {
+		return
+	}
+
+	if s.status != "" {
+		s.messageQueue = append(s.messageQueue, warningType(fmt.Sprintf(message, a...)))
+	} else {
+		s.logger.V(0).Infof(s.warningFormat, fmt.Sprintf(message, a...))
+	}
+}
+
+// End completes the current status, ending any previous spinning and
 // marking the status as success or failure.
-func (s *Status) EndWith(output Result) {
+func (s *status) End() {
 	if s.status == "" {
 		return
 	}
@@ -121,12 +183,14 @@ func (s *Status) EndWith(output Result) {
 		fmt.Fprint(s.spinner.writer, "\r")
 	}
 
-	switch output {
-	case Success:
+	result := s.resultFromMessages()
+
+	switch result {
+	case success:
 		s.logger.V(0).Infof(s.successFormat, s.status)
-	case Failure:
+	case failure:
 		s.logger.V(0).Infof(s.failureFormat, s.status)
-	case Warning:
+	case warning:
 		s.logger.V(0).Infof(s.warningFormat, s.status)
 	}
 
@@ -143,145 +207,4 @@ func (s *Status) EndWith(output Result) {
 
 	s.status = ""
 	s.messageQueue = []interface{}{}
-}
-
-func (s *Status) EndWithFailure(message string, a ...interface{}) {
-	s.QueueFailureMessage(fmt.Sprintf(message, a...))
-	s.EndWith(Failure)
-}
-
-func (s *Status) EndWithSuccess(message string, a ...interface{}) {
-	s.QueueSuccessMessage(fmt.Sprintf(message, a...))
-	s.EndWith(Success)
-}
-
-func (s *Status) EndWithWarning(message string, a ...interface{}) {
-	s.QueueWarningMessage(fmt.Sprintf(message, a...))
-	s.EndWith(Warning)
-}
-
-// QueueSuccessMessage queues up a message, which will be displayed once
-// the status ends (using the success format).
-func (s *Status) QueueSuccessMessage(message string) {
-	s.messageQueue = append(s.messageQueue, successType(message))
-}
-
-// QueueFailureMessage queues up a message, which will be displayed once
-// the status ends (using the failure format).
-func (s *Status) QueueFailureMessage(message string) {
-	s.messageQueue = append(s.messageQueue, failureType(message))
-}
-
-// QueueWarningMessage queues up a message, which will be displayed once
-// the status ends (using the warning format).
-func (s *Status) QueueWarningMessage(message string) {
-	s.messageQueue = append(s.messageQueue, warningType(message))
-}
-
-func (s *Status) HasFailureMessages() bool {
-	for _, message := range s.messageQueue {
-		if _, ok := message.(failureType); ok {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (s *Status) HasWarningMessages() bool {
-	for _, message := range s.messageQueue {
-		if _, ok := message.(warningType); ok {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (s *Status) ResultFromMessages() Result {
-	if s.HasFailureMessages() {
-		return Failure
-	}
-
-	if s.HasWarningMessages() {
-		return Warning
-	}
-
-	return Success
-}
-
-func CheckForError(err error) Result {
-	if err == nil {
-		return Success
-	}
-
-	return Failure
-}
-
-// Failure queues up a message, which will be displayed once
-// the status ends (using the failure format).
-func (s *Status) Failure(message string, a ...interface{}) {
-	if message == "" {
-		return
-	}
-
-	if s.status != "" {
-		s.messageQueue = append(s.messageQueue, failureType(fmt.Sprintf(message, a...)))
-	} else {
-		s.logger.V(0).Infof(s.failureFormat, fmt.Sprintf(message, a...))
-	}
-}
-
-// Success queues up a message, which will be displayed once
-// the status ends (using the warning format).
-func (s *Status) Success(message string, a ...interface{}) {
-	if message == "" {
-		return
-	}
-
-	if s.status != "" {
-		s.messageQueue = append(s.messageQueue, successType(fmt.Sprintf(message, a...)))
-	} else {
-		s.logger.V(0).Infof(s.successFormat, fmt.Sprintf(message, a...))
-	}
-}
-
-// Warning queues up a message, which will be displayed once
-// the status ends (using the warning format).
-func (s *Status) Warning(message string, a ...interface{}) {
-	if message == "" {
-		return
-	}
-
-	if s.status != "" {
-		s.messageQueue = append(s.messageQueue, warningType(fmt.Sprintf(message, a...)))
-	} else {
-		s.logger.V(0).Infof(s.warningFormat, fmt.Sprintf(message, a...))
-	}
-}
-
-func (s *Status) Error(err error, message string, args ...interface{}) error {
-	err = errors.Wrapf(err, message, args...)
-	if err == nil {
-		return nil
-	}
-
-	capitalizeFirst := func(str string) string {
-		for i, v := range str {
-			return string(unicode.ToUpper(v)) + str[i+1:]
-		}
-
-		return ""
-	}
-
-	s.Failure(capitalizeFirst(err.Error()))
-	s.End()
-
-	return err
-}
-
-// End completes the current status, ending any previous spinning and
-// marking the status as success or failure.
-func (s *Status) End() {
-	s.EndWith(s.ResultFromMessages())
 }
