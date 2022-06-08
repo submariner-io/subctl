@@ -16,7 +16,6 @@ package subctl
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -117,7 +116,7 @@ var (
 		Run: func(command *cobra.Command, args []string) {
 			execute.OnMultiCluster(restConfigProducer, execute.IfSubmarinerInstalled(
 				func(info *cluster.Info, status reporter.Interface) bool {
-					return diagnose.VxLANConfig(info, diagnoseFirewallOptions, status)
+					return diagnose.FirewallIntraVxLANConfig(info, diagnoseFirewallOptions, status)
 				}))
 		},
 	}
@@ -126,27 +125,25 @@ var (
 		Use:   "inter-cluster <localkubeconfig> <remotekubeconfig>",
 		Short: "Check firewall access to setup tunnels between the Gateway node",
 		Long:  "This command checks if the firewall configuration allows tunnels to be configured on the Gateway nodes.",
-		Args: func(command *cobra.Command, args []string) error {
-			if len(args) != 2 {
-				return fmt.Errorf("two kubeconfigs must be specified")
-			}
-
-			same, err := compareFiles(args[0], args[1])
-			if err != nil {
-				return err
-			}
-
-			if same {
-				return fmt.Errorf("the specified kubeconfig files are the same")
-			}
-
-			return nil
-		},
+		Args:  checkKubeconfigArgs,
 		Run: func(command *cobra.Command, args []string) {
-			if !diagnose.TunnelConfigAcrossClusters(clusterInfoFromKubeConfig(args[0]), clusterInfoFromKubeConfig(args[1]),
-				diagnoseFirewallOptions, cli.NewReporter()) {
-				os.Exit(1)
-			}
+			err := diagnose.TunnelConfigAcrossClusters(
+				clusterInfoFromKubeConfig(args[0]), clusterInfoFromKubeConfig(args[1]),
+				diagnoseFirewallOptions, cli.NewReporter())
+			exit.OnError(err)
+		},
+	}
+
+	diagnoseFirewallNatDiscovery = &cobra.Command{
+		Use:   "nat-discovery <localkubeconfig> <remotekubeconfig>",
+		Short: "Check firewall access for nat-discovery to function properly",
+		Long:  "This command checks if the firewall configuration allows nat-discovery between the configured Gateway nodes.",
+		Args:  checkKubeconfigArgs,
+		Run: func(command *cobra.Command, args []string) {
+			err := diagnose.NatDiscoveryConfigAcrossClusters(
+				clusterInfoFromKubeConfig(args[0]), clusterInfoFromKubeConfig(args[1]),
+				diagnoseFirewallOptions, cli.NewReporter())
+			exit.OnError(err)
 		},
 	}
 
@@ -185,10 +182,12 @@ func addDiagnoseFirewallSubCommands() {
 	addDiagnoseFWConfigFlags(diagnoseFirewallMetricsCmd)
 	addDiagnoseFWConfigFlags(diagnoseFirewallVxLANCmd)
 	addDiagnoseFWConfigFlags(diagnoseFirewallTunnelCmd)
+	addDiagnoseFWConfigFlags(diagnoseFirewallNatDiscovery)
 
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallMetricsCmd)
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallVxLANCmd)
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallTunnelCmd)
+	diagnoseFirewallCmd.AddCommand(diagnoseFirewallNatDiscovery)
 }
 
 func addDiagnosePodNamespaceFlag(command *cobra.Command, value *string) {
@@ -200,6 +199,23 @@ func addDiagnoseFWConfigFlags(command *cobra.Command) {
 		"timeout in seconds while validating the connection attempt")
 	command.Flags().BoolVar(&diagnoseFirewallOptions.VerboseOutput, "verbose", false, "produce verbose output")
 	addDiagnosePodNamespaceFlag(command, &diagnoseFirewallOptions.PodNamespace)
+}
+
+func checkKubeconfigArgs(_ *cobra.Command, args []string) error {
+	if len(args) != 2 {
+		return fmt.Errorf("two kubeconfigs must be specified")
+	}
+
+	same, err := compareFiles(args[0], args[1])
+	if err != nil {
+		return err
+	}
+
+	if same {
+		return fmt.Errorf("the specified kubeconfig files are the same")
+	}
+
+	return nil
 }
 
 func clusterInfoFromKubeConfig(kubeConfig string) *cluster.Info {
@@ -253,7 +269,7 @@ func diagnoseAll(clusterInfo *cluster.Info, status reporter.Interface) bool {
 
 	fmt.Println()
 
-	success = diagnose.VxLANConfig(clusterInfo, diagnoseFirewallOptions, status) && success
+	success = diagnose.FirewallIntraVxLANConfig(clusterInfo, diagnoseFirewallOptions, status) && success
 
 	fmt.Println()
 
