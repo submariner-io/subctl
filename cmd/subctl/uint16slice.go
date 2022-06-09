@@ -16,11 +16,41 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cloud
+package subctl
 
-type Ports struct {
-	Natt         uint16
-	NatDiscovery uint16
-	Vxlan        uint16
-	Metrics      []uint16
+import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/pkg/errors"
+)
+
+type uint16Slice struct {
+	value *[]uint16
+}
+
+func (s *uint16Slice) Type() string {
+	return "uint16Slice"
+}
+
+func (s *uint16Slice) String() string {
+	return fmt.Sprintf("%v", *s.value)
+}
+
+func (s *uint16Slice) Set(value string) error {
+	values := strings.Split(value, ",")
+
+	*s.value = make([]uint16, len(values))
+
+	for i, d := range values {
+		u, err := strconv.ParseUint(d, 10, 16)
+		if err != nil {
+			return errors.Wrap(err, "conversion to uint16 failed")
+		}
+
+		(*s.value)[i] = uint16(u)
+	}
+
+	return nil
 }
