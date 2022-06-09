@@ -21,7 +21,6 @@ package diagnose
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -30,6 +29,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	subv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
+	"github.com/submariner-io/submariner/pkg/port"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/kubernetes"
@@ -251,20 +251,19 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, optio
 	return nil
 }
 
-func getTargetPort(submariner *v1alpha1.Submariner, endpoint *subv1.Endpoint, port TargetPort) (int32, error) {
+func getTargetPort(submariner *v1alpha1.Submariner, endpoint *subv1.Endpoint, tgtport TargetPort) (int32, error) {
 	var targetPort int32
 	var err error
 
 	switch endpoint.Spec.Backend {
 	case "libreswan", "wireguard", "vxlan":
-		if port == TunnelPort {
+		if tgtport == TunnelPort {
 			targetPort, err = endpoint.Spec.GetBackendPort(subv1.UDPPortConfig, int32(submariner.Spec.CeIPSecNATTPort))
 			if err != nil {
 				return 0, fmt.Errorf("error reading tunnel port: %w", err)
 			}
-		} else if port == NatDiscoveryPort {
-			intValue, _ := strconv.ParseInt(subv1.DefaultNATTDiscoveryPort, 0, 32)
-			targetPort, err = endpoint.Spec.GetBackendPort(subv1.NATTDiscoveryPortConfig, int32(intValue))
+		} else if tgtport == NatDiscoveryPort {
+			targetPort, err = endpoint.Spec.GetBackendPort(subv1.NATTDiscoveryPortConfig, port.NATTDiscovery)
 			if err != nil {
 				return 0, fmt.Errorf("error reading nat-discovery port: %w", err)
 			}

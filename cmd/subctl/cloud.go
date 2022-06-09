@@ -21,6 +21,7 @@ package subctl
 import (
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/subctl/pkg/cloud"
+	"github.com/submariner-io/submariner/pkg/port"
 )
 
 const (
@@ -57,9 +58,11 @@ func init() {
 	restConfigProducer.AddKubeContextFlag(cloudCmd)
 	rootCmd.AddCommand(cloudCmd)
 
-	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Natt, "natt-port", 4500, "IPSec NAT traversal port")
-	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.NatDiscovery, "nat-discovery-port", 4490, "NAT discovery port")
-	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Vxlan, "vxlan-port", 4800, "Internal VXLAN port")
+	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Natt, "natt-port", port.ExternalTunnel,
+		"IPSec NAT traversal port")
+	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.NatDiscovery, "nat-discovery-port",
+		port.NATTDiscovery, "NAT discovery port")
+	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Vxlan, "vxlan-port", port.IntraClusterVxLAN, "Internal VXLAN port")
 	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Metrics, "metrics-port", 8080, "Metrics port")
 
 	cloudCmd.AddCommand(cloudPrepareCmd)

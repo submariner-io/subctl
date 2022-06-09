@@ -26,7 +26,7 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
-	"github.com/submariner-io/submariner/pkg/routeagent_driver/constants"
+	"github.com/submariner-io/submariner/pkg/cni"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -34,8 +34,8 @@ import (
 )
 
 var supportedNetworkPlugins = []string{
-	constants.NetworkPluginGeneric, constants.NetworkPluginCanalFlannel, constants.NetworkPluginWeaveNet,
-	constants.NetworkPluginOpenShiftSDN, constants.NetworkPluginOVNKubernetes, constants.NetworkPluginCalico,
+	cni.Generic, cni.CanalFlannel, cni.WeaveNet,
+	cni.OpenShiftSDN, cni.OVNKubernetes, cni.Calico,
 }
 
 var calicoGVR = schema.GroupVersionResource{
@@ -65,7 +65,7 @@ func CNIConfig(clusterInfo *cluster.Info, status reporter.Interface) bool {
 		return false
 	}
 
-	if clusterInfo.Submariner.Status.NetworkPlugin == constants.NetworkPluginGeneric {
+	if clusterInfo.Submariner.Status.NetworkPlugin == cni.Generic {
 		status.Warning("Submariner could not detect the CNI network plugin and is using (%q) plugin."+
 			" It may or may not work.", clusterInfo.Submariner.Status.NetworkPlugin)
 	} else {
