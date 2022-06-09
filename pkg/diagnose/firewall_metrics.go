@@ -49,7 +49,8 @@ func FirewallMetricsConfig(clusterInfo *cluster.Info, options FirewallOptions, s
 
 	podCommand := fmt.Sprintf("timeout %d %s", options.ValidationTimeout, tcpSniffMetricsCommand)
 
-	sPod, err := spawnSnifferPodOnGatewayNode(clusterInfo.ClientProducer.ForKubernetes(), options.PodNamespace, podCommand)
+	sPod, err := spawnSnifferPodOnGatewayNode(clusterInfo.ClientProducer.ForKubernetes(), options.PodNamespace, podCommand,
+		clusterInfo.GetImageRepositoryInfo())
 	if err != nil {
 		status.Failure("Error spawning the sniffer pod on the Gateway node: %v", err)
 		return false
@@ -60,7 +61,8 @@ func FirewallMetricsConfig(clusterInfo *cluster.Info, options FirewallOptions, s
 	gatewayPodIP := sPod.Pod.Status.HostIP
 	podCommand = fmt.Sprintf("for i in $(seq 10); do timeout 2 nc -p 9898 %s 8080; done", gatewayPodIP)
 
-	cPod, err := spawnClientPodOnNonGatewayNode(clusterInfo.ClientProducer.ForKubernetes(), options.PodNamespace, podCommand)
+	cPod, err := spawnClientPodOnNonGatewayNode(clusterInfo.ClientProducer.ForKubernetes(), options.PodNamespace, podCommand,
+		clusterInfo.GetImageRepositoryInfo())
 	if err != nil {
 		status.Failure("Error spawning the client pod on non-Gateway node: %v", err)
 		return false

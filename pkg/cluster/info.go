@@ -23,6 +23,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/subctl/internal/constants"
+	"github.com/submariner-io/subctl/pkg/image"
 	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/names"
@@ -117,4 +118,24 @@ func (c *Info) GetAnyRemoteEndpoint() (*submarinerv1.Endpoint, error) {
 		Group:    submarinerv1.SchemeGroupVersion.Group,
 		Resource: "endpoints",
 	}, "remote Endpoint")
+}
+
+func (c *Info) GetImageRepositoryInfo() *image.RepositoryInfo {
+	info := &image.RepositoryInfo{}
+
+	if c.Submariner != nil {
+		info.Name = c.Submariner.Spec.Repository
+		info.Version = c.Submariner.Spec.Version
+		info.Overrides = c.Submariner.Spec.ImageOverrides
+	}
+
+	if info.Name == "" {
+		info.Name = v1alpha1.DefaultRepo
+	}
+
+	if info.Version == "" {
+		info.Version = v1alpha1.DefaultSubmarinerOperatorVersion
+	}
+
+	return info
 }

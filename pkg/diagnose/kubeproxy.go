@@ -23,7 +23,8 @@ import (
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/pods"
-	"k8s.io/client-go/kubernetes"
+	"github.com/submariner-io/subctl/pkg/image"
+	"github.com/submariner-io/submariner-operator/pkg/client"
 )
 
 const (
@@ -31,18 +32,21 @@ const (
 	missingInterface          = "ip: can't find device"
 )
 
-func KubeProxyMode(client kubernetes.Interface, podNamespace string, status reporter.Interface) bool {
+func KubeProxyMode(clientProducer client.Producer, podNamespace string, imageRepInfo *image.RepositoryInfo,
+	status reporter.Interface,
+) bool {
 	status.Start("Checking Submariner support for the kube-proxy mode")
 	defer status.End()
 
 	scheduling := pods.Scheduling{ScheduleOn: pods.GatewayNode, Networking: pods.HostNetworking}
 
 	podOutput, err := pods.ScheduleAndAwaitCompletion(&pods.Config{
-		Name:       "query-iface-list",
-		ClientSet:  client,
-		Scheduling: scheduling,
-		Namespace:  podNamespace,
-		Command:    kubeProxyIPVSIfaceCommand,
+		Name:                "query-iface-list",
+		ClientSet:           clientProducer.ForKubernetes(),
+		Scheduling:          scheduling,
+		Namespace:           podNamespace,
+		Command:             kubeProxyIPVSIfaceCommand,
+		ImageRepositoryInfo: *imageRepInfo,
 	})
 	if err != nil {
 		status.Failure("Error spawning the network pod: %v", err)
