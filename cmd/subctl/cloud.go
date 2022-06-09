@@ -19,6 +19,9 @@ limitations under the License.
 package subctl
 
 import (
+	"strconv"
+
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/subctl/pkg/cloud"
 	"github.com/submariner-io/submariner/pkg/port"
@@ -58,16 +61,41 @@ func init() {
 	restConfigProducer.AddKubeContextFlag(cloudCmd)
 	rootCmd.AddCommand(cloudCmd)
 
-	cloudPorts.Metrics = append(cloudPorts.Metrics, 8080, 8081)
-
 	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Natt, "natt-port", port.ExternalTunnel,
 		"IPSec NAT traversal port")
 	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.NatDiscovery, "nat-discovery-port",
 		port.NATTDiscovery, "NAT discovery port")
 	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Vxlan, "vxlan-port", port.IntraClusterVxLAN, "Internal VXLAN port")
-	cloudPrepareCmd.PersistentFlags().Var(&cloudPorts.Metrics, "metrics-port", "Metrics port")
+
+	cloudPorts.Metrics = append(cloudPorts.Metrics, 8080, 8081)
+
+	cloudPrepareCmd.PersistentFlags().Var(&uint16Slice{value: &cloudPorts.Metrics}, "metrics-ports", "Metrics ports")
+
+	cloudPrepareCmd.PersistentFlags().Var(&metricsAliasType{}, "metrics-port", "Metrics port")
+	_ = cloudPrepareCmd.PersistentFlags().MarkDeprecated("metrics-port", "Use metrics-ports instead")
 
 	cloudCmd.AddCommand(cloudPrepareCmd)
 
 	cloudCmd.AddCommand(cloudCleanupCmd)
+}
+
+type metricsAliasType struct{}
+
+func (m metricsAliasType) String() string {
+	return strconv.FormatUint(uint64(cloudPorts.Metrics[0]), 10)
+}
+
+func (m metricsAliasType) Set(s string) error {
+	v, err := strconv.ParseUint(s, 0, 16)
+	if err != nil {
+		return errors.Wrap(err, "conversion to uint16 failed")
+	}
+
+	cloudPorts.Metrics = []uint16{uint16(v)}
+
+	return nil
+}
+
+func (m metricsAliasType) Type() string {
+	return "uint16"
 }
