@@ -30,7 +30,7 @@ declare_kubeconfig
 
 # Import functions for testing with Operator
 # NB: These are also used to verify non-Operator deployments, thereby asserting the two are mostly equivalent
-. ${DAPPER_SOURCE}/scripts/kind-e2e/lib_operator_verify_subm.sh
+. ${DAPPER_SOURCE}/scripts/test/lib_operator_verify_subm.sh
 
 create_subm_vars
 with_context "$broker" broker_vars
@@ -50,7 +50,7 @@ ${DAPPER_SOURCE}/cmd/bin/subctl verify ${verify} --submariner-namespace=$subm_ns
     --verbose --connection-timeout 20 --connection-attempts 4 \
     --kubecontexts cluster1,cluster2
 
-. ${DAPPER_SOURCE}/scripts/kind-e2e/lib_subctl_gather_test.sh
+. ${DAPPER_SOURCE}/scripts/test/lib_subctl_gather_test.sh
 
 test_subctl_gather
 
