@@ -43,7 +43,8 @@ BINARIES := cmd/bin/subctl
 CROSS_BINARIES := $(foreach cross,$(CROSS_TARGETS),$(patsubst %,cmd/bin/subctl-$(VERSION)-%,$(cross)))
 CROSS_TARBALLS := $(foreach cross,$(CROSS_TARGETS),$(patsubst %,dist/subctl-$(VERSION)-%.tar.xz,$(cross)))
 
-override E2E_ARGS += --settings $(SETTINGS) cluster1 cluster2
+override E2E_ARGS += cluster1 cluster2
+override SYSTEM_ARGS += --settings $(SETTINGS) cluster1 cluster2
 export DEPLOY_ARGS
 override UNIT_TEST_ARGS += test internal/env
 override VALIDATE_ARGS += --skip-dirs pkg/client
@@ -75,8 +76,8 @@ export PATH := $(CURDIR)/cmd/bin:$(PATH)
 # (with the PATH set above)
 deploy: cmd/bin/subctl
 
-e2e: deploy
-	scripts/kind-e2e/e2e.sh $(E2E_ARGS)
+system: deploy
+	scripts/test/system.sh $(SYSTEM_ARGS)
 
 clean:
 	rm -f $(BINARIES) $(CROSS_BINARIES) $(CROSS_TARBALLS)
@@ -152,7 +153,7 @@ test-subctl: cmd/bin/subctl deploy
 # verify is tested by the e2e target (run elsewhere)
 	cmd/bin/subctl uninstall -y --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
 
-.PHONY: build ci clean generate-clientset
+.PHONY: build ci clean generate-clientset system
 
 else
 
