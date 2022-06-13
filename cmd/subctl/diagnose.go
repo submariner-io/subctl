@@ -85,9 +85,11 @@ var (
 		Short: "Check the kube-proxy mode",
 		Long:  "This command checks if the kube-proxy mode is supported by Submariner.",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(restConfigProducer, func(info *cluster.Info, status reporter.Interface) bool {
-				return diagnose.KubeProxyMode(info.ClientProducer.ForKubernetes(), diagnoseKubeProxyOptions.podNamespace, status)
-			})
+			execute.OnMultiCluster(restConfigProducer, execute.IfSubmarinerInstalled(
+				func(info *cluster.Info, status reporter.Interface) bool {
+					return diagnose.KubeProxyMode(info.ClientProducer, diagnoseKubeProxyOptions.podNamespace,
+						info.GetImageRepositoryInfo(), status)
+				}))
 		},
 	}
 
@@ -261,7 +263,8 @@ func diagnoseAll(clusterInfo *cluster.Info, status reporter.Interface) bool {
 
 	fmt.Println()
 
-	success = diagnose.KubeProxyMode(clusterInfo.ClientProducer.ForKubernetes(), diagnoseKubeProxyOptions.podNamespace, status) && success
+	success = diagnose.KubeProxyMode(clusterInfo.ClientProducer, diagnoseKubeProxyOptions.podNamespace,
+		clusterInfo.GetImageRepositoryInfo(), status) && success
 
 	fmt.Println()
 

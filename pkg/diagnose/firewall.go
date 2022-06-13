@@ -27,6 +27,7 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/pods"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	"github.com/submariner-io/subctl/pkg/image"
 	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	subv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"github.com/submariner-io/submariner/pkg/port"
@@ -56,25 +57,30 @@ type FirewallOptions struct {
 	PodNamespace      string
 }
 
-func spawnSnifferPodOnGatewayNode(client kubernetes.Interface, namespace, podCommand string) (*pods.Scheduled, error) {
+func spawnSnifferPodOnGatewayNode(client kubernetes.Interface, namespace, podCommand string,
+	imageRepInfo *image.RepositoryInfo,
+) (*pods.Scheduled, error) {
 	scheduling := pods.Scheduling{ScheduleOn: pods.GatewayNode, Networking: pods.HostNetworking}
-	return spawnPod(client, scheduling, "validate-sniffer", namespace, podCommand)
+	return spawnPod(client, scheduling, "validate-sniffer", namespace, podCommand, imageRepInfo)
 }
 
-func spawnClientPodOnNonGatewayNode(client kubernetes.Interface, namespace, podCommand string) (*pods.Scheduled, error) {
+func spawnClientPodOnNonGatewayNode(client kubernetes.Interface, namespace, podCommand string,
+	imageRepInfo *image.RepositoryInfo,
+) (*pods.Scheduled, error) {
 	scheduling := pods.Scheduling{ScheduleOn: pods.NonGatewayNode, Networking: pods.PodNetworking}
-	return spawnPod(client, scheduling, "validate-client", namespace, podCommand)
+	return spawnPod(client, scheduling, "validate-client", namespace, podCommand, imageRepInfo)
 }
 
 func spawnPod(client kubernetes.Interface, scheduling pods.Scheduling, podName, namespace,
-	podCommand string,
+	podCommand string, imageRepInfo *image.RepositoryInfo,
 ) (*pods.Scheduled, error) {
 	pod, err := pods.Schedule(&pods.Config{
-		Name:       podName,
-		ClientSet:  client,
-		Scheduling: scheduling,
-		Namespace:  namespace,
-		Command:    podCommand,
+		Name:                podName,
+		ClientSet:           client,
+		Scheduling:          scheduling,
+		Namespace:           namespace,
+		Command:             podCommand,
+		ImageRepositoryInfo: *imageRepInfo,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "error scheduling pod")
@@ -83,16 +89,20 @@ func spawnPod(client kubernetes.Interface, scheduling pods.Scheduling, podName, 
 	return pod, nil
 }
 
-func spawnSnifferPodOnNode(client kubernetes.Interface, nodeName, namespace, podCommand string) (*pods.Scheduled, error) {
+func spawnSnifferPodOnNode(client kubernetes.Interface, nodeName, namespace, podCommand string,
+	imageRepInfo *image.RepositoryInfo,
+) (*pods.Scheduled, error) {
 	scheduling := pods.Scheduling{
 		ScheduleOn: pods.CustomNode, NodeName: nodeName,
 		Networking: pods.HostNetworking,
 	}
 
-	return spawnPod(client, scheduling, "validate-sniffer", namespace, podCommand)
+	return spawnPod(client, scheduling, "validate-sniffer", namespace, podCommand, imageRepInfo)
 }
 
-func getActiveGatewayNodeName(clusterInfo *cluster.Info, hostname string, status reporter.Interface) (string, error) {
+func getActiveGatewayNodeName(clusterInfo *cluster.Info, hostname string, imageRepInfo *image.RepositoryInfo,
+	status reporter.Interface,
+) (string, error) {
 	nodes, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "submariner.io/gateway=true",
 	})
@@ -109,7 +119,8 @@ func getActiveGatewayNodeName(clusterInfo *cluster.Info, hostname string, status
 		// On some platforms, the nodeName does not match with the hostname.
 		// Submariner Endpoint stores the hostname info in the endpoint and not the nodeName. So, we spawn a
 		// tiny pod to read the hostname and return the corresponding node.
-		sPod, err := spawnSnifferPodOnNode(clusterInfo.ClientProducer.ForKubernetes(), node.Name, "default", "hostname")
+		sPod, err := spawnSnifferPodOnNode(clusterInfo.ClientProducer.ForKubernetes(), node.Name, "default", "hostname",
+			imageRepInfo)
 		if err != nil {
 			return "", status.Error(err, "Error spawning the sniffer pod on the node %q: %v", node.Name)
 		}
@@ -191,7 +202,8 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, optio
 		return status.Error(err, "Unable to obtain the local endpoint")
 	}
 
-	gwNodeName, err := getActiveGatewayNodeName(localClusterInfo, localEndpoint.Spec.Hostname, status)
+	gwNodeName, err := getActiveGatewayNodeName(localClusterInfo, localEndpoint.Spec.Hostname,
+		localClusterInfo.GetImageRepositoryInfo(), status)
 	if err != nil {
 		return err
 	}
@@ -205,7 +217,8 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, optio
 	podCommand := fmt.Sprintf("timeout %d tcpdump -ln -Q in -A -s 100 -i any udp and dst port %d | grep '%s'",
 		options.ValidationTimeout, destPort, clientMessage)
 
-	sPod, err := spawnSnifferPodOnNode(localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, options.PodNamespace, podCommand)
+	sPod, err := spawnSnifferPodOnNode(localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, options.PodNamespace, podCommand,
+		localClusterInfo.GetImageRepositoryInfo())
 	if err != nil {
 		return status.Error(err, "Error spawning the sniffer pod on the Gateway node %q", gwNodeName)
 	}
@@ -222,7 +235,8 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, optio
 
 	// Spawn the pod on the nonGateway node. If we spawn the pod on Gateway node, the tunnel process can
 	// sometimes drop the udp traffic from client pod until the tunnels are properly setup.
-	cPod, err := spawnClientPodOnNonGatewayNode(remoteClusterInfo.ClientProducer.ForKubernetes(), options.PodNamespace, podCommand)
+	cPod, err := spawnClientPodOnNonGatewayNode(remoteClusterInfo.ClientProducer.ForKubernetes(), options.PodNamespace, podCommand,
+		localClusterInfo.GetImageRepositoryInfo())
 	if err != nil {
 		return status.Error(err, "Error spawning the client pod on non-Gateway node of cluster %q", remoteClusterInfo.Name)
 	}

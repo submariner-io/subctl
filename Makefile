@@ -20,7 +20,7 @@ ifneq (,$(DAPPER_HOST_ARCH))
 # Running in Dapper
 
 IMAGES = subctl
-PRELOAD_IMAGES := $(IMAGES) submariner-operator submariner-gateway submariner-globalnet submariner-route-agent lighthouse-agent lighthouse-coredns
+PRELOAD_IMAGES := $(IMAGES) submariner-operator submariner-gateway submariner-globalnet submariner-route-agent lighthouse-agent lighthouse-coredns nettest
 undefine SKIP
 undefine FOCUS
 undefine E2E_TESTDIR
