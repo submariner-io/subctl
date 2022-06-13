@@ -18,8 +18,14 @@ limitations under the License.
 
 package image
 
+import "github.com/submariner-io/submariner-operator/pkg/images"
+
 type RepositoryInfo struct {
 	Name      string
 	Version   string
 	Overrides map[string]string
+}
+
+func (i *RepositoryInfo) GetNettestImageURL() string {
+	return images.GetImagePath(i.Name, i.Version, "nettest", "nettest", i.Overrides)
 }
