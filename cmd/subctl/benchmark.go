@@ -75,7 +75,7 @@ func init() {
 	benchmarkCmd.AddCommand(benchmarkLatencyCmd)
 	rootCmd.AddCommand(benchmarkCmd)
 
-	framework.AddBeforeSuite(detectGlobalnet)
+	framework.AddBeforeSuite(setupTestFrameworkBeforeSuite)
 }
 
 func addBenchmarkFlags(cmd *cobra.Command) {
