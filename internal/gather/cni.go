@@ -73,6 +73,7 @@ var ovnCmds = map[string]string{
 	"ovn_routes":                         "ovn-nbctl list Logical_Router_Static_Route",
 	"ovn_policies":                       "ovn-nbctl list Logical_Router_Policy",
 	"ovn_acls":                           "ovn-nbctl list ACL",
+	"ovn_lbgroups":                       "ovn-nbctl list Load_Balancer_Group",
 }
 
 var networkPluginCNIType = map[string]string{
