@@ -54,34 +54,29 @@ func All(clients client.Producer, clusterName, submarinerNamespace string, statu
 		}
 	}
 
-	err = deleteClusterRolesAndBindings(clients, clusterName, status)
+	deleted, err := deleteBrokerIfUnused(clients, brokerNS, clusterName, status)
 	if err != nil {
 		return err
 	}
 
-	status.Start("Deleting the Submariner namespace %q on cluster %q", submarinerNamespace, clusterName)
-	defer status.End()
-
-	err = clients.ForKubernetes().CoreV1().Namespaces().Delete(context.TODO(), submarinerNamespace, metav1.DeleteOptions{})
-	if err != nil && !apierrors.IsNotFound(err) {
-		return status.Error(err, "Error deleting the namespace")
+	err = deleteClusterRolesAndBindings(clients, clusterName, status, !deleted)
+	if err != nil {
+		return err
 	}
 
-	if brokerNS != "" {
-		_, err := clients.ForKubernetes().CoreV1().Namespaces().Get(context.TODO(), brokerNS, metav1.GetOptions{})
-		if err == nil {
-			status.Start("Deleting the broker namespace %q on cluster %q", brokerNS, clusterName)
+	if deleted {
+		status.Start("Deleting the Submariner namespace %q on cluster %q", submarinerNamespace, clusterName)
+		defer status.End()
 
-			err = clients.ForKubernetes().CoreV1().Namespaces().Delete(context.TODO(), brokerNS, metav1.DeleteOptions{})
-			if err != nil && !apierrors.IsNotFound(err) {
-				return status.Error(err, "Error deleting the namespace")
-			}
+		err = clients.ForKubernetes().CoreV1().Namespaces().Delete(context.TODO(), submarinerNamespace, metav1.DeleteOptions{})
+		if err != nil && !apierrors.IsNotFound(err) {
+			return status.Error(err, "Error deleting the Submariner namespace")
 		}
-	}
 
-	err = deleteCRDs(clients, clusterName, status)
-	if err != nil {
-		return err
+		err = deleteCRDs(clients, clusterName, status)
+		if err != nil {
+			return err
+		}
 	}
 
 	return unlabelGatewayNodes(clients, clusterName, status)
@@ -147,7 +142,9 @@ func deleteCRDs(clients client.Producer, clusterName string, status reporter.Int
 	return nil
 }
 
-func deleteClusterRolesAndBindings(clients client.Producer, clusterName string, status reporter.Interface) error {
+func deleteClusterRolesAndBindings(clients client.Producer, clusterName string, status reporter.Interface,
+	keepOperator bool,
+) error {
 	status.Start("Deleting the Submariner cluster roles and bindings on cluster %q", clusterName)
 	defer status.End()
 
@@ -157,7 +154,7 @@ func deleteClusterRolesAndBindings(clients client.Producer, clusterName string, 
 	}
 
 	for i := range list.Items {
-		if !strings.HasPrefix(list.Items[i].Name, "submariner-") {
+		if !strings.HasPrefix(list.Items[i].Name, "submariner-") || (keepOperator && list.Items[i].Name == names.OperatorComponent) {
 			continue
 		}
 
@@ -244,4 +241,66 @@ func ensureDeleted(resourceInterface resource.Interface, name string) error {
 
 		return false, err
 	})
+}
+
+func deleteBrokerIfUnused(clients client.Producer, namespace, clusterName string, status reporter.Interface) (bool, error) {
+	if namespace == "" {
+		return true, nil
+	}
+
+	_, err := clients.ForKubernetes().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return true, nil
+		}
+
+		return false, status.Error(err, "Error retrieving broker namespace %q", namespace)
+	}
+
+	inUse, err := brokerInUse(clients, namespace, clusterName, status)
+	if err != nil {
+		return false, err
+	}
+
+	if inUse {
+		return false, nil
+	}
+
+	status.Start("Deleting the broker namespace %q", namespace)
+	defer status.End()
+
+	err = clients.ForKubernetes().CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return false, status.Error(err, "Error deleting the broker namespace")
+	}
+
+	return true, nil
+}
+
+func brokerInUse(clients client.Producer, namespace, clusterName string, status reporter.Interface) (bool, error) {
+	status.Start("Verifying broker namespace %q is not in use", namespace)
+	defer status.End()
+
+	endpoints, err := clients.ForSubmariner().SubmarinerV1().Endpoints(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return false, status.Error(err, "error retrieving Endpoints")
+	}
+
+	var remoteClusterNames []string
+
+	for i := range endpoints.Items {
+		remoteClusterName := endpoints.Items[i].Spec.ClusterID
+		if remoteClusterName != clusterName {
+			remoteClusterNames = append(remoteClusterNames, remoteClusterName)
+		}
+	}
+
+	if len(remoteClusterNames) > 0 {
+		status.Warning("Broker namespace %q appears to be in use by other clusters (%v) - keeping the broker components.",
+			namespace, remoteClusterNames)
+
+		return true, nil
+	}
+
+	return false, nil
 }
