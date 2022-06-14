@@ -62,7 +62,7 @@ GOBIN=$(shell $(GO) env GOBIN)
 endif
 
 # Ensure we prefer binaries we build
-export PATH := $(CURDIR)/bin:$(PATH)
+export PATH := $(CURDIR)/cmd/bin:$(PATH)
 
 # Targets to make
 
