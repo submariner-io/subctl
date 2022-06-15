@@ -42,16 +42,21 @@ import (
 const componentReadyTimeout time.Duration = time.Minute * 2
 
 func All(clients client.Producer, clusterName, submarinerNamespace string, status reporter.Interface) error {
-	found, brokerNS, err := ensureSubmarinerDeleted(clients, clusterName, submarinerNamespace, status)
+	found, err := ensureSubmarinerDeleted(clients, clusterName, submarinerNamespace, status)
 	if err != nil {
 		return err
 	}
 
 	if !found {
-		brokerNS, err = ensureServiceDiscoveryDeleted(clients, clusterName, submarinerNamespace, status)
+		err = ensureServiceDiscoveryDeleted(clients, clusterName, submarinerNamespace, status)
 		if err != nil {
 			return err
 		}
+	}
+
+	brokerNS, err := findBrokerNamespace(clients, clusterName, status)
+	if err != nil {
+		return err
 	}
 
 	deleted, err := deleteBrokerIfUnused(clients, brokerNS, clusterName, status)
@@ -174,7 +179,7 @@ func deleteClusterRolesAndBindings(clients client.Producer, clusterName string, 
 	return nil
 }
 
-func ensureSubmarinerDeleted(clients client.Producer, clusterName, namespace string, status reporter.Interface) (bool, string, error) {
+func ensureSubmarinerDeleted(clients client.Producer, clusterName, namespace string, status reporter.Interface) (bool, error) {
 	defer status.End()
 
 	status.Start("Checking if the connectivity component is installed on cluster %q", clusterName)
@@ -184,11 +189,11 @@ func ensureSubmarinerDeleted(clients client.Producer, clusterName, namespace str
 	submariner, err := submClient.Get(context.TODO(), names.SubmarinerCrName, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		status.Success("The connectivity component is not installed on cluster %q - skipping", clusterName)
-		return false, "", nil
+		return false, nil
 	}
 
 	if err != nil {
-		return false, "", status.Error(err, "Error retrieving the Submariner resource")
+		return false, status.Error(err, "Error retrieving the Submariner resource")
 	}
 
 	status.Success("The connectivity component is installed on cluster %q", clusterName)
@@ -197,11 +202,10 @@ func ensureSubmarinerDeleted(clients client.Producer, clusterName, namespace str
 
 	err = ensureDeleted(submarinercr.ResourceInterface(submClient), submariner.Name)
 
-	return true, submariner.Spec.BrokerK8sRemoteNamespace,
-		status.Error(err, "Error deleting Submariner resource %q", submariner.Name)
+	return true, status.Error(err, "Error deleting Submariner resource %q", submariner.Name)
 }
 
-func ensureServiceDiscoveryDeleted(clients client.Producer, clusterName, namespace string, status reporter.Interface) (string, error) {
+func ensureServiceDiscoveryDeleted(clients client.Producer, clusterName, namespace string, status reporter.Interface) error {
 	defer status.End()
 
 	status.Start("Checking if the service discovery component is installed on cluster %q", clusterName)
@@ -211,11 +215,11 @@ func ensureServiceDiscoveryDeleted(clients client.Producer, clusterName, namespa
 	serviceDiscovery, err := sdClient.Get(context.TODO(), names.ServiceDiscoveryCrName, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		status.Success("The service discovery component is not installed on cluster %q - skipping", clusterName)
-		return "", nil
+		return nil
 	}
 
 	if err != nil {
-		return "", status.Error(err, "Error retrieving the ServiceDiscovery resource")
+		return status.Error(err, "Error retrieving the ServiceDiscovery resource")
 	}
 
 	status.Success("The service discovery component is installed on cluster %q", clusterName)
@@ -224,8 +228,7 @@ func ensureServiceDiscoveryDeleted(clients client.Producer, clusterName, namespa
 
 	err = ensureDeleted(servicediscoverycr.ResourceInterface(sdClient), serviceDiscovery.Name)
 
-	return serviceDiscovery.Spec.BrokerK8sRemoteNamespace,
-		status.Error(err, "Error deleting ServiceDiscovery resource %q", serviceDiscovery.Name)
+	return status.Error(err, "Error deleting ServiceDiscovery resource %q", serviceDiscovery.Name)
 }
 
 func ensureDeleted(resourceInterface resource.Interface, name string) error {
@@ -303,4 +306,24 @@ func brokerInUse(clients client.Producer, namespace, clusterName string, status 
 	}
 
 	return false, nil
+}
+
+func findBrokerNamespace(clients client.Producer, clusterName string, status reporter.Interface) (string, error) {
+	status.Start("Checking if the broker component is installed on cluster %q", clusterName)
+	defer status.End()
+
+	brokers, err := clients.ForOperator().SubmarinerV1alpha1().Brokers(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return "", status.Error(err, "Error listing broker resources")
+	}
+
+	for i := range brokers.Items {
+		status.Success("The broker component is installed in namespace %q", brokers.Items[i].Namespace)
+
+		return brokers.Items[i].Namespace, nil
+	}
+
+	status.Success("The broker component is not installed on cluster %q", clusterName)
+
+	return "", nil
 }
