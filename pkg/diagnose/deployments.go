@@ -25,6 +25,7 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner/pkg/cidr"
+	"github.com/submariner-io/submariner/pkg/cni"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -115,6 +116,11 @@ func checkPods(clusterInfo *cluster.Info, status reporter.Interface) bool {
 	// Check if globalnet components are deployed and running if enabled
 	if clusterInfo.Submariner.Spec.GlobalCIDR != "" {
 		checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-globalnet", tracker)
+	}
+
+	// check if networkplugin syncer components are deployed and running if enabled
+	if clusterInfo.Submariner.Status.NetworkPlugin == cni.OVNKubernetes {
+		checkDeployment(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-networkplugin-syncer", tracker)
 	}
 
 	checkPodsStatus(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, tracker)
