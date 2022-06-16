@@ -100,7 +100,7 @@ dist/subctl-%.tar.xz: cmd/bin/subctl-%
 	tar -cJf $@ --transform "s/^cmd.bin/subctl-$(VERSION)/" $<
 
 # Versions may include hyphens so it's easier to use $(VERSION) than to extract them from the target
-cmd/bin/subctl-%: $(shell find cmd/ -name "*.go") $(VENDOR_MODULES)
+cmd/bin/subctl-%: $(shell find . -name "*.go") $(VENDOR_MODULES)
 	mkdir -p cmd/bin
 	target=$@; \
 	target=$${target%.exe}; \

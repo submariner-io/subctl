@@ -71,6 +71,13 @@ func spawnClientPodOnNonGatewayNode(client kubernetes.Interface, namespace, podC
 	return spawnPod(client, scheduling, "validate-client", namespace, podCommand, imageRepInfo)
 }
 
+func spawnClientPodOnNonGatewayNodeWithHostNet(client kubernetes.Interface, namespace, podCommand string,
+	imageRepInfo *image.RepositoryInfo,
+) (*pods.Scheduled, error) {
+	scheduling := pods.Scheduling{ScheduleOn: pods.NonGatewayNode, Networking: pods.HostNetworking}
+	return spawnPod(client, scheduling, "validate-client", namespace, podCommand, imageRepInfo)
+}
+
 func spawnPod(client kubernetes.Interface, scheduling pods.Scheduling, podName, namespace,
 	podCommand string, imageRepInfo *image.RepositoryInfo,
 ) (*pods.Scheduled, error) {
@@ -235,7 +242,7 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, optio
 
 	// Spawn the pod on the nonGateway node. If we spawn the pod on Gateway node, the tunnel process can
 	// sometimes drop the udp traffic from client pod until the tunnels are properly setup.
-	cPod, err := spawnClientPodOnNonGatewayNode(remoteClusterInfo.ClientProducer.ForKubernetes(), options.PodNamespace, podCommand,
+	cPod, err := spawnClientPodOnNonGatewayNodeWithHostNet(remoteClusterInfo.ClientProducer.ForKubernetes(), options.PodNamespace, podCommand,
 		localClusterInfo.GetImageRepositoryInfo())
 	if err != nil {
 		return status.Error(err, "Error spawning the client pod on non-Gateway node of cluster %q", remoteClusterInfo.Name)
