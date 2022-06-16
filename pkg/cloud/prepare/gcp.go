@@ -28,29 +28,13 @@ import (
 )
 
 func GCP(restConfigProducer *restconfig.Producer, ports *cloud.Ports, config *gcp.Config, status reporter.Interface) error {
-	gwPorts := []api.PortSpec{
-		{Port: ports.Natt, Protocol: "udp"},
-		{Port: ports.NatDiscovery, Protocol: "udp"},
-
-		// ESP & AH protocols are used for private-ip to private-ip gateway communications
-		{Port: 0, Protocol: "esp"},
-		{Port: 0, Protocol: "ah"},
-	}
-	input := api.PrepareForSubmarinerInput{
-		InternalPorts: []api.PortSpec{
-			{Port: ports.Vxlan, Protocol: "udp"},
-		},
-	}
-
-	for i := range ports.Metrics {
-		port := api.PortSpec{
-			Port: ports.Metrics[i], Protocol: "tcp",
-		}
-		input.InternalPorts = append(input.InternalPorts, port)
+	gwPorts, input, err := getPortConfig(restConfigProducer, ports, false)
+	if err != nil {
+		return status.Error(err, "Failed to prepare the cloud")
 	}
 
 	// nolint:wrapcheck // No need to wrap errors here.
-	err := gcp.RunOn(restConfigProducer, config, cli.NewReporter(),
+	err = gcp.RunOn(restConfigProducer, config, cli.NewReporter(),
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if config.Gateways > 0 {
 				gwInput := api.GatewayDeployInput{
