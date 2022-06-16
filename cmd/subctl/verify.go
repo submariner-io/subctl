@@ -119,7 +119,7 @@ func init() {
 	addVerifyFlags(verifyCmd)
 	rootCmd.AddCommand(verifyCmd)
 
-	framework.AddBeforeSuite(detectGlobalnet)
+	framework.AddBeforeSuite(setupTestFrameworkBeforeSuite)
 }
 
 func addVerifyFlags(cmd *cobra.Command) {

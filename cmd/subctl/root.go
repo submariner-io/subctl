@@ -20,20 +20,16 @@ package subctl
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"os"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
-	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/pkg/client"
-	"github.com/submariner-io/submariner-operator/pkg/names"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var restConfigProducer = restconfig.NewProducer()
@@ -53,23 +49,21 @@ func Execute() {
 	}
 }
 
-func detectGlobalnet() {
+func setupTestFrameworkBeforeSuite() {
 	clientProducer, err := client.NewProducerFromRestConfig(framework.RestConfigs[framework.ClusterA])
 	exit.OnErrorWithMessage(err, "Error creating client producer")
 
-	operatorClient := clientProducer.ForOperator()
+	clusterInfo, err := cluster.NewInfo(framework.TestContext.ClusterIDs[framework.ClusterA], clientProducer,
+		framework.RestConfigs[framework.ClusterA])
+	exit.OnErrorWithMessage(err, "Error initializing the cluster information")
 
-	submariner, err := operatorClient.SubmarinerV1alpha1().Submariners(constants.OperatorNamespace).Get(
-		context.TODO(), names.SubmarinerCrName, v1.GetOptions{})
-	if k8serrors.IsNotFound(err) {
-		exit.WithMessage("The Submariner resource was not found. Either submariner has not" +
-			"been deployed in this cluster or was deployed using helm. This command only supports submariner deployed" +
-			" using the operator via 'subctl join'.")
+	if clusterInfo.Submariner == nil {
+		exit.WithMessage("The Submariner resource was not found which indicates submariner has not been deployed in this cluster.")
 	}
 
-	exit.OnErrorWithMessage(err, "Error obtaining Submariner resource")
+	framework.TestContext.GlobalnetEnabled = clusterInfo.Submariner.Spec.GlobalCIDR != ""
 
-	framework.TestContext.GlobalnetEnabled = submariner.Spec.GlobalCIDR != ""
+	framework.TestContext.NettestImageURL = clusterInfo.GetImageRepositoryInfo().GetNettestImageURL()
 }
 
 func compareFiles(file1, file2 string) (bool, error) {

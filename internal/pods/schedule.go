@@ -25,7 +25,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/pkg/image"
-	"github.com/submariner-io/submariner-operator/pkg/images"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -126,9 +125,8 @@ func (np *Scheduled) schedule() error {
 			HostNetwork:   bool(np.Config.Scheduling.Networking),
 			Containers: []v1.Container{
 				{
-					Name: np.Config.Name,
-					Image: images.GetImagePath(np.Config.ImageRepositoryInfo.Name, np.Config.ImageRepositoryInfo.Version,
-						"nettest", "nettest", np.Config.ImageRepositoryInfo.Overrides),
+					Name:    np.Config.Name,
+					Image:   np.Config.ImageRepositoryInfo.GetNettestImageURL(),
 					Command: []string{"sh", "-c", "$(COMMAND) >/dev/termination-log 2>&1 || exit 0"},
 					Env: []v1.EnvVar{
 						{Name: "COMMAND", Value: np.Config.Command},
