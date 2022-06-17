@@ -229,8 +229,8 @@ func checkOVNVersion(info *cluster.Info, status reporter.Interface) bool {
 
 	clientSet := info.ClientProducer.ForKubernetes()
 
-	ovnPod, err := findPod(clientSet, ovnKubeDBPodLabel)
-	if err != nil || ovnPod == nil {
+	ovnPod, err := mustFindPod(clientSet, ovnKubeDBPodLabel)
+	if err != nil {
 		status.Failure("Failed to get OVNKubeDB Pod %v", err)
 		return false
 	}
@@ -242,16 +242,16 @@ func checkOVNVersion(info *cluster.Info, status reporter.Interface) bool {
 	}
 
 	if version.Compare(ovnNBVersion, minOVNNBVersion, "<") {
-		status.Failure("OVN NBDB version %v is lesser than minimum supported %v", ovnNBVersion, minOVNNBVersion)
+		status.Failure("The OVN NB DB version %v is less than the minimum supported version %v", ovnNBVersion, minOVNNBVersion)
 		return false
 	}
 
-	status.Success("OVN NBDB Version %v is supported", ovnNBVersion)
+	status.Success("The OVN NB DB version %v is supported", ovnNBVersion)
 
 	return true
 }
 
-func findPod(clientSet kubernetes.Interface, labelSelector string) (*corev1.Pod, error) {
+func mustFindPod(clientSet kubernetes.Interface, labelSelector string) (*corev1.Pod, error) {
 	pods, err := clientSet.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: labelSelector,
 		Limit:         1,
@@ -261,7 +261,7 @@ func findPod(clientSet kubernetes.Interface, labelSelector string) (*corev1.Pod,
 	}
 
 	if len(pods.Items) == 0 {
-		return nil, errors.WithMessagef(err, "found 0 pods with label %v", labelSelector)
+		return nil, errors.WithMessagef(err, "no pod found with label %v", labelSelector)
 	}
 
 	return &pods.Items[0], nil
@@ -298,7 +298,7 @@ func getOVNNBVersion(clientSet kubernetes.Interface, config *rest.Config, pod *c
 
 	exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
 	if err != nil {
-		return "", errors.WithMessagef(err, "Failed to get OVN NBDB version")
+		return "", errors.WithMessagef(err, "failed to create SPDY executor")
 	}
 
 	err = exec.Stream(remotecommand.StreamOptions{
@@ -309,10 +309,14 @@ func getOVNNBVersion(clientSet kubernetes.Interface, config *rest.Config, pod *c
 	})
 
 	if err != nil {
-		return "", errors.WithMessagef(err, "Failed to get OVN NBDB version")
+		return "", errors.WithMessagef(err, "failed to execute SPDY command")
 	}
 
-	result := strings.Split(stdout.String(), "DB Schema")[1]
+	results := strings.Split(stdout.String(), "DB Schema")
 
-	return strings.TrimSpace(result), nil
+	if len(results) < 2 {
+		return "", errors.WithMessagef(err, "unable to determine the version from the ovn-nbctl output: %q", stdout.String())
+	}
+
+	return strings.TrimSpace(results[1]), nil
 }
