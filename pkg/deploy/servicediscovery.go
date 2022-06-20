@@ -32,6 +32,7 @@ import (
 
 type ServiceDiscoveryOptions struct {
 	SubmarinerDebug        bool
+	BrokerK8sInsecure      bool
 	ClusterID              string
 	CoreDNSCustomConfigMap string
 	Repository             string
@@ -65,6 +66,7 @@ func populateServiceDiscoverySpec(options *ServiceDiscoveryOptions, brokerInfo *
 		BrokerK8sApiServerToken:  string(brokerSecret.Data["token"]),
 		BrokerK8sApiServer:       brokerURL,
 		BrokerK8sSecret:          brokerSecret.ObjectMeta.Name,
+		BrokerK8sInsecure:        options.BrokerK8sInsecure,
 		Debug:                    options.SubmarinerDebug,
 		ClusterID:                options.ClusterID,
 		Namespace:                constants.SubmarinerNamespace,
