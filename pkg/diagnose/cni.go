@@ -237,16 +237,16 @@ func checkOVNVersion(info *cluster.Info, status reporter.Interface) bool {
 
 	ovnNBVersion, err := getOVNNBVersion(clientSet, info.RestConfig, ovnPod)
 	if err != nil {
-		status.Failure("Failed to get OVN NB version %v", err)
+		status.Failure("Failed to get ovn-nb database version %v", err)
 		return false
 	}
 
 	if version.Compare(ovnNBVersion, minOVNNBVersion, "<") {
-		status.Failure("The OVN NB DB version %v is less than the minimum supported version %v", ovnNBVersion, minOVNNBVersion)
+		status.Failure("The ovn-nb database version %v is less than the minimum supported version %v", ovnNBVersion, minOVNNBVersion)
 		return false
 	}
 
-	status.Success("The OVN NB DB version %v is supported", ovnNBVersion)
+	status.Success("The ovn-nb database version %v is supported", ovnNBVersion)
 
 	return true
 }
@@ -275,6 +275,7 @@ func getOVNNBVersion(clientSet kubernetes.Interface, config *rest.Config, pod *c
 		// NBDB container name is nb-ovsdb [vanilla OVNK] or nbdb [OCP].
 		if strings.HasPrefix(container.Name, "nb") {
 			containerName = container.Name
+			break
 		}
 	}
 
