@@ -54,7 +54,7 @@ func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer c
 	status.Start("Gathering relevant information from Broker")
 	defer status.End()
 
-	brokerAdminConfig, err := brokerInfo.GetBrokerAdministratorConfig()
+	brokerAdminConfig, err := brokerInfo.GetBrokerAdministratorConfig(!options.BrokerK8sSecure)
 	if err != nil {
 		return status.Error(err, "Error retrieving broker admin config")
 	}
@@ -150,6 +150,7 @@ func submarinerOptionsFrom(joinOptions *Options) *deploy.SubmarinerOptions {
 		CustomDomains:                 joinOptions.CustomDomains,
 		ServiceCIDR:                   joinOptions.ServiceCIDR,
 		ClusterCIDR:                   joinOptions.ClusterCIDR,
+		BrokerK8sInsecure:             !joinOptions.BrokerK8sSecure,
 	}
 }
 
@@ -161,6 +162,7 @@ func serviceDiscoveryOptionsFrom(joinOptions *Options) *deploy.ServiceDiscoveryO
 		Repository:             joinOptions.Repository,
 		ImageVersion:           joinOptions.ImageVersion,
 		CustomDomains:          joinOptions.CustomDomains,
+		BrokerK8sInsecure:      !joinOptions.BrokerK8sSecure,
 	}
 }
 
