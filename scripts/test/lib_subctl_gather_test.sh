@@ -129,8 +129,8 @@ function validate_resource_files() {
 }
 
 function validate_broker_resources() {
-  validate_resource_files $SUBMARINER_BROKER_NS 'endpoints.submariner.io' 'Endpoint' '' 'broker'
-  validate_resource_files $SUBMARINER_BROKER_NS 'clusters.submariner.io' 'Cluster' '' 'broker'
-  validate_resource_files $SUBMARINER_BROKER_NS 'serviceimports.multicluster.x-k8s.io' 'ServiceImport' '' 'broker'
-  validate_resource_files $SUBMARINER_BROKER_NS 'endpointslices.discovery.k8s.io' 'EndpointSlice' '' 'broker'
+  validate_resource_files $submariner_broker_ns 'endpoints.submariner.io' 'Endpoint' '' 'broker'
+  validate_resource_files $submariner_broker_ns 'clusters.submariner.io' 'Cluster' '' 'broker'
+  validate_resource_files $submariner_broker_ns 'serviceimports.multicluster.x-k8s.io' 'ServiceImport' '' 'broker'
+  validate_resource_files $submariner_broker_ns 'endpointslices.discovery.k8s.io' 'EndpointSlice' '' 'broker'
 }

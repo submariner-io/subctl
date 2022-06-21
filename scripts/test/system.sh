@@ -5,10 +5,29 @@ set -em -o pipefail
 source ${SCRIPTS_DIR}/lib/debug_functions
 source ${SCRIPTS_DIR}/lib/utils
 
+### Functions ###
+
+function deploy_env_once() {
+    if with_context "${clusters[0]}" kubectl wait --for condition=Ready pods -l app=submariner-gateway -n "${subm_ns}" --timeout=3s > /dev/null 2>&1; then
+        echo "Submariner already deployed, skipping deployment..."
+        return
+    fi
+
+    # Print GHA groups to make looking at CI output easier
+    printf "::group::Deploying the environment"
+    make deploy SETTINGS="$settings" using="${USING}" -o package/.image.subctl
+    declare_kubeconfig
+    echo "::endgroup::" 
+}
+
 ### Main ###
 
+settings="${DAPPER_SOURCE}/.shipyard.system.yml"
+subm_ns=submariner-operator
+submariner_broker_ns=submariner-k8s-broker
 load_settings
 declare_kubeconfig
+deploy_env_once
 
 . ${DAPPER_SOURCE}/scripts/test/lib_subctl_gather_test.sh
 

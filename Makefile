@@ -76,7 +76,7 @@ export PATH := $(CURDIR)/cmd/bin:$(PATH)
 # (with the PATH set above)
 deploy: cmd/bin/subctl
 
-system: deploy
+system:
 	scripts/test/system.sh $(SYSTEM_ARGS)
 
 clean:
