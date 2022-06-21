@@ -2,6 +2,7 @@
 
 set -em -o pipefail
 
+source ${DAPPER_SOURCE}/scripts/test/lib_subctl_gather_test.sh
 source ${SCRIPTS_DIR}/lib/debug_functions
 source ${SCRIPTS_DIR}/lib/utils
 
@@ -20,6 +21,32 @@ function deploy_env_once() {
     echo "::endgroup::" 
 }
 
+function _subctl() {
+    # Print GHA groups to make looking at CI output easier
+    echo "::group::Running 'subctl $@'"
+    "${DAPPER_SOURCE}"/cmd/bin/subctl "$@"
+    echo "::endgroup::"
+}
+
+function test_subctl_gather() {
+    # Print GHA groups to make looking at CI output easier
+    rm -rf "$gather_out_dir"
+    mkdir "$gather_out_dir"
+
+    _subctl gather --dir "$gather_out_dir"
+
+    echo "::group::Validating 'subctl gather'"
+    ls $gather_out_dir
+
+    for cluster in "${clusters[@]}"; do
+        with_context "${cluster}" validate_gathered_files
+    done
+
+    # Broker
+    with_context "$broker" validate_broker_resources
+    echo "::endgroup::"
+}
+
 ### Main ###
 
 settings="${DAPPER_SOURCE}/.shipyard.system.yml"
@@ -29,22 +56,20 @@ load_settings
 declare_kubeconfig
 deploy_env_once
 
-. ${DAPPER_SOURCE}/scripts/test/lib_subctl_gather_test.sh
+# Test subctl gather invocations
 
 test_subctl_gather
 
-# Run subctl diagnose as a sanity check
+# Test subctl diagnose invocations
 
-${DAPPER_SOURCE}/cmd/bin/subctl diagnose all
-${DAPPER_SOURCE}/cmd/bin/subctl diagnose firewall inter-cluster ${KUBECONFIGS_DIR}/kind-config-cluster1 ${KUBECONFIGS_DIR}/kind-config-cluster2
+_subctl diagnose all
+_subctl diagnose firewall inter-cluster "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2
 
-# Run benchmark commands for sanity checks
+# Test subctl benchmark invocations
 
-${DAPPER_SOURCE}/cmd/bin/subctl benchmark latency --intra-cluster ${KUBECONFIGS_DIR}/kind-config-cluster1
+_subctl benchmark latency --intra-cluster --kubecontexts cluster1
+_subctl benchmark latency --kubecontexts cluster1,cluster2
 
-${DAPPER_SOURCE}/cmd/bin/subctl benchmark latency ${KUBECONFIGS_DIR}/kind-config-cluster1 ${KUBECONFIGS_DIR}/kind-config-cluster2
-
-${DAPPER_SOURCE}/cmd/bin/subctl benchmark throughput --intra-cluster ${KUBECONFIGS_DIR}/kind-config-cluster1
-
-${DAPPER_SOURCE}/cmd/bin/subctl benchmark throughput --verbose ${KUBECONFIGS_DIR}/kind-config-cluster1 ${KUBECONFIGS_DIR}/kind-config-cluster2
+_subctl benchmark throughput --intra-cluster --kubecontexts cluster1
+_subctl benchmark throughput --verbose --kubecontexts cluster1,cluster2
 
