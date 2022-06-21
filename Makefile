@@ -127,32 +127,6 @@ cmd/bin/subctl-%: $(shell find . -name "*.go") $(VENDOR_MODULES)
 
 ci: golangci-lint markdownlint unit build images
 
-# Test as many of the config/context-dependent subctl commands as possible
-test-subctl: cmd/bin/subctl deploy
-# benchmark
-	cmd/bin/subctl benchmark latency --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1:$(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster2 \
-		--kubecontexts cluster1,cluster2
-	cmd/bin/subctl benchmark latency --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 \
-		--kubecontexts cluster1 --intra-cluster
-	cmd/bin/subctl benchmark throughput --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1:$(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster2 \
-		--kubecontexts cluster1,cluster2
-	cmd/bin/subctl benchmark throughput --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 \
-		--kubecontexts cluster1 --intra-cluster
-# cloud
-	cmd/bin/subctl cloud prepare generic --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 --kubecontext cluster1
-# deploy-broker is tested by the deploy target
-# diagnose
-	cmd/bin/subctl diagnose all --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
-	cmd/bin/subctl diagnose firewall inter-cluster $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster2
-# export TBD
-# gather
-	cmd/bin/subctl gather $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
-# join is tested by the deploy target
-# show
-	cmd/bin/subctl show all --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
-# verify is tested by the e2e target (run elsewhere)
-	cmd/bin/subctl uninstall -y --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
-
 .PHONY: build ci clean generate-clientset system
 
 else

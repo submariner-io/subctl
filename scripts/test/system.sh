@@ -56,6 +56,10 @@ load_settings
 declare_kubeconfig
 deploy_env_once
 
+# Test subctl show invocations
+
+_subctl show all
+
 # Test subctl gather invocations
 
 test_subctl_gather
@@ -72,4 +76,12 @@ _subctl benchmark latency --kubecontexts cluster1,cluster2
 
 _subctl benchmark throughput --intra-cluster --kubecontexts cluster1
 _subctl benchmark throughput --verbose --kubecontexts cluster1,cluster2
+
+# Test subctl cloud prepare invocations
+
+_subctl cloud prepare generic --kubecontext cluster1
+
+# Test subctl uninstall invocations
+
+_subctl uninstall -y --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1
 
