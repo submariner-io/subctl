@@ -30,6 +30,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/gateway"
 	"github.com/submariner-io/subctl/pkg/namespace"
 	"github.com/submariner-io/subctl/pkg/role"
+	"github.com/submariner-io/subctl/pkg/serviceaccount"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 	"github.com/submariner-io/submariner-operator/pkg/lighthouse"
 	"github.com/submariner-io/submariner-operator/pkg/names"
@@ -204,6 +205,18 @@ func CreateNewBrokerRoleBinding(kubeClient kubernetes.Interface, serviceAccount,
 
 // nolint:wrapcheck // No need to wrap here
 func CreateNewBrokerSA(kubeClient kubernetes.Interface, submarinerBrokerSA, inNamespace string) (brokerSA *v1.ServiceAccount, err error) {
-	return kubeClient.CoreV1().ServiceAccounts(inNamespace).Create(
-		context.TODO(), NewBrokerSA(submarinerBrokerSA), metav1.CreateOptions{})
+	sa := NewBrokerSA(submarinerBrokerSA)
+	_, err = serviceaccount.Ensure(kubeClient, inNamespace, sa)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = serviceaccount.EnsureSecretFromSA(kubeClient, sa.Name, inNamespace)
+
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get secret for broker SA")
+	}
+
+	return kubeClient.CoreV1().ServiceAccounts(inNamespace).Get(context.TODO(), sa.Name, metav1.GetOptions{})
 }
