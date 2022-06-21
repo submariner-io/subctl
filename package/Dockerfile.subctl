@@ -1,8 +1,21 @@
-FROM scratch
+ARG BASE_BRANCH
+ARG SOURCE=/go/src/github.com/submariner-io/submariner-operator
+
+FROM --platform=${BUILDPLATFORM} quay.io/submariner/shipyard-dapper-base:${BASE_BRANCH} AS builder
+ARG SOURCE
+ARG TARGETPLATFORM
+
+COPY . ${SOURCE}
+
+RUN make -C ${SOURCE} cmd/bin/${TARGETPLATFORM}/subctl
+
+FROM --platform=${TARGETPLATFORM} scratch
+ARG SOURCE
+ARG TARGETPLATFORM
 
 ENV USER_UID=1001 PATH=/
 
 # install subctl binary
-COPY cmd/bin/subctl /subctl
+COPY --from=builder ${SOURCE}/cmd/bin/${TARGETPLATFORM}/subctl /subctl
 
 USER ${USER_UID}
