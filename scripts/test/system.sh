@@ -66,8 +66,8 @@ test_subctl_gather
 
 # Test subctl diagnose invocations
 
-_subctl diagnose all
-_subctl diagnose firewall inter-cluster "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2
+_subctl diagnose all --validation-timeout 20
+_subctl diagnose firewall inter-cluster --validation-timeout 20 "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2
 
 # Test subctl benchmark invocations
 
