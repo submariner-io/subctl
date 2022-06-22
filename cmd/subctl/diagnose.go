@@ -170,6 +170,7 @@ func init() {
 
 func addDiagnoseSubCommands() {
 	addDiagnosePodNamespaceFlag(diagnoseKubeProxyModeCmd, &diagnoseKubeProxyOptions.podNamespace)
+	addDiagnoseFWConfigFlags(diagnoseAllCmd)
 
 	diagnoseCmd.AddCommand(diagnoseCNICmd)
 	diagnoseCmd.AddCommand(diagnoseConnectionsCmd)
@@ -198,8 +199,9 @@ func addDiagnosePodNamespaceFlag(command *cobra.Command, value *string) {
 
 func addDiagnoseFWConfigFlags(command *cobra.Command) {
 	command.Flags().UintVar(&diagnoseFirewallOptions.ValidationTimeout, "validation-timeout", 90,
-		"timeout in seconds while validating the connection attempt")
-	command.Flags().BoolVar(&diagnoseFirewallOptions.VerboseOutput, "verbose", false, "produce verbose output")
+		"time to run in seconds while validating the firewall")
+	command.Flags().BoolVar(&diagnoseFirewallOptions.VerboseOutput, "verbose", false,
+		"produce verbose output while validating the firewall")
 	addDiagnosePodNamespaceFlag(command, &diagnoseFirewallOptions.PodNamespace)
 }
 
