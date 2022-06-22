@@ -31,8 +31,6 @@ import (
 )
 
 func Brokers(clusterInfo *cluster.Info, status reporter.Interface) bool {
-	template := "%-25.24s%-25.24s%-40.39s\n"
-
 	status.Start("Detecting broker(s)")
 
 	brokerList, err := clusterInfo.ClientProducer.ForOperator().SubmarinerV1alpha1().Brokers(corev1.NamespaceAll).List(
@@ -51,7 +49,9 @@ func Brokers(clusterInfo *cluster.Info, status reporter.Interface) bool {
 		return true
 	}
 
-	fmt.Printf(template, "NAMESPACE", "NAME", "COMPONENTS")
+	template := "%-25.24s%-25.24s%-34.33s%-20v%-21s%-26v%-40s\n"
+	fmt.Printf(template, "NAMESPACE", "NAME", "COMPONENTS", "GLOBALNET ENABLED", "GLOBALNET CIDR", "DEFAULT GLOBALNET SIZE",
+		"DEFAULT DOMAINS")
 
 	for i := range brokers {
 		fmt.Printf(
@@ -59,6 +59,10 @@ func Brokers(clusterInfo *cluster.Info, status reporter.Interface) bool {
 			brokers[i].Namespace,
 			brokers[i].Name,
 			strings.Join(brokers[i].Spec.Components, ", "),
+			brokers[i].Spec.GlobalnetEnabled,
+			brokers[i].Spec.GlobalnetCIDRRange,
+			brokers[i].Spec.DefaultGlobalnetClusterSize,
+			strings.Join(brokers[i].Spec.DefaultCustomDomains, ", "),
 		)
 	}
 
