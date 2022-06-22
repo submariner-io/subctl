@@ -4,8 +4,8 @@ go 1.17
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.5
-	github.com/Azure/azure-sdk-for-go v63.4.0+incompatible // indirect
-	github.com/Azure/go-autorest/autorest v0.11.24 // indirect
+	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // indirect
+	github.com/Azure/go-autorest/autorest v0.11.27 // indirect
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
@@ -17,11 +17,11 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.4.0
 	github.com/submariner-io/admiral v0.13.0-rc0
-	github.com/submariner-io/cloud-prepare v0.13.0-m2
-	github.com/submariner-io/lighthouse v0.13.0-m2
+	github.com/submariner-io/cloud-prepare v0.13.0-rc0
+	github.com/submariner-io/lighthouse v0.13.0-rc0
 	github.com/submariner-io/shipyard v0.13.0-rc0
-	github.com/submariner-io/submariner v0.13.0-m2.0.20220608112640-7f4a6a79da0d
-	github.com/submariner-io/submariner-operator v0.13.0-m2.0.20220609003531-bb2519c11cb2
+	github.com/submariner-io/submariner v0.13.0-rc0
+	github.com/submariner-io/submariner-operator v0.13.0-rc0
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb
 	google.golang.org/api v0.84.0
@@ -41,18 +41,18 @@ require (
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.16.4 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.15.7 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.12.2 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.5 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.11 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.5 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.12 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.43.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.11.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.16.6 // indirect
-	github.com/aws/smithy-go v1.11.2 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.16.5 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.15.11 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.12.6 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.6 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.12 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.6 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.13 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.45.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.6 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.11.9 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.16.7 // indirect
+	github.com/aws/smithy-go v1.11.3 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
@@ -70,7 +70,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.0.0-20220520183353-fd19c99a87aa // indirect
 	github.com/googleapis/gax-go/v2 v2.4.0 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
-	github.com/gophercloud/gophercloud v0.24.0 // indirect
+	github.com/gophercloud/gophercloud v0.25.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
