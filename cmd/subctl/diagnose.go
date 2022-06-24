@@ -194,7 +194,7 @@ func addDiagnoseFirewallSubCommands() {
 }
 
 func addDiagnosePodNamespaceFlag(command *cobra.Command, value *string) {
-	command.Flags().StringVar(value, "namespace", "default", "namespace in which validation pods should be deployed")
+	command.Flags().StringVar(value, "namespace", constants.OperatorNamespace, "namespace in which validation pods should be deployed")
 }
 
 func addDiagnoseFWConfigFlags(command *cobra.Command) {
