@@ -25,6 +25,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/pods"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/image"
@@ -126,7 +127,7 @@ func getActiveGatewayNodeName(clusterInfo *cluster.Info, hostname string, imageR
 		// On some platforms, the nodeName does not match with the hostname.
 		// Submariner Endpoint stores the hostname info in the endpoint and not the nodeName. So, we spawn a
 		// tiny pod to read the hostname and return the corresponding node.
-		sPod, err := spawnSnifferPodOnNode(clusterInfo.ClientProducer.ForKubernetes(), node.Name, "default", "hostname",
+		sPod, err := spawnSnifferPodOnNode(clusterInfo.ClientProducer.ForKubernetes(), node.Name, constants.OperatorNamespace, "hostname",
 			imageRepInfo)
 		if err != nil {
 			return "", status.Error(err, "Error spawning the sniffer pod on the node %q: %v", node.Name)
