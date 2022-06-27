@@ -170,6 +170,7 @@ func init() {
 
 func addDiagnoseSubCommands() {
 	addDiagnosePodNamespaceFlag(diagnoseKubeProxyModeCmd, &diagnoseKubeProxyOptions.podNamespace)
+	addDiagnoseFWConfigFlags(diagnoseAllCmd)
 
 	diagnoseCmd.AddCommand(diagnoseCNICmd)
 	diagnoseCmd.AddCommand(diagnoseConnectionsCmd)
@@ -193,13 +194,14 @@ func addDiagnoseFirewallSubCommands() {
 }
 
 func addDiagnosePodNamespaceFlag(command *cobra.Command, value *string) {
-	command.Flags().StringVar(value, "namespace", "default", "namespace in which validation pods should be deployed")
+	command.Flags().StringVar(value, "namespace", constants.OperatorNamespace, "namespace in which validation pods should be deployed")
 }
 
 func addDiagnoseFWConfigFlags(command *cobra.Command) {
 	command.Flags().UintVar(&diagnoseFirewallOptions.ValidationTimeout, "validation-timeout", 90,
-		"timeout in seconds while validating the connection attempt")
-	command.Flags().BoolVar(&diagnoseFirewallOptions.VerboseOutput, "verbose", false, "produce verbose output")
+		"time to run in seconds while validating the firewall")
+	command.Flags().BoolVar(&diagnoseFirewallOptions.VerboseOutput, "verbose", false,
+		"produce verbose output while validating the firewall")
 	addDiagnosePodNamespaceFlag(command, &diagnoseFirewallOptions.PodNamespace)
 }
 
