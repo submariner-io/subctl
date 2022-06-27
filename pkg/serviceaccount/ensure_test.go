@@ -71,7 +71,7 @@ var _ = Describe("EnsureFromYAML", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-sa",
 				},
-			})
+			}, false)
 			Expect(err).To(Succeed())
 			assertServiceAccount()
 

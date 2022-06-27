@@ -206,7 +206,7 @@ func CreateNewBrokerRoleBinding(kubeClient kubernetes.Interface, serviceAccount,
 // nolint:wrapcheck // No need to wrap here
 func CreateNewBrokerSA(kubeClient kubernetes.Interface, submarinerBrokerSA, inNamespace string) (brokerSA *v1.ServiceAccount, err error) {
 	sa := NewBrokerSA(submarinerBrokerSA)
-	_, err = serviceaccount.Ensure(kubeClient, inNamespace, sa)
+	_, err = serviceaccount.Ensure(kubeClient, inNamespace, sa, true)
 
 	if err != nil {
 		return nil, err
