@@ -53,7 +53,7 @@ func ensureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (*c
 		return nil, err
 	}
 
-	_, err = Ensure(kubeClient, namespace, sa)
+	_, err = Ensure(kubeClient, namespace, sa, true)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,14 @@ func ensureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (*c
 }
 
 // nolint:wrapcheck // No need to wrap errors here.
-func Ensure(kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount) (bool, error) {
+func Ensure(kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount, onlyCreate bool) (bool, error) {
+	if onlyCreate {
+		_, err := kubeClient.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), sa.Name, metav1.GetOptions{})
+		if err == nil {
+			return true, nil
+		}
+	}
+
 	return resourceutil.CreateOrUpdate(context.TODO(), resource.ForServiceAccount(kubeClient, namespace), sa)
 }
 
@@ -123,7 +130,7 @@ func EnsureSecretFromSA(client kubernetes.Interface, saName, namespace string) (
 	}
 
 	sa.Secrets = append(sa.Secrets, secretRef)
-	_, err = Ensure(client, namespace, sa)
+	_, err = Ensure(client, namespace, sa, false)
 
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to update ServiceAccount %v with Secret reference %v", saName, secretRef.Name)
