@@ -43,7 +43,8 @@ BINARIES := cmd/bin/subctl
 CROSS_BINARIES := $(foreach cross,$(CROSS_TARGETS),$(patsubst %,cmd/bin/subctl-$(VERSION)-%,$(cross)))
 CROSS_TARBALLS := $(foreach cross,$(CROSS_TARGETS),$(patsubst %,dist/subctl-$(VERSION)-%.tar.xz,$(cross)))
 
-override E2E_ARGS += --settings $(SETTINGS) cluster1 cluster2
+override E2E_ARGS += cluster1 cluster2
+override SYSTEM_ARGS += --settings $(SETTINGS) cluster1 cluster2
 export DEPLOY_ARGS
 override UNIT_TEST_ARGS += test internal/env
 override VALIDATE_ARGS += --skip-dirs pkg/client
@@ -75,8 +76,9 @@ export PATH := $(CURDIR)/cmd/bin:$(PATH)
 # (with the PATH set above)
 deploy: cmd/bin/subctl
 
-e2e: deploy
-	scripts/kind-e2e/e2e.sh $(E2E_ARGS)
+# [system-test] runs system level tests for the various `subctl` commands
+system-test:
+	scripts/test/system.sh $(SYSTEM_ARGS)
 
 clean:
 	rm -f $(BINARIES) $(CROSS_BINARIES) $(CROSS_TARBALLS)
@@ -126,33 +128,7 @@ cmd/bin/subctl-%: $(shell find . -name "*.go") $(VENDOR_MODULES)
 
 ci: golangci-lint markdownlint unit build images
 
-# Test as many of the config/context-dependent subctl commands as possible
-test-subctl: cmd/bin/subctl deploy
-# benchmark
-	cmd/bin/subctl benchmark latency --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1:$(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster2 \
-		--kubecontexts cluster1,cluster2
-	cmd/bin/subctl benchmark latency --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 \
-		--kubecontexts cluster1 --intra-cluster
-	cmd/bin/subctl benchmark throughput --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1:$(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster2 \
-		--kubecontexts cluster1,cluster2
-	cmd/bin/subctl benchmark throughput --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 \
-		--kubecontexts cluster1 --intra-cluster
-# cloud
-	cmd/bin/subctl cloud prepare generic --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 --kubecontext cluster1
-# deploy-broker is tested by the deploy target
-# diagnose
-	cmd/bin/subctl diagnose all --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
-	cmd/bin/subctl diagnose firewall inter-cluster $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1 $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster2
-# export TBD
-# gather
-	cmd/bin/subctl gather $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
-# join is tested by the deploy target
-# show
-	cmd/bin/subctl show all --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
-# verify is tested by the e2e target (run elsewhere)
-	cmd/bin/subctl uninstall -y --kubeconfig $(DAPPER_OUTPUT)/kubeconfigs/kind-config-cluster1
-
-.PHONY: build ci clean generate-clientset
+.PHONY: build ci clean generate-clientset system-test
 
 else
 

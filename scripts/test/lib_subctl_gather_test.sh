@@ -6,22 +6,7 @@ if [ "${0##*/}" = "lib_subctl_gather_test.sh" ]; then
     exit 1
 fi
 
-function test_subctl_gather() {
-  out_dir=/tmp/subctl-gather-output
-  rm -rf $out_dir
-  mkdir $out_dir
-
-  ${DAPPER_SOURCE}/cmd/bin/subctl gather --dir $out_dir
-
-  ls $out_dir
-
-  for cluster in "${clusters[@]}"; do
-      with_context "${cluster}" validate_gathered_files
-  done
-
-  # Broker
-  with_context "$broker" validate_broker_resources
-}
+gather_out_dir=/tmp/subctl-gather-output
 
 function validate_gathered_files () {
 
@@ -76,7 +61,7 @@ function validate_pod_log_files() {
   read -ra pod_names_array <<< "$pod_names"
 
   for pod_name in "${pod_names_array[@]}"; do
-    file=$out_dir/${cluster}_$pod_name.log
+    file=$gather_out_dir/${cluster}_$pod_name.log
     cat $file
 
   done
@@ -111,7 +96,7 @@ function validate_resource_files() {
   for i in "${!names_array[@]}"; do
     name=${names_array[$i]}
     namespace=${namespaces_array[$i]}
-    file=$out_dir/${cluster_name}_${short_res}_${namespace}_${name}.yaml
+    file=$gather_out_dir/${cluster_name}_${short_res}_${namespace}_${name}.yaml
     cat $file
 
     kind_count=$(grep "kind: $kind$" $file | wc -l)
@@ -129,8 +114,8 @@ function validate_resource_files() {
 }
 
 function validate_broker_resources() {
-  validate_resource_files $SUBMARINER_BROKER_NS 'endpoints.submariner.io' 'Endpoint' '' 'broker'
-  validate_resource_files $SUBMARINER_BROKER_NS 'clusters.submariner.io' 'Cluster' '' 'broker'
-  validate_resource_files $SUBMARINER_BROKER_NS 'serviceimports.multicluster.x-k8s.io' 'ServiceImport' '' 'broker'
-  validate_resource_files $SUBMARINER_BROKER_NS 'endpointslices.discovery.k8s.io' 'EndpointSlice' '' 'broker'
+  validate_resource_files $submariner_broker_ns 'endpoints.submariner.io' 'Endpoint' '' 'broker'
+  validate_resource_files $submariner_broker_ns 'clusters.submariner.io' 'Cluster' '' 'broker'
+  validate_resource_files $submariner_broker_ns 'serviceimports.multicluster.x-k8s.io' 'ServiceImport' '' 'broker'
+  validate_resource_files $submariner_broker_ns 'endpointslices.discovery.k8s.io' 'EndpointSlice' '' 'broker'
 }
