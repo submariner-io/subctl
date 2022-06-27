@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  system-test:
     name: Subctl Commands
     timeout-minutes: 30
     runs-on: ubuntu-latest
@@ -20,7 +20,7 @@ jobs:
       - name: Deploy the environment and run the tests
         uses: submariner-io/shipyard/gh-actions/e2e@devel
         with:
-          target: system
+          target: system-test
           using: ${{ matrix.globalnet }}
 
       - name: Post mortem

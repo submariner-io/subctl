@@ -76,7 +76,8 @@ export PATH := $(CURDIR)/cmd/bin:$(PATH)
 # (with the PATH set above)
 deploy: cmd/bin/subctl
 
-system:
+# [system-test] runs system level tests for the various `subctl` commands
+system-test:
 	scripts/test/system.sh $(SYSTEM_ARGS)
 
 clean:
@@ -127,7 +128,7 @@ cmd/bin/subctl-%: $(shell find . -name "*.go") $(VENDOR_MODULES)
 
 ci: golangci-lint markdownlint unit build images
 
-.PHONY: build ci clean generate-clientset system
+.PHONY: build ci clean generate-clientset system-test
 
 else
 
