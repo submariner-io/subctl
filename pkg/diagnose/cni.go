@@ -19,18 +19,30 @@ limitations under the License.
 package diagnose
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/mcuadros/go-version"
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"github.com/submariner-io/submariner/pkg/cni"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/remotecommand"
+)
+
+const (
+	ovnKubeDBPodLabel = "ovn-db-pod=true"
+	minOVNNBVersion   = "6.1.0"
 )
 
 var supportedNetworkPlugins = []string{
@@ -70,6 +82,10 @@ func CNIConfig(clusterInfo *cluster.Info, status reporter.Interface) bool {
 			" It may or may not work.", clusterInfo.Submariner.Status.NetworkPlugin)
 	} else {
 		status.Success("The detected CNI network plugin (%q) is supported", clusterInfo.Submariner.Status.NetworkPlugin)
+	}
+
+	if clusterInfo.Submariner.Status.NetworkPlugin == cni.OVNKubernetes {
+		return checkOVNVersion(clusterInfo, status)
 	}
 
 	return checkCalicoIPPoolsIfCalicoCNI(clusterInfo, status)
@@ -205,4 +221,103 @@ func mustHaveSubmariner(clusterInfo *cluster.Info) {
 	if clusterInfo.Submariner == nil {
 		panic("cluster.Info.Submariner field cannot be nil")
 	}
+}
+
+func checkOVNVersion(info *cluster.Info, status reporter.Interface) bool {
+	status.Start("Checking OVN version")
+	defer status.End()
+
+	clientSet := info.ClientProducer.ForKubernetes()
+
+	ovnPod, err := mustFindPod(clientSet, ovnKubeDBPodLabel)
+	if err != nil {
+		status.Failure("Failed to get OVNKubeDB Pod %v", err)
+		return false
+	}
+
+	ovnNBVersion, err := getOVNNBVersion(clientSet, info.RestConfig, ovnPod)
+	if err != nil {
+		status.Failure("Failed to get ovn-nb database version %v", err)
+		return false
+	}
+
+	if version.Compare(ovnNBVersion, minOVNNBVersion, "<") {
+		status.Failure("The ovn-nb database version %v is less than the minimum supported version %v", ovnNBVersion, minOVNNBVersion)
+		return false
+	}
+
+	status.Success("The ovn-nb database version %v is supported", ovnNBVersion)
+
+	return true
+}
+
+func mustFindPod(clientSet kubernetes.Interface, labelSelector string) (*corev1.Pod, error) {
+	pods, err := clientSet.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{
+		LabelSelector: labelSelector,
+		Limit:         1,
+	})
+	if err != nil {
+		return nil, errors.WithMessagef(err, "error listing Pods by label selector %q", labelSelector)
+	}
+
+	if len(pods.Items) == 0 {
+		return nil, errors.WithMessagef(err, "no pod found with label %v", labelSelector)
+	}
+
+	return &pods.Items[0], nil
+}
+
+func getOVNNBVersion(clientSet kubernetes.Interface, config *rest.Config, pod *corev1.Pod) (string, error) {
+	containerName := ""
+
+	for i := 0; i < len(pod.Spec.Containers); i++ {
+		container := pod.Spec.Containers[i]
+		// NBDB container name is nb-ovsdb [vanilla OVNK] or nbdb [OCP].
+		if strings.HasPrefix(container.Name, "nb") {
+			containerName = container.Name
+			break
+		}
+	}
+
+	cmd := []string{"ovn-nbctl", "-V"}
+	req := clientSet.CoreV1().RESTClient().Post().
+		Resource("pods").
+		Name(pod.Name).
+		Namespace(pod.Namespace).
+		SubResource("exec").
+		Param("container", containerName)
+	req.VersionedParams(&corev1.PodExecOptions{
+		Container: containerName,
+		Command:   cmd,
+		Stdin:     false,
+		Stdout:    true,
+		Stderr:    true,
+		TTY:       false,
+	}, scheme.ParameterCodec)
+
+	var stdout, stderr bytes.Buffer
+
+	exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
+	if err != nil {
+		return "", errors.WithMessagef(err, "failed to create SPDY executor")
+	}
+
+	err = exec.Stream(remotecommand.StreamOptions{
+		Stdin:  nil,
+		Stdout: &stdout,
+		Stderr: &stderr,
+		Tty:    false,
+	})
+
+	if err != nil {
+		return "", errors.WithMessagef(err, "failed to execute SPDY command")
+	}
+
+	results := strings.Split(stdout.String(), "DB Schema")
+
+	if len(results) < 2 {
+		return "", errors.WithMessagef(err, "unable to determine the version from the ovn-nbctl output: %q", stdout.String())
+	}
+
+	return strings.TrimSpace(results[1]), nil
 }
