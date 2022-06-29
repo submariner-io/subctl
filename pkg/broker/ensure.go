@@ -91,7 +91,7 @@ func Ensure(crdUpdater crd.Updater, kubeClient kubernetes.Interface, componentAr
 
 func createBrokerClusterRoleAndDefaultSA(kubeClient kubernetes.Interface, inNamespace string) error {
 	// Create the a default SA for cluster access (backwards compatibility with documentation)
-	_, err := CreateNewBrokerSA(kubeClient, submarinerBrokerClusterDefaultSA, inNamespace)
+	err := CreateNewBrokerSA(kubeClient, submarinerBrokerClusterDefaultSA, inNamespace)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return errors.Wrap(err, "error creating the default broker service account")
 	}
@@ -115,7 +115,7 @@ func createBrokerClusterRoleAndDefaultSA(kubeClient kubernetes.Interface, inName
 func CreateSAForCluster(kubeClient kubernetes.Interface, clusterID, inNamespace string) (*v1.Secret, error) {
 	saName := names.ForClusterSA(clusterID)
 
-	_, err := CreateNewBrokerSA(kubeClient, saName, inNamespace)
+	err := CreateNewBrokerSA(kubeClient, saName, inNamespace)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return nil, errors.Wrap(err, "error creating cluster sa")
 	}
@@ -135,7 +135,7 @@ func CreateSAForCluster(kubeClient kubernetes.Interface, clusterID, inNamespace 
 
 func createBrokerAdministratorRoleAndSA(kubeClient kubernetes.Interface, inNamespace string) error {
 	// Create the SA we need for the managing the broker (from subctl, etc..).
-	_, err := CreateNewBrokerSA(kubeClient, constants.SubmarinerBrokerAdminSA, inNamespace)
+	err := CreateNewBrokerSA(kubeClient, constants.SubmarinerBrokerAdminSA, inNamespace)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return errors.Wrap(err, "error creating the broker admin service account")
 	}
@@ -204,19 +204,9 @@ func CreateNewBrokerRoleBinding(kubeClient kubernetes.Interface, serviceAccount,
 }
 
 // nolint:wrapcheck // No need to wrap here
-func CreateNewBrokerSA(kubeClient kubernetes.Interface, submarinerBrokerSA, inNamespace string) (brokerSA *v1.ServiceAccount, err error) {
+func CreateNewBrokerSA(kubeClient kubernetes.Interface, submarinerBrokerSA, inNamespace string) (err error) {
 	sa := NewBrokerSA(submarinerBrokerSA)
 	_, err = serviceaccount.Ensure(kubeClient, inNamespace, sa, true)
 
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = serviceaccount.EnsureSecretFromSA(kubeClient, sa.Name, inNamespace)
-
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get secret for broker SA")
-	}
-
-	return kubeClient.CoreV1().ServiceAccounts(inNamespace).Get(context.TODO(), sa.Name, metav1.GetOptions{})
+	return err
 }
