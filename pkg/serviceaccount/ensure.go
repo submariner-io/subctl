@@ -53,7 +53,7 @@ func ensureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (*c
 		return nil, err
 	}
 
-	_, err = Ensure(kubeClient, namespace, sa, true)
+	err = ensure(kubeClient, namespace, sa, true)
 	if err != nil {
 		return nil, err
 	}
@@ -62,15 +62,34 @@ func ensureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (*c
 }
 
 // nolint:wrapcheck // No need to wrap errors here.
-func Ensure(kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount, onlyCreate bool) (bool, error) {
+func ensure(kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount, onlyCreate bool) error {
 	if onlyCreate {
 		_, err := kubeClient.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), sa.Name, metav1.GetOptions{})
-		if err == nil {
-			return true, nil
+
+		if err == nil || !apierrors.IsNotFound(err) {
+			return err
 		}
 	}
 
-	return resourceutil.CreateOrUpdate(context.TODO(), resource.ForServiceAccount(kubeClient, namespace), sa)
+	_, err := resourceutil.CreateOrUpdate(context.TODO(), resource.ForServiceAccount(kubeClient, namespace), sa)
+
+	return err
+}
+
+// nolint:wrapcheck // No need to wrap errors here.
+func Ensure(kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount, onlyCreate bool) (*corev1.ServiceAccount, error) {
+	err := ensure(kubeClient, namespace, sa, onlyCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = EnsureSecretFromSA(kubeClient, sa.Name, namespace)
+
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get secret for broker SA")
+	}
+
+	return kubeClient.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), sa.Name, metav1.GetOptions{})
 }
 
 // EnsureFromYAML creates the given service account and secret for it.
@@ -130,7 +149,7 @@ func EnsureSecretFromSA(client kubernetes.Interface, saName, namespace string) (
 	}
 
 	sa.Secrets = append(sa.Secrets, secretRef)
-	_, err = Ensure(client, namespace, sa, false)
+	err = ensure(client, namespace, sa, false)
 
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to update ServiceAccount %v with Secret reference %v", saName, secretRef.Name)
