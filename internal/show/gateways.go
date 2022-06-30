@@ -22,15 +22,10 @@ import (
 	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/subctl/internal/show/table"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 )
-
-type gatewayStatus struct {
-	node     string
-	haStatus submv1.HAStatus
-	summary  string
-}
 
 func Gateways(clusterInfo *cluster.Info, status reporter.Interface) bool {
 	status.Start("Showing Gateways")
@@ -50,12 +45,14 @@ func Gateways(clusterInfo *cluster.Info, status reporter.Interface) bool {
 		return false
 	}
 
-	gwStatus := make([]gatewayStatus, 0, len(gateways))
+	printer := table.Printer{Columns: []table.Column{
+		{Name: "NODE", MaxLength: 30},
+		{Name: "HA STATUS"},
+		{Name: "SUMMARY"},
+	}}
 
 	for i := range gateways {
-		gateway := &gateways[i]
-		haStatus := gateway.Status.HAStatus
-		enpoint := gateway.Status.LocalEndpoint.Hostname
+		gateway := gateways[i]
 		totalConnections := len(gateway.Status.Connections)
 		countConnected := 0
 
@@ -76,36 +73,11 @@ func Gateways(clusterInfo *cluster.Info, status reporter.Interface) bool {
 			summary = fmt.Sprintf("%d connections out of %d are established", countConnected, totalConnections)
 		}
 
-		gwStatus = append(gwStatus,
-			gatewayStatus{
-				node:     enpoint,
-				haStatus: haStatus,
-				summary:  summary,
-			})
-	}
-
-	if len(gwStatus) == 0 {
-		status.Failure("No Gateways found")
-		status.End()
-
-		return false
+		printer.Add(gateway.Status.LocalEndpoint.Hostname, gateway.Status.HAStatus, summary)
 	}
 
 	status.End()
-	printGateways(gwStatus)
+	printer.Print()
 
 	return true
-}
-
-func printGateways(gateways []gatewayStatus) {
-	template := "%-32.31s%-16s%-32s\n"
-	fmt.Printf(template, "NODE", "HA STATUS", "SUMMARY")
-
-	for _, item := range gateways {
-		fmt.Printf(
-			template,
-			item.node,
-			item.haStatus,
-			item.summary)
-	}
 }
