@@ -19,24 +19,11 @@ limitations under the License.
 package show
 
 import (
-	"strings"
-
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/show/table"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 )
-
-type connectionStatus struct {
-	gateway     string
-	cluster     string
-	remoteIP    string
-	usingNAT    string
-	cableDriver string
-	subnets     string
-	rtt         string
-	status      submv1.ConnectionStatus
-}
 
 func Connections(clusterInfo *cluster.Info, status reporter.Interface) bool {
 	status.Start("Showing Connections")
@@ -56,30 +43,36 @@ func Connections(clusterInfo *cluster.Info, status reporter.Interface) bool {
 		return false
 	}
 
-	var connStatus []interface{}
+	printer := table.Printer{Columns: []table.Column{
+		{Name: "GATEWAY", MaxLength: 30},
+		{Name: "CLUSTER", MaxLength: 24},
+		{Name: "REMOTE IP"},
+		{Name: "NAT"},
+		{Name: "CABLE DRIVER"},
+		{Name: "SUBNETS", MaxLength: 40},
+		{Name: "STATUS"},
+		{Name: "RTT avg."},
+	}}
 
 	for i := range gateways {
 		gateway := &gateways[i]
 		for i := range gateway.Status.Connections {
 			connection := &gateway.Status.Connections[i]
-			subnets := strings.Join(connection.Endpoint.Subnets, ", ")
-
 			ip, nat := remoteIPAndNATForConnection(connection)
-
-			connStatus = append(connStatus, connectionStatus{
-				gateway:     connection.Endpoint.Hostname,
-				cluster:     connection.Endpoint.ClusterID,
-				remoteIP:    ip,
-				usingNAT:    nat,
-				cableDriver: connection.Endpoint.Backend,
-				subnets:     subnets,
-				status:      connection.Status,
-				rtt:         getAverageRTTForConnection(connection),
-			})
+			printer.Add(
+				connection.Endpoint.Hostname,
+				connection.Endpoint.ClusterID,
+				ip,
+				nat,
+				connection.Endpoint.Backend,
+				connection.Endpoint.Subnets,
+				connection.Status,
+				getAverageRTTForConnection(connection),
+			)
 		}
 	}
 
-	if len(connStatus) == 0 {
+	if printer.Empty() {
 		status.Failure("No connections found")
 		status.End()
 
@@ -87,7 +80,7 @@ func Connections(clusterInfo *cluster.Info, status reporter.Interface) bool {
 	}
 
 	status.End()
-	connectionPrinter.Print(connStatus)
+	printer.Print()
 
 	return true
 }
@@ -101,40 +94,14 @@ func getAverageRTTForConnection(connection *submv1.Connection) string {
 	return rtt
 }
 
-func remoteIPAndNATForConnection(connection *submv1.Connection) (string, string) {
-	usingNAT := "no"
-
+func remoteIPAndNATForConnection(connection *submv1.Connection) (string, bool) {
 	if connection.UsingIP != "" {
-		if connection.UsingNAT {
-			usingNAT = "yes"
-		}
-
-		return connection.UsingIP, usingNAT
+		return connection.UsingIP, connection.UsingNAT
 	}
 
 	if connection.Endpoint.NATEnabled {
-		return connection.Endpoint.PublicIP, "yes"
+		return connection.Endpoint.PublicIP, true
 	}
 
-	return connection.Endpoint.PrivateIP, "no"
-}
-
-var connectionPrinter = table.Printer{
-	Headers: []table.Header{
-		{Name: "GATEWAY", MaxLength: 31},
-		{Name: "CLUSTER", MaxLength: 23},
-		{Name: "REMOTE IP", MaxLength: 15},
-		{Name: "NAT", MaxLength: 3},
-		{Name: "CABLE DRIVER", MaxLength: 19},
-		{Name: "SUBNETS", MaxLength: 39},
-		{Name: "STATUS", MaxLength: 15},
-		{Name: "RTT avg.", MaxLength: 12},
-	},
-	RowConverterFunc: func(obj interface{}) []string {
-		item := obj.(connectionStatus)
-		return []string{
-			item.gateway, item.cluster, item.remoteIP, item.usingNAT, item.cableDriver,
-			item.subnets, string(item.status), item.rtt,
-		}
-	},
+	return connection.Endpoint.PrivateIP, false
 }
