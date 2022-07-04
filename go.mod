@@ -18,11 +18,11 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.4.0
 	github.com/submariner-io/admiral v0.13.0-rc1
-	github.com/submariner-io/cloud-prepare v0.13.0-rc0
-	github.com/submariner-io/lighthouse v0.13.0-rc0
+	github.com/submariner-io/cloud-prepare v0.13.0-rc1
+	github.com/submariner-io/lighthouse v0.13.0-rc1
 	github.com/submariner-io/shipyard v0.13.0-rc1
-	github.com/submariner-io/submariner v0.13.0-rc0
-	github.com/submariner-io/submariner-operator v0.13.0-rc0
+	github.com/submariner-io/submariner v0.13.0-rc1
+	github.com/submariner-io/submariner-operator v0.13.0-rc1
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb
 	google.golang.org/api v0.84.0
