@@ -28,20 +28,20 @@ import (
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/deploy"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
 	deployflags       deploy.BrokerOptions
 	ipsecSubmFile     string
 	defaultComponents = []string{component.ServiceDiscovery, component.Connectivity}
-)
 
-var deployRestConfigProducer = restconfig.NewProducer()
+	deployClientConfig clientcmd.ClientConfig
+)
 
 // deployBroker represents the deployBroker command.
 var deployBroker = &cobra.Command{
@@ -50,16 +50,16 @@ var deployBroker = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		status := cli.NewReporter()
 
-		config, err := deployRestConfigProducer.ForCluster()
-		exit.OnError(status.Error(err, "Error creating REST config"))
+		restConfig, err := deployClientConfig.ClientConfig()
+		exit.OnError(status.Error(err, "Error retrieving REST config"))
 
-		clientProducer, err := client.NewProducerFromRestConfig(config.Config)
+		clientProducer, err := client.NewProducerFromRestConfig(restConfig)
 		exit.OnError(status.Error(err, "Error creating client producer"))
 
 		err = deploy.Broker(&deployflags, clientProducer, status)
 		exit.OnError(err)
 
-		err = broker.WriteInfoToFile(config.Config, deployflags.BrokerNamespace, ipsecSubmFile,
+		err = broker.WriteInfoToFile(restConfig, deployflags.BrokerNamespace, ipsecSubmFile,
 			stringset.New(deployflags.BrokerSpec.Components...), deployflags.BrokerSpec.DefaultCustomDomains, status)
 		exit.OnError(err)
 	},
@@ -67,7 +67,6 @@ var deployBroker = &cobra.Command{
 
 func init() {
 	addDeployBrokerFlags()
-	deployRestConfigProducer.AddKubeContextFlag(deployBroker)
 	rootCmd.AddCommand(deployBroker)
 }
 
@@ -94,4 +93,6 @@ func addDeployBrokerFlags() {
 	deployBroker.PersistentFlags().BoolVar(&deployflags.OperatorDebug, "operator-debug", false, "enable operator debugging (verbose logging)")
 	deployBroker.PersistentFlags().StringVar(&deployflags.BrokerNamespace, "broker-namespace", constants.DefaultBrokerNamespace,
 		"namespace for broker")
+
+	deployClientConfig = setupKubeconfigFlags(deployBroker.Flags(), false)
 }
