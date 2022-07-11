@@ -36,11 +36,14 @@ import (
 	"github.com/submariner-io/subctl/pkg/join"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/network"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
 	joinFlags    join.Options
 	labelGateway bool
+
+	joinClientConfig clientcmd.ClientConfig
 )
 
 var joinRestConfigProducer = restconfig.NewProducer()
@@ -60,10 +63,10 @@ var joinCmd = &cobra.Command{
 
 		determineClusterID(status)
 
-		clientConfig, err := joinRestConfigProducer.ForCluster()
-		exit.OnError(status.Error(err, "Error creating the REST config"))
+		restConfig, err := joinClientConfig.ClientConfig()
+		exit.OnError(status.Error(err, "Error retrieving REST config"))
 
-		clientProducer, err := client.NewProducerFromRestConfig(clientConfig.Config)
+		clientProducer, err := client.NewProducerFromRestConfig(restConfig)
 		exit.OnError(status.Error(err, "Error creating the client producer"))
 
 		networkDetails := getNetworkDetails(clientProducer, status)
@@ -85,7 +88,6 @@ var joinCmd = &cobra.Command{
 
 func init() {
 	addJoinFlags(joinCmd)
-	joinRestConfigProducer.AddKubeContextFlag(joinCmd)
 	rootCmd.AddCommand(joinCmd)
 }
 
@@ -135,6 +137,8 @@ func addJoinFlags(cmd *cobra.Command) {
 
 	cmd.Flags().BoolVar(&joinFlags.BrokerK8sSecure, "check-broker-certificate", true,
 		"check the broker certificate (disable this to allow \"insecure\" connections)")
+
+	joinClientConfig = setupKubeconfigFlags(cmd.Flags(), false)
 }
 
 func possiblyLabelGateway(kubeClient kubernetes.Interface, status reporter.Interface) {

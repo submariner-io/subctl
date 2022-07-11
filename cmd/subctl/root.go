@@ -25,6 +25,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/pkg/cluster"
@@ -32,6 +33,7 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 func init() {
@@ -52,6 +54,28 @@ func Execute() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+func setupKubeconfigFlags(flags *pflag.FlagSet, allowNamespace bool) clientcmd.ClientConfig {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
+	overrides := clientcmd.ConfigOverrides{}
+	kflags := clientcmd.RecommendedConfigOverrideFlags("")
+	clientcmd.BindOverrideFlags(&overrides, flags, kflags)
+
+	// Support deprecated --kubecontext; TODO remove in 0.15
+	legacyFlags := clientcmd.RecommendedConfigOverrideFlags("kube")
+	legacyFlags.CurrentContext.BindStringFlag(flags, &overrides.CurrentContext)
+	_ = flags.MarkDeprecated("kubecontext", "Use --context instead")
+
+	flags.StringVar(&loadingRules.ExplicitPath, "kubeconfig", "", "absolute path(s) to the kubeconfig file(s)")
+
+	_ = flags.MarkDeprecated("check-broker-certificate", "Use --insecure-skip-tls-verify instead")
+	if !allowNamespace {
+		_ = flags.MarkHidden("namespace")
+	}
+
+	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &overrides)
 }
 
 func setupTestFrameworkBeforeSuite() {
