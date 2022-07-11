@@ -18,73 +18,116 @@ limitations under the License.
 
 package table
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
-type Header struct {
-	Name      string
+type Column struct {
+	Name string
+
+	// Maximum column length (if unspecified then output won't be truncated)
 	MaxLength int
 }
 
 type Printer struct {
-	Headers          []Header
-	RowConverterFunc func(obj interface{}) []string
+	Columns []Column
+	rows    [][]string
 }
 
-func (p *Printer) Print(objects []interface{}) {
-	rowList := p.generateRowList(objects)
+// Add a new row consisting of values to be printed.
+// The value will be cast to string, with special care given to bool and slice.
+// It's up to the caller to ensure the number of values match the nubmer of table columns.
+func (p *Printer) Add(values ...interface{}) {
+	row := make([]string, len(values))
 
-	columnLengths := p.findColumnLengths(rowList)
-	template := templateFromLengths(columnLengths)
-
-	for _, row := range rowList {
-		rowInterfaces := make([]interface{}, len(row))
-		for i := range row {
-			rowInterfaces[i] = row[i]
+	for i, value := range values {
+		if value == nil {
+			continue
 		}
 
-		fmt.Printf(template, rowInterfaces...)
+		switch v := value.(type) {
+		case bool:
+			row[i] = "no"
+			if v {
+				row[i] = "yes"
+			}
+		case []string:
+			row[i] = strings.Join(v, ", ")
+		default:
+			row[i] = fmt.Sprintf("%v", v)
+		}
+	}
+
+	p.rows = append(p.rows, row)
+}
+
+// Empty will be true if there aren't any rows to print.
+func (p *Printer) Empty() bool {
+	return len(p.rows) == 0
+}
+
+// Print out the table; if it's empty then nothing gets printed.
+func (p *Printer) Print() {
+	if p.Empty() {
+		return
+	}
+
+	template := p.initTemplate()
+	printRow(template, p.columnNames())
+
+	for _, row := range p.rows {
+		printRow(template, row)
 	}
 }
 
-func (p *Printer) generateRowList(objects []interface{}) [][]string {
-	headerRow := []string{}
-	for _, header := range p.Headers {
-		headerRow = append(headerRow, header.Name)
+func printRow(template string, row []string) {
+	values := make([]interface{}, len(row))
+	for i, v := range row {
+		values[i] = v
 	}
 
-	rowList := [][]string{headerRow}
-
-	for _, row := range objects {
-		rowList = append(rowList, p.RowConverterFunc(row))
-	}
-
-	return rowList
+	fmt.Printf(template, values...)
 }
 
-func templateFromLengths(columnLengths []int) string {
+func (p *Printer) columnNames() []string {
+	columns := make([]string, len(p.Columns))
+	for i, column := range p.Columns {
+		columns[i] = column.Name
+	}
+
+	return columns
+}
+
+func (p *Printer) initTemplate() string {
+	columnLengths := p.findColumnLengths()
+
 	sprintfTemplate := ""
 	for _, length := range columnLengths {
-		sprintfTemplate += fmt.Sprintf("%%-%d.%ds", length+2, length)
+		sprintfTemplate += fmt.Sprintf("%%-%d.%ds", length+3, length)
 	}
 
 	return sprintfTemplate + "\n"
 }
 
-func (p *Printer) findColumnLengths(rowList [][]string) []int {
-	columns := len(rowList[0])
-	columnLengths := make([]int, columns)
+func (p *Printer) findColumnLengths() []int {
+	columnLengths := make([]int, len(p.Columns))
+	for i, column := range p.Columns {
+		columnLengths[i] = len(column.Name)
+	}
 
-	for _, row := range rowList {
-		for index, column := range row {
+	for _, row := range p.rows {
+		for i, column := range row {
+			maxLength := p.Columns[i].MaxLength
 			colLength := len(column)
 
-			// trim the column length if it's going over our maximum
-			if colLength > p.Headers[index].MaxLength {
-				colLength = p.Headers[index].MaxLength
+			// trim the column length if it's going over our maximum (if one is set)
+			if maxLength > 0 && colLength > maxLength {
+				colLength = maxLength
 			}
 
-			if colLength > columnLengths[index] {
-				columnLengths[index] = colLength
+			if colLength > columnLengths[i] {
+				columnLengths[i] = colLength
 			}
 		}
 	}
