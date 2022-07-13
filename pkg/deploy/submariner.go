@@ -41,6 +41,7 @@ type SubmarinerOptions struct {
 	SubmarinerDebug               bool
 	LoadBalancerEnabled           bool
 	HealthCheckEnabled            bool
+	BrokerK8sInsecure             bool
 	NATTPort                      int
 	HealthCheckInterval           uint64
 	HealthCheckMaxPacketLossCount uint64
@@ -93,6 +94,7 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 		BrokerK8sApiServerToken:  string(brokerSecret.Data["token"]),
 		BrokerK8sApiServer:       brokerURL,
 		BrokerK8sSecret:          brokerSecret.ObjectMeta.Name,
+		BrokerK8sInsecure:        options.BrokerK8sInsecure,
 		Broker:                   "k8s",
 		NatEnabled:               options.NATTraversal,
 		Debug:                    options.SubmarinerDebug,

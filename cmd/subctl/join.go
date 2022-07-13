@@ -134,6 +134,9 @@ func addJoinFlags(cmd *cobra.Command) {
 		"Name of the custom CoreDNS configmap to configure forwarding to lighthouse. It should be in "+
 			"<namespace>/<name> format where <namespace> is optional and defaults to kube-system")
 	cmd.Flags().BoolVar(&joinFlags.IgnoreRequirements, "ignore-requirements", false, "ignore requirement failures (unsupported)")
+
+	cmd.Flags().BoolVar(&joinFlags.BrokerK8sSecure, "check-broker-certificate", true,
+		"check the broker certificate (disable this to allow \"insecure\" connections)")
 }
 
 func possiblyLabelGateway(kubeClient kubernetes.Interface, status reporter.Interface) {

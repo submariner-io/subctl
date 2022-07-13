@@ -66,19 +66,22 @@ func (d *Info) encode() (string, error) {
 	return base64.URLEncoding.EncodeToString(jsonBytes), nil
 }
 
-func (d *Info) GetBrokerAdministratorConfig() (*rest.Config, error) {
+func (d *Info) GetBrokerAdministratorConfig(insecure bool) (*rest.Config, error) {
+	if insecure {
+		return d.getAndCheckBrokerAdministratorConfig(false, true)
+	}
 	// We need to try a connection to determine whether the trust chain needs to be provided
-	config, err := d.getAndCheckBrokerAdministratorConfig(false)
+	config, err := d.getAndCheckBrokerAdministratorConfig(false, false)
 	if resource.IsUnknownAuthorityError(err) {
 		// Certificate error, try with the trust chain
-		config, err = d.getAndCheckBrokerAdministratorConfig(true)
+		config, err = d.getAndCheckBrokerAdministratorConfig(true, false)
 	}
 
 	return config, err
 }
 
-func (d *Info) getAndCheckBrokerAdministratorConfig(private bool) (*rest.Config, error) {
-	config := d.getBrokerAdministratorConfig(private)
+func (d *Info) getAndCheckBrokerAdministratorConfig(private, insecure bool) (*rest.Config, error) {
+	config := d.getBrokerAdministratorConfig(private, insecure)
 
 	submClientset, err := submarinerClientset.NewForConfig(config)
 	if err != nil {
@@ -97,8 +100,10 @@ func (d *Info) getAndCheckBrokerAdministratorConfig(private bool) (*rest.Config,
 	return config, err
 }
 
-func (d *Info) getBrokerAdministratorConfig(private bool) *rest.Config {
-	tlsClientConfig := rest.TLSClientConfig{}
+func (d *Info) getBrokerAdministratorConfig(private, insecure bool) *rest.Config {
+	tlsClientConfig := rest.TLSClientConfig{
+		Insecure: insecure,
+	}
 	if private {
 		tlsClientConfig.CAData = d.ClientToken.Data["ca.crt"]
 	}

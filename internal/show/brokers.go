@@ -20,10 +20,9 @@ package show
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/subctl/internal/show/table"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -31,8 +30,6 @@ import (
 )
 
 func Brokers(clusterInfo *cluster.Info, status reporter.Interface) bool {
-	template := "%-25.24s%-25.24s%-40.39s\n"
-
 	status.Start("Detecting broker(s)")
 
 	brokerList, err := clusterInfo.ClientProducer.ForOperator().SubmarinerV1alpha1().Brokers(corev1.NamespaceAll).List(
@@ -51,16 +48,30 @@ func Brokers(clusterInfo *cluster.Info, status reporter.Interface) bool {
 		return true
 	}
 
-	fmt.Printf(template, "NAMESPACE", "NAME", "COMPONENTS")
+	printer := table.Printer{Columns: []table.Column{
+		{Name: "NAMESPACE", MaxLength: 24},
+		{Name: "NAME", MaxLength: 24},
+		{Name: "COMPONENTS"},
+		{Name: "GLOBALNET"},
+		{Name: "GLOBALNET CIDR"},
+		{Name: "DEFAULT GLOBALNET SIZE"},
+		{Name: "DEFAULT DOMAINS", MaxLength: 40},
+	}}
 
 	for i := range brokers {
-		fmt.Printf(
-			template,
+		printer.Add(
 			brokers[i].Namespace,
 			brokers[i].Name,
-			strings.Join(brokers[i].Spec.Components, ", "),
+			brokers[i].Spec.Components,
+			brokers[i].Spec.GlobalnetEnabled,
+			brokers[i].Spec.GlobalnetCIDRRange,
+			brokers[i].Spec.DefaultGlobalnetClusterSize,
+			brokers[i].Spec.DefaultCustomDomains,
 		)
 	}
+
+	status.End()
+	printer.Print()
 
 	return true
 }

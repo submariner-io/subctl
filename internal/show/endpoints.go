@@ -19,29 +19,10 @@ limitations under the License.
 package show
 
 import (
-	"fmt"
-
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/subctl/internal/show/table"
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
-
-type endpointStatus struct {
-	clusterID    string
-	endpointIP   string
-	publicIP     string
-	cableDriver  string
-	endpointType string
-}
-
-func newEndpointsStatusFrom(clusterID, endpointIP, publicIP, cableDriver, endpointType string) endpointStatus {
-	return endpointStatus{
-		clusterID:    clusterID,
-		endpointIP:   endpointIP,
-		publicIP:     publicIP,
-		cableDriver:  cableDriver,
-		endpointType: endpointType,
-	}
-}
 
 func Endpoints(clusterInfo *cluster.Info, status reporter.Interface) bool {
 	status.Start("Showing Endpoints")
@@ -61,53 +42,38 @@ func Endpoints(clusterInfo *cluster.Info, status reporter.Interface) bool {
 		return false
 	}
 
-	epStatus := make([]endpointStatus, 0, len(gateways))
+	printer := table.Printer{Columns: []table.Column{
+		{Name: "CLUSTER", MaxLength: 24},
+		{Name: "ENDPOINT IP"},
+		{Name: "PUBLIC IP"},
+		{Name: "CABLE DRIVER"},
+		{Name: "TYPE"},
+	}}
 
 	for i := range gateways {
 		gateway := &gateways[i]
-		epStatus = append(epStatus, newEndpointsStatusFrom(
+		printer.Add(
 			gateway.Status.LocalEndpoint.ClusterID,
 			gateway.Status.LocalEndpoint.PrivateIP,
 			gateway.Status.LocalEndpoint.PublicIP,
 			gateway.Status.LocalEndpoint.Backend,
-			"local"))
+			"local",
+		)
 
 		for i := range gateway.Status.Connections {
 			connection := &gateway.Status.Connections[i]
-			epStatus = append(epStatus, newEndpointsStatusFrom(
+			printer.Add(
 				connection.Endpoint.ClusterID,
 				connection.Endpoint.PrivateIP,
 				connection.Endpoint.PublicIP,
 				connection.Endpoint.Backend,
-				"remote"))
+				"remote",
+			)
 		}
 	}
 
-	if len(epStatus) == 0 {
-		status.Failure("No Endpoints found")
-		status.End()
-
-		return false
-	}
-
 	status.End()
-	printEndpoints(epStatus)
+	printer.Print()
 
 	return true
-}
-
-func printEndpoints(endpoints []endpointStatus) {
-	template := "%-30.29s%-16.15s%-16.15s%-20.19s%-16.15s\n"
-
-	fmt.Printf(template, "CLUSTER ID", "ENDPOINT IP", "PUBLIC IP", "CABLE DRIVER", "TYPE")
-
-	for _, item := range endpoints {
-		fmt.Printf(
-			template,
-			item.clusterID,
-			item.endpointIP,
-			item.publicIP,
-			item.cableDriver,
-			item.endpointType)
-	}
 }

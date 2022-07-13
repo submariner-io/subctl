@@ -25,6 +25,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/pods"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/image"
@@ -45,6 +46,9 @@ const (
 
 const (
 	clientSourcePort = "9898"
+	loadBalancerName = "submariner-gateway"
+	encapsPortName   = "cable-encaps"
+	nattPortName     = "natt-discovery"
 )
 
 const (
@@ -68,6 +72,7 @@ func spawnClientPodOnNonGatewayNode(client kubernetes.Interface, namespace, podC
 	imageRepInfo *image.RepositoryInfo,
 ) (*pods.Scheduled, error) {
 	scheduling := pods.Scheduling{ScheduleOn: pods.NonGatewayNode, Networking: pods.PodNetworking}
+
 	return spawnPod(client, scheduling, "validate-client", namespace, podCommand, imageRepInfo)
 }
 
@@ -126,7 +131,7 @@ func getActiveGatewayNodeName(clusterInfo *cluster.Info, hostname string, imageR
 		// On some platforms, the nodeName does not match with the hostname.
 		// Submariner Endpoint stores the hostname info in the endpoint and not the nodeName. So, we spawn a
 		// tiny pod to read the hostname and return the corresponding node.
-		sPod, err := spawnSnifferPodOnNode(clusterInfo.ClientProducer.ForKubernetes(), node.Name, "default", "hostname",
+		sPod, err := spawnSnifferPodOnNode(clusterInfo.ClientProducer.ForKubernetes(), node.Name, constants.OperatorNamespace, "hostname",
 			imageRepInfo)
 		if err != nil {
 			return "", status.Error(err, "Error spawning the sniffer pod on the node %q: %v", node.Name)
@@ -220,9 +225,21 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, optio
 		return status.Error(err, "Could not determine the target port")
 	}
 
+	portFilter := fmt.Sprintf("dst port %d", destPort)
+
+	lbNodePort, err := getLbNodePort(localClusterInfo, localEndpoint, targetPort)
+	if err != nil {
+		return status.Error(err, "Could not determine LB node port")
+	}
+
+	// When SM deployed using LB the encapsulated and nat discovery traffic received in some platforms on LB nodeport
+	if lbNodePort != 0 {
+		portFilter += fmt.Sprintf(" or dst port %d ", lbNodePort)
+	}
+
 	clientMessage := string(uuid.NewUUID())[0:8]
-	podCommand := fmt.Sprintf("timeout %d tcpdump -ln -Q in -A -s 100 -i any udp and dst port %d | grep '%s'",
-		options.ValidationTimeout, destPort, clientMessage)
+	podCommand := fmt.Sprintf("timeout %d tcpdump -ln -Q in -A -s 100 -i any udp and %s | grep '%s'",
+		options.ValidationTimeout, portFilter, clientMessage)
 
 	sPod, err := spawnSnifferPodOnNode(localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, options.PodNamespace, podCommand,
 		localClusterInfo.GetImageRepositoryInfo())
@@ -294,4 +311,30 @@ func getTargetPort(submariner *v1alpha1.Submariner, endpoint *subv1.Endpoint, tg
 	default:
 		return 0, fmt.Errorf("could not determine the target port for cable driver %q", endpoint.Spec.Backend)
 	}
+}
+
+func getLbNodePort(clusterInfo *cluster.Info, endpoint *subv1.Endpoint, tgtport TargetPort) (int32, error) {
+	usingLoadBalancer, _ := endpoint.Spec.GetBackendBool(subv1.UsingLoadBalancer, nil)
+	if usingLoadBalancer == nil || !*usingLoadBalancer {
+		return 0, nil
+	}
+
+	portName := encapsPortName
+	if tgtport == NatDiscoveryPort {
+		portName = nattPortName
+	}
+
+	svc, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Services(endpoint.GetNamespace()).Get(
+		context.TODO(), loadBalancerName, metav1.GetOptions{})
+	if err == nil {
+		for _, port := range svc.Spec.Ports {
+			if port.Name == portName {
+				return port.NodePort, nil
+			}
+		}
+	} else {
+		return 0, fmt.Errorf("error reading the details of LB service %s: %w", loadBalancerName, err)
+	}
+
+	return 0, fmt.Errorf("could not determine nodePort for port name %q of LB service %s", portName, loadBalancerName)
 }
