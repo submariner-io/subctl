@@ -70,6 +70,7 @@ func Brokers(clusterInfo *cluster.Info, status reporter.Interface) bool {
 		)
 	}
 
+	status.End()
 	printer.Print()
 
 	return true
