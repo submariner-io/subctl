@@ -4,6 +4,8 @@ DEFAULT_IMAGE_VERSION ?= $(BASE_BRANCH)
 export BASE_BRANCH
 export DEFAULT_IMAGE_VERSION
 
+DEFAULT_REPO ?= "quay.io/submariner"
+
 # Define LOCAL_BUILD to build directly on the host and not inside a Dapper container
 ifdef LOCAL_BUILD
 DAPPER_HOST_ARCH ?= $(shell go env GOHOSTARCH)
@@ -110,7 +112,8 @@ cmd/bin/subctl-%: $(shell find . -name "*.go") $(VENDOR_MODULES)
 	export GOARCH GOOS; \
 	$(SCRIPTS_DIR)/compile.sh \
 		--ldflags "-X 'github.com/submariner-io/subctl/pkg/version.Version=$(VERSION)' \
-		       -X 'github.com/submariner-io/submariner-operator/api/submariner/v1alpha1.DefaultSubmarinerOperatorVersion=$${DEFAULT_IMAGE_VERSION#v}'" \
+		       -X 'github.com/submariner-io/submariner-operator/api/submariner/v1alpha1.DefaultSubmarinerOperatorVersion=$${DEFAULT_IMAGE_VERSION#v}' \
+		       -X 'github.com/submariner-io/submariner-operator/api/submariner/v1alpha1.DefaultRepo=$(DEFAULT_REPO)'" \
         --noupx $@ ./cmd $(BUILD_ARGS)
 
 ci: golangci-lint markdownlint unit build images
