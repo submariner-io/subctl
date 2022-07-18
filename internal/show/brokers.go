@@ -46,6 +46,7 @@ func Brokers(clusterInfo *cluster.Info, status reporter.Interface) bool {
 
 	brokers := brokerList.Items
 	if len(brokers) == 0 {
+		status.Success("No brokers found")
 		return true
 	}
 
