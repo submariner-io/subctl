@@ -113,7 +113,7 @@ func addJoinFlags(cmd *cobra.Command) {
 		"enable Submariner pod debugging (verbose logging in the deployed pods)")
 	cmd.Flags().BoolVar(&joinFlags.OperatorDebug, "operator-debug", false, "enable operator debugging (verbose logging)")
 	cmd.Flags().BoolVar(&labelGateway, "label-gateway", true, "label gateways if necessary")
-	cmd.Flags().StringVar(&joinFlags.CableDriver, "cable-driver", "", "cable driver implementation")
+	cmd.Flags().StringVar(&joinFlags.CableDriver, "cable-driver", "libreswan", "cable driver implementation")
 	cmd.Flags().UintVar(&joinFlags.GlobalnetClusterSize, "globalnet-cluster-size", 0,
 		"cluster size for GlobalCIDR allocated to this cluster (amount of global IPs)")
 	cmd.Flags().StringVar(&joinFlags.GlobalnetCIDR, "globalnet-cidr", "",
