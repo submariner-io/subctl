@@ -127,7 +127,8 @@ func (np *Scheduled) schedule() error {
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: np.Config.Name,
 			Labels: map[string]string{
-				"app": np.Config.Name,
+				"app":                    np.Config.Name,
+				constants.TransientLabel: constants.TrueLabel,
 			},
 		},
 		Spec: v1.PodSpec{

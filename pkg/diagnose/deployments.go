@@ -20,6 +20,7 @@ package diagnose
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
@@ -173,7 +174,9 @@ func checkDaemonset(k8sClient kubernetes.Interface, namespace, daemonSetName str
 }
 
 func checkPodsStatus(k8sClient kubernetes.Interface, namespace string, status reporter.Interface) {
-	pods, err := k8sClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+	pods, err := k8sClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s!=%s", constants.TransientLabel, constants.TrueLabel),
+	})
 	if err != nil {
 		status.Failure("Error obtaining Pods list: %v", err)
 		return
