@@ -27,5 +27,6 @@ const (
 	SubmarinerNamespace          = "submariner-operator"
 	SubmarinerNotInstalled       = "Submariner is not installed"
 	ServiceDiscoveryNotInstalled = "Service discovery is not installed"
+	TransientLabel               = "submariner.io/transient"
 	TrueLabel                    = "true"
 )
