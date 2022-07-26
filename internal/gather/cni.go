@@ -28,6 +28,7 @@ const (
 	typeOvn      = "ovn"
 	typeUnknown  = "unknown"
 	libreswan    = "libreswan"
+	vxlan        = "vxlan"
 )
 
 var systemCmds = map[string]string{
@@ -57,6 +58,10 @@ var libreswanCmds = map[string]string{
 
 var globalnetCmds = map[string]string{
 	"ipset-list": "ipset list",
+}
+
+var vxlanCmds = map[string]string{
+	"ip-routes-table100": "ip route show table 100",
 }
 
 const ovnShowCmd = "ovn-nbctl show"
@@ -176,11 +181,20 @@ func gatherCableDriverResources(info *Info, cableDriver string) {
 		if cableDriver == libreswan || cableDriver == "" { // If none specified, use libreswan as default
 			logLibreswanCmds(info, pod)
 		}
+		if cableDriver == vxlan {
+			logVxlanCmds(info, pod)
+		}
 	})
 }
 
 func logLibreswanCmds(info *Info, pod *v1.Pod) {
 	for name, cmd := range libreswanCmds {
+		logCmdOutput(info, pod, cmd, name, true)
+	}
+}
+
+func logVxlanCmds(info *Info, pod *v1.Pod) {
+	for name, cmd := range vxlanCmds {
 		logCmdOutput(info, pod, cmd, name, true)
 	}
 }
