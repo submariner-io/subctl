@@ -37,7 +37,7 @@ function validate_gathered_files () {
   validate_pod_log_files $subm_ns '-l name=submariner-operator'
 
   # Service Discovery
-  if [[ "$lighthouse" == "true" ]]; then
+  if [[ "$LIGHTHOUSE" == "true" ]]; then
     validate_resource_files all 'serviceexports.multicluster.x-k8s.io' 'ServiceExport'
     validate_resource_files all 'serviceimports.multicluster.x-k8s.io' 'ServiceImport'
     validate_resource_files all 'endpointslices.discovery.k8s.io' 'EndpointSlice' '-l endpointslice.kubernetes.io/managed-by=lighthouse-agent.submariner.io'
