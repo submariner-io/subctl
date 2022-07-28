@@ -26,7 +26,6 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/client"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
@@ -48,13 +47,9 @@ func Export(clientProducer client.Producer, serviceNamespace, svcName string, st
 		return status.Error(err, "Failed to convert to Unstructured")
 	}
 
-	gvr := &schema.GroupVersionResource{
-		Group:    mcsv1a1.GroupVersion.Group,
-		Version:  mcsv1a1.GroupVersion.Version,
-		Resource: "serviceexports",
-	}
+	gvr := mcsv1a1.SchemeGroupVersion.WithResource("serviceexports")
 
-	_, err = clientProducer.ForDynamic().Resource(*gvr).Namespace(serviceNamespace).
+	_, err = clientProducer.ForDynamic().Resource(gvr).Namespace(serviceNamespace).
 		Create(context.TODO(), resourceServiceExport, metav1.CreateOptions{})
 	if err != nil {
 		if k8serrors.IsAlreadyExists(err) {

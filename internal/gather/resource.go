@@ -96,29 +96,17 @@ func ResourcesToYAMLFile(info *Info, ofType schema.GroupVersionResource, namespa
 
 // nolint:gocritic // hugeParam: listOptions - match K8s API.
 func gatherDaemonSet(info *Info, namespace string, listOptions metav1.ListOptions) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    appsv1.SchemeGroupVersion.Group,
-		Version:  appsv1.SchemeGroupVersion.Version,
-		Resource: "daemonsets",
-	}, namespace, listOptions)
+	ResourcesToYAMLFile(info, appsv1.SchemeGroupVersion.WithResource("daemonsets"), namespace, listOptions)
 }
 
 // nolint:gocritic // hugeParam: listOptions - match K8s API.
 func gatherDeployment(info *Info, namespace string, listOptions metav1.ListOptions) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    appsv1.SchemeGroupVersion.Group,
-		Version:  appsv1.SchemeGroupVersion.Version,
-		Resource: "deployments",
-	}, namespace, listOptions)
+	ResourcesToYAMLFile(info, appsv1.SchemeGroupVersion.WithResource("deployments"), namespace, listOptions)
 }
 
 // nolint:gocritic // hugeParam: listOptions - match K8s API.
 func gatherConfigMaps(info *Info, namespace string, listOptions metav1.ListOptions) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    corev1.SchemeGroupVersion.Group,
-		Version:  corev1.SchemeGroupVersion.Version,
-		Resource: "configmaps",
-	}, namespace, listOptions)
+	ResourcesToYAMLFile(info, corev1.SchemeGroupVersion.WithResource("configmaps"), namespace, listOptions)
 }
 
 func scrubSensitiveData(info *Info, dataString string) string {
