@@ -30,7 +30,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
@@ -146,13 +145,9 @@ func checkGlobalEgressIPs(clusterInfo *cluster.Info, status reporter.Interface) 
 }
 
 func checkGlobalIngressIPs(clusterInfo *cluster.Info, status reporter.Interface) {
-	serviceExportGVR := &schema.GroupVersionResource{
-		Group:    mcsv1a1.GroupVersion.Group,
-		Version:  mcsv1a1.GroupVersion.Version,
-		Resource: "serviceexports",
-	}
+	serviceExportGVR := mcsv1a1.SchemeGroupVersion.WithResource("serviceexports")
 
-	serviceExports, err := clusterInfo.LegacyClientProducer.ForDynamic().Resource(*serviceExportGVR).Namespace(corev1.NamespaceAll).
+	serviceExports, err := clusterInfo.LegacyClientProducer.ForDynamic().Resource(serviceExportGVR).Namespace(corev1.NamespaceAll).
 		List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		status.Failure("Error listing ServiceExport resources: %v", err)
