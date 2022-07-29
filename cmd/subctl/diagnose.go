@@ -230,7 +230,7 @@ func clusterInfoFromKubeConfig(kubeConfig string) *cluster.Info {
 	clientProducer, err := client.NewProducerFromRestConfig(config.Config)
 	exit.OnErrorWithMessage(err, fmt.Sprintf("Error creating client producer for kubeconfig %q", kubeConfig))
 
-	clusterInfo, err := cluster.NewInfo("", clientProducer, nil)
+	clusterInfo, err := cluster.NewInfo("", clientProducer, config.Config)
 	exit.OnErrorWithMessage(err, fmt.Sprintf("Error initializing cluster information for kubeconfig %q", kubeConfig))
 
 	if clusterInfo.Submariner == nil {
