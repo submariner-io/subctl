@@ -26,10 +26,11 @@ import (
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/brokercr"
-	submarinerv1a1 "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
-	"github.com/submariner-io/submariner-operator/pkg/client"
+	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
+	operatorclient "github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type BrokerOptions struct {
@@ -37,12 +38,14 @@ type BrokerOptions struct {
 	Repository      string
 	ImageVersion    string
 	BrokerNamespace string
-	BrokerSpec      submarinerv1a1.BrokerSpec
+	BrokerSpec      operatorv1alpha1.BrokerSpec
 }
 
 var ValidComponents = []string{component.ServiceDiscovery, component.Connectivity}
 
-func Broker(options *BrokerOptions, clientProducer client.Producer, status reporter.Interface) error {
+func Broker(options *BrokerOptions, clientProducer operatorclient.Producer, client controllerClient.Client,
+	status reporter.Interface,
+) error {
 	componentSet := stringset.New(options.BrokerSpec.Components...)
 
 	if err := isValidComponents(componentSet); err != nil {
@@ -57,7 +60,7 @@ func Broker(options *BrokerOptions, clientProducer client.Producer, status repor
 		return status.Error(err, "invalid GlobalCIDR configuration")
 	}
 
-	err := deploy(options, status, clientProducer)
+	err := deploy(options, status, clientProducer, client)
 	if err != nil {
 		return err
 	}
@@ -76,7 +79,9 @@ func Broker(options *BrokerOptions, clientProducer client.Producer, status repor
 	return nil
 }
 
-func deploy(options *BrokerOptions, status reporter.Interface, clientProducer client.Producer) error {
+func deploy(options *BrokerOptions, status reporter.Interface, clientProducer operatorclient.Producer,
+	client controllerClient.Client,
+) error {
 	status.Start("Setting up broker RBAC")
 	defer status.End()
 
@@ -95,7 +100,7 @@ func deploy(options *BrokerOptions, status reporter.Interface, clientProducer cl
 
 	status.Start("Deploying the broker")
 
-	err = brokercr.Ensure(clientProducer.ForOperator(), options.BrokerNamespace, options.BrokerSpec)
+	err = brokercr.Ensure(client, options.BrokerNamespace, options.BrokerSpec)
 
 	return status.Error(err, "Broker deployment failed")
 }

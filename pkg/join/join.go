@@ -31,15 +31,16 @@ import (
 	"github.com/submariner-io/subctl/pkg/deploy"
 	"github.com/submariner-io/subctl/pkg/secret"
 	"github.com/submariner-io/subctl/pkg/version"
-	"github.com/submariner-io/submariner-operator/pkg/client"
+	operatorClient "github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer client.Producer,
-	status reporter.Interface,
+func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer operatorClient.Producer,
+	client controllerClient.Client, status reporter.Interface,
 ) error {
 	err := checkRequirements(clientProducer.ForKubernetes(), options.IgnoreRequirements, status)
 	if err != nil {
@@ -108,7 +109,7 @@ func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer c
 	if brokerInfo.IsConnectivityEnabled() {
 		status.Start("Deploying submariner")
 
-		err := deploy.Submariner(clientProducer, submarinerOptionsFrom(options), brokerInfo, brokerSecret, netconfig,
+		err := deploy.Submariner(clientProducer, client, submarinerOptionsFrom(options), brokerInfo, brokerSecret, netconfig,
 			imageOverrides, status)
 		if err != nil {
 			return status.Error(err, "Error deploying the Submariner resource")
@@ -118,7 +119,7 @@ func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer c
 	} else if brokerInfo.IsServiceDiscoveryEnabled() {
 		status.Start("Deploying service discovery only")
 
-		err := deploy.ServiceDiscovery(clientProducer, serviceDiscoveryOptionsFrom(options), brokerInfo, brokerSecret,
+		err := deploy.ServiceDiscovery(client, serviceDiscoveryOptionsFrom(options), brokerInfo, brokerSecret,
 			imageOverrides, status)
 		if err != nil {
 			return status.Error(err, "Error deploying the ServiceDiscovery resource")

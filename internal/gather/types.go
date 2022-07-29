@@ -25,6 +25,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Info struct {
@@ -37,6 +38,7 @@ type Info struct {
 	IncludeSensitiveData bool
 	Summary              *Summary
 	ClientProducer       client.Producer
+	Client               controllerClient.Client
 }
 
 type Summary struct {

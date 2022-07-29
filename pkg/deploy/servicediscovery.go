@@ -25,9 +25,9 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/servicediscoverycr"
-	submariner "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
-	"github.com/submariner-io/submariner-operator/pkg/client"
+	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	v1 "k8s.io/api/core/v1"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ServiceDiscoveryOptions struct {
@@ -40,12 +40,12 @@ type ServiceDiscoveryOptions struct {
 	CustomDomains          []string
 }
 
-func ServiceDiscovery(clientProducer client.Producer, options *ServiceDiscoveryOptions, brokerInfo *broker.Info, brokerSecret *v1.Secret,
-	imageOverrides map[string]string, status reporter.Interface,
+func ServiceDiscovery(client controllerClient.Client, options *ServiceDiscoveryOptions, brokerInfo *broker.Info,
+	brokerSecret *v1.Secret, imageOverrides map[string]string, status reporter.Interface,
 ) error {
 	serviceDiscoverySpec := populateServiceDiscoverySpec(options, brokerInfo, brokerSecret, imageOverrides)
 
-	err := servicediscoverycr.Ensure(clientProducer.ForOperator(), constants.OperatorNamespace, serviceDiscoverySpec)
+	err := servicediscoverycr.Ensure(client, constants.OperatorNamespace, serviceDiscoverySpec)
 	if err != nil {
 		return status.Error(err, "Service discovery deployment failed")
 	}
@@ -55,10 +55,10 @@ func ServiceDiscovery(clientProducer client.Producer, options *ServiceDiscoveryO
 
 func populateServiceDiscoverySpec(options *ServiceDiscoveryOptions, brokerInfo *broker.Info, brokerSecret *v1.Secret,
 	imageOverrides map[string]string,
-) *submariner.ServiceDiscoverySpec {
+) *operatorv1alpha1.ServiceDiscoverySpec {
 	brokerURL := removeSchemaPrefix(brokerInfo.BrokerURL)
 
-	serviceDiscoverySpec := submariner.ServiceDiscoverySpec{
+	serviceDiscoverySpec := operatorv1alpha1.ServiceDiscoverySpec{
 		Repository:               options.Repository,
 		Version:                  options.ImageVersion,
 		BrokerK8sCA:              base64.StdEncoding.EncodeToString(brokerSecret.Data["ca.crt"]),
@@ -75,7 +75,7 @@ func populateServiceDiscoverySpec(options *ServiceDiscoveryOptions, brokerInfo *
 
 	if options.CoreDNSCustomConfigMap != "" {
 		namespace, name := getCustomCoreDNSParams(options.CoreDNSCustomConfigMap)
-		serviceDiscoverySpec.CoreDNSCustomConfig = &submariner.CoreDNSCustomConfig{
+		serviceDiscoverySpec.CoreDNSCustomConfig = &operatorv1alpha1.CoreDNSCustomConfig{
 			ConfigMapName: name,
 			Namespace:     namespace,
 		}

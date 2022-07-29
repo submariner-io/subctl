@@ -26,10 +26,12 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/show/table"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/images"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func getOperatorVersion(clusterInfo *cluster.Info) ([]interface{}, error) {
@@ -50,9 +52,12 @@ func getOperatorVersion(clusterInfo *cluster.Info) ([]interface{}, error) {
 }
 
 func getServiceDiscoveryVersion(clusterInfo *cluster.Info) ([]interface{}, error) {
-	serviceDiscoveries := clusterInfo.ClientProducer.ForOperator().SubmarinerV1alpha1().ServiceDiscoveries(constants.OperatorNamespace)
+	serviceDiscovery := &v1alpha1.ServiceDiscovery{}
 
-	serviceDiscovery, err := serviceDiscoveries.Get(context.TODO(), names.ServiceDiscoveryCrName, v1.GetOptions{})
+	err := clusterInfo.Client.Get(context.TODO(), controllerClient.ObjectKey{
+		Namespace: constants.OperatorNamespace,
+		Name:      names.ServiceDiscoveryCrName,
+	}, serviceDiscovery)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, nil

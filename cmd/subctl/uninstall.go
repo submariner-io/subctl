@@ -28,6 +28,7 @@ import (
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/pkg/uninstall"
 	"github.com/submariner-io/submariner-operator/pkg/client"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var uninstallOptions struct {
@@ -49,6 +50,9 @@ var uninstallCmd = &cobra.Command{
 		clientProducer, err := client.NewProducerFromRestConfig(config.Config)
 		exit.OnError(status.Error(err, "Error creating client producer"))
 
+		client, err := controllerClient.New(config.Config, controllerClient.Options{})
+		exit.OnError(status.Error(err, "Error creating client"))
+
 		if !uninstallOptions.noPrompt {
 			result := false
 			prompt := &survey.Confirm{
@@ -63,7 +67,7 @@ var uninstallCmd = &cobra.Command{
 			}
 		}
 
-		exit.OnError(uninstall.All(clientProducer, config.ClusterName, uninstallOptions.namespace, status))
+		exit.OnError(uninstall.All(clientProducer, client, config.ClusterName, uninstallOptions.namespace, status))
 	},
 }
 
