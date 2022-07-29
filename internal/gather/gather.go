@@ -35,11 +35,11 @@ import (
 	"github.com/submariner-io/subctl/pkg/brokercr"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
-	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -109,8 +109,8 @@ func gatherDataByCluster(clusterInfo *cluster.Info, status reporter.Interface, o
 		DirName:              options.Directory,
 		IncludeSensitiveData: options.IncludeSensitiveData,
 		Summary:              &Summary{},
-		ClientProducer:       clusterInfo.ClientProducer,
 		Client:               clusterInfo.Client,
+		KubeClient:           clusterInfo.KubeClient,
 		Submariner:           clusterInfo.Submariner,
 		ServiceDiscovery:     &v1alpha1.ServiceDiscovery{},
 	}
@@ -210,15 +210,15 @@ func gatherBroker(dataType string, info Info) bool {
 		if brokerRestConfig != nil {
 			info.RestConfig = brokerRestConfig
 
-			info.ClientProducer, err = client.NewProducerFromRestConfig(brokerRestConfig)
-			if err != nil {
-				info.Status.Failure("Error creating broker client Producer: %s", err)
-				return true
-			}
-
 			info.Client, err = controllerClient.New(brokerRestConfig, controllerClient.Options{})
 			if err != nil {
 				info.Status.Failure("Error creating broker client: %s", err)
+				return true
+			}
+
+			info.KubeClient, err = kubernetes.NewForConfig(brokerRestConfig)
+			if err != nil {
+				info.Status.Failure("error creating broker kube client: %s", err)
 				return true
 			}
 		} else {

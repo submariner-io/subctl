@@ -22,7 +22,6 @@ import (
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
@@ -56,49 +55,25 @@ func gatherAddonPodLogs(info *Info) {
 }
 
 func gatherEndpoints(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    submarinerv1.SchemeGroupVersion.Group,
-		Version:  submarinerv1.SchemeGroupVersion.Version,
-		Resource: "endpoints",
-	}, namespace, v1.ListOptions{})
+	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithKind("EndpointList"), namespace, v1.ListOptions{})
 }
 
 func gatherClusters(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    submarinerv1.SchemeGroupVersion.Group,
-		Version:  submarinerv1.SchemeGroupVersion.Version,
-		Resource: "clusters",
-	}, namespace, v1.ListOptions{})
+	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithKind("ClusterList"), namespace, v1.ListOptions{})
 }
 
 func gatherGateways(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    submarinerv1.SchemeGroupVersion.Group,
-		Version:  submarinerv1.SchemeGroupVersion.Version,
-		Resource: "gateways",
-	}, namespace, v1.ListOptions{})
+	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithKind("GatewayList"), namespace, v1.ListOptions{})
 }
 
 func gatherClusterGlobalEgressIPs(info *Info) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    submarinerv1.SchemeGroupVersion.Group,
-		Version:  submarinerv1.SchemeGroupVersion.Version,
-		Resource: "clusterglobalegressips",
-	}, corev1.NamespaceAll, v1.ListOptions{})
+	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithKind("ClusterGlobalEgressIPList"), corev1.NamespaceAll, v1.ListOptions{})
 }
 
 func gatherGlobalEgressIPs(info *Info) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    submarinerv1.SchemeGroupVersion.Group,
-		Version:  submarinerv1.SchemeGroupVersion.Version,
-		Resource: "globalegressips",
-	}, corev1.NamespaceAll, v1.ListOptions{})
+	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithKind("GlobalEgressIPList"), corev1.NamespaceAll, v1.ListOptions{})
 }
 
 func gatherGlobalIngressIPs(info *Info) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    submarinerv1.SchemeGroupVersion.Group,
-		Version:  submarinerv1.SchemeGroupVersion.Version,
-		Resource: "globalingressips",
-	}, corev1.NamespaceAll, v1.ListOptions{})
+	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithKind("GlobalIngressIPList"), corev1.NamespaceAll, v1.ListOptions{})
 }

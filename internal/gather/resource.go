@@ -30,18 +30,23 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
 var fileNameRegexp = regexp.MustCompile(`[<>:"/\|?*]`)
 
 // nolint:gocritic // hugeParam: listOptions - match K8s API.
-func ResourcesToYAMLFile(info *Info, ofType schema.GroupVersionResource, namespace string, listOptions metav1.ListOptions) {
+func ResourcesToYAMLFile(info *Info, ofType schema.GroupVersionKind, namespace string, listOptions metav1.ListOptions) {
 	err := func() error {
-		list, err := info.ClientProducer.ForDynamic().Resource(ofType).Namespace(namespace).List(context.TODO(), listOptions)
+		list := &unstructured.UnstructuredList{}
+		list.SetGroupVersionKind(ofType)
+
+		err := info.Client.List(context.TODO(), list, controllerClient.InNamespace(namespace))
 		if err != nil {
-			return errors.WithMessagef(err, "error listing %q", ofType.Resource)
+			return errors.WithMessagef(err, "error listing %q", ofType.Kind)
 		}
 
 		selectorStr := ""
@@ -51,13 +56,13 @@ func ResourcesToYAMLFile(info *Info, ofType schema.GroupVersionResource, namespa
 			selectorStr = fmt.Sprintf("by field selector %q ", listOptions.FieldSelector)
 		}
 
-		info.Status.Success("Found %d %s %sin namespace %q", len(list.Items), ofType.Resource,
+		info.Status.Success("Found %d %s %sin namespace %q", len(list.Items), ofType.Kind,
 			selectorStr, namespace)
 
 		for i := range list.Items {
 			item := &list.Items[i]
 
-			name := escapeFileName(info.ClusterName+"_"+ofType.Resource+"_"+item.GetNamespace()+"_"+item.GetName()) + ".yaml"
+			name := escapeFileName(info.ClusterName+"_"+ofType.Kind+"_"+item.GetNamespace()+"_"+item.GetName()) + ".yaml"
 			path := filepath.Join(info.DirName, name)
 
 			file, err := os.Create(path)
@@ -82,7 +87,7 @@ func ResourcesToYAMLFile(info *Info, ofType schema.GroupVersionResource, namespa
 			info.Summary.Resources = append(info.Summary.Resources, ResourceInfo{
 				Name:      item.GetName(),
 				Namespace: item.GetNamespace(),
-				Type:      ofType.Resource,
+				Type:      ofType.Kind,
 				FileName:  name,
 			})
 		}
@@ -90,35 +95,23 @@ func ResourcesToYAMLFile(info *Info, ofType schema.GroupVersionResource, namespa
 		return nil
 	}()
 	if err != nil {
-		info.Status.Failure("Failed to gather %s: %s", ofType.Resource, err)
+		info.Status.Failure("Failed to gather %s: %s", ofType.Kind, err)
 	}
 }
 
 // nolint:gocritic // hugeParam: listOptions - match K8s API.
 func gatherDaemonSet(info *Info, namespace string, listOptions metav1.ListOptions) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    appsv1.SchemeGroupVersion.Group,
-		Version:  appsv1.SchemeGroupVersion.Version,
-		Resource: "daemonsets",
-	}, namespace, listOptions)
+	ResourcesToYAMLFile(info, appsv1.SchemeGroupVersion.WithKind("DaemonSetList"), namespace, listOptions)
 }
 
 // nolint:gocritic // hugeParam: listOptions - match K8s API.
 func gatherDeployment(info *Info, namespace string, listOptions metav1.ListOptions) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    appsv1.SchemeGroupVersion.Group,
-		Version:  appsv1.SchemeGroupVersion.Version,
-		Resource: "deployments",
-	}, namespace, listOptions)
+	ResourcesToYAMLFile(info, appsv1.SchemeGroupVersion.WithKind("DeploymentList"), namespace, listOptions)
 }
 
 // nolint:gocritic // hugeParam: listOptions - match K8s API.
 func gatherConfigMaps(info *Info, namespace string, listOptions metav1.ListOptions) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    corev1.SchemeGroupVersion.Group,
-		Version:  corev1.SchemeGroupVersion.Version,
-		Resource: "configmaps",
-	}, namespace, listOptions)
+	ResourcesToYAMLFile(info, corev1.SchemeGroupVersion.WithKind("ConfigMapList"), namespace, listOptions)
 }
 
 func scrubSensitiveData(info *Info, dataString string) string {

@@ -49,18 +49,18 @@ func gatherCoreDNSPodLogs(info *Info) {
 }
 
 func gatherServiceExports(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    mcsv1a1.GroupName,
-		Version:  mcsv1a1.GroupVersion.Version,
-		Resource: "serviceexports",
+	ResourcesToYAMLFile(info, schema.GroupVersionKind{
+		Group:   mcsv1a1.GroupName,
+		Version: mcsv1a1.GroupVersion.Version,
+		Kind:    "ServiceExport",
 	}, namespace, metav1.ListOptions{})
 }
 
 func gatherServiceImports(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    mcsv1a1.GroupName,
-		Version:  mcsv1a1.GroupVersion.Version,
-		Resource: "serviceimports",
+	ResourcesToYAMLFile(info, schema.GroupVersionKind{
+		Group:   mcsv1a1.GroupName,
+		Version: mcsv1a1.GroupVersion.Version,
+		Kind:    "ServiceImport",
 	}, namespace, metav1.ListOptions{})
 }
 
@@ -70,11 +70,8 @@ func gatherEndpointSlices(info *Info, namespace string) {
 	}
 	labelSelector := labels.Set(labelMap).String()
 
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    discoveryv1.SchemeGroupVersion.Group,
-		Version:  discoveryv1.SchemeGroupVersion.Version,
-		Resource: "endpointslices",
-	}, namespace, metav1.ListOptions{LabelSelector: labelSelector})
+	ResourcesToYAMLFile(info, discoveryv1.SchemeGroupVersion.WithKind("EndpointSliceList"), namespace,
+		metav1.ListOptions{LabelSelector: labelSelector})
 }
 
 func gatherConfigMapCoreDNS(info *Info) {
@@ -114,11 +111,8 @@ func gatherConfigMapCoreDNS(info *Info) {
 
 // gatherLabeledServices gathers a service based on the label provided.
 func gatherLabeledServices(info *Info, label string) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    corev1.SchemeGroupVersion.Group,
-		Version:  corev1.SchemeGroupVersion.Version,
-		Resource: "services",
-	}, corev1.NamespaceAll, metav1.ListOptions{LabelSelector: label})
+	ResourcesToYAMLFile(info, corev1.SchemeGroupVersion.WithKind("ServiceList"), corev1.NamespaceAll,
+		metav1.ListOptions{LabelSelector: label})
 }
 
 func gatherConfigMapLighthouseDNS(info *Info, namespace string) {
@@ -126,6 +120,6 @@ func gatherConfigMapLighthouseDNS(info *Info, namespace string) {
 }
 
 func isCoreDNSTypeOcp(info *Info) bool {
-	pods, err := findPods(info.ClientProducer.ForKubernetes(), ocpCoreDNSPodLabel)
+	pods, err := findPods(info.KubeClient, ocpCoreDNSPodLabel)
 	return err == nil && len(pods.Items) > 0
 }

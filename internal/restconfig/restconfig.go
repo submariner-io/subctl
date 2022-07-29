@@ -33,17 +33,16 @@ import (
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/pkg/version"
 	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
-	subOperatorClientset "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	subv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1opts "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type RestConfig struct {
@@ -320,11 +319,15 @@ func (rcp *Producer) CheckVersionMismatch(cmd *cobra.Command, args []string) err
 	config, err := rcp.ForCluster()
 	exit.OnErrorWithMessage(err, "The provided kubeconfig is invalid")
 
-	operatorClient, err := subOperatorClientset.NewForConfig(config.Config)
-	exit.OnErrorWithMessage(err, "Error creating operator clientset")
+	client, err := controllerClient.New(config.Config, controllerClient.Options{})
+	exit.OnErrorWithMessage(err, "Error creating client")
 
-	submariner, err := operatorClient.SubmarinerV1alpha1().Submariners(constants.OperatorNamespace).
-		Get(context.TODO(), names.SubmarinerCrName, v1opts.GetOptions{})
+	submariner := &v1alpha1.Submariner{}
+	err = client.Get(context.TODO(), controllerClient.ObjectKey{
+		Namespace: constants.OperatorNamespace,
+		Name:      names.SubmarinerCrName,
+	}, submariner)
+
 	if apierrors.IsNotFound(err) {
 		return nil
 	}

@@ -23,23 +23,14 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func gatherSubmariners(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    submarinerOp.SchemeGroupVersion.Group,
-		Version:  submarinerOp.SchemeGroupVersion.Version,
-		Resource: "submariners",
-	}, namespace, metav1.ListOptions{})
+	ResourcesToYAMLFile(info, submarinerOp.SchemeGroupVersion.WithKind("SubmarinerList"), namespace, metav1.ListOptions{})
 }
 
 func gatherServiceDiscoveries(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    submarinerOp.SchemeGroupVersion.Group,
-		Version:  submarinerOp.SchemeGroupVersion.Version,
-		Resource: "servicediscoveries",
-	}, namespace, metav1.ListOptions{})
+	ResourcesToYAMLFile(info, submarinerOp.SchemeGroupVersion.WithKind("ServiceDiscoveryList"), namespace, metav1.ListOptions{})
 }
 
 func gatherSubmarinerOperatorDeployment(info *Info, namespace string) {
