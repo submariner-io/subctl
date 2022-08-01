@@ -23,7 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func ResourceFromMetaGroupVersion(gv metav1.GroupVersion, resource string) schema.GroupVersionResource {
+func FromMetaGroupVersion(gv metav1.GroupVersion, resource string) schema.GroupVersionResource {
 	return schema.GroupVersionResource{
 		Group:    gv.Group,
 		Version:  gv.Version,
