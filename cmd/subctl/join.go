@@ -35,6 +35,7 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/network"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var (
@@ -43,6 +44,8 @@ var (
 
 	// Deprecated: will be removed in 0.14.
 	ignoredIkePort int
+
+	clientConfig clientcmd.ClientConfig
 )
 
 var joinCmd = &cobra.Command{
@@ -60,10 +63,10 @@ var joinCmd = &cobra.Command{
 
 		determineClusterID(status)
 
-		clientConfig, err := restConfigProducer.ForCluster()
-		exit.OnError(status.Error(err, "Error creating the REST config"))
+		restConfig, err := clientConfig.ClientConfig()
+		exit.OnError(status.Error(err, "Error retrieving REST config"))
 
-		clientProducer, err := client.NewProducerFromRestConfig(clientConfig.Config)
+		clientProducer, err := client.NewProducerFromRestConfig(restConfig)
 		exit.OnError(status.Error(err, "Error creating the client producer"))
 
 		networkDetails := getNetworkDetails(clientProducer, status)
@@ -85,7 +88,6 @@ var joinCmd = &cobra.Command{
 
 func init() {
 	addJoinFlags(joinCmd)
-	restConfigProducer.AddKubeContextFlag(joinCmd)
 	rootCmd.AddCommand(joinCmd)
 }
 
@@ -137,6 +139,17 @@ func addJoinFlags(cmd *cobra.Command) {
 
 	cmd.Flags().BoolVar(&joinFlags.BrokerK8sSecure, "check-broker-certificate", true,
 		"check the broker certificate (disable this to allow \"insecure\" connections)")
+
+	_ = cmd.Flags().MarkDeprecated("check-broker-certificate", "Use --kubeinsecure-skip-tls-verify instead")
+
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
+	overrides := clientcmd.ConfigOverrides{}
+	kflags := clientcmd.RecommendedConfigOverrideFlags("kube")
+	clientcmd.BindOverrideFlags(&overrides, cmd.Flags(), kflags)
+	clientConfig = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &overrides)
+
+	cmd.Flags().StringVar(&loadingRules.ExplicitPath, "kubeconfig", "", "absolute path(s) to the kubeconfig file(s)")
 }
 
 func possiblyLabelGateway(kubeClient kubernetes.Interface, status reporter.Interface) {
