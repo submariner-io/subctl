@@ -30,6 +30,7 @@ const (
 	routeagentPodLabel          = "app=submariner-routeagent"
 	globalnetPodLabel           = "app=submariner-globalnet"
 	networkpluginSyncerPodLabel = "app=submariner-networkplugin-syncer"
+	addonPodLabel               = "app=submariner-addon"
 	ovnMasterPodLabelOCP        = "app=ovnkube-master"
 	ovnMasterPodLabelGeneric    = "name=ovnkube-master"
 )
@@ -48,6 +49,10 @@ func gatherGlobalnetPodLogs(info *Info) {
 
 func gatherNetworkPluginSyncerPodLogs(info *Info) {
 	gatherPodLogs(networkpluginSyncerPodLabel, info)
+}
+
+func gatherAddonPodLogs(info *Info) {
+	gatherPodLogs(addonPodLabel, info)
 }
 
 func gatherEndpoints(info *Info, namespace string) {
