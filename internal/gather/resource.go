@@ -57,7 +57,7 @@ func ResourcesToYAMLFile(info *Info, ofType schema.GroupVersionResource, namespa
 		for i := range list.Items {
 			item := &list.Items[i]
 
-			name := escapeFileName(info.ClusterName+"_"+ofType.Resource+"_"+item.GetNamespace()+"_"+item.GetName()) + ".yaml"
+			name := escapeFileName(ofType.Resource+"_"+item.GetNamespace()+"_"+item.GetName()) + ".yaml"
 			path := filepath.Join(info.DirName, name)
 
 			file, err := os.Create(path)

@@ -61,7 +61,7 @@ function validate_pod_log_files() {
   read -ra pod_names_array <<< "$pod_names"
 
   for pod_name in "${pod_names_array[@]}"; do
-    file=$gather_out_dir/${cluster}_$pod_name.log
+    file=$gather_out_dir/${cluster}/$pod_name.log
     cat $file
 
   done
@@ -96,7 +96,7 @@ function validate_resource_files() {
   for i in "${!names_array[@]}"; do
     name=${names_array[$i]}
     namespace=${namespaces_array[$i]}
-    file=$gather_out_dir/${cluster_name}_${short_res}_${namespace}_${name}.yaml
+    file=$gather_out_dir/${cluster_name}/${short_res}_${namespace}_${name}.yaml
     cat $file
 
     kind_count=$(grep "kind: $kind$" $file | wc -l)
@@ -114,8 +114,8 @@ function validate_resource_files() {
 }
 
 function validate_broker_resources() {
-  validate_resource_files $submariner_broker_ns 'endpoints.submariner.io' 'Endpoint' '' 'broker'
-  validate_resource_files $submariner_broker_ns 'clusters.submariner.io' 'Cluster' '' 'broker'
-  validate_resource_files $submariner_broker_ns 'serviceimports.multicluster.x-k8s.io' 'ServiceImport' '' 'broker'
-  validate_resource_files $submariner_broker_ns 'endpointslices.discovery.k8s.io' 'EndpointSlice' '' 'broker'
+  validate_resource_files $submariner_broker_ns endpoints.submariner.io Endpoint
+  validate_resource_files $submariner_broker_ns clusters.submariner.io Cluster
+  validate_resource_files $submariner_broker_ns serviceimports.multicluster.x-k8s.io ServiceImport
+  validate_resource_files $submariner_broker_ns endpointslices.discovery.k8s.io EndpointSlice
 }
