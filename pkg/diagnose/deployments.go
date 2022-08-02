@@ -20,7 +20,6 @@ package diagnose
 
 import (
 	"context"
-
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/cluster"
@@ -177,6 +176,9 @@ func checkPodsStatus(k8sClient kubernetes.Interface, namespace string, status re
 	for i := range pods.Items {
 		pod := &pods.Items[i]
 		if pod.Status.Phase != v1.PodRunning {
+			if pod.Labels["type"] == "submariner-diagnose" {
+				continue
+			}
 			status.Failure("Pod %q is not running. (current state is %v)", pod.Name, pod.Status.Phase)
 			continue
 		}
