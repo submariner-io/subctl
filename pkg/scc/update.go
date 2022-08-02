@@ -22,23 +22,17 @@ import (
 	"context"
 	"fmt"
 
+	securityv1 "github.com/openshift/api/security/v1"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
 )
 
-var openshiftSCCGVR = schema.GroupVersionResource{
-	Group:    "security.openshift.io",
-	Version:  "v1",
-	Resource: "securitycontextconstraints",
-}
-
 func Update(dynClient dynamic.Interface, namespace, name string) (bool, error) {
-	sccClient := dynClient.Resource(openshiftSCCGVR)
+	sccClient := dynClient.Resource(securityv1.GroupVersion.WithResource("securitycontextconstraints"))
 
 	created := false
 	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
