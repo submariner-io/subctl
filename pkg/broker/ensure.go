@@ -172,7 +172,9 @@ func WaitForClientToken(kubeClient kubernetes.Interface, submarinerBrokerSA, inN
 	err := wait.ExponentialBackoff(backoff, func() (bool, error) {
 		secret, lastErr = rbac.GetClientTokenSecret(kubeClient, inNamespace, submarinerBrokerSA)
 		if lastErr != nil {
-			return false, nil // nolint:nilerr // Intentional - the error is propagated via the outer-scoped var 'lastErr'
+			// nilerr is currently disabled because of go1.18. Remove the TODO below when nilerr is re-enabled.
+			// TODO nolint:nilerr // Intentional - the error is propagated via the outer-scoped var 'lastErr'
+			return false, nil
 		}
 
 		return true, nil

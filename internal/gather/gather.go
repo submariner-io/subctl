@@ -147,6 +147,7 @@ func gatherConnectivity(dataType string, info Info) bool {
 		gatherRouteAgentPodLogs(&info)
 		gatherGlobalnetPodLogs(&info)
 		gatherNetworkPluginSyncerPodLogs(&info)
+		gatherAddonPodLogs(&info)
 	case Resources:
 		gatherCNIResources(&info, info.Submariner.Status.NetworkPlugin)
 		gatherCableDriverResources(&info, info.Submariner.Spec.CableDriver)

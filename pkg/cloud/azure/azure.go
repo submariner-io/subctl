@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/Azure/go-autorest/autorest/azure/auth"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/util"
@@ -77,9 +77,7 @@ func RunOn(restConfigProducer *restconfig.Producer, config *Config, status repor
 
 	status.Start("Initializing Azure connectivity")
 
-	// This is the most recommended of several authentication options
-	// https://github.com/Azure/go-autorest/tree/master/autorest/azure/auth#more-authentication-details
-	authorizer, err := auth.NewAuthorizerFromEnvironment()
+	credentials, err := azidentity.NewEnvironmentCredential(nil)
 	if err != nil {
 		return status.Error(err, "Error getting an authorizer for Azure")
 	}
@@ -109,12 +107,12 @@ func RunOn(restConfigProducer *restconfig.Producer, config *Config, status repor
 	msDeployer := ocp.NewK8sMachinesetDeployer(restMapper, dynamicClient)
 
 	cloudInfo := &azure.CloudInfo{
-		SubscriptionID: subscriptionID,
-		InfraID:        config.InfraID,
-		Region:         config.Region,
-		BaseGroupName:  config.InfraID + "-rg",
-		Authorizer:     authorizer,
-		K8sClient:      k8sClientSet,
+		SubscriptionID:  subscriptionID,
+		InfraID:         config.InfraID,
+		Region:          config.Region,
+		BaseGroupName:   config.InfraID + "-rg",
+		TokenCredential: credentials,
+		K8sClient:       k8sClientSet,
 	}
 
 	azureCloud := azure.NewCloud(cloudInfo)

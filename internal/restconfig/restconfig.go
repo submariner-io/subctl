@@ -370,7 +370,9 @@ func ConfigureTestFramework(args []string) error {
 
 		clusterName, err := rcp.ClusterNameFromContext()
 		if err != nil {
-			return nil // nolint:nilerr // This is intentional.
+			// nilerr is currently disabled because of go1.18. Remove the TODO below when nilerr is re-enabled.
+			// TODO nolint:nilerr // This is intentional.
+			return nil
 		}
 
 		framework.TestContext.ClusterIDs = append(framework.TestContext.ClusterIDs, *clusterName)
