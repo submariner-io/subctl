@@ -32,12 +32,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Info struct {
 	Name           string
 	RestConfig     *rest.Config
 	ClientProducer client.Producer
+	Client         controllerClient.Client
 	Submariner     *v1alpha1.Submariner
 }
 
@@ -48,8 +50,19 @@ func NewInfo(clusterName string, clientProducer client.Producer, config *rest.Co
 		ClientProducer: clientProducer,
 	}
 
-	submariner, err := info.ClientProducer.ForOperator().SubmarinerV1alpha1().Submariners(constants.SubmarinerNamespace).
-		Get(context.TODO(), names.SubmarinerCrName, metav1.GetOptions{})
+	var err error
+
+	info.Client, err = controllerClient.New(config, controllerClient.Options{})
+	if err != nil {
+		return nil, errors.Wrap(err, "error creating client")
+	}
+
+	submariner := &v1alpha1.Submariner{}
+	err = info.Client.Get(context.TODO(), controllerClient.ObjectKey{
+		Namespace: constants.SubmarinerNamespace,
+		Name:      names.SubmarinerCrName,
+	}, submariner)
+
 	if err == nil {
 		info.Submariner = submariner
 	} else if !apierrors.IsNotFound(err) {

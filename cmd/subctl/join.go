@@ -35,6 +35,7 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/network"
 	"k8s.io/client-go/kubernetes"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -66,6 +67,9 @@ var joinCmd = &cobra.Command{
 		clientProducer, err := client.NewProducerFromRestConfig(clientConfig.Config)
 		exit.OnError(status.Error(err, "Error creating the client producer"))
 
+		client, err := controllerClient.New(clientConfig.Config, controllerClient.Options{})
+		exit.OnError(status.Error(err, "Error creating client"))
+
 		networkDetails := getNetworkDetails(clientProducer, status)
 		determinePodCIDR(networkDetails, status)
 		determineServiceCIDR(networkDetails, status)
@@ -78,7 +82,7 @@ var joinCmd = &cobra.Command{
 			joinFlags.CustomDomains = *brokerInfo.CustomDomains
 		}
 
-		err = join.ClusterToBroker(brokerInfo, &joinFlags, clientProducer, status)
+		err = join.ClusterToBroker(brokerInfo, &joinFlags, clientProducer, client, status)
 		exit.OnError(err)
 	},
 }

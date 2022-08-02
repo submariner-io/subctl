@@ -27,10 +27,11 @@ import (
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/secret"
 	"github.com/submariner-io/subctl/pkg/submarinercr"
-	submariner "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
-	"github.com/submariner-io/submariner-operator/pkg/client"
+	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
+	operatorClient "github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 	v1 "k8s.io/api/core/v1"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type SubmarinerOptions struct {
@@ -55,8 +56,8 @@ type SubmarinerOptions struct {
 	CustomDomains                 []string
 }
 
-func Submariner(clientProducer client.Producer, options *SubmarinerOptions, brokerInfo *broker.Info, brokerSecret *v1.Secret,
-	netconfig globalnet.Config, imageOverrides map[string]string, status reporter.Interface,
+func Submariner(clientProducer operatorClient.Producer, client controllerClient.Client, options *SubmarinerOptions, brokerInfo *broker.Info,
+	brokerSecret *v1.Secret, netconfig globalnet.Config, imageOverrides map[string]string, status reporter.Interface,
 ) error {
 	pskSecret, err := secret.Ensure(clientProducer.ForKubernetes(), constants.OperatorNamespace, brokerInfo.IPSecPSK)
 	if err != nil {
@@ -65,7 +66,7 @@ func Submariner(clientProducer client.Producer, options *SubmarinerOptions, brok
 
 	submarinerSpec := populateSubmarinerSpec(options, brokerInfo, brokerSecret, pskSecret, netconfig, imageOverrides)
 
-	err = submarinercr.Ensure(clientProducer.ForOperator(), constants.OperatorNamespace, submarinerSpec)
+	err = submarinercr.Ensure(client, constants.OperatorNamespace, submarinerSpec)
 	if err != nil {
 		return status.Error(err, "Submariner deployment failed")
 	}
@@ -75,12 +76,12 @@ func Submariner(clientProducer client.Producer, options *SubmarinerOptions, brok
 
 func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info, brokerSecret *v1.Secret, pskSecret *v1.Secret,
 	netconfig globalnet.Config, imageOverrides map[string]string,
-) *submariner.SubmarinerSpec {
+) *operatorv1alpha1.SubmarinerSpec {
 	brokerURL := removeSchemaPrefix(brokerInfo.BrokerURL)
 
 	// For backwards compatibility, the connection information is populated through the secret and individual components
 	// TODO skitt This will be removed in the release following 0.12
-	submarinerSpec := &submariner.SubmarinerSpec{
+	submarinerSpec := &operatorv1alpha1.SubmarinerSpec{
 		Repository:               getImageRepo(options.Repository),
 		Version:                  getImageVersion(options.ImageVersion),
 		CeIPSecNATTPort:          options.NATTPort,
@@ -106,7 +107,7 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 		ServiceDiscoveryEnabled:  brokerInfo.IsServiceDiscoveryEnabled(),
 		ImageOverrides:           imageOverrides,
 		LoadBalancerEnabled:      options.LoadBalancerEnabled,
-		ConnectionHealthCheck: &submariner.HealthCheckSpec{
+		ConnectionHealthCheck: &operatorv1alpha1.HealthCheckSpec{
 			Enabled:            options.HealthCheckEnabled,
 			IntervalSeconds:    options.HealthCheckInterval,
 			MaxPacketLossCount: options.HealthCheckMaxPacketLossCount,
@@ -118,7 +119,7 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 
 	if options.CoreDNSCustomConfigMap != "" {
 		namespace, name := getCustomCoreDNSParams(options.CoreDNSCustomConfigMap)
-		submarinerSpec.CoreDNSCustomConfig = &submariner.CoreDNSCustomConfig{
+		submarinerSpec.CoreDNSCustomConfig = &operatorv1alpha1.CoreDNSCustomConfig{
 			ConfigMapName: name,
 			Namespace:     namespace,
 		}
@@ -133,7 +134,7 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 
 func getImageVersion(imageVersion string) string {
 	if imageVersion == "" {
-		return submariner.DefaultSubmarinerOperatorVersion
+		return operatorv1alpha1.DefaultSubmarinerOperatorVersion
 	}
 
 	return imageVersion
@@ -141,7 +142,7 @@ func getImageVersion(imageVersion string) string {
 
 func getImageRepo(imagerepo string) string {
 	if imagerepo == "" {
-		return submariner.DefaultRepo
+		return operatorv1alpha1.DefaultRepo
 	}
 
 	return imagerepo
