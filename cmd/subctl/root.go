@@ -29,8 +29,15 @@ import (
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/client"
+	"k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
 )
+
+func init() {
+	runtime.Must(operatorv1alpha1.AddToScheme(scheme.Scheme))
+}
 
 var restConfigProducer = restconfig.NewProducer()
 

@@ -37,7 +37,7 @@ func gatherPodLogs(podLabelSelector string, info *Info) {
 
 func gatherPodLogsByContainer(podLabelSelector, container string, info *Info) {
 	err := func() error {
-		pods, err := findPods(info.ClientProducer.ForKubernetes(), podLabelSelector)
+		pods, err := findPods(info.KubeClient, podLabelSelector)
 		if err != nil {
 			return err
 		}
@@ -131,7 +131,7 @@ func findPods(clientSet kubernetes.Interface, byLabelSelector string) (*corev1.P
 // nolint:gocritic // hugeParam: podLogOptions - purposely passed by value.
 func outputPreviousPodLog(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, info *Info, podLogInfo *LogInfo) error {
 	podLogOptions.Previous = true
-	logRequest := info.ClientProducer.ForKubernetes().CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOptions)
+	logRequest := info.KubeClient.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOptions)
 	logStream, _ := logRequest.Stream(context.TODO())
 
 	// TODO: Check for error other than "no previous pods found"
@@ -161,7 +161,7 @@ func outputPreviousPodLog(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, i
 func outputCurrentPodLog(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, info *Info, podLogInfo *LogInfo) error {
 	// Running with Previous = false on the same pod
 	podLogOptions.Previous = false
-	logRequest := info.ClientProducer.ForKubernetes().CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOptions)
+	logRequest := info.KubeClient.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOptions)
 
 	logStream, err := logRequest.Stream(context.TODO())
 	if err != nil {
@@ -178,7 +178,7 @@ func outputCurrentPodLog(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, in
 
 func logPodInfo(info *Info, what, podLabelSelector string, process func(info *Info, pod *corev1.Pod)) {
 	err := func() error {
-		pods, err := findPods(info.ClientProducer.ForKubernetes(), podLabelSelector)
+		pods, err := findPods(info.KubeClient, podLabelSelector)
 		if err != nil {
 			return err
 		}

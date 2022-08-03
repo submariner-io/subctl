@@ -144,9 +144,9 @@ func gatherOVNResources(info *Info, networkPlugin string) {
 
 	// we check two different labels because OpenShift deploys with a different
 	// label compared to ovn-kubernetes upstream
-	ovnMasterpods, err := findPods(info.ClientProducer.ForKubernetes(), ovnMasterPodLabelOCP)
+	ovnMasterpods, err := findPods(info.KubeClient, ovnMasterPodLabelOCP)
 	if err != nil || ovnMasterpods == nil || len(ovnMasterpods.Items) == 0 {
-		ovnMasterpods, err = findPods(info.ClientProducer.ForKubernetes(), ovnMasterPodLabelGeneric)
+		ovnMasterpods, err = findPods(info.KubeClient, ovnMasterPodLabelGeneric)
 		if err != nil {
 			info.Status.Failure("Failed to gather any OVN master ovnMasterpods: " + err.Error())
 		} else if ovnMasterpods == nil || len(ovnMasterpods.Items) == 0 {
@@ -204,7 +204,7 @@ func execCmdInBash(info *Info, pod *v1.Pod, cmd string) (string, string, error) 
 	execOptions := pods.ExecOptionsFromPod(pod)
 	execConfig := pods.ExecConfig{
 		RestConfig: info.RestConfig,
-		ClientSet:  info.ClientProducer.ForKubernetes(),
+		ClientSet:  info.KubeClient,
 	}
 
 	execOptions.Command = []string{"/bin/bash", "-c", cmd}

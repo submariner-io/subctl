@@ -31,6 +31,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -40,7 +41,9 @@ type Info struct {
 	RestConfig     *rest.Config
 	ClientProducer client.Producer
 	Client         controllerClient.Client
-	Submariner     *v1alpha1.Submariner
+	// This is needed for operations that aren't (yet) supported by the controller Client (eg, accessing subresources like pod logs).
+	KubeClient kubernetes.Interface
+	Submariner *v1alpha1.Submariner
 }
 
 func NewInfo(clusterName string, clientProducer client.Producer, config *rest.Config) (*Info, error) {
@@ -55,6 +58,11 @@ func NewInfo(clusterName string, clientProducer client.Producer, config *rest.Co
 	info.Client, err = controllerClient.New(config, controllerClient.Options{})
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating client")
+	}
+
+	info.KubeClient, err = kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, errors.Wrap(err, "error creating kube client")
 	}
 
 	submariner := &v1alpha1.Submariner{}
