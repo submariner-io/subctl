@@ -709,8 +709,8 @@ github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.7.1 h1:5TQK59W5E3v0r2duFAb7P95B6hEeOyEnHRa8MjYSMTY=
-github.com/submariner-io/admiral v0.13.0-m2.0.20220616204116-c054a15f1c60 h1:mrlCOedkDreAylxztOIiK7CxQNTYkafEm5zk3kX+WCw=
-github.com/submariner-io/admiral v0.13.0-m2.0.20220616204116-c054a15f1c60/go.mod h1:f3eyy4WCqB2sOFHXhht5dm4epkBj7Apm+UYt70gpMhM=
+github.com/submariner-io/admiral v0.13.0-m2.0.20220801133712-a14f98e90433 h1:60SSyXLxxWAtaRsjQhDvg1Y1PGNaITDq8NpXxqP0ud0=
+github.com/submariner-io/admiral v0.13.0-m2.0.20220801133712-a14f98e90433/go.mod h1:jqZnXzAYowGa1Dz85/JwiT3uL9LomzuhcmUw54tlTt0=
 github.com/submariner-io/cloud-prepare v0.13.0-m2.0.20220726072231-78de7046e1bd h1:3ixCUUathfmEkrWIZc+9SrLBCYOIELan4NeWwL6eft4=
 github.com/submariner-io/cloud-prepare v0.13.0-m2.0.20220726072231-78de7046e1bd/go.mod h1:/qnenempEw/cywTF8DipJKfj7wm7NHTTw4kPLmX4G7w=
 github.com/submariner-io/lighthouse v0.13.0-m2.0.20220621072741-0cd5c1da3f9c h1:HKfUbCDfPf1JGc0OR0DGVuWAlmKXEtcvl9KEUIdJrXc=
@@ -1176,8 +1176,8 @@ google.golang.org/api v0.75.0/go.mod h1:pU9QmyHLnzlpar1Mjt4IbapUCy8J+6HD6GeELN69
 google.golang.org/api v0.78.0/go.mod h1:1Sg78yoMLOhlQTeF+ARBoytAcH1NNyyl390YMy6rKmw=
 google.golang.org/api v0.80.0/go.mod h1:xY3nI94gbvBrE0J6NHXhxOmW97HG7Khjkku6AFB3Hyg=
 google.golang.org/api v0.84.0/go.mod h1:NTsGnUFJMYROtiquksZHBWtHfeMC7iYthki7Eq3pa8o=
-google.golang.org/api v0.90.0 h1:WMnUWAvihIClUYFNeFA69VTuR3duKS3IalMGDQcLvq8=
-google.golang.org/api v0.90.0/go.mod h1:+Sem1dnrKlrXMR/X0bPnMWyluQe4RsNoYfmNLhOIkzw=
+google.golang.org/api v0.91.0 h1:731+JzuwaJoZXRQGmPoBiV+SrsAfUaIkdMCWTcQNPyA=
+google.golang.org/api v0.91.0/go.mod h1:+Sem1dnrKlrXMR/X0bPnMWyluQe4RsNoYfmNLhOIkzw=
 google.golang.org/appengine v1.1.0/go.mod h1:EbEs0AVv82hx2wNQdGPgUI5lhzA/G0D9YwlJXL52JkM=
 google.golang.org/appengine v1.4.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
 google.golang.org/appengine v1.5.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=

@@ -24,24 +24,22 @@ import (
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
 	resourceutil "github.com/submariner-io/subctl/pkg/resource"
-	submariner "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
-	operatorClientset "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned"
-	operatorv1alpha1client "github.com/submariner-io/submariner-operator/pkg/client/clientset/versioned/typed/submariner/v1alpha1"
+	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func init() {
-	err := submariner.AddToScheme(scheme.Scheme)
+	err := operatorv1alpha1.AddToScheme(scheme.Scheme)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func Ensure(client operatorClientset.Interface, namespace string, serviceDiscoverySpec *submariner.ServiceDiscoverySpec) error {
-	sd := &submariner.ServiceDiscovery{
+func Ensure(client controllerClient.Client, namespace string, serviceDiscoverySpec *operatorv1alpha1.ServiceDiscoverySpec) error {
+	sd := &operatorv1alpha1.ServiceDiscovery{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      names.ServiceDiscoveryCrName,
@@ -49,25 +47,8 @@ func Ensure(client operatorClientset.Interface, namespace string, serviceDiscove
 		Spec: *serviceDiscoverySpec,
 	}
 
-	_, err := resourceutil.CreateOrUpdate(context.TODO(), ResourceInterface(client.SubmarinerV1alpha1().ServiceDiscoveries(namespace)), sd)
+	_, err := resourceutil.CreateOrUpdate(context.TODO(), resource.ForControllerClient(client, namespace,
+		&operatorv1alpha1.ServiceDiscovery{}), sd)
 
 	return errors.Wrap(err, "error creating/updating ServiceDiscovery resource")
-}
-
-// nolint:wrapcheck // No need to wrap.
-func ResourceInterface(client operatorv1alpha1client.ServiceDiscoveryInterface) resource.Interface {
-	return &resource.InterfaceFuncs{
-		GetFunc: func(ctx context.Context, name string, options metav1.GetOptions) (runtime.Object, error) {
-			return client.Get(ctx, name, options)
-		},
-		CreateFunc: func(ctx context.Context, obj runtime.Object, options metav1.CreateOptions) (runtime.Object, error) {
-			return client.Create(ctx, obj.(*submariner.ServiceDiscovery), options)
-		},
-		UpdateFunc: func(ctx context.Context, obj runtime.Object, options metav1.UpdateOptions) (runtime.Object, error) {
-			return client.Update(ctx, obj.(*submariner.ServiceDiscovery), options)
-		},
-		DeleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions) error {
-			return client.Delete(ctx, name, options)
-		},
-	}
 }

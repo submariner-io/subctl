@@ -16,7 +16,7 @@ function deploy_env_once() {
 
     # Print GHA groups to make looking at CI output easier
     printf "::group::Deploying the environment"
-    make deploy SETTINGS="$settings" using="${USING}" -o package/.image.subctl
+    make deploy SETTINGS="$SETTINGS" using="${USING}" -o package/.image.subctl
     declare_kubeconfig
     echo "::endgroup::" 
 }
@@ -49,7 +49,6 @@ function test_subctl_gather() {
 
 ### Main ###
 
-settings="${DAPPER_SOURCE}/.shipyard.system.yml"
 subm_ns=submariner-operator
 submariner_broker_ns=submariner-k8s-broker
 load_settings

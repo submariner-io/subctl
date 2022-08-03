@@ -25,9 +25,6 @@ PLATFORMS ?= linux/amd64,linux/arm64
 IMAGES = subctl
 PRELOAD_IMAGES := $(IMAGES) submariner-operator submariner-gateway submariner-globalnet submariner-route-agent lighthouse-agent lighthouse-coredns nettest
 MULTIARCH_IMAGES := subctl
-undefine SKIP
-undefine FOCUS
-undefine E2E_TESTDIR
 
 ifneq (,$(filter ovn,$(USING)))
 SETTINGS = $(DAPPER_SOURCE)/.shipyard.e2e.ovn.yml
@@ -46,7 +43,6 @@ CROSS_BINARIES := $(foreach cross,$(CROSS_TARGETS),$(patsubst %,cmd/bin/subctl-$
 CROSS_TARBALLS := $(foreach cross,$(CROSS_TARGETS),$(patsubst %,dist/subctl-$(VERSION)-%.tar.xz,$(cross)))
 
 override E2E_ARGS += cluster1 cluster2
-override SYSTEM_ARGS += --settings $(SETTINGS) cluster1 cluster2
 export DEPLOY_ARGS
 override UNIT_TEST_ARGS += test internal/env
 override VALIDATE_ARGS += --skip-dirs pkg/client
@@ -74,7 +70,7 @@ deploy: cmd/bin/subctl
 
 # [system-test] runs system level tests for the various `subctl` commands
 system-test:
-	scripts/test/system.sh $(SYSTEM_ARGS)
+	scripts/test/system.sh
 
 clean:
 	rm -f $(BINARIES) $(CROSS_BINARIES) $(CROSS_TARBALLS)

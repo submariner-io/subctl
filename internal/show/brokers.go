@@ -24,16 +24,18 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/show/table"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	corev1 "k8s.io/api/core/v1"
+	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func Brokers(clusterInfo *cluster.Info, status reporter.Interface) bool {
 	status.Start("Detecting broker(s)")
 
-	brokerList, err := clusterInfo.ClientProducer.ForOperator().SubmarinerV1alpha1().Brokers(corev1.NamespaceAll).List(
-		context.TODO(), metav1.ListOptions{})
+	brokerList := &v1alpha1.BrokerList{}
+	err := clusterInfo.Client.List(context.TODO(), brokerList, client.InNamespace(metav1.NamespaceAll))
+
 	if err != nil && !apierrors.IsNotFound(err) {
 		status.Failure(err.Error())
 		status.End()
