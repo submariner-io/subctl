@@ -370,8 +370,7 @@ func ConfigureTestFramework(args []string) error {
 
 		clusterName, err := rcp.ClusterNameFromContext()
 		if err != nil {
-			// nilerr is currently disabled because of go1.18. Remove the TODO below when nilerr is re-enabled.
-			// TODO nolint:nilerr // This is intentional.
+			// nolint:nilerr // This is intentional.
 			return nil
 		}
 
