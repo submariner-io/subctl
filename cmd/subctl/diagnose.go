@@ -26,7 +26,6 @@ import (
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/diagnose"
-	"github.com/submariner-io/submariner-operator/pkg/client"
 )
 
 var (
@@ -75,7 +74,7 @@ var (
 		Long:  "This command checks if Submariner can be deployed on the Kubernetes version.",
 		Run: func(command *cobra.Command, args []string) {
 			execute.OnMultiCluster(restConfigProducer, func(info *cluster.Info, status reporter.Interface) bool {
-				return diagnose.K8sVersion(info.ClientProducer.ForKubernetes(), status)
+				return diagnose.K8sVersion(info.LegacyClientProducer.ForKubernetes(), status)
 			})
 		},
 	}
@@ -87,7 +86,7 @@ var (
 		Run: func(command *cobra.Command, args []string) {
 			execute.OnMultiCluster(restConfigProducer, execute.IfSubmarinerInstalled(
 				func(info *cluster.Info, status reporter.Interface) bool {
-					return diagnose.KubeProxyMode(info.ClientProducer, diagnoseKubeProxyOptions.podNamespace,
+					return diagnose.KubeProxyMode(info.LegacyClientProducer, diagnoseKubeProxyOptions.podNamespace,
 						info.GetImageRepositoryInfo(), status)
 				}))
 		},
@@ -227,10 +226,7 @@ func clusterInfoFromKubeConfig(kubeConfig string) *cluster.Info {
 	config, err := producer.ForCluster()
 	exit.OnErrorWithMessage(err, fmt.Sprintf("The provided kubeconfig %q is invalid", kubeConfig))
 
-	clientProducer, err := client.NewProducerFromRestConfig(config.Config)
-	exit.OnErrorWithMessage(err, fmt.Sprintf("Error creating client producer for kubeconfig %q", kubeConfig))
-
-	clusterInfo, err := cluster.NewInfo("", clientProducer, config.Config)
+	clusterInfo, err := cluster.NewInfo("", config.Config)
 	exit.OnErrorWithMessage(err, fmt.Sprintf("Error initializing cluster information for kubeconfig %q", kubeConfig))
 
 	if clusterInfo.Submariner == nil {
@@ -243,7 +239,7 @@ func clusterInfoFromKubeConfig(kubeConfig string) *cluster.Info {
 }
 
 func diagnoseAll(clusterInfo *cluster.Info, status reporter.Interface) bool {
-	success := diagnose.K8sVersion(clusterInfo.ClientProducer.ForKubernetes(), status)
+	success := diagnose.K8sVersion(clusterInfo.LegacyClientProducer.ForKubernetes(), status)
 
 	fmt.Println()
 
@@ -265,7 +261,7 @@ func diagnoseAll(clusterInfo *cluster.Info, status reporter.Interface) bool {
 
 	fmt.Println()
 
-	success = diagnose.KubeProxyMode(clusterInfo.ClientProducer, diagnoseKubeProxyOptions.podNamespace,
+	success = diagnose.KubeProxyMode(clusterInfo.LegacyClientProducer, diagnoseKubeProxyOptions.podNamespace,
 		clusterInfo.GetImageRepositoryInfo(), status) && success
 
 	fmt.Println()

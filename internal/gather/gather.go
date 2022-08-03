@@ -108,7 +108,7 @@ func gatherDataByCluster(clusterInfo *cluster.Info, status reporter.Interface, o
 		DirName:              options.Directory,
 		IncludeSensitiveData: options.IncludeSensitiveData,
 		Summary:              &Summary{},
-		ClientProducer:       clusterInfo.ClientProducer,
+		ClientProducer:       clusterInfo.LegacyClientProducer,
 		Client:               clusterInfo.Client,
 		Submariner:           clusterInfo.Submariner,
 		ServiceDiscovery:     &v1alpha1.ServiceDiscovery{},
