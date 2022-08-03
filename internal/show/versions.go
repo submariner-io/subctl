@@ -35,7 +35,7 @@ import (
 )
 
 func getOperatorVersion(clusterInfo *cluster.Info) ([]interface{}, error) {
-	deployments := clusterInfo.ClientProducer.ForKubernetes().AppsV1().Deployments(constants.OperatorNamespace)
+	deployments := clusterInfo.LegacyClientProducer.ForKubernetes().AppsV1().Deployments(constants.OperatorNamespace)
 
 	operatorDeployment, err := deployments.Get(context.TODO(), names.OperatorComponent, v1.GetOptions{})
 	if err != nil {

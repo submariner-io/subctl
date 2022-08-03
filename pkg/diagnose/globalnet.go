@@ -61,7 +61,7 @@ func GlobalnetConfig(clusterInfo *cluster.Info, status reporter.Interface) bool 
 }
 
 func checkClusterGlobalEgressIPs(clusterInfo *cluster.Info, status reporter.Interface) {
-	clusterGlobalEgress, err := clusterInfo.ClientProducer.ForSubmariner().SubmarinerV1().ClusterGlobalEgressIPs(
+	clusterGlobalEgress, err := clusterInfo.LegacyClientProducer.ForSubmariner().SubmarinerV1().ClusterGlobalEgressIPs(
 		corev1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		status.Failure("Error listing the ClusterGlobalEgressIP resources: %v", err)
@@ -113,7 +113,7 @@ func checkClusterGlobalEgressIPs(clusterInfo *cluster.Info, status reporter.Inte
 }
 
 func checkGlobalEgressIPs(clusterInfo *cluster.Info, status reporter.Interface) {
-	globalEgressIps, err := clusterInfo.ClientProducer.ForSubmariner().SubmarinerV1().GlobalEgressIPs(
+	globalEgressIps, err := clusterInfo.LegacyClientProducer.ForSubmariner().SubmarinerV1().GlobalEgressIPs(
 		corev1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		status.Failure("Error obtaining GlobalEgressIPs resources: %v", err)
@@ -152,7 +152,7 @@ func checkGlobalIngressIPs(clusterInfo *cluster.Info, status reporter.Interface)
 		Resource: "serviceexports",
 	}
 
-	serviceExports, err := clusterInfo.ClientProducer.ForDynamic().Resource(*serviceExportGVR).Namespace(corev1.NamespaceAll).
+	serviceExports, err := clusterInfo.LegacyClientProducer.ForDynamic().Resource(*serviceExportGVR).Namespace(corev1.NamespaceAll).
 		List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		status.Failure("Error listing ServiceExport resources: %v", err)
@@ -163,7 +163,7 @@ func checkGlobalIngressIPs(clusterInfo *cluster.Info, status reporter.Interface)
 		ns := serviceExports.Items[i].GetNamespace()
 		name := serviceExports.Items[i].GetName()
 
-		svc, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Services(ns).Get(context.TODO(), name, metav1.GetOptions{})
+		svc, err := clusterInfo.LegacyClientProducer.ForKubernetes().CoreV1().Services(ns).Get(context.TODO(), name, metav1.GetOptions{})
 
 		if apierrors.IsNotFound(err) {
 			status.Warning("No matching Service resource found for exported service \"%s/%s\"", ns, name)
@@ -179,7 +179,7 @@ func checkGlobalIngressIPs(clusterInfo *cluster.Info, status reporter.Interface)
 			continue
 		}
 
-		globalIngress, err := clusterInfo.ClientProducer.ForSubmariner().SubmarinerV1().GlobalIngressIPs(ns).Get(context.TODO(),
+		globalIngress, err := clusterInfo.LegacyClientProducer.ForSubmariner().SubmarinerV1().GlobalIngressIPs(ns).Get(context.TODO(),
 			name, metav1.GetOptions{})
 
 		if apierrors.IsNotFound(err) {
@@ -216,7 +216,7 @@ func checkGlobalIngressIPs(clusterInfo *cluster.Info, status reporter.Interface)
 func verifyInternalService(clusterInfo *cluster.Info, status reporter.Interface, ns, name string,
 	globalIngress *submarinerv1.GlobalIngressIP,
 ) {
-	svcs, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Services(ns).List(
+	svcs, err := clusterInfo.LegacyClientProducer.ForKubernetes().CoreV1().Services(ns).List(
 		context.TODO(), metav1.ListOptions{LabelSelector: fmt.Sprintf("submariner.io/exportedServiceRef=%s", name)})
 	if err != nil {
 		status.Failure("Error listing internal Services \"%s/%s\": %v", ns, name, err)
