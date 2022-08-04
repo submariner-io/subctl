@@ -20,12 +20,11 @@ package gather
 
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
-	"github.com/submariner-io/submariner-operator/pkg/client"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
-	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Info struct {
@@ -38,7 +37,6 @@ type Info struct {
 	IncludeSensitiveData bool
 	Summary              *Summary
 	ClientProducer       client.Producer
-	Client               controllerClient.Client
 }
 
 type Summary struct {
