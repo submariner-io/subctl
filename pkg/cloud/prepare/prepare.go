@@ -26,9 +26,9 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud"
-	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/network"
 	"github.com/submariner-io/submariner/pkg/cni"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func getNetworkDetails(restCfgProducer *restconfig.Producer) (*network.ClusterNetwork, error) {
@@ -37,13 +37,12 @@ func getNetworkDetails(restCfgProducer *restconfig.Producer) (*network.ClusterNe
 		return nil, errors.Wrapf(err, "error creating the restConfig")
 	}
 
-	clientProducer, err := client.NewProducerFromRestConfig(k8sConfig.Config)
+	client, err := controllerClient.New(k8sConfig.Config, controllerClient.Options{})
 	if err != nil {
-		return nil, errors.Wrapf(err, "error creating the client producer")
+		return nil, errors.Wrap(err, "error creating controller client")
 	}
 
-	networkDetails, err := network.Discover(clientProducer.ForDynamic(), clientProducer.ForKubernetes(), clientProducer.ForOperator(),
-		constants.OperatorNamespace)
+	networkDetails, err := network.Discover(client, constants.OperatorNamespace)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to discover network details")
 	} else if networkDetails == nil {

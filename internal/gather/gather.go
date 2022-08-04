@@ -35,7 +35,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/brokercr"
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
+	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

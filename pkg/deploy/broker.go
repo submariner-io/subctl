@@ -26,7 +26,7 @@ import (
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/brokercr"
-	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
+	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	operatorclient "github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
@@ -66,12 +66,12 @@ func Broker(options *BrokerOptions, clientProducer operatorclient.Producer, clie
 	}
 
 	if options.BrokerSpec.GlobalnetEnabled {
-		if err = globalnet.ValidateExistingGlobalNetworks(clientProducer.ForKubernetes(), options.BrokerNamespace); err != nil {
+		if err = globalnet.ValidateExistingGlobalNetworks(client, options.BrokerNamespace); err != nil {
 			return status.Error(err, "error validating existing globalCIDR configmap")
 		}
 	}
 
-	if err = globalnet.CreateConfigMap(clientProducer.ForKubernetes(), options.BrokerSpec.GlobalnetEnabled,
+	if err = globalnet.CreateConfigMap(client, options.BrokerSpec.GlobalnetEnabled,
 		options.BrokerSpec.GlobalnetCIDRRange, options.BrokerSpec.DefaultGlobalnetClusterSize, options.BrokerNamespace); err != nil {
 		return status.Error(err, "error creating globalCIDR configmap on Broker")
 	}

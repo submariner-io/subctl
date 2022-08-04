@@ -25,7 +25,7 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/image"
-	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
+	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	operatorClient "github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
@@ -42,9 +42,7 @@ type Info struct {
 	// TODO - will be replaced by ClientProducer.
 	LegacyClientProducer operatorClient.Producer
 	ClientProducer       client.Producer
-	// TODO - will be replaced by ClientProducer.
-	Client     controllerClient.Client
-	Submariner *v1alpha1.Submariner
+	Submariner           *v1alpha1.Submariner
 }
 
 func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
@@ -54,11 +52,6 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 	}
 
 	var err error
-
-	info.Client, err = controllerClient.New(config, controllerClient.Options{})
-	if err != nil {
-		return nil, errors.Wrap(err, "error creating client")
-	}
 
 	info.LegacyClientProducer, err = operatorClient.NewProducerFromRestConfig(config)
 	if err != nil {
