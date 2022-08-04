@@ -115,7 +115,7 @@ func spawnSnifferPodOnNode(client kubernetes.Interface, nodeName, namespace, pod
 func getActiveGatewayNodeName(clusterInfo *cluster.Info, hostname string, imageRepInfo *image.RepositoryInfo,
 	status reporter.Interface,
 ) (string, error) {
-	nodes, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{
+	nodes, err := clusterInfo.LegacyClientProducer.ForKubernetes().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "submariner.io/gateway=true",
 	})
 	if err != nil {
@@ -131,7 +131,7 @@ func getActiveGatewayNodeName(clusterInfo *cluster.Info, hostname string, imageR
 		// On some platforms, the nodeName does not match with the hostname.
 		// Submariner Endpoint stores the hostname info in the endpoint and not the nodeName. So, we spawn a
 		// tiny pod to read the hostname and return the corresponding node.
-		sPod, err := spawnSnifferPodOnNode(clusterInfo.ClientProducer.ForKubernetes(), node.Name, constants.OperatorNamespace, "hostname",
+		sPod, err := spawnSnifferPodOnNode(clusterInfo.LegacyClientProducer.ForKubernetes(), node.Name, constants.OperatorNamespace, "hostname",
 			imageRepInfo)
 		if err != nil {
 			return "", status.Error(err, "Error spawning the sniffer pod on the node %q: %v", node.Name)
@@ -241,7 +241,7 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, optio
 	podCommand := fmt.Sprintf("timeout %d tcpdump -ln -Q in -A -s 100 -i any udp and %s | grep '%s'",
 		options.ValidationTimeout, portFilter, clientMessage)
 
-	sPod, err := spawnSnifferPodOnNode(localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, options.PodNamespace, podCommand,
+	sPod, err := spawnSnifferPodOnNode(localClusterInfo.LegacyClientProducer.ForKubernetes(), gwNodeName, options.PodNamespace, podCommand,
 		localClusterInfo.GetImageRepositoryInfo())
 	if err != nil {
 		return status.Error(err, "Error spawning the sniffer pod on the Gateway node %q", gwNodeName)
@@ -259,8 +259,8 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, optio
 
 	// Spawn the pod on the nonGateway node. If we spawn the pod on Gateway node, the tunnel process can
 	// sometimes drop the udp traffic from client pod until the tunnels are properly setup.
-	cPod, err := spawnClientPodOnNonGatewayNodeWithHostNet(remoteClusterInfo.ClientProducer.ForKubernetes(), options.PodNamespace, podCommand,
-		localClusterInfo.GetImageRepositoryInfo())
+	cPod, err := spawnClientPodOnNonGatewayNodeWithHostNet(remoteClusterInfo.LegacyClientProducer.ForKubernetes(), options.PodNamespace,
+		podCommand, localClusterInfo.GetImageRepositoryInfo())
 	if err != nil {
 		return status.Error(err, "Error spawning the client pod on non-Gateway node of cluster %q", remoteClusterInfo.Name)
 	}
@@ -324,7 +324,7 @@ func getLbNodePort(clusterInfo *cluster.Info, endpoint *subv1.Endpoint, tgtport 
 		portName = nattPortName
 	}
 
-	svc, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Services(endpoint.GetNamespace()).Get(
+	svc, err := clusterInfo.LegacyClientProducer.ForKubernetes().CoreV1().Services(endpoint.GetNamespace()).Get(
 		context.TODO(), loadBalancerName, metav1.GetOptions{})
 	if err == nil {
 		for _, port := range svc.Spec.Ports {

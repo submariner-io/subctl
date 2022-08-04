@@ -27,7 +27,6 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	"github.com/submariner-io/submariner-operator/pkg/client"
 )
 
 type OnClusterFn func(*cluster.Info, reporter.Interface) bool
@@ -45,15 +44,7 @@ func OnMultiCluster(restConfigProducer restconfig.Producer, run OnClusterFn) {
 	for _, config := range restConfigs {
 		fmt.Printf("Cluster %q\n", config.ClusterName)
 
-		clientProducer, err := client.NewProducerFromRestConfig(config.Config)
-		if err != nil {
-			status.Failure("Error creating the client producer: %v", err)
-			fmt.Println()
-
-			continue
-		}
-
-		clusterInfo, err := cluster.NewInfo(config.ClusterName, clientProducer, config.Config)
+		clusterInfo, err := cluster.NewInfo(config.ClusterName, config.Config)
 		if err != nil {
 			success = false
 
