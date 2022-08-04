@@ -102,7 +102,7 @@ func getLogFromStream(logStream io.ReadCloser) (string, error) {
 }
 
 func writeLogToFile(data, podName string, info *Info, fileExtension string) (string, error) {
-	fileName := escapeFileName(info.ClusterName+"_"+podName) + fileExtension
+	fileName := escapeFileName(podName) + fileExtension
 	filePath := filepath.Join(info.DirName, fileName)
 
 	f, err := os.Create(filePath)
