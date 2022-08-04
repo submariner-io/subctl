@@ -5,6 +5,7 @@ export BASE_BRANCH
 export DEFAULT_IMAGE_VERSION
 
 DEFAULT_REPO ?= "quay.io/submariner"
+BUILD_UPX=false
 
 # Define LOCAL_BUILD to build directly on the host and not inside a Dapper container
 ifdef LOCAL_BUILD
@@ -79,7 +80,6 @@ build: $(BINARIES)
 
 build-cross: $(CROSS_TARBALLS)
 
-licensecheck: BUILD_ARGS=--noupx
 licensecheck: build | bin/lichen
 	bin/lichen -c .lichen.yaml $(BINARIES)
 
@@ -113,11 +113,10 @@ cmd/bin/subctl-%: $(shell find . -name "*.go") $(VENDOR_MODULES)
 	GOOS=$${components[-2]}; \
 	GOARCH=$${components[-1]}; \
 	export GOARCH GOOS; \
-	$(SCRIPTS_DIR)/compile.sh \
-		--ldflags "-X 'github.com/submariner-io/subctl/pkg/version.Version=$(VERSION)' \
-		       -X 'github.com/submariner-io/submariner-operator/api/submariner/v1alpha1.DefaultSubmarinerOperatorVersion=$${DEFAULT_IMAGE_VERSION#v}' \
-		       -X 'github.com/submariner-io/submariner-operator/api/submariner/v1alpha1.DefaultRepo=$(DEFAULT_REPO)'" \
-        --noupx $@ ./cmd $(BUILD_ARGS)
+	LDFLAGS="-X 'github.com/submariner-io/subctl/pkg/version.Version=$(VERSION)' \
+		-X 'github.com/submariner-io/submariner-operator/api/submariner/v1alpha1.DefaultSubmarinerOperatorVersion=$${DEFAULT_IMAGE_VERSION#v}' \
+		-X 'github.com/submariner-io/submariner-operator/api/submariner/v1alpha1.DefaultRepo=$(DEFAULT_REPO)'" \
+	$(SCRIPTS_DIR)/compile.sh $@ ./cmd
 
 ci: golangci-lint markdownlint unit build images
 
