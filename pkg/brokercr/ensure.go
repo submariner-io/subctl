@@ -24,7 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/util"
-	submariner "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
+	submariner "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )

@@ -29,7 +29,7 @@ import (
 	"github.com/submariner-io/subctl/internal/pods"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/image"
-	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
+	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	subv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"github.com/submariner-io/submariner/pkg/port"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
