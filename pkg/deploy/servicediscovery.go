@@ -24,10 +24,10 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/broker"
+	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/servicediscoverycr"
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
-	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ServiceDiscoveryOptions struct {
@@ -40,12 +40,12 @@ type ServiceDiscoveryOptions struct {
 	CustomDomains          []string
 }
 
-func ServiceDiscovery(client controllerClient.Client, options *ServiceDiscoveryOptions, brokerInfo *broker.Info,
+func ServiceDiscovery(clientProducer client.Producer, options *ServiceDiscoveryOptions, brokerInfo *broker.Info,
 	brokerSecret *v1.Secret, imageOverrides map[string]string, status reporter.Interface,
 ) error {
 	serviceDiscoverySpec := populateServiceDiscoverySpec(options, brokerInfo, brokerSecret, imageOverrides)
 
-	err := servicediscoverycr.Ensure(client, constants.OperatorNamespace, serviceDiscoverySpec)
+	err := servicediscoverycr.Ensure(clientProducer.ForGeneral(), constants.OperatorNamespace, serviceDiscoverySpec)
 	if err != nil {
 		return status.Error(err, "Service discovery deployment failed")
 	}

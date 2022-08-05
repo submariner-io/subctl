@@ -25,13 +25,12 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/broker"
+	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/secret"
 	"github.com/submariner-io/subctl/pkg/submarinercr"
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
-	operatorClient "github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 	v1 "k8s.io/api/core/v1"
-	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type SubmarinerOptions struct {
@@ -56,7 +55,7 @@ type SubmarinerOptions struct {
 	CustomDomains                 []string
 }
 
-func Submariner(clientProducer operatorClient.Producer, client controllerClient.Client, options *SubmarinerOptions, brokerInfo *broker.Info,
+func Submariner(clientProducer client.Producer, options *SubmarinerOptions, brokerInfo *broker.Info,
 	brokerSecret *v1.Secret, netconfig globalnet.Config, imageOverrides map[string]string, status reporter.Interface,
 ) error {
 	pskSecret, err := secret.Ensure(clientProducer.ForKubernetes(), constants.OperatorNamespace, brokerInfo.IPSecPSK)
@@ -66,7 +65,7 @@ func Submariner(clientProducer operatorClient.Producer, client controllerClient.
 
 	submarinerSpec := populateSubmarinerSpec(options, brokerInfo, brokerSecret, pskSecret, netconfig, imageOverrides)
 
-	err = submarinercr.Ensure(client, constants.OperatorNamespace, submarinerSpec)
+	err = submarinercr.Ensure(clientProducer.ForGeneral(), constants.OperatorNamespace, submarinerSpec)
 	if err != nil {
 		return status.Error(err, "Submariner deployment failed")
 	}

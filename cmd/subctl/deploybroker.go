@@ -29,10 +29,9 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/pkg/broker"
+	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/deploy"
-	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
-	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -54,10 +53,7 @@ var deployBroker = &cobra.Command{
 		clientProducer, err := client.NewProducerFromRestConfig(config.Config)
 		exit.OnError(status.Error(err, "Error creating client producer"))
 
-		client, err := controllerClient.New(config.Config, controllerClient.Options{})
-		exit.OnError(status.Error(err, "Error creating client"))
-
-		err = deploy.Broker(&deployflags, clientProducer, client, status)
+		err = deploy.Broker(&deployflags, clientProducer, status)
 		exit.OnError(err)
 
 		err = broker.WriteInfoToFile(config.Config, deployflags.BrokerNamespace, ipsecSubmFile,
