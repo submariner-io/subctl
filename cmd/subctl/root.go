@@ -29,7 +29,14 @@ import (
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
 )
+
+func init() {
+	runtime.Must(apiextensionsv1.AddToScheme(scheme.Scheme))
+}
 
 var restConfigProducer = restconfig.NewProducer()
 

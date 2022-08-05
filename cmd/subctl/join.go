@@ -31,11 +31,10 @@ import (
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/nodes"
 	"github.com/submariner-io/subctl/pkg/broker"
+	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/join"
-	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/network"
 	"k8s.io/client-go/kubernetes"
-	controllerclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -67,10 +66,7 @@ var joinCmd = &cobra.Command{
 		clientProducer, err := client.NewProducerFromRestConfig(clientConfig.Config)
 		exit.OnError(status.Error(err, "Error creating the client producer"))
 
-		client, err := controllerclient.New(clientConfig.Config, controllerclient.Options{})
-		exit.OnError(status.Error(err, "Error creating client"))
-
-		networkDetails := getNetworkDetails(client, status)
+		networkDetails := getNetworkDetails(clientProducer, status)
 		determinePodCIDR(networkDetails, status)
 		determineServiceCIDR(networkDetails, status)
 
@@ -82,7 +78,7 @@ var joinCmd = &cobra.Command{
 			joinFlags.CustomDomains = *brokerInfo.CustomDomains
 		}
 
-		err = join.ClusterToBroker(brokerInfo, &joinFlags, clientProducer, client, status)
+		err = join.ClusterToBroker(brokerInfo, &joinFlags, clientProducer, status)
 		exit.OnError(err)
 	},
 }
@@ -291,10 +287,10 @@ func determineClusterID(status reporter.Interface) {
 	}
 }
 
-func getNetworkDetails(controllerClient controllerclient.Client, status reporter.Interface) *network.ClusterNetwork {
+func getNetworkDetails(clientProducer client.Producer, status reporter.Interface) *network.ClusterNetwork {
 	status.Start("Discovering network details")
 
-	networkDetails, err := network.Discover(controllerClient, constants.OperatorNamespace)
+	networkDetails, err := network.Discover(clientProducer.ForGeneral(), constants.OperatorNamespace)
 	if err != nil {
 		status.Warning("Unable to discover network details: %s", err)
 	} else if networkDetails == nil {

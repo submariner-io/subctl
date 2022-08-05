@@ -20,6 +20,7 @@ package operator
 
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/lighthouse"
 	"github.com/submariner-io/subctl/pkg/namespace"
 	opcrds "github.com/submariner-io/subctl/pkg/operator/crds"
@@ -27,13 +28,12 @@ import (
 	"github.com/submariner-io/subctl/pkg/operator/scc"
 	"github.com/submariner-io/subctl/pkg/operator/serviceaccount"
 	"github.com/submariner-io/subctl/pkg/submariner"
-	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 )
 
 // nolint:wrapcheck // No need to wrap errors here.
 func Ensure(status reporter.Interface, clientProducer client.Producer, operatorNamespace, operatorImage string, debug bool) error {
-	if created, err := opcrds.Ensure(crd.UpdaterFromClientSet(clientProducer.ForCRD())); err != nil {
+	if created, err := opcrds.Ensure(crd.UpdaterFromControllerClient(clientProducer.ForGeneral())); err != nil {
 		return err
 	} else if created {
 		status.Success("Created operator CRDs")
