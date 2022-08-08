@@ -25,7 +25,7 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/servicediscoverycr"
-	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
+	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )

@@ -110,7 +110,7 @@ func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface
 	status.Start("Trying to detect the Calico ConfigMap")
 	defer status.End()
 
-	found, err := detectCalicoConfigMap(info.ClientProducer.ForKubernetes())
+	found, err := detectCalicoConfigMap(info.LegacyClientProducer.ForKubernetes())
 	if err != nil {
 		status.Failure("Error trying to detect the Calico ConfigMap: %s", err)
 		return false
@@ -133,7 +133,7 @@ func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface
 		return false
 	}
 
-	client := info.ClientProducer.ForDynamic().Resource(calicoGVR)
+	client := info.LegacyClientProducer.ForDynamic().Resource(calicoGVR)
 
 	ippoolList, err := client.List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -227,7 +227,7 @@ func checkOVNVersion(info *cluster.Info, status reporter.Interface) bool {
 	status.Start("Checking OVN version")
 	defer status.End()
 
-	clientSet := info.ClientProducer.ForKubernetes()
+	clientSet := info.LegacyClientProducer.ForKubernetes()
 
 	ovnPod, err := mustFindPod(clientSet, ovnKubeDBPodLabel)
 	if err != nil {

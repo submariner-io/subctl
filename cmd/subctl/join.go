@@ -35,7 +35,7 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/network"
 	"k8s.io/client-go/kubernetes"
-	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
+	controllerclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -67,10 +67,10 @@ var joinCmd = &cobra.Command{
 		clientProducer, err := client.NewProducerFromRestConfig(clientConfig.Config)
 		exit.OnError(status.Error(err, "Error creating the client producer"))
 
-		client, err := controllerClient.New(clientConfig.Config, controllerClient.Options{})
+		client, err := controllerclient.New(clientConfig.Config, controllerclient.Options{})
 		exit.OnError(status.Error(err, "Error creating client"))
 
-		networkDetails := getNetworkDetails(clientProducer, status)
+		networkDetails := getNetworkDetails(client, status)
 		determinePodCIDR(networkDetails, status)
 		determineServiceCIDR(networkDetails, status)
 
@@ -291,11 +291,10 @@ func determineClusterID(status reporter.Interface) {
 	}
 }
 
-func getNetworkDetails(clientProducer client.Producer, status reporter.Interface) *network.ClusterNetwork {
+func getNetworkDetails(controllerClient controllerclient.Client, status reporter.Interface) *network.ClusterNetwork {
 	status.Start("Discovering network details")
 
-	networkDetails, err := network.Discover(clientProducer.ForDynamic(), clientProducer.ForKubernetes(), clientProducer.ForOperator(),
-		constants.OperatorNamespace)
+	networkDetails, err := network.Discover(controllerClient, constants.OperatorNamespace)
 	if err != nil {
 		status.Warning("Unable to discover network details: %s", err)
 	} else if networkDetails == nil {

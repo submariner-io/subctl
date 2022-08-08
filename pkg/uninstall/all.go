@@ -27,7 +27,7 @@ import (
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/util"
 	"github.com/submariner-io/subctl/internal/constants"
-	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
+	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	operatorClient "github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	corev1 "k8s.io/api/core/v1"

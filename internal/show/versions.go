@@ -26,7 +26,7 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/show/table"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
+	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/images"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -35,7 +35,7 @@ import (
 )
 
 func getOperatorVersion(clusterInfo *cluster.Info) ([]interface{}, error) {
-	deployments := clusterInfo.ClientProducer.ForKubernetes().AppsV1().Deployments(constants.OperatorNamespace)
+	deployments := clusterInfo.LegacyClientProducer.ForKubernetes().AppsV1().Deployments(constants.OperatorNamespace)
 
 	operatorDeployment, err := deployments.Get(context.TODO(), names.OperatorComponent, v1.GetOptions{})
 	if err != nil {
@@ -54,7 +54,7 @@ func getOperatorVersion(clusterInfo *cluster.Info) ([]interface{}, error) {
 func getServiceDiscoveryVersion(clusterInfo *cluster.Info) ([]interface{}, error) {
 	serviceDiscovery := &v1alpha1.ServiceDiscovery{}
 
-	err := clusterInfo.Client.Get(context.TODO(), controllerClient.ObjectKey{
+	err := clusterInfo.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
 		Namespace: constants.OperatorNamespace,
 		Name:      names.ServiceDiscoveryCrName,
 	}, serviceDiscovery)

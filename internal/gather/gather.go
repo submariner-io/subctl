@@ -23,7 +23,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
+	"path/filepath"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/stringset"
@@ -33,9 +33,9 @@ import (
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/brokercr"
+	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	"github.com/submariner-io/submariner-operator/api/submariner/v1alpha1"
-	"github.com/submariner-io/submariner-operator/pkg/client"
+	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -74,9 +74,8 @@ func Data(clusterInfo *cluster.Info, status reporter.Interface, options Options)
 		Deduplicate: true,
 	}))
 
-	if options.Directory == "" {
-		options.Directory = "submariner-" + time.Now().UTC().Format("20060102150405") // submariner-YYYYMMDDHHMMSS
-	}
+	// concatenate the name of the cluster with the root gather directory
+	options.Directory = filepath.Join(options.Directory, clusterInfo.Name)
 
 	if _, err := os.Stat(options.Directory); os.IsNotExist(err) {
 		err := os.MkdirAll(options.Directory, 0o700)
@@ -110,12 +109,11 @@ func gatherDataByCluster(clusterInfo *cluster.Info, status reporter.Interface, o
 		IncludeSensitiveData: options.IncludeSensitiveData,
 		Summary:              &Summary{},
 		ClientProducer:       clusterInfo.ClientProducer,
-		Client:               clusterInfo.Client,
 		Submariner:           clusterInfo.Submariner,
 		ServiceDiscovery:     &v1alpha1.ServiceDiscovery{},
 	}
 
-	err = info.Client.Get(context.TODO(), controllerClient.ObjectKey{
+	err = info.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
 		Namespace: constants.OperatorNamespace,
 		Name:      names.ServiceDiscoveryCrName,
 	}, info.ServiceDiscovery)
@@ -215,14 +213,8 @@ func gatherBroker(dataType string, info Info) bool {
 				info.Status.Failure("Error creating broker client Producer: %s", err)
 				return true
 			}
-
-			info.Client, err = controllerClient.New(brokerRestConfig, controllerClient.Options{})
-			if err != nil {
-				info.Status.Failure("Error creating broker client: %s", err)
-				return true
-			}
 		} else {
-			err = info.Client.Get(context.TODO(), controllerClient.ObjectKey{
+			err = info.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
 				Namespace: constants.OperatorNamespace,
 				Name:      brokercr.Name,
 			}, &v1alpha1.Broker{})

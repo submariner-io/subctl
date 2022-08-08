@@ -21,6 +21,7 @@ package subctl
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -39,6 +40,10 @@ var gatherCmd = &cobra.Command{
 		"can be selected by component (%v) and type (%v). Default is to capture all data.",
 		strings.Join(gather.AllModules.Elements(), ","), strings.Join(gather.AllTypes.Elements(), ",")),
 	Run: func(command *cobra.Command, args []string) {
+		if options.Directory == "" {
+			options.Directory = "submariner-" + time.Now().UTC().Format("20060102150405") // submariner-YYYYMMDDHHMMSS
+		}
+
 		execute.OnMultiCluster(restConfigProducer, func(info *cluster.Info, status reporter.Interface) bool {
 			err := checkGatherArguments()
 			exit.OnErrorWithMessage(err, "Invalid argument")

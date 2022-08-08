@@ -45,8 +45,7 @@ func Network(clusterInfo *cluster.Info, status reporter.Interface) bool {
 	} else {
 		msg = "    Discovered network details"
 
-		clusterNetwork, err = network.Discover(clusterInfo.ClientProducer.ForDynamic(), clusterInfo.ClientProducer.ForKubernetes(),
-			clusterInfo.ClientProducer.ForOperator(), constants.OperatorNamespace)
+		clusterNetwork, err = network.Discover(clusterInfo.ClientProducer.ForGeneral(), constants.OperatorNamespace)
 		if err != nil {
 			status.Failure("There was an error discovering network details for this cluster", err)
 			status.End()

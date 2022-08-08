@@ -29,7 +29,6 @@ import (
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	"github.com/submariner-io/submariner-operator/pkg/client"
 )
 
 var restConfigProducer = restconfig.NewProducer()
@@ -50,10 +49,7 @@ func Execute() {
 }
 
 func setupTestFrameworkBeforeSuite() {
-	clientProducer, err := client.NewProducerFromRestConfig(framework.RestConfigs[framework.ClusterA])
-	exit.OnErrorWithMessage(err, "Error creating client producer")
-
-	clusterInfo, err := cluster.NewInfo(framework.TestContext.ClusterIDs[framework.ClusterA], clientProducer,
+	clusterInfo, err := cluster.NewInfo(framework.TestContext.ClusterIDs[framework.ClusterA],
 		framework.RestConfigs[framework.ClusterA])
 	exit.OnErrorWithMessage(err, "Error initializing the cluster information")
 
