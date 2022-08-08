@@ -31,19 +31,20 @@ import (
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/internal/gvr"
 	"github.com/submariner-io/subctl/pkg/version"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	subv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
+	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
 type RestConfig struct {
@@ -207,22 +208,20 @@ func ForBroker(submariner *v1alpha1.Submariner, serviceDisc *v1alpha1.ServiceDis
 		// should allow read access.
 		restConfig, _, err = resource.GetAuthorizedRestConfigFromData(submariner.Spec.BrokerK8sApiServer,
 			submariner.Spec.BrokerK8sApiServerToken,
-			submariner.Spec.BrokerK8sCA, &rest.TLSClientConfig{}, schema.GroupVersionResource{
-				Group:    subv1.SchemeGroupVersion.Group,
-				Version:  subv1.SchemeGroupVersion.Version,
-				Resource: "clusters",
-			}, submariner.Spec.BrokerK8sRemoteNamespace)
+			submariner.Spec.BrokerK8sCA,
+			&rest.TLSClientConfig{},
+			subv1.SchemeGroupVersion.WithResource("clusters"),
+			submariner.Spec.BrokerK8sRemoteNamespace)
 		namespace = submariner.Spec.BrokerK8sRemoteNamespace
 	} else if serviceDisc != nil {
 		// Try to authorize against the ServiceImport resource as we know the CRD should exist and the credentials
 		// should allow read access.
 		restConfig, _, err = resource.GetAuthorizedRestConfigFromData(serviceDisc.Spec.BrokerK8sApiServer,
 			serviceDisc.Spec.BrokerK8sApiServerToken,
-			serviceDisc.Spec.BrokerK8sCA, &rest.TLSClientConfig{}, schema.GroupVersionResource{
-				Group:    "multicluster.x-k8s.io",
-				Version:  "v1alpha1",
-				Resource: "serviceimports",
-			}, serviceDisc.Spec.BrokerK8sRemoteNamespace)
+			serviceDisc.Spec.BrokerK8sCA,
+			&rest.TLSClientConfig{},
+			gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceimports"),
+			serviceDisc.Spec.BrokerK8sRemoteNamespace)
 		namespace = serviceDisc.Spec.BrokerK8sRemoteNamespace
 	}
 
@@ -374,8 +373,7 @@ func ConfigureTestFramework(args []string) error {
 
 		clusterName, err := rcp.ClusterNameFromContext()
 		if err != nil {
-			// nilerr is currently disabled because of go1.18. Remove the TODO below when nilerr is re-enabled.
-			// TODO nolint:nilerr // This is intentional.
+			// nolint:nilerr // This is intentional.
 			return nil
 		}
 

@@ -20,12 +20,12 @@ package gather
 
 import (
 	lhconstants "github.com/submariner-io/lighthouse/pkg/constants"
+	"github.com/submariner-io/subctl/internal/gvr"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
@@ -49,19 +49,11 @@ func gatherCoreDNSPodLogs(info *Info) {
 }
 
 func gatherServiceExports(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    mcsv1a1.GroupName,
-		Version:  mcsv1a1.GroupVersion.Version,
-		Resource: "serviceexports",
-	}, namespace, metav1.ListOptions{})
+	ResourcesToYAMLFile(info, gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports"), namespace, metav1.ListOptions{})
 }
 
 func gatherServiceImports(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    mcsv1a1.GroupName,
-		Version:  mcsv1a1.GroupVersion.Version,
-		Resource: "serviceimports",
-	}, namespace, metav1.ListOptions{})
+	ResourcesToYAMLFile(info, gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceimports"), namespace, metav1.ListOptions{})
 }
 
 func gatherEndpointSlices(info *Info, namespace string) {
@@ -70,11 +62,8 @@ func gatherEndpointSlices(info *Info, namespace string) {
 	}
 	labelSelector := labels.Set(labelMap).String()
 
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    discoveryv1.SchemeGroupVersion.Group,
-		Version:  discoveryv1.SchemeGroupVersion.Version,
-		Resource: "endpointslices",
-	}, namespace, metav1.ListOptions{LabelSelector: labelSelector})
+	ResourcesToYAMLFile(info, discoveryv1.SchemeGroupVersion.WithResource("endpointslices"), namespace,
+		metav1.ListOptions{LabelSelector: labelSelector})
 }
 
 func gatherConfigMapCoreDNS(info *Info) {
@@ -114,11 +103,8 @@ func gatherConfigMapCoreDNS(info *Info) {
 
 // gatherLabeledServices gathers a service based on the label provided.
 func gatherLabeledServices(info *Info, label string) {
-	ResourcesToYAMLFile(info, schema.GroupVersionResource{
-		Group:    corev1.SchemeGroupVersion.Group,
-		Version:  corev1.SchemeGroupVersion.Version,
-		Resource: "services",
-	}, corev1.NamespaceAll, metav1.ListOptions{LabelSelector: label})
+	ResourcesToYAMLFile(info, corev1.SchemeGroupVersion.WithResource("services"), corev1.NamespaceAll,
+		metav1.ListOptions{LabelSelector: label})
 }
 
 func gatherConfigMapLighthouseDNS(info *Info, namespace string) {
