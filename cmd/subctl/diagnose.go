@@ -74,7 +74,7 @@ var (
 		Long:  "This command checks if Submariner can be deployed on the Kubernetes version.",
 		Run: func(command *cobra.Command, args []string) {
 			execute.OnMultiCluster(restConfigProducer, func(info *cluster.Info, status reporter.Interface) bool {
-				return diagnose.K8sVersion(info.LegacyClientProducer.ForKubernetes(), status)
+				return diagnose.K8sVersion(info.ClientProducer.ForKubernetes(), status)
 			})
 		},
 	}
@@ -86,7 +86,7 @@ var (
 		Run: func(command *cobra.Command, args []string) {
 			execute.OnMultiCluster(restConfigProducer, execute.IfSubmarinerInstalled(
 				func(info *cluster.Info, status reporter.Interface) bool {
-					return diagnose.KubeProxyMode(info.LegacyClientProducer, diagnoseKubeProxyOptions.podNamespace,
+					return diagnose.KubeProxyMode(info.ClientProducer, diagnoseKubeProxyOptions.podNamespace,
 						info.GetImageRepositoryInfo(), status)
 				}))
 		},
@@ -239,7 +239,7 @@ func clusterInfoFromKubeConfig(kubeConfig string) *cluster.Info {
 }
 
 func diagnoseAll(clusterInfo *cluster.Info, status reporter.Interface) bool {
-	success := diagnose.K8sVersion(clusterInfo.LegacyClientProducer.ForKubernetes(), status)
+	success := diagnose.K8sVersion(clusterInfo.ClientProducer.ForKubernetes(), status)
 
 	fmt.Println()
 
@@ -261,7 +261,7 @@ func diagnoseAll(clusterInfo *cluster.Info, status reporter.Interface) bool {
 
 	fmt.Println()
 
-	success = diagnose.KubeProxyMode(clusterInfo.LegacyClientProducer, diagnoseKubeProxyOptions.podNamespace,
+	success = diagnose.KubeProxyMode(clusterInfo.ClientProducer, diagnoseKubeProxyOptions.podNamespace,
 		clusterInfo.GetImageRepositoryInfo(), status) && success
 
 	fmt.Println()
