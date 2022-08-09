@@ -24,11 +24,13 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"github.com/submariner-io/submariner/pkg/cidr"
 	"github.com/submariner-io/submariner/pkg/cni"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func Deployments(clusterInfo *cluster.Info, status reporter.Interface) bool {
@@ -45,8 +47,10 @@ func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface)
 
 	defer status.End()
 
-	endpointList, err := clusterInfo.LegacyClientProducer.ForSubmariner().SubmarinerV1().Endpoints(clusterInfo.Submariner.Namespace).List(
-		context.TODO(), metav1.ListOptions{})
+	endpointList := &submarinerv1.EndpointList{}
+
+	err := clusterInfo.ClientProducer.ForGeneral().List(context.TODO(), endpointList,
+		controllerClient.InNamespace(clusterInfo.Submariner.Namespace))
 	if err != nil {
 		status.Failure("Error listing the Submariner endpoints: %v", err)
 		return false
@@ -104,26 +108,26 @@ func checkPods(clusterInfo *cluster.Info, status reporter.Interface) bool {
 
 	tracker := reporter.NewTracker(status)
 
-	checkDaemonset(clusterInfo.LegacyClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-gateway", tracker)
-	checkDaemonset(clusterInfo.LegacyClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-routeagent", tracker)
+	checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-gateway", tracker)
+	checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-routeagent", tracker)
 
 	// Check if service-discovery components are deployed and running if enabled
 	if clusterInfo.Submariner.Spec.ServiceDiscoveryEnabled {
-		checkDeployment(clusterInfo.LegacyClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-lighthouse-agent", tracker)
-		checkDeployment(clusterInfo.LegacyClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-lighthouse-coredns", tracker)
+		checkDeployment(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-lighthouse-agent", tracker)
+		checkDeployment(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-lighthouse-coredns", tracker)
 	}
 
 	// Check if globalnet components are deployed and running if enabled
 	if clusterInfo.Submariner.Spec.GlobalCIDR != "" {
-		checkDaemonset(clusterInfo.LegacyClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-globalnet", tracker)
+		checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-globalnet", tracker)
 	}
 
 	// check if networkplugin syncer components are deployed and running if enabled
 	if clusterInfo.Submariner.Status.NetworkPlugin == cni.OVNKubernetes {
-		checkDeployment(clusterInfo.LegacyClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-networkplugin-syncer", tracker)
+		checkDeployment(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-networkplugin-syncer", tracker)
 	}
 
-	checkPodsStatus(clusterInfo.LegacyClientProducer.ForKubernetes(), constants.OperatorNamespace, tracker)
+	checkPodsStatus(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, tracker)
 
 	if tracker.HasFailures() {
 		return false

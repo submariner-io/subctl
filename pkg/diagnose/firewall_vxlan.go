@@ -86,7 +86,7 @@ func checkFWConfig(clusterInfo *cluster.Info, options FirewallOptions, status re
 
 	podCommand := fmt.Sprintf("timeout %d %s", options.ValidationTimeout, tcpSniffVxLANCommand)
 
-	sPod, err := spawnSnifferPodOnNode(clusterInfo.LegacyClientProducer.ForKubernetes(), gwNodeName, options.PodNamespace, podCommand,
+	sPod, err := spawnSnifferPodOnNode(clusterInfo.ClientProducer.ForKubernetes(), gwNodeName, options.PodNamespace, podCommand,
 		clusterInfo.GetImageRepositoryInfo())
 	if err != nil {
 		status.Failure("Error spawning the sniffer pod on the Gateway node: %v", err)
@@ -98,7 +98,7 @@ func checkFWConfig(clusterInfo *cluster.Info, options FirewallOptions, status re
 	remoteClusterIP := strings.Split(remoteEndpoint.Spec.Subnets[0], "/")[0]
 	podCommand = fmt.Sprintf("nc -w %d %s 8080", options.ValidationTimeout/2, remoteClusterIP)
 
-	cPod, err := spawnClientPodOnNonGatewayNode(clusterInfo.LegacyClientProducer.ForKubernetes(), options.PodNamespace, podCommand,
+	cPod, err := spawnClientPodOnNonGatewayNode(clusterInfo.ClientProducer.ForKubernetes(), options.PodNamespace, podCommand,
 		clusterInfo.GetImageRepositoryInfo())
 	if err != nil {
 		status.Failure("Error spawning the client pod on non-Gateway node: %v", err)

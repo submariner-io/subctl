@@ -30,6 +30,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
@@ -60,8 +61,10 @@ func GlobalnetConfig(clusterInfo *cluster.Info, status reporter.Interface) bool 
 }
 
 func checkClusterGlobalEgressIPs(clusterInfo *cluster.Info, status reporter.Interface) {
-	clusterGlobalEgress, err := clusterInfo.LegacyClientProducer.ForSubmariner().SubmarinerV1().ClusterGlobalEgressIPs(
-		corev1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+	clusterGlobalEgress := &submarinerv1.ClusterGlobalEgressIPList{}
+
+	err := clusterInfo.ClientProducer.ForGeneral().List(context.TODO(), clusterGlobalEgress,
+		controllerClient.InNamespace(corev1.NamespaceAll))
 	if err != nil {
 		status.Failure("Error listing the ClusterGlobalEgressIP resources: %v", err)
 		return
@@ -112,8 +115,9 @@ func checkClusterGlobalEgressIPs(clusterInfo *cluster.Info, status reporter.Inte
 }
 
 func checkGlobalEgressIPs(clusterInfo *cluster.Info, status reporter.Interface) {
-	globalEgressIps, err := clusterInfo.LegacyClientProducer.ForSubmariner().SubmarinerV1().GlobalEgressIPs(
-		corev1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+	globalEgressIps := &submarinerv1.GlobalEgressIPList{}
+
+	err := clusterInfo.ClientProducer.ForGeneral().List(context.TODO(), globalEgressIps, controllerClient.InNamespace(corev1.NamespaceAll))
 	if err != nil {
 		status.Failure("Error obtaining GlobalEgressIPs resources: %v", err)
 		return
@@ -147,7 +151,7 @@ func checkGlobalEgressIPs(clusterInfo *cluster.Info, status reporter.Interface) 
 func checkGlobalIngressIPs(clusterInfo *cluster.Info, status reporter.Interface) {
 	serviceExportGVR := mcsv1a1.SchemeGroupVersion.WithResource("serviceexports")
 
-	serviceExports, err := clusterInfo.LegacyClientProducer.ForDynamic().Resource(serviceExportGVR).Namespace(corev1.NamespaceAll).
+	serviceExports, err := clusterInfo.ClientProducer.ForDynamic().Resource(serviceExportGVR).Namespace(corev1.NamespaceAll).
 		List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		status.Failure("Error listing ServiceExport resources: %v", err)
@@ -158,7 +162,7 @@ func checkGlobalIngressIPs(clusterInfo *cluster.Info, status reporter.Interface)
 		ns := serviceExports.Items[i].GetNamespace()
 		name := serviceExports.Items[i].GetName()
 
-		svc, err := clusterInfo.LegacyClientProducer.ForKubernetes().CoreV1().Services(ns).Get(context.TODO(), name, metav1.GetOptions{})
+		svc, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Services(ns).Get(context.TODO(), name, metav1.GetOptions{})
 
 		if apierrors.IsNotFound(err) {
 			status.Warning("No matching Service resource found for exported service \"%s/%s\"", ns, name)
@@ -174,8 +178,11 @@ func checkGlobalIngressIPs(clusterInfo *cluster.Info, status reporter.Interface)
 			continue
 		}
 
-		globalIngress, err := clusterInfo.LegacyClientProducer.ForSubmariner().SubmarinerV1().GlobalIngressIPs(ns).Get(context.TODO(),
-			name, metav1.GetOptions{})
+		globalIngress := &submarinerv1.GlobalIngressIP{}
+		err = clusterInfo.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
+			Namespace: ns,
+			Name:      name,
+		}, globalIngress)
 
 		if apierrors.IsNotFound(err) {
 			status.Failure("No matching GlobalIngressIP resource found for exported service \"%s/%s\"", ns, name)
@@ -211,7 +218,7 @@ func checkGlobalIngressIPs(clusterInfo *cluster.Info, status reporter.Interface)
 func verifyInternalService(clusterInfo *cluster.Info, status reporter.Interface, ns, name string,
 	globalIngress *submarinerv1.GlobalIngressIP,
 ) {
-	svcs, err := clusterInfo.LegacyClientProducer.ForKubernetes().CoreV1().Services(ns).List(
+	svcs, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Services(ns).List(
 		context.TODO(), metav1.ListOptions{LabelSelector: fmt.Sprintf("submariner.io/exportedServiceRef=%s", name)})
 	if err != nil {
 		status.Failure("Error listing internal Services \"%s/%s\": %v", ns, name, err)
