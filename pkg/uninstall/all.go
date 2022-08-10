@@ -27,36 +27,38 @@ import (
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/util"
 	"github.com/submariner-io/subctl/internal/constants"
+	"github.com/submariner-io/subctl/pkg/client"
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
-	operatorClient "github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/names"
+	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
-	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
+	controller "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const componentReadyTimeout = time.Minute * 2
 
-func All(clients operatorClient.Producer, client controllerClient.Client, clusterName, submarinerNamespace string,
+func All(clients client.Producer, clusterName, submarinerNamespace string,
 	status reporter.Interface,
 ) error {
-	found, err := ensureSubmarinerDeleted(client, clusterName, submarinerNamespace, status)
+	found, err := ensureSubmarinerDeleted(clients.ForGeneral(), clusterName, submarinerNamespace, status)
 	if err != nil {
 		return err
 	}
 
 	if !found {
-		err = ensureServiceDiscoveryDeleted(client, clusterName, submarinerNamespace, status)
+		err = ensureServiceDiscoveryDeleted(clients.ForGeneral(), clusterName, submarinerNamespace, status)
 		if err != nil {
 			return err
 		}
 	}
 
-	brokerNS, err := findBrokerNamespace(client, clusterName, status)
+	brokerNS, err := findBrokerNamespace(clients.ForGeneral(), clusterName, status)
 	if err != nil {
 		return err
 	}
@@ -80,7 +82,7 @@ func All(clients operatorClient.Producer, client controllerClient.Client, cluste
 			return status.Error(err, "Error deleting the Submariner namespace")
 		}
 
-		err = deleteCRDs(clients, clusterName, status)
+		err = deleteCRDs(clients.ForGeneral(), clusterName, status)
 		if err != nil {
 			return err
 		}
@@ -89,7 +91,7 @@ func All(clients operatorClient.Producer, client controllerClient.Client, cluste
 	return unlabelGatewayNodes(clients, clusterName, status)
 }
 
-func unlabelGatewayNodes(clients operatorClient.Producer, clusterName string, status reporter.Interface) error {
+func unlabelGatewayNodes(clients client.Producer, clusterName string, status reporter.Interface) error {
 	status.Start("Unlabeling gateway nodes on cluster %q", clusterName)
 	defer status.End()
 
@@ -123,11 +125,13 @@ func unlabelGatewayNodes(clients operatorClient.Producer, clusterName string, st
 	return nil
 }
 
-func deleteCRDs(clients operatorClient.Producer, clusterName string, status reporter.Interface) error {
+func deleteCRDs(controllerClient controller.Client, clusterName string, status reporter.Interface) error {
 	status.Start("Deleting the Submariner custom resource definitions on cluster %q", clusterName)
 	defer status.End()
 
-	list, err := clients.ForCRD().ApiextensionsV1().CustomResourceDefinitions().List(context.TODO(), metav1.ListOptions{})
+	list := &apiextensionsv1.CustomResourceDefinitionList{}
+
+	err := controllerClient.List(context.TODO(), list)
 	if err != nil {
 		return status.Error(err, "Error listing CustomResourceDefinitions")
 	}
@@ -137,8 +141,7 @@ func deleteCRDs(clients operatorClient.Producer, clusterName string, status repo
 			continue
 		}
 
-		err = clients.ForCRD().ApiextensionsV1().CustomResourceDefinitions().Delete(context.TODO(), list.Items[i].Name,
-			metav1.DeleteOptions{})
+		err = controllerClient.Delete(context.TODO(), &list.Items[i])
 		if err != nil {
 			return status.Error(err, "Error deleting CustomResourceDefinition %q", list.Items[i].Name)
 		}
@@ -149,7 +152,7 @@ func deleteCRDs(clients operatorClient.Producer, clusterName string, status repo
 	return nil
 }
 
-func deleteClusterRolesAndBindings(clients operatorClient.Producer, clusterName string, status reporter.Interface,
+func deleteClusterRolesAndBindings(clients client.Producer, clusterName string, status reporter.Interface,
 	keepOperator bool,
 ) error {
 	status.Start("Deleting the Submariner cluster roles and bindings on cluster %q", clusterName)
@@ -181,13 +184,13 @@ func deleteClusterRolesAndBindings(clients operatorClient.Producer, clusterName 
 	return nil
 }
 
-func ensureSubmarinerDeleted(client controllerClient.Client, clusterName, namespace string, status reporter.Interface) (bool, error) {
+func ensureSubmarinerDeleted(controllerClient controller.Client, clusterName, namespace string, status reporter.Interface) (bool, error) {
 	defer status.End()
 
 	status.Start("Checking if the connectivity component is installed on cluster %q", clusterName)
 
 	submariner := &operatorv1alpha1.Submariner{}
-	err := client.Get(context.TODO(), controllerClient.ObjectKey{
+	err := controllerClient.Get(context.TODO(), controller.ObjectKey{
 		Namespace: namespace,
 		Name:      names.SubmarinerCrName,
 	}, submariner)
@@ -205,18 +208,18 @@ func ensureSubmarinerDeleted(client controllerClient.Client, clusterName, namesp
 
 	status.Start("Deleting the Submariner resource - this may take some time")
 
-	err = ensureDeleted(client, submariner)
+	err = ensureDeleted(controllerClient, submariner)
 
 	return true, status.Error(err, "Error deleting Submariner resource %q", submariner.Name)
 }
 
-func ensureServiceDiscoveryDeleted(client controllerClient.Client, clusterName, namespace string, status reporter.Interface) error {
+func ensureServiceDiscoveryDeleted(controllerClient controller.Client, clusterName, namespace string, status reporter.Interface) error {
 	defer status.End()
 
 	status.Start("Checking if the service discovery component is installed on cluster %q", clusterName)
 
 	serviceDiscovery := &operatorv1alpha1.ServiceDiscovery{}
-	err := client.Get(context.TODO(), controllerClient.ObjectKey{
+	err := controllerClient.Get(context.TODO(), controller.ObjectKey{
 		Namespace: namespace,
 		Name:      names.ServiceDiscoveryCrName,
 	}, serviceDiscovery)
@@ -234,18 +237,18 @@ func ensureServiceDiscoveryDeleted(client controllerClient.Client, clusterName, 
 
 	status.Start("Deleting the ServiceDiscovery resource - this may take some time")
 
-	err = ensureDeleted(client, serviceDiscovery)
+	err = ensureDeleted(controllerClient, serviceDiscovery)
 
 	return status.Error(err, "Error deleting ServiceDiscovery resource %q", serviceDiscovery.Name)
 }
 
-func ensureDeleted(client controllerClient.Client, obj controllerClient.Object) error {
+func ensureDeleted(controllerClient controller.Client, obj controller.Object) error {
 	const maxWait = componentReadyTimeout + time.Second*30
 	const checkInterval = 2 * time.Second
 
 	// nolint:wrapcheck // Let the caller wrap errors
 	return wait.PollImmediate(checkInterval, maxWait, func() (bool, error) {
-		err := client.Delete(context.TODO(), obj)
+		err := controllerClient.Delete(context.TODO(), obj)
 		if apierrors.IsNotFound(err) {
 			return true, nil
 		}
@@ -254,7 +257,7 @@ func ensureDeleted(client controllerClient.Client, obj controllerClient.Object) 
 	})
 }
 
-func deleteBrokerIfUnused(clients operatorClient.Producer, namespace, clusterName string, status reporter.Interface) (bool, error) {
+func deleteBrokerIfUnused(clients client.Producer, namespace, clusterName string, status reporter.Interface) (bool, error) {
 	if namespace == "" {
 		return true, nil
 	}
@@ -268,7 +271,7 @@ func deleteBrokerIfUnused(clients operatorClient.Producer, namespace, clusterNam
 		return false, status.Error(err, "Error retrieving broker namespace %q", namespace)
 	}
 
-	inUse, err := brokerInUse(clients, namespace, clusterName, status)
+	inUse, err := brokerInUse(clients.ForGeneral(), namespace, clusterName, status)
 	if err != nil {
 		return false, err
 	}
@@ -288,11 +291,13 @@ func deleteBrokerIfUnused(clients operatorClient.Producer, namespace, clusterNam
 	return true, nil
 }
 
-func brokerInUse(clients operatorClient.Producer, namespace, clusterName string, status reporter.Interface) (bool, error) {
+func brokerInUse(controllerClient controller.Client, namespace, clusterName string, status reporter.Interface) (bool, error) {
 	status.Start("Verifying broker namespace %q is not in use", namespace)
 	defer status.End()
 
-	endpoints, err := clients.ForSubmariner().SubmarinerV1().Endpoints(namespace).List(context.TODO(), metav1.ListOptions{})
+	endpoints := &submarinerv1.EndpointList{}
+
+	err := controllerClient.List(context.TODO(), endpoints, controller.InNamespace(namespace))
 	if err != nil {
 		return false, status.Error(err, "error retrieving Endpoints")
 	}
@@ -316,13 +321,13 @@ func brokerInUse(clients operatorClient.Producer, namespace, clusterName string,
 	return false, nil
 }
 
-func findBrokerNamespace(client controllerClient.Client, clusterName string, status reporter.Interface) (string, error) {
+func findBrokerNamespace(controllerClient controller.Client, clusterName string, status reporter.Interface) (string, error) {
 	status.Start("Checking if the broker component is installed on cluster %q", clusterName)
 	defer status.End()
 
 	brokers := &operatorv1alpha1.BrokerList{}
 
-	err := client.List(context.TODO(), brokers, controllerClient.InNamespace(metav1.NamespaceAll))
+	err := controllerClient.List(context.TODO(), brokers, controller.InNamespace(metav1.NamespaceAll))
 	if err != nil {
 		return "", status.Error(err, "Error listing broker resources")
 	}
