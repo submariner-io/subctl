@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/subctl/internal/gvr"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"github.com/submariner-io/submariner/pkg/globalnet/constants"
@@ -149,7 +150,7 @@ func checkGlobalEgressIPs(clusterInfo *cluster.Info, status reporter.Interface) 
 }
 
 func checkGlobalIngressIPs(clusterInfo *cluster.Info, status reporter.Interface) {
-	serviceExportGVR := mcsv1a1.SchemeGroupVersion.WithResource("serviceexports")
+	serviceExportGVR := gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports")
 
 	serviceExports, err := clusterInfo.ClientProducer.ForDynamic().Resource(serviceExportGVR).Namespace(corev1.NamespaceAll).
 		List(context.TODO(), metav1.ListOptions{})
