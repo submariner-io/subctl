@@ -26,7 +26,6 @@ import (
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/image"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
-	operatorClient "github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -37,12 +36,10 @@ import (
 )
 
 type Info struct {
-	Name       string
-	RestConfig *rest.Config
-	// TODO - will be replaced by ClientProducer.
-	LegacyClientProducer operatorClient.Producer
-	ClientProducer       client.Producer
-	Submariner           *v1alpha1.Submariner
+	Name           string
+	RestConfig     *rest.Config
+	ClientProducer client.Producer
+	Submariner     *v1alpha1.Submariner
 }
 
 func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
@@ -52,11 +49,6 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 	}
 
 	var err error
-
-	info.LegacyClientProducer, err = operatorClient.NewProducerFromRestConfig(config)
-	if err != nil {
-		return nil, errors.Wrap(err, "error creating client producer")
-	}
 
 	info.ClientProducer, err = client.NewProducerFromRestConfig(config)
 	if err != nil {
@@ -79,8 +71,9 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 }
 
 func (c *Info) GetGateways() ([]submarinerv1.Gateway, error) {
-	gateways, err := c.LegacyClientProducer.ForSubmariner().SubmarinerV1().
-		Gateways(constants.OperatorNamespace).List(context.TODO(), metav1.ListOptions{})
+	gateways := &submarinerv1.GatewayList{}
+
+	err := c.ClientProducer.ForGeneral().List(context.TODO(), gateways, controllerClient.InNamespace(constants.OperatorNamespace))
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return []submarinerv1.Gateway{}, nil
@@ -93,7 +86,7 @@ func (c *Info) GetGateways() ([]submarinerv1.Gateway, error) {
 }
 
 func (c *Info) HasSingleNode() (bool, error) {
-	nodes, err := c.LegacyClientProducer.ForKubernetes().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	nodes, err := c.ClientProducer.ForKubernetes().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return false, errors.Wrap(err, "error listing Nodes")
 	}
@@ -102,8 +95,9 @@ func (c *Info) HasSingleNode() (bool, error) {
 }
 
 func (c *Info) GetLocalEndpoint() (*submarinerv1.Endpoint, error) {
-	endpoints, err := c.LegacyClientProducer.ForSubmariner().SubmarinerV1().Endpoints(constants.OperatorNamespace).List(
-		context.TODO(), metav1.ListOptions{})
+	endpoints := &submarinerv1.EndpointList{}
+
+	err := c.ClientProducer.ForGeneral().List(context.TODO(), endpoints, controllerClient.InNamespace(constants.OperatorNamespace))
 	if err != nil {
 		return nil, errors.Wrap(err, "error listing Endpoints")
 	}
@@ -121,8 +115,9 @@ func (c *Info) GetLocalEndpoint() (*submarinerv1.Endpoint, error) {
 }
 
 func (c *Info) GetAnyRemoteEndpoint() (*submarinerv1.Endpoint, error) {
-	endpoints, err := c.LegacyClientProducer.ForSubmariner().SubmarinerV1().Endpoints(constants.OperatorNamespace).List(
-		context.TODO(), metav1.ListOptions{})
+	endpoints := &submarinerv1.EndpointList{}
+
+	err := c.ClientProducer.ForGeneral().List(context.TODO(), endpoints, controllerClient.InNamespace(constants.OperatorNamespace))
 	if err != nil {
 		return nil, errors.Wrap(err, "error listing Endpoints")
 	}
