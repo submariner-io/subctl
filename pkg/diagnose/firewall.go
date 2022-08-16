@@ -61,13 +61,6 @@ type FirewallOptions struct {
 	PodNamespace      string
 }
 
-func spawnSnifferPodOnGatewayNode(client kubernetes.Interface, namespace, podCommand string,
-	imageRepInfo *image.RepositoryInfo,
-) (*pods.Scheduled, error) {
-	scheduling := pods.Scheduling{ScheduleOn: pods.GatewayNode, Networking: pods.HostNetworking}
-	return spawnPod(client, scheduling, "validate-sniffer", namespace, podCommand, imageRepInfo)
-}
-
 func spawnClientPodOnNonGatewayNode(client kubernetes.Interface, namespace, podCommand string,
 	imageRepInfo *image.RepositoryInfo,
 ) (*pods.Scheduled, error) {

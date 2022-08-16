@@ -99,15 +99,9 @@ var (
 	}
 
 	diagnoseFirewallMetricsCmd = &cobra.Command{
-		Use:   "metrics",
-		Short: "Check firewall access to metrics",
-		Long:  "This command checks if the firewall configuration allows metrics to be accessed from the Gateway nodes.",
-		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(restConfigProducer, execute.IfSubmarinerInstalled(
-				func(info *cluster.Info, status reporter.Interface) bool {
-					return diagnose.FirewallMetricsConfig(info, diagnoseFirewallOptions, status)
-				}))
-		},
+		Use:        "metrics",
+		Short:      "Check firewall access to metrics",
+		Deprecated: "Metrics check is now implicitly done as part of deployment check",
 	}
 
 	diagnoseFirewallVxLANCmd = &cobra.Command{
@@ -263,10 +257,6 @@ func diagnoseAll(clusterInfo *cluster.Info, status reporter.Interface) bool {
 
 	success = diagnose.KubeProxyMode(clusterInfo.ClientProducer, diagnoseKubeProxyOptions.podNamespace,
 		clusterInfo.GetImageRepositoryInfo(), status) && success
-
-	fmt.Println()
-
-	success = diagnose.FirewallMetricsConfig(clusterInfo, diagnoseFirewallOptions, status) && success
 
 	fmt.Println()
 

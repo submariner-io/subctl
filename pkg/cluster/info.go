@@ -40,12 +40,14 @@ type Info struct {
 	RestConfig     *rest.Config
 	ClientProducer client.Producer
 	Submariner     *v1alpha1.Submariner
+	nodeCount      int
 }
 
 func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 	info := &Info{
 		Name:       clusterName,
 		RestConfig: config,
+		nodeCount:  -1,
 	}
 
 	var err error
@@ -86,12 +88,16 @@ func (c *Info) GetGateways() ([]submarinerv1.Gateway, error) {
 }
 
 func (c *Info) HasSingleNode() (bool, error) {
-	nodes, err := c.ClientProducer.ForKubernetes().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		return false, errors.Wrap(err, "error listing Nodes")
+	if c.nodeCount == -1 {
+		nodes, err := c.ClientProducer.ForKubernetes().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			return false, errors.Wrap(err, "error listing Nodes")
+		}
+
+		c.nodeCount = len(nodes.Items)
 	}
 
-	return len(nodes.Items) == 1, nil
+	return c.nodeCount == 1, nil
 }
 
 func (c *Info) GetLocalEndpoint() (*submarinerv1.Endpoint, error) {
