@@ -724,8 +724,8 @@ github.com/submariner-io/cloud-prepare v0.13.0-m2.0.20220726072231-78de7046e1bd 
 github.com/submariner-io/cloud-prepare v0.13.0-m2.0.20220726072231-78de7046e1bd/go.mod h1:/qnenempEw/cywTF8DipJKfj7wm7NHTTw4kPLmX4G7w=
 github.com/submariner-io/lighthouse v0.13.0-m2.0.20220621072741-0cd5c1da3f9c h1:HKfUbCDfPf1JGc0OR0DGVuWAlmKXEtcvl9KEUIdJrXc=
 github.com/submariner-io/lighthouse v0.13.0-m2.0.20220621072741-0cd5c1da3f9c/go.mod h1:swU7izDT9TJvjm4PnX3rqFj7q1tou2AzLRaoaDeMJZQ=
-github.com/submariner-io/shipyard v0.13.0-m2.0.20220613150042-b90492334262 h1:H2jW/KPapyllIbWNthwZ7+YQ8TCkLTdikXdVdiH9724=
-github.com/submariner-io/shipyard v0.13.0-m2.0.20220613150042-b90492334262/go.mod h1:QC3tq6LKRCaavN3/pGw/QqSVIsVJKA9rbmNueihTydE=
+github.com/submariner-io/shipyard v0.14.0-m0 h1:223Y6aOJmNUXDE4IWvamUHF4AOAa/nvjNwQaxprL4AQ=
+github.com/submariner-io/shipyard v0.14.0-m0/go.mod h1:e4Unlk/40Jmzj/aaPWeGcNNv37y0DfpmnanoJbPogLY=
 github.com/submariner-io/submariner v0.13.0-m2.0.20220608112640-7f4a6a79da0d h1:BhA0h3q2yur40r64VZe/g3AQ8PuhDMnPPYi4hh+H2/k=
 github.com/submariner-io/submariner v0.13.0-m2.0.20220608112640-7f4a6a79da0d/go.mod h1:xZYyT7oVFObCXQoChh0bmQlCd5tIalBOXbh1gnYLUh8=
 github.com/submariner-io/submariner-operator v0.13.0-m2.0.20220804142929-da637f6071a5 h1:k8DMHjbMGm7nkYNF6h4W0+QZjOxUlEKvNbxzJOkWC4Q=
