@@ -17,7 +17,7 @@ require (
 	github.com/submariner-io/admiral v0.13.0-m2.0.20220801133712-a14f98e90433
 	github.com/submariner-io/cloud-prepare v0.13.0-m2.0.20220726072231-78de7046e1bd
 	github.com/submariner-io/lighthouse v0.13.0-m2.0.20220621072741-0cd5c1da3f9c
-	github.com/submariner-io/shipyard v0.13.0-m2.0.20220613150042-b90492334262
+	github.com/submariner-io/shipyard v0.14.0-m0
 	github.com/submariner-io/submariner v0.13.0-m2.0.20220608112640-7f4a6a79da0d
 	github.com/submariner-io/submariner-operator v0.13.0-m2.0.20220804142929-da637f6071a5
 	github.com/uw-labs/lichen v0.1.7
