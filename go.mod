@@ -15,8 +15,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.5.0
 	github.com/submariner-io/admiral v0.14.0-m0
-	github.com/submariner-io/cloud-prepare v0.13.0-m2.0.20220726072231-78de7046e1bd
-	github.com/submariner-io/lighthouse v0.13.0-m2.0.20220621072741-0cd5c1da3f9c
+	github.com/submariner-io/cloud-prepare v0.14.0-m0
+	github.com/submariner-io/lighthouse v0.14.0-m0
 	github.com/submariner-io/shipyard v0.14.0-m0
 	github.com/submariner-io/submariner v0.13.0-m2.0.20220608112640-7f4a6a79da0d
 	github.com/submariner-io/submariner-operator v0.13.0-m2.0.20220804142929-da637f6071a5
@@ -35,27 +35,27 @@ require (
 
 require (
 	cloud.google.com/go/compute v1.7.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.1.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.1.2 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.0.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute v1.0.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork v1.0.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork v1.1.0 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.5.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.16.7 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.15.14 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.12.9 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.8 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.14 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.8 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.15 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.50.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.8 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.11.12 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.16.9 // indirect
-	github.com/aws/smithy-go v1.12.0 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.16.11 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.17.1 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.12.14 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.12 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.18 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.12 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.19 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.52.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.12 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.11.17 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.16.13 // indirect
+	github.com/aws/smithy-go v1.12.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
