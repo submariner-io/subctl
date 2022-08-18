@@ -24,7 +24,7 @@ ifneq (,$(DAPPER_HOST_ARCH))
 
 PLATFORMS ?= linux/amd64,linux/arm64
 IMAGES = subctl
-PRELOAD_IMAGES := $(IMAGES) submariner-operator submariner-gateway submariner-globalnet submariner-route-agent lighthouse-agent lighthouse-coredns nettest
+PRELOAD_IMAGES := submariner-operator submariner-gateway submariner-globalnet submariner-route-agent lighthouse-agent lighthouse-coredns
 MULTIARCH_IMAGES := subctl
 
 ifneq (,$(filter ovn,$(USING)))
@@ -114,8 +114,8 @@ cmd/bin/subctl-%: $(shell find . -name "*.go") $(VENDOR_MODULES)
 	GOARCH=$${components[-1]}; \
 	export GOARCH GOOS; \
 	LDFLAGS="-X 'github.com/submariner-io/subctl/pkg/version.Version=$(VERSION)' \
-		-X 'github.com/submariner-io/submariner-operator/api/submariner/v1alpha1.DefaultSubmarinerOperatorVersion=$${DEFAULT_IMAGE_VERSION#v}' \
-		-X 'github.com/submariner-io/submariner-operator/api/submariner/v1alpha1.DefaultRepo=$(DEFAULT_REPO)'" \
+		-X 'github.com/submariner-io/submariner-operator/api/v1alpha1.DefaultSubmarinerOperatorVersion=$${DEFAULT_IMAGE_VERSION#v}' \
+		-X 'github.com/submariner-io/submariner-operator/api/v1alpha1.DefaultRepo=$(DEFAULT_REPO)'" \
 	$(SCRIPTS_DIR)/compile.sh $@ ./cmd
 
 ci: golangci-lint markdownlint unit build images
