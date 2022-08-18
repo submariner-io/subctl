@@ -26,47 +26,58 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/show/table"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/images"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func getOperatorVersion(clusterInfo *cluster.Info) ([]interface{}, error) {
-	deployments := clusterInfo.ClientProducer.ForKubernetes().AppsV1().Deployments(constants.OperatorNamespace)
+func printDaemonSetVersions(clusterInfo *cluster.Info, printer *table.Printer, components ...string) error {
+	daemonSets := clusterInfo.ClientProducer.ForKubernetes().AppsV1().DaemonSets(constants.OperatorNamespace)
 
-	operatorDeployment, err := deployments.Get(context.TODO(), names.OperatorComponent, v1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil, nil
+	for _, component := range components {
+		daemonSet, err := daemonSets.Get(context.TODO(), component, v1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				continue
+			}
+
+			return errors.Wrapf(err, "error retrieving %s DaemonSet", component)
 		}
 
-		return nil, errors.Wrap(err, "error retrieving Deployment")
+		// The name of the function is confusing, it just parses any image repo & version
+		version, repository := images.ParseOperatorImage(daemonSet.Spec.Template.Spec.Containers[0].Image)
+		printer.Add(component, repository, version)
 	}
 
-	version, repository := images.ParseOperatorImage(operatorDeployment.Spec.Template.Spec.Containers[0].Image)
-
-	return []interface{}{names.OperatorComponent, repository, version}, nil
+	return nil
 }
 
-func getServiceDiscoveryVersion(clusterInfo *cluster.Info) ([]interface{}, error) {
-	serviceDiscovery := &v1alpha1.ServiceDiscovery{}
+func printDeploymentVersions(clusterInfo *cluster.Info, printer *table.Printer, components ...string) error {
+	deployments := clusterInfo.ClientProducer.ForKubernetes().AppsV1().Deployments(constants.OperatorNamespace)
 
-	err := clusterInfo.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
-		Namespace: constants.OperatorNamespace,
-		Name:      names.ServiceDiscoveryCrName,
-	}, serviceDiscovery)
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil, nil
+	for _, component := range components {
+		deployment, err := deployments.Get(context.TODO(), component, v1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				continue
+			}
+
+			return errors.Wrapf(err, "error retrieving %s Deployment", component)
 		}
 
-		return nil, errors.Wrap(err, "error retrieving Submariner resource")
+		version, repository := images.ParseOperatorImage(deployment.Spec.Template.Spec.Containers[0].Image)
+		printer.Add(component, repository, version)
 	}
 
-	return []interface{}{names.ServiceDiscoveryCrName, serviceDiscovery.Spec.Repository, serviceDiscovery.Spec.Version}, nil
+	return nil
+}
+
+func fail(status reporter.Interface, err error) bool {
+	status.Failure("Unable to determine versions: %v", err)
+	status.End()
+
+	return false
 }
 
 func Versions(clusterInfo *cluster.Info, status reporter.Interface) bool {
@@ -78,37 +89,18 @@ func Versions(clusterInfo *cluster.Info, status reporter.Interface) bool {
 		{Name: "VERSION"},
 	}}
 
-	submariner := clusterInfo.Submariner
-	if submariner != nil {
-		printer.Add(names.SubmarinerCrName, submariner.Spec.Repository, submariner.Spec.Version)
-	}
-
-	operatorVersion, err := getOperatorVersion(clusterInfo)
+	err := printDaemonSetVersions(clusterInfo, &printer, names.GatewayComponent, names.RouteAgentComponent, names.GlobalnetComponent)
 	if err != nil {
-		status.Failure("Unable to get the Operator version", err)
-		status.End()
-
-		return false
+		return fail(status, err)
 	}
 
-	if operatorVersion != nil {
-		printer.Add(operatorVersion...)
-	}
-
-	lighthouseVersion, err := getServiceDiscoveryVersion(clusterInfo)
+	err = printDeploymentVersions(
+		clusterInfo, &printer, names.OperatorComponent, names.ServiceDiscoveryComponent, names.LighthouseCoreDNSComponent)
 	if err != nil {
-		status.Failure("Unable to get the Service-Discovery version", err)
-		status.End()
-
-		return false
-	}
-
-	if lighthouseVersion != nil {
-		printer.Add(lighthouseVersion...)
+		return fail(status, err)
 	}
 
 	status.End()
-
 	printer.Print()
 
 	return true
