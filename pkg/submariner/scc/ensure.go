@@ -65,5 +65,5 @@ func Ensure(dynClient dynamic.Interface, namespace string) (bool, error) {
 		updateScc = updateScc || result
 	}
 
-	return updateScc, errors.Wrap(err, "error updating the SCC resource")
+	return updateScc, nil
 }
