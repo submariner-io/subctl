@@ -26,6 +26,7 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/client"
+	"github.com/submariner-io/subctl/pkg/image"
 	"github.com/submariner-io/subctl/pkg/secret"
 	"github.com/submariner-io/subctl/pkg/submarinercr"
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
@@ -56,14 +57,14 @@ type SubmarinerOptions struct {
 }
 
 func Submariner(clientProducer client.Producer, options *SubmarinerOptions, brokerInfo *broker.Info,
-	brokerSecret *v1.Secret, netconfig globalnet.Config, imageOverrides map[string]string, status reporter.Interface,
+	brokerSecret *v1.Secret, netconfig globalnet.Config, repositoryInfo *image.RepositoryInfo, status reporter.Interface,
 ) error {
 	pskSecret, err := secret.Ensure(clientProducer.ForKubernetes(), constants.OperatorNamespace, brokerInfo.IPSecPSK)
 	if err != nil {
 		return status.Error(err, "Error creating PSK secret for cluster")
 	}
 
-	submarinerSpec := populateSubmarinerSpec(options, brokerInfo, brokerSecret, pskSecret, netconfig, imageOverrides)
+	submarinerSpec := populateSubmarinerSpec(options, brokerInfo, brokerSecret, pskSecret, netconfig, repositoryInfo)
 
 	err = submarinercr.Ensure(clientProducer.ForGeneral(), constants.OperatorNamespace, submarinerSpec)
 	if err != nil {
@@ -74,15 +75,15 @@ func Submariner(clientProducer client.Producer, options *SubmarinerOptions, brok
 }
 
 func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info, brokerSecret *v1.Secret, pskSecret *v1.Secret,
-	netconfig globalnet.Config, imageOverrides map[string]string,
+	netconfig globalnet.Config, repositoryInfo *image.RepositoryInfo,
 ) *operatorv1alpha1.SubmarinerSpec {
 	brokerURL := removeSchemaPrefix(brokerInfo.BrokerURL)
 
 	// For backwards compatibility, the connection information is populated through the secret and individual components
 	// TODO skitt This will be removed in the release following 0.12
 	submarinerSpec := &operatorv1alpha1.SubmarinerSpec{
-		Repository:               getImageRepo(options.Repository),
-		Version:                  getImageVersion(options.ImageVersion),
+		Repository:               repositoryInfo.Name,
+		Version:                  repositoryInfo.Version,
 		CeIPSecNATTPort:          options.NATTPort,
 		CeIPSecDebug:             options.IPSecDebug,
 		CeIPSecForceUDPEncaps:    options.ForceUDPEncaps,
@@ -104,7 +105,7 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 		Namespace:                constants.OperatorNamespace,
 		CableDriver:              options.CableDriver,
 		ServiceDiscoveryEnabled:  brokerInfo.IsServiceDiscoveryEnabled(),
-		ImageOverrides:           imageOverrides,
+		ImageOverrides:           repositoryInfo.Overrides,
 		LoadBalancerEnabled:      options.LoadBalancerEnabled,
 		ConnectionHealthCheck: &operatorv1alpha1.HealthCheckSpec{
 			Enabled:            options.HealthCheckEnabled,
@@ -129,22 +130,6 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 	}
 
 	return submarinerSpec
-}
-
-func getImageVersion(imageVersion string) string {
-	if imageVersion == "" {
-		return operatorv1alpha1.DefaultSubmarinerOperatorVersion
-	}
-
-	return imageVersion
-}
-
-func getImageRepo(imagerepo string) string {
-	if imagerepo == "" {
-		return operatorv1alpha1.DefaultRepo
-	}
-
-	return imagerepo
 }
 
 func getCustomCoreDNSParams(corednsCustomConfigMap string) (namespace, name string) {

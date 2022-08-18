@@ -26,17 +26,30 @@ import (
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
-	"github.com/submariner-io/subctl/internal/image"
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/deploy"
+	"github.com/submariner-io/subctl/pkg/image"
+	"github.com/submariner-io/subctl/pkg/operator"
 	"github.com/submariner-io/subctl/pkg/secret"
 	"github.com/submariner-io/subctl/pkg/version"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
+	"github.com/submariner-io/submariner-operator/pkg/names"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/utils/strings/slices"
 )
+
+var validOverrides = []string{
+	names.OperatorComponent,
+	names.GatewayComponent,
+	names.RouteAgentComponent,
+	names.GlobalnetComponent,
+	names.NetworkPluginSyncerComponent,
+	names.ServiceDiscoveryComponent,
+	names.LighthouseCoreDNSComponent,
+}
 
 func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer client.Producer, status reporter.Interface,
 ) error {
@@ -48,6 +61,11 @@ func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer c
 	err = isValidCustomCoreDNSConfig(options.CoreDNSCustomConfigMap)
 	if err != nil {
 		return status.Error(err, "error validating custom CoreDNS config")
+	}
+
+	imageOverrides, err := overridesArrToMap(options.ImageOverrideArr)
+	if err != nil {
+		return status.Error(err, "Error calculating image overrides")
 	}
 
 	status.Start("Gathering relevant information from Broker")
@@ -79,7 +97,9 @@ func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer c
 
 	status.Start("Deploying the Submariner operator")
 
-	err = deploy.Operator(status, options.ImageVersion, options.Repository, options.ImageOverrideArr, options.OperatorDebug, clientProducer)
+	repositoryInfo := image.NewRepositoryInfo(options.Repository, options.ImageVersion, imageOverrides)
+
+	err = operator.Ensure(status, clientProducer, constants.OperatorNamespace, repositoryInfo.GetOperatorImage(), options.OperatorDebug)
 	if err != nil {
 		return status.Error(err, "Error deploying the operator")
 	}
@@ -99,16 +119,11 @@ func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer c
 		return status.Error(err, "Error creating broker secret for cluster")
 	}
 
-	imageOverrides, err := image.GetOverrides(options.ImageOverrideArr)
-	if err != nil {
-		return status.Error(err, "Error overriding Operator image")
-	}
-
 	if brokerInfo.IsConnectivityEnabled() {
 		status.Start("Deploying submariner")
 
 		err := deploy.Submariner(clientProducer, submarinerOptionsFrom(options), brokerInfo, brokerSecret, netconfig,
-			imageOverrides, status)
+			repositoryInfo, status)
 		if err != nil {
 			return status.Error(err, "Error deploying the Submariner resource")
 		}
@@ -118,7 +133,7 @@ func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer c
 		status.Start("Deploying service discovery only")
 
 		err := deploy.ServiceDiscovery(clientProducer, serviceDiscoveryOptionsFrom(options), brokerInfo, brokerSecret,
-			imageOverrides, status)
+			repositoryInfo, status)
 		if err != nil {
 			return status.Error(err, "Error deploying the ServiceDiscovery resource")
 		}
@@ -127,6 +142,25 @@ func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer c
 	}
 
 	return nil
+}
+
+func overridesArrToMap(imageOverrideArr []string) (map[string]string, error) {
+	imageOverrides := make(map[string]string)
+
+	for _, s := range imageOverrideArr {
+		component, imageURL, found := strings.Cut(s, "=")
+		if !found {
+			return nil, fmt.Errorf("invalid override %s provided. Please use `a=b` syntax", s)
+		}
+
+		if !slices.Contains(validOverrides, component) {
+			return nil, fmt.Errorf("invalid override component %s provided. Please choose from %q", component, validOverrides)
+		}
+
+		imageOverrides[component] = imageURL
+	}
+
+	return imageOverrides, nil
 }
 
 func submarinerOptionsFrom(joinOptions *Options) *deploy.SubmarinerOptions {
