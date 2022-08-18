@@ -19,9 +19,6 @@ limitations under the License.
 package subctl
 
 import (
-	"strconv"
-
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/subctl/pkg/cloud"
 	"github.com/submariner-io/submariner/pkg/port"
@@ -71,31 +68,7 @@ func init() {
 
 	cloudPrepareCmd.PersistentFlags().Var(&uint16Slice{value: &cloudPorts.Metrics}, "metrics-ports", "Metrics ports")
 
-	cloudPrepareCmd.PersistentFlags().Var(&metricsAliasType{}, "metrics-port", "Metrics port")
-	_ = cloudPrepareCmd.PersistentFlags().MarkDeprecated("metrics-port", "Use metrics-ports instead")
-
 	cloudCmd.AddCommand(cloudPrepareCmd)
 
 	cloudCmd.AddCommand(cloudCleanupCmd)
-}
-
-type metricsAliasType struct{}
-
-func (m metricsAliasType) String() string {
-	return strconv.FormatUint(uint64(cloudPorts.Metrics[0]), 10)
-}
-
-func (m metricsAliasType) Set(s string) error {
-	v, err := strconv.ParseUint(s, 0, 16)
-	if err != nil {
-		return errors.Wrap(err, "conversion to uint16 failed")
-	}
-
-	cloudPorts.Metrics = []uint16{uint16(v)}
-
-	return nil
-}
-
-func (m metricsAliasType) Type() string {
-	return "uint16"
 }
