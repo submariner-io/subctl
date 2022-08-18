@@ -154,23 +154,12 @@ func (c *Info) GetAnyRemoteEndpoint() (*submarinerv1.Endpoint, error) {
 }
 
 func (c *Info) GetImageRepositoryInfo() *image.RepositoryInfo {
-	info := &image.RepositoryInfo{}
-
 	if c.Submariner != nil {
-		info.Name = c.Submariner.Spec.Repository
-		info.Version = c.Submariner.Spec.Version
-		info.Overrides = c.Submariner.Spec.ImageOverrides
+		spec := c.Submariner.Spec
+		return image.NewRepositoryInfo(spec.Repository, spec.Version, spec.ImageOverrides)
 	}
 
-	if info.Name == "" {
-		info.Name = v1alpha1.DefaultRepo
-	}
-
-	if info.Version == "" {
-		info.Version = v1alpha1.DefaultSubmarinerOperatorVersion
-	}
-
-	return info
+	return image.NewRepositoryInfo("", "", nil)
 }
 
 func (c *Info) OperatorNamespace() string {
