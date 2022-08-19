@@ -76,13 +76,6 @@ func getPortConfig(restcfg *restconfig.Producer, ports *cloud.Ports, useNumericE
 
 	input := api.PrepareForSubmarinerInput{}
 
-	for i := range ports.Metrics {
-		port := api.PortSpec{
-			Port: ports.Metrics[i], Protocol: "tcp",
-		}
-		input.InternalPorts = append(input.InternalPorts, port)
-	}
-
 	nwDetails, err := getNetworkDetails(restcfg)
 	if err != nil {
 		return gwPorts, input, errors.Wrapf(err, "failed to discover the network details in the cluster")
