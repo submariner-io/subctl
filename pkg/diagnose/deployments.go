@@ -35,7 +35,8 @@ import (
 
 func Deployments(clusterInfo *cluster.Info, status reporter.Interface) bool {
 	mustHaveSubmariner(clusterInfo)
-	return checkOverlappingCIDRs(clusterInfo, status) && checkPods(clusterInfo, status)
+	return checkOverlappingCIDRs(clusterInfo, status) && checkPods(clusterInfo, status) &&
+		checkMetricsConfig(clusterInfo, status)
 }
 
 func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface) bool {
