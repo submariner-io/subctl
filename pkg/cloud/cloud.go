@@ -22,5 +22,4 @@ type Ports struct {
 	Natt         uint16
 	NatDiscovery uint16
 	Vxlan        uint16
-	Metrics      []uint16
 }

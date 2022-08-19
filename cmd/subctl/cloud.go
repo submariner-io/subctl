@@ -64,9 +64,10 @@ func init() {
 		port.NATTDiscovery, "NAT discovery port")
 	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Vxlan, "vxlan-port", port.IntraClusterVxLAN, "Internal VXLAN port")
 
-	cloudPorts.Metrics = append(cloudPorts.Metrics, 8080, 8081)
+	ports := []uint16{}
 
-	cloudPrepareCmd.PersistentFlags().Var(&uint16Slice{value: &cloudPorts.Metrics}, "metrics-ports", "Metrics ports")
+	cloudPrepareCmd.PersistentFlags().Var(&uint16Slice{value: &ports}, "metrics-ports", "Metrics ports")
+	_ = cloudPrepareCmd.PersistentFlags().MarkDeprecated("metrics-ports", "Metrics ports are no longer used, this flag is ignored")
 
 	cloudCmd.AddCommand(cloudPrepareCmd)
 
