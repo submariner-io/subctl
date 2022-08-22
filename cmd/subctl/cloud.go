@@ -55,7 +55,6 @@ var (
 )
 
 func init() {
-	restConfigProducer.AddKubeContextFlag(cloudCmd)
 	rootCmd.AddCommand(cloudCmd)
 
 	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Natt, "natt-port", port.ExternalTunnel,

@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/service"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -33,6 +34,9 @@ var (
 	exportOptions struct {
 		namespace string
 	}
+
+	exportRestConfigProducer = restconfig.NewProducer()
+
 	exportCmd = &cobra.Command{
 		Use:   "export",
 		Short: "Exports a resource to other clusters",
@@ -43,17 +47,17 @@ var (
 		Short: "Exports a Service to other clusters",
 		Long: "This command creates a ServiceExport resource with the given name which causes the Service of the same name to be accessible" +
 			" to other clusters",
-		PreRunE: restConfigProducer.CheckVersionMismatch,
+		PreRunE: exportRestConfigProducer.CheckVersionMismatch,
 		Run: func(cmd *cobra.Command, args []string) {
 			err := validateArguments(args)
 			exit.OnErrorWithMessage(err, "Insufficient arguments")
 
 			status := cli.NewReporter()
 
-			config, err := restConfigProducer.ForCluster()
+			config, err := exportRestConfigProducer.ForCluster()
 			exit.OnError(status.Error(err, "Error creating REST config"))
 
-			clientConfig := restConfigProducer.ClientConfig()
+			clientConfig := exportRestConfigProducer.ClientConfig()
 			if exportOptions.namespace == "" {
 				if exportOptions.namespace, _, err = clientConfig.Namespace(); err != nil {
 					exportOptions.namespace = "default"
@@ -74,7 +78,7 @@ func init() {
 	err := mcsv1a1.Install(scheme.Scheme)
 	exit.OnErrorWithMessage(err, "Failed to add to scheme")
 
-	restConfigProducer.AddKubeConfigFlag(exportCmd)
+	exportRestConfigProducer.AddKubeConfigFlag(exportCmd)
 	exportServiceCmd.Flags().StringVarP(&exportOptions.namespace, "namespace", "n", "", "namespace of the service to be exported")
 	exportCmd.AddCommand(exportServiceCmd)
 	rootCmd.AddCommand(exportCmd)

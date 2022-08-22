@@ -34,6 +34,8 @@ var (
 	intraCluster bool
 	verbose      bool
 
+	benchmarkRestConfigProducer = restconfig.NewProducer()
+
 	benchmarkCmd = &cobra.Command{
 		Use:   "benchmark",
 		Short: "Benchmark tests",
@@ -47,7 +49,7 @@ var (
 			return checkBenchmarkArguments(args, intraCluster)
 		},
 		Run: func(command *cobra.Command, args []string) {
-			err := setUpTestFramework(args, restConfigProducer, constants.OperatorNamespace)
+			err := setUpTestFramework(args, benchmarkRestConfigProducer, constants.OperatorNamespace)
 			exit.OnErrorWithMessage(err, "error setting up test framework")
 			benchmark.StartThroughputTests(intraCluster, verbose)
 		},
@@ -60,7 +62,7 @@ var (
 			return checkBenchmarkArguments(args, intraCluster)
 		},
 		Run: func(command *cobra.Command, args []string) {
-			err := setUpTestFramework(args, restConfigProducer, constants.OperatorNamespace)
+			err := setUpTestFramework(args, benchmarkRestConfigProducer, constants.OperatorNamespace)
 			exit.OnErrorWithMessage(err, "error setting up test framework")
 			benchmark.StartLatencyTests(intraCluster, verbose)
 		},
@@ -79,15 +81,15 @@ func init() {
 }
 
 func addBenchmarkFlags(cmd *cobra.Command) {
-	restConfigProducer.AddKubeContextMultiFlag(cmd, "comma-separated list of one or two kubeconfig contexts to use.")
+	benchmarkRestConfigProducer.AddKubeContextMultiFlag(cmd, "comma-separated list of one or two kubeconfig contexts to use.")
 	cmd.PersistentFlags().BoolVar(&intraCluster, "intra-cluster", false, "run the test within a single cluster")
 	cmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "produce verbose logs during benchmark tests")
 }
 
 func checkBenchmarkArguments(args []string, intraCluster bool) error {
-	if !intraCluster && len(args) != 2 && restConfigProducer.CountRequestedClusters() != 2 {
+	if !intraCluster && len(args) != 2 && benchmarkRestConfigProducer.CountRequestedClusters() != 2 {
 		return fmt.Errorf("two kubecontexts must be specified")
-	} else if intraCluster && len(args) != 1 && restConfigProducer.CountRequestedClusters() != 1 {
+	} else if intraCluster && len(args) != 1 && benchmarkRestConfigProducer.CountRequestedClusters() != 1 {
 		return fmt.Errorf("only one kubecontext should be specified")
 	}
 
