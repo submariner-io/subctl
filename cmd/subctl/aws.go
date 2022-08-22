@@ -23,6 +23,7 @@ import (
 	cpaws "github.com/submariner-io/cloud-prepare/pkg/aws"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	cloudaws "github.com/submariner-io/subctl/pkg/cloud/aws"
 	"github.com/submariner-io/subctl/pkg/cloud/cleanup"
 	"github.com/submariner-io/subctl/pkg/cloud/prepare"
@@ -31,13 +32,15 @@ import (
 var (
 	awsConfig cloudaws.Config
 
+	awsRestConfigProducer = restconfig.NewProducer()
+
 	awsPrepareCmd = &cobra.Command{
 		Use:     "aws",
 		Short:   "Prepare an OpenShift AWS cloud",
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on AWS cloud for Submariner installation.",
 		PreRunE: checkAWSFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := prepare.AWS(&restConfigProducer, &cloudPorts, &awsConfig, cli.NewReporter())
+			err := prepare.AWS(&awsRestConfigProducer, &cloudPorts, &awsConfig, cli.NewReporter())
 			exit.OnError(err)
 		},
 	}
@@ -49,7 +52,7 @@ var (
 			" cloud after Submariner uninstallation.",
 		PreRunE: checkAWSFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := cleanup.AWS(&restConfigProducer, &awsConfig, cli.NewReporter())
+			err := cleanup.AWS(&awsRestConfigProducer, &awsConfig, cli.NewReporter())
 			exit.OnError(err)
 		},
 	}

@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud/azure"
 	"github.com/submariner-io/subctl/pkg/cloud/cleanup"
 	"github.com/submariner-io/subctl/pkg/cloud/prepare"
@@ -30,13 +31,15 @@ import (
 var (
 	azureConfig azure.Config
 
+	azureRestConfigProducer = restconfig.NewProducer()
+
 	azurePrepareCmd = &cobra.Command{
 		Use:     "azure",
 		Short:   "Prepare an OpenShift Azure cloud",
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on Azure cloud for Submariner installation.",
 		PreRunE: checkAzureFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := prepare.Azure(&restConfigProducer, &cloudPorts, &azureConfig, cli.NewReporter())
+			err := prepare.Azure(&azureRestConfigProducer, &cloudPorts, &azureConfig, cli.NewReporter())
 			exit.OnError(err)
 		},
 	}
@@ -48,7 +51,7 @@ var (
 			" cloud after Submariner uninstallation.",
 		PreRunE: checkAzureFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := cleanup.Azure(&restConfigProducer, &azureConfig, cli.NewReporter())
+			err := cleanup.Azure(&azureRestConfigProducer, &azureConfig, cli.NewReporter())
 			exit.OnError(err)
 		},
 	}

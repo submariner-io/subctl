@@ -28,10 +28,13 @@ import (
 	"github.com/submariner-io/subctl/cmd/subctl/execute"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/gather"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
 var options gather.Options
+
+var gatherRestConfigProducer = restconfig.NewProducer()
 
 var gatherCmd = &cobra.Command{
 	Use:   "gather",
@@ -44,7 +47,7 @@ var gatherCmd = &cobra.Command{
 			options.Directory = "submariner-" + time.Now().UTC().Format("20060102150405") // submariner-YYYYMMDDHHMMSS
 		}
 
-		execute.OnMultiCluster(restConfigProducer, func(info *cluster.Info, status reporter.Interface) bool {
+		execute.OnMultiCluster(gatherRestConfigProducer, func(info *cluster.Info, status reporter.Interface) bool {
 			err := checkGatherArguments()
 			exit.OnErrorWithMessage(err, "Invalid argument")
 
@@ -54,7 +57,7 @@ var gatherCmd = &cobra.Command{
 }
 
 func init() {
-	restConfigProducer.AddKubeContextMultiFlag(gatherCmd, "")
+	gatherRestConfigProducer.AddKubeContextMultiFlag(gatherCmd, "")
 	addGatherFlags(gatherCmd)
 	rootCmd.AddCommand(gatherCmd)
 }

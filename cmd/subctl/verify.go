@@ -38,6 +38,7 @@ import (
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	_ "github.com/submariner-io/submariner/test/e2e/dataplane"
 	_ "github.com/submariner-io/submariner/test/e2e/redundancy"
 )
@@ -52,6 +53,8 @@ var (
 	verifyOnly                      string
 	disruptiveTests                 bool
 )
+
+var verifyRestConfigProducer = restconfig.NewProducer()
 
 var verifyCmd = &cobra.Command{
 	Use:   "verify --kubecontexts <kubeContext1>,<kubeContext2>",
@@ -78,7 +81,7 @@ The following verifications are deemed disruptive:
 		if len(args) > 0 {
 			fmt.Println("subctl verify with kubeconfig arguments is deprecated, please use --kubecontexts instead")
 		}
-		err := setUpTestFramework(args, restConfigProducer)
+		err := setUpTestFramework(args, verifyRestConfigProducer)
 		exit.OnErrorWithMessage(err, "error setting up test framework")
 
 		disruptive := extractDisruptiveVerifications(verifyOnly)
@@ -115,7 +118,7 @@ prompt for confirmation therefore you must specify --enable-disruptive to run th
 }
 
 func init() {
-	restConfigProducer.AddKubeContextMultiFlag(verifyCmd, "comma-separated list of exactly two kubeconfig contexts to use.")
+	verifyRestConfigProducer.AddKubeContextMultiFlag(verifyCmd, "comma-separated list of exactly two kubeconfig contexts to use.")
 	addVerifyFlags(verifyCmd)
 	rootCmd.AddCommand(verifyCmd)
 
@@ -153,7 +156,7 @@ func isNonInteractive(err error) bool {
 }
 
 func checkValidateArguments(args []string) error {
-	if len(args) != 2 && restConfigProducer.CountRequestedClusters() != 2 {
+	if len(args) != 2 && verifyRestConfigProducer.CountRequestedClusters() != 2 {
 		return fmt.Errorf("two kubecontexts must be specified")
 	}
 

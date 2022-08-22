@@ -26,6 +26,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud/cleanup"
 	"github.com/submariner-io/subctl/pkg/cloud/gcp"
 	"github.com/submariner-io/subctl/pkg/cloud/prepare"
@@ -34,13 +35,15 @@ import (
 var (
 	gcpConfig gcp.Config
 
+	gcpRestConfigProducer = restconfig.NewProducer()
+
 	gcpPrepareCmd = &cobra.Command{
 		Use:     "gcp",
 		Short:   "Prepare an OpenShift GCP cloud",
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on GCP cloud for Submariner installation.",
 		PreRunE: checkGCPFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := prepare.GCP(&restConfigProducer, &cloudPorts, &gcpConfig, cli.NewReporter())
+			err := prepare.GCP(&gcpRestConfigProducer, &cloudPorts, &gcpConfig, cli.NewReporter())
 			exit.OnError(err)
 		},
 	}
@@ -51,7 +54,7 @@ var (
 		Long:    "This command cleans up an installer-provisioned infrastructure (IPI) on GCP-based cloud after Submariner uninstallation.",
 		PreRunE: checkGCPFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := cleanup.GCP(&restConfigProducer, &gcpConfig, cli.NewReporter())
+			err := cleanup.GCP(&gcpRestConfigProducer, &gcpConfig, cli.NewReporter())
 			exit.OnError(err)
 		},
 	}

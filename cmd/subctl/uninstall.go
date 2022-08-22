@@ -26,6 +26,7 @@ import (
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/uninstall"
 )
@@ -35,15 +36,17 @@ var uninstallOptions struct {
 	namespace string
 }
 
+var uninstallRestConfigProducer = restconfig.NewProducer()
+
 var uninstallCmd = &cobra.Command{
 	Use:     "uninstall",
 	Short:   "Uninstall Submariner and its components",
 	Long:    "This command uninstalls Submariner and its components",
-	PreRunE: restConfigProducer.CheckVersionMismatch,
+	PreRunE: uninstallRestConfigProducer.CheckVersionMismatch,
 	Run: func(cmd *cobra.Command, args []string) {
 		status := cli.NewReporter()
 
-		config, err := restConfigProducer.ForCluster()
+		config, err := uninstallRestConfigProducer.ForCluster()
 		exit.OnError(status.Error(err, "Error creating REST config"))
 
 		clientProducer, err := client.NewProducerFromRestConfig(config.Config)
@@ -72,6 +75,6 @@ func init() {
 		"namespace in which Submariner is installed")
 	uninstallCmd.Flags().BoolVarP(&uninstallOptions.noPrompt, "yes", "y", false, "automatically answer yes to confirmation prompt")
 
-	restConfigProducer.AddKubeConfigFlag(uninstallCmd)
+	uninstallRestConfigProducer.AddKubeConfigFlag(uninstallCmd)
 	rootCmd.AddCommand(uninstallCmd)
 }

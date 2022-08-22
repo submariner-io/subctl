@@ -27,7 +27,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/exit"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -39,8 +38,6 @@ func init() {
 	runtime.Must(apiextensionsv1.AddToScheme(scheme.Scheme))
 	runtime.Must(submarinerv1.AddToScheme(scheme.Scheme))
 }
-
-var restConfigProducer = restconfig.NewProducer()
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{

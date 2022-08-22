@@ -30,6 +30,7 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/nodes"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/join"
@@ -42,11 +43,13 @@ var (
 	labelGateway bool
 )
 
+var joinRestConfigProducer = restconfig.NewProducer()
+
 var joinCmd = &cobra.Command{
 	Use:     "join",
 	Short:   "Connect a cluster to an existing broker",
 	Args:    cobra.MaximumNArgs(1),
-	PreRunE: restConfigProducer.CheckVersionMismatch,
+	PreRunE: joinRestConfigProducer.CheckVersionMismatch,
 	Run: func(cmd *cobra.Command, args []string) {
 		status := cli.NewReporter()
 		checkArgumentPassed(args)
@@ -57,7 +60,7 @@ var joinCmd = &cobra.Command{
 
 		determineClusterID(status)
 
-		clientConfig, err := restConfigProducer.ForCluster()
+		clientConfig, err := joinRestConfigProducer.ForCluster()
 		exit.OnError(status.Error(err, "Error creating the REST config"))
 
 		clientProducer, err := client.NewProducerFromRestConfig(clientConfig.Config)
@@ -82,7 +85,7 @@ var joinCmd = &cobra.Command{
 
 func init() {
 	addJoinFlags(joinCmd)
-	restConfigProducer.AddKubeContextFlag(joinCmd)
+	joinRestConfigProducer.AddKubeContextFlag(joinCmd)
 	rootCmd.AddCommand(joinCmd)
 }
 
@@ -260,7 +263,7 @@ func determineClusterID(status reporter.Interface) {
 	var err error
 
 	if joinFlags.ClusterID == "" {
-		joinFlags.ClusterID, err = restConfigProducer.GetClusterID()
+		joinFlags.ClusterID, err = joinRestConfigProducer.GetClusterID()
 		exit.OnError(status.Error(err, "Error determining cluster ID of the target cluster"))
 
 		if err = cluster.IsValidID(joinFlags.ClusterID); err != nil {

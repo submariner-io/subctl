@@ -35,6 +35,8 @@ var (
 		podNamespace string
 	}
 
+	diagnoseRestConfigProducer = restconfig.NewProducer()
+
 	diagnoseCmd = &cobra.Command{
 		Use:   "diagnose",
 		Short: "Run diagnostic checks on the Submariner deployment and report any issues",
@@ -46,7 +48,7 @@ var (
 		Short: "Check the CNI network plugin",
 		Long:  "This command checks if the detected CNI network plugin is supported by Submariner.",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(restConfigProducer, execute.IfSubmarinerInstalled(diagnose.CNIConfig))
+			execute.OnMultiCluster(diagnoseRestConfigProducer, execute.IfSubmarinerInstalled(diagnose.CNIConfig))
 		},
 	}
 
@@ -55,7 +57,7 @@ var (
 		Short: "Check the Gateway connections",
 		Long:  "This command checks that the Gateway connections to other clusters are all established",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(restConfigProducer, execute.IfSubmarinerInstalled(diagnose.Connections))
+			execute.OnMultiCluster(diagnoseRestConfigProducer, execute.IfSubmarinerInstalled(diagnose.Connections))
 		},
 	}
 
@@ -64,7 +66,7 @@ var (
 		Short: "Check the Submariner deployment",
 		Long:  "This command checks that the Submariner components are properly deployed and running with no overlapping CIDRs.",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(restConfigProducer, execute.IfSubmarinerInstalled(diagnose.Deployments))
+			execute.OnMultiCluster(diagnoseRestConfigProducer, execute.IfSubmarinerInstalled(diagnose.Deployments))
 		},
 	}
 
@@ -73,7 +75,7 @@ var (
 		Short: "Check the Kubernetes version",
 		Long:  "This command checks if Submariner can be deployed on the Kubernetes version.",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(restConfigProducer, func(info *cluster.Info, status reporter.Interface) bool {
+			execute.OnMultiCluster(diagnoseRestConfigProducer, func(info *cluster.Info, status reporter.Interface) bool {
 				return diagnose.K8sVersion(info.ClientProducer.ForKubernetes(), status)
 			})
 		},
@@ -84,7 +86,7 @@ var (
 		Short: "Check the kube-proxy mode",
 		Long:  "This command checks if the kube-proxy mode is supported by Submariner.",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(restConfigProducer, execute.IfSubmarinerInstalled(
+			execute.OnMultiCluster(diagnoseRestConfigProducer, execute.IfSubmarinerInstalled(
 				func(info *cluster.Info, status reporter.Interface) bool {
 					return diagnose.KubeProxyMode(info.ClientProducer, diagnoseKubeProxyOptions.podNamespace,
 						info.GetImageRepositoryInfo(), status)
@@ -109,7 +111,7 @@ var (
 		Short: "Check firewall access for intra-cluster Submariner VxLAN traffic",
 		Long:  "This command checks if the firewall configuration allows traffic over vx-submariner interface.",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(restConfigProducer, execute.IfSubmarinerInstalled(
+			execute.OnMultiCluster(diagnoseRestConfigProducer, execute.IfSubmarinerInstalled(
 				func(info *cluster.Info, status reporter.Interface) bool {
 					return diagnose.FirewallIntraVxLANConfig(info, diagnoseFirewallOptions, status)
 				}))
@@ -147,14 +149,14 @@ var (
 		Short: "Run all diagnostic checks (except those requiring two kubecontexts)",
 		Long:  "This command runs all diagnostic checks (except those requiring two kubecontexts) and reports any issues",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(restConfigProducer, diagnoseAll)
+			execute.OnMultiCluster(diagnoseRestConfigProducer, diagnoseAll)
 		},
 	}
 )
 
 func init() {
-	restConfigProducer.AddKubeConfigFlag(diagnoseCmd)
-	restConfigProducer.AddInClusterConfigFlag(diagnoseCmd)
+	diagnoseRestConfigProducer.AddKubeConfigFlag(diagnoseCmd)
+	diagnoseRestConfigProducer.AddInClusterConfigFlag(diagnoseCmd)
 	rootCmd.AddCommand(diagnoseCmd)
 
 	addDiagnoseSubCommands()

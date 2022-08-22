@@ -20,6 +20,7 @@ package subctl
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud"
 	"github.com/submariner-io/submariner/pkg/port"
 )
@@ -34,6 +35,8 @@ const (
 
 var (
 	cloudPorts cloud.Ports
+
+	cloudRestConfigProducer = restconfig.NewProducer()
 
 	cloudCmd = &cobra.Command{
 		Use:   "cloud",
@@ -55,7 +58,7 @@ var (
 )
 
 func init() {
-	restConfigProducer.AddKubeContextFlag(cloudCmd)
+	cloudRestConfigProducer.AddKubeContextFlag(cloudCmd)
 	rootCmd.AddCommand(cloudCmd)
 
 	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Natt, "natt-port", port.ExternalTunnel,
