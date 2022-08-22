@@ -28,6 +28,7 @@ import (
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/deploy"
@@ -40,6 +41,8 @@ var (
 	defaultComponents = []string{component.ServiceDiscovery, component.Connectivity}
 )
 
+var deployRestConfigProducer = restconfig.NewProducer()
+
 // deployBroker represents the deployBroker command.
 var deployBroker = &cobra.Command{
 	Use:   "deploy-broker",
@@ -47,7 +50,7 @@ var deployBroker = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		status := cli.NewReporter()
 
-		config, err := restConfigProducer.ForCluster()
+		config, err := deployRestConfigProducer.ForCluster()
 		exit.OnError(status.Error(err, "Error creating REST config"))
 
 		clientProducer, err := client.NewProducerFromRestConfig(config.Config)
@@ -64,7 +67,7 @@ var deployBroker = &cobra.Command{
 
 func init() {
 	addDeployBrokerFlags()
-	restConfigProducer.AddKubeContextFlag(deployBroker)
+	deployRestConfigProducer.AddKubeContextFlag(deployBroker)
 	rootCmd.AddCommand(deployBroker)
 }
 

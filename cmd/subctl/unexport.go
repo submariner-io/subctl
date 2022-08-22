@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/service"
 	mcsclient "sigs.k8s.io/mcs-api/pkg/client/clientset/versioned/typed/apis/v1alpha1"
 )
@@ -31,6 +32,9 @@ var (
 	unexportOptions struct {
 		namespace string
 	}
+
+	unexportRestConfigProducer = restconfig.NewProducer()
+
 	unexportCmd = &cobra.Command{
 		Use:   "unexport",
 		Short: "Stop a resource from being exported to other clusters",
@@ -41,17 +45,17 @@ var (
 		Short: "Stop a Service from being exported to other clusters",
 		Long: "This command removes the ServiceExport resource with the given name which in turn stops the Service " +
 			"of the same name from being exported to other clusters",
-		PreRunE: restConfigProducer.CheckVersionMismatch,
+		PreRunE: unexportRestConfigProducer.CheckVersionMismatch,
 		Run: func(cmd *cobra.Command, args []string) {
 			err := validateUnexportArguments(args)
 			exit.OnErrorWithMessage(err, "Insufficient arguments")
 
 			status := cli.NewReporter()
 
-			config, err := restConfigProducer.ForCluster()
+			config, err := unexportRestConfigProducer.ForCluster()
 			exit.OnError(status.Error(err, "Error creating REST config"))
 
-			clientConfig := restConfigProducer.ClientConfig()
+			clientConfig := unexportRestConfigProducer.ClientConfig()
 			if unexportOptions.namespace == "" {
 				if unexportOptions.namespace, _, err = clientConfig.Namespace(); err != nil {
 					unexportOptions.namespace = "default"
@@ -68,7 +72,7 @@ var (
 )
 
 func init() {
-	restConfigProducer.AddKubeContextFlag(unexportCmd)
+	unexportRestConfigProducer.AddKubeContextFlag(unexportCmd)
 	unexportServiceCmd.Flags().StringVarP(&unexportOptions.namespace, "namespace", "n", "", "namespace of the service to be unexported")
 	unexportCmd.AddCommand(unexportServiceCmd)
 	rootCmd.AddCommand(unexportCmd)
