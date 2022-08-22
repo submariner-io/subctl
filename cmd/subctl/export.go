@@ -27,13 +27,12 @@ import (
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/service"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/clientcmd"
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
 var (
-	exportOptions struct {
-		namespace string
-	}
+	exportClientConfig       clientcmd.ClientConfig
 	exportRestConfigProducer = restconfig.NewProducer()
 	exportCmd                = &cobra.Command{
 		Use:   "export",
@@ -52,21 +51,18 @@ var (
 
 			status := cli.NewReporter()
 
-			config, err := exportRestConfigProducer.ForCluster()
+			restConfig, err := exportClientConfig.ClientConfig()
 			exit.OnError(status.Error(err, "Error creating REST config"))
 
-			clientConfig := exportRestConfigProducer.ClientConfig()
-			if exportOptions.namespace == "" {
-				if exportOptions.namespace, _, err = clientConfig.Namespace(); err != nil {
-					exportOptions.namespace = "default"
-				}
-				exit.OnErrorWithMessage(err, "Error getting service Namespace")
+			var namespace string
+			if namespace, _, err = exportClientConfig.Namespace(); err != nil {
+				namespace = "default"
 			}
 
-			clientProducer, err := client.NewProducerFromRestConfig(config.Config)
+			clientProducer, err := client.NewProducerFromRestConfig(restConfig)
 			exit.OnError(status.Error(err, "Error creating client producer"))
 
-			err = service.Export(clientProducer, exportOptions.namespace, args[0], status)
+			err = service.Export(clientProducer, namespace, args[0], status)
 			exit.OnError(err)
 		},
 	}
@@ -76,8 +72,8 @@ func init() {
 	err := mcsv1a1.Install(scheme.Scheme)
 	exit.OnErrorWithMessage(err, "Failed to add to scheme")
 
-	exportRestConfigProducer.AddKubeConfigFlag(exportCmd)
-	exportServiceCmd.Flags().StringVarP(&exportOptions.namespace, "namespace", "n", "", "namespace of the service to be exported")
+	setupKubeconfigFlags(exportServiceCmd.Flags(), true)
+
 	exportCmd.AddCommand(exportServiceCmd)
 	rootCmd.AddCommand(exportCmd)
 }
