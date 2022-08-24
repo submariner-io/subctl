@@ -64,10 +64,11 @@ var vxlanCmds = map[string]string{
 	"ip-routes-table100": "ip route show table 100",
 }
 
-const ovnShowCmd = "ovn-nbctl show"
+const ovnNbctlShowCmd = "ovn-nbctl show"
 
 var ovnCmds = map[string]string{
-	"ovn_show":                           ovnShowCmd,
+	"ovn_nbctl_show":                     ovnNbctlShowCmd,
+	"ovn_sbctl_show":                     "ovn-sbctl show",
 	"ovn_lr_ovn_cluster_router_policies": "ovn-nbctl lr-policy-list ovn_cluster_router",
 	"ovn_lr_ovn_cluster_router_routes":   "ovn-nbctl lr-route-list ovn_cluster_router",
 	"ovn_lr_submariner_router_routes":    "ovn-nbctl lr-route-list submariner_router",
@@ -157,7 +158,7 @@ func gatherOVNResources(info *Info, networkPlugin string) {
 	var ovnMasterPod *v1.Pod
 	// ovn-nbctl commands only work on one of the masters, figure out which one
 	for i := range ovnMasterpods.Items {
-		err = tryCmd(info, &ovnMasterpods.Items[i], ovnShowCmd)
+		err = tryCmd(info, &ovnMasterpods.Items[i], ovnNbctlShowCmd)
 		if err == nil {
 			ovnMasterPod = &ovnMasterpods.Items[i]
 			break
