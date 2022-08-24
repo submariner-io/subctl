@@ -36,7 +36,6 @@ import (
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
-	"github.com/submariner-io/submariner-operator/pkg/names"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -84,7 +83,7 @@ func Data(clusterInfo *cluster.Info, status reporter.Interface, options Options)
 		}
 	}
 
-	gatherDataByCluster(clusterInfo, status, options)
+	gatherDataByCluster(clusterInfo, options)
 
 	fmt.Printf("Files are stored under directory %q\n", options.Directory)
 
@@ -96,8 +95,7 @@ func Data(clusterInfo *cluster.Info, status reporter.Interface, options Options)
 	return true
 }
 
-func gatherDataByCluster(clusterInfo *cluster.Info, status reporter.Interface, options Options) {
-	var err error
+func gatherDataByCluster(clusterInfo *cluster.Info, options Options) {
 	clusterName := clusterInfo.Name
 
 	fmt.Printf("Gathering information from cluster %q\n", clusterName)
@@ -110,21 +108,7 @@ func gatherDataByCluster(clusterInfo *cluster.Info, status reporter.Interface, o
 		Summary:              &Summary{},
 		ClientProducer:       clusterInfo.ClientProducer,
 		Submariner:           clusterInfo.Submariner,
-		ServiceDiscovery:     &v1alpha1.ServiceDiscovery{},
-	}
-
-	err = info.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
-		Namespace: constants.OperatorNamespace,
-		Name:      names.ServiceDiscoveryCrName,
-	}, info.ServiceDiscovery)
-
-	if err != nil {
-		info.ServiceDiscovery = nil
-
-		if !apierrors.IsNotFound(err) {
-			status.Failure("Error getting ServiceDiscovery resource: %s", err)
-			return
-		}
+		ServiceDiscovery:     clusterInfo.ServiceDiscovery,
 	}
 
 	for _, module := range options.Modules {
