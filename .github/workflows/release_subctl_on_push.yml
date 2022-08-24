@@ -6,6 +6,8 @@ on:
     branches:
       - devel
 
+permissions: {}
+
 jobs:
   release-subctl-on-push:
     if: github.repository_owner == 'submariner-io'
