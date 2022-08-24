@@ -20,11 +20,12 @@ package constants
 
 // Arranged alphabetically.
 const (
-	DefaultBrokerNamespace  = "submariner-k8s-broker"
-	OperatorNamespace       = "submariner-operator"
-	SubmarinerBrokerAdminSA = "submariner-k8s-broker-admin"
-	SubmarinerGatewayLabel  = "submariner.io/gateway"
-	SubmarinerNamespace     = "submariner-operator"
-	SubmarinerNotInstalled  = "Submariner is not installed"
-	TrueLabel               = "true"
+	DefaultBrokerNamespace       = "submariner-k8s-broker"
+	OperatorNamespace            = "submariner-operator"
+	SubmarinerBrokerAdminSA      = "submariner-k8s-broker-admin"
+	SubmarinerGatewayLabel       = "submariner.io/gateway"
+	SubmarinerNamespace          = "submariner-operator"
+	SubmarinerNotInstalled       = "Submariner is not installed"
+	ServiceDiscoveryNotInstalled = "Service discovery is not installed"
+	TrueLabel                    = "true"
 )

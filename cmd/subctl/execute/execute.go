@@ -75,3 +75,15 @@ func IfSubmarinerInstalled(run OnClusterFn) OnClusterFn {
 		return run(clusterInfo, status)
 	}
 }
+
+func IfServiceDiscoveryInstalled(run OnClusterFn) OnClusterFn {
+	return func(clusterInfo *cluster.Info, status reporter.Interface) bool {
+		if clusterInfo.ServiceDiscovery == nil {
+			status.Warning(constants.ServiceDiscoveryNotInstalled)
+
+			return true
+		}
+
+		return run(clusterInfo, status)
+	}
+}
