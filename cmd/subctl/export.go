@@ -21,21 +21,18 @@ package subctl
 import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
-	"github.com/submariner-io/subctl/pkg/client"
+	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/service"
 	"k8s.io/client-go/kubernetes/scheme"
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
 var (
-	exportOptions struct {
-		namespace string
-	}
-
-	exportRestConfigProducer = restconfig.NewProducer()
+	exportRestConfigProducer = restconfig.NewProducer().WithNamespace()
 
 	exportCmd = &cobra.Command{
 		Use:   "export",
@@ -52,24 +49,10 @@ var (
 			err := validateArguments(args)
 			exit.OnErrorWithMessage(err, "Insufficient arguments")
 
-			status := cli.NewReporter()
-
-			config, err := exportRestConfigProducer.ForCluster()
-			exit.OnError(status.Error(err, "Error creating REST config"))
-
-			clientConfig := exportRestConfigProducer.ClientConfig()
-			if exportOptions.namespace == "" {
-				if exportOptions.namespace, _, err = clientConfig.Namespace(); err != nil {
-					exportOptions.namespace = "default"
-				}
-				exit.OnErrorWithMessage(err, "Error getting service Namespace")
-			}
-
-			clientProducer, err := client.NewProducerFromRestConfig(config.Config)
-			exit.OnError(status.Error(err, "Error creating client producer"))
-
-			err = service.Export(clientProducer, exportOptions.namespace, args[0], status)
-			exit.OnError(err)
+			exit.OnError(exportRestConfigProducer.RunOnSelectedContext(
+				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					return service.Export(clusterInfo.ClientProducer, namespace, args[0], status) // nolint:wrapcheck // No need to wrap errors here.
+				}, cli.NewReporter()))
 		},
 	}
 )
@@ -78,8 +61,7 @@ func init() {
 	err := mcsv1a1.Install(scheme.Scheme)
 	exit.OnErrorWithMessage(err, "Failed to add to scheme")
 
-	exportRestConfigProducer.AddKubeConfigFlag(exportCmd)
-	exportServiceCmd.Flags().StringVarP(&exportOptions.namespace, "namespace", "n", "", "namespace of the service to be exported")
+	exportRestConfigProducer.SetupFlags(exportServiceCmd.Flags())
 	exportCmd.AddCommand(exportServiceCmd)
 	rootCmd.AddCommand(exportCmd)
 }
