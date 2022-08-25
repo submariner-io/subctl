@@ -26,20 +26,22 @@ import (
 	"github.com/coreos/go-semver/semver"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/stringset"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
+	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/gvr"
+	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/version"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	subv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -52,22 +54,111 @@ type RestConfig struct {
 	ClusterName string
 }
 
+type configAndOverrides struct {
+	config    clientcmd.ClientConfig
+	overrides *clientcmd.ConfigOverrides
+}
+
 type Producer struct {
-	kubeConfig   string
-	kubeContext  string
-	kubeContexts []string
-	inCluster    bool
+	kubeConfig          string
+	kubeContext         string
+	kubeContexts        []string
+	defaultClientConfig *configAndOverrides
+	inCluster           bool
+	namespaceFlag       bool
 }
 
-func NewProducer() Producer {
-	return Producer{}
+// NewProducer initialises a blank producer which needs to be set up with flags (see SetupFlags).
+func NewProducer() *Producer {
+	return &Producer{}
 }
 
-func NewProducerFrom(kubeConfig, kubeContext string) Producer {
-	return Producer{
+// NewProducerFrom initialises a producer using the given kubeconfig file and context.
+// The context may be empty, in which case the default context will be used.
+func NewProducerFrom(kubeConfig, kubeContext string) *Producer {
+	return &Producer{
 		kubeConfig:  kubeConfig,
 		kubeContext: kubeContext,
 	}
+}
+
+// WithNamespace configures the producer to set up a namespace flag.
+// The chosen namespace will be passed to the PerContextFn used to process the context.
+func (rcp *Producer) WithNamespace() *Producer {
+	rcp.namespaceFlag = true
+
+	return rcp
+}
+
+// SetupFlags configures the given flags to control the producer settings.
+func (rcp *Producer) SetupFlags(flags *pflag.FlagSet) {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
+
+	flags.StringVar(&loadingRules.ExplicitPath, "kubeconfig", "", "absolute path(s) to the kubeconfig file(s)")
+
+	// Default un-prefixed context
+	overrides := clientcmd.ConfigOverrides{ClusterDefaults: clientcmd.ClusterDefaults}
+	kflags := clientcmd.RecommendedConfigOverrideFlags("")
+	clientcmd.BindOverrideFlags(&overrides, flags, kflags)
+
+	// Support deprecated --kubecontext; TODO remove in 0.15
+	legacyFlags := clientcmd.RecommendedConfigOverrideFlags("kube")
+	legacyFlags.CurrentContext.BindStringFlag(flags, &overrides.CurrentContext)
+	_ = flags.MarkDeprecated("kubecontext", "use --context instead")
+
+	if !rcp.namespaceFlag {
+		_ = flags.MarkHidden("namespace")
+	}
+
+	rcp.defaultClientConfig = &configAndOverrides{
+		config:    clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &overrides),
+		overrides: &overrides,
+	}
+}
+
+type PerContextFn func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error
+
+// RunOnSelectedContext runs the given function on the selected context.
+func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter.Interface) error {
+	if rcp.inCluster {
+		restConfig, err := rest.InClusterConfig()
+		if err != nil {
+			return status.Error(err, "error retrieving the in-cluster configuration")
+		}
+
+		// In-cluster configurations don't give a cluster name, use "in-cluster"
+		clusterInfo, err := cluster.NewInfo("in-cluster", restConfig)
+		if err != nil {
+			return status.Error(err, "error building the cluster.Info for the in-cluster configuration")
+		}
+
+		// In-cluster configurations don't specify a namespace, use the default
+		// When using the in-cluster configuration, that's the only configuration we want
+		return function(clusterInfo, "default", status)
+	}
+
+	if rcp.defaultClientConfig == nil {
+		// If we get here, no context was set up, which means SetupFlags() wasn't called
+		return status.Error(errors.New("no context provided (this is a programming error)"), "")
+	}
+
+	restConfig, err := getRestConfigFromConfig(rcp.defaultClientConfig.config, rcp.defaultClientConfig.overrides)
+	if err != nil {
+		return status.Error(err, "error retrieving the default configuration")
+	}
+
+	clusterInfo, err := cluster.NewInfo(restConfig.ClusterName, restConfig.Config)
+	if err != nil {
+		return status.Error(err, "error building the cluster.Info for the default configuration")
+	}
+
+	namespace, _, err := rcp.defaultClientConfig.config.Namespace()
+	if err != nil {
+		return status.Error(err, "error retrieving the namespace for the default configuration")
+	}
+
+	return function(clusterInfo, namespace, status)
 }
 
 func (rcp *Producer) AddKubeConfigFlag(cmd *cobra.Command) {
@@ -105,7 +196,7 @@ func (rcp *Producer) PopulateTestFramework() {
 }
 
 func (rcp *Producer) MustGetForClusters() []RestConfig {
-	configs, err := rcp.ForClusters()
+	configs, err := rcp.getRestConfigs()
 	exit.OnErrorWithMessage(err, "Error getting REST Config for cluster")
 
 	return configs
@@ -138,10 +229,6 @@ func (rcp *Producer) ForCluster() (RestConfig, error) {
 	}
 
 	return restConfig, errors.New("error getting restconfig")
-}
-
-func (rcp *Producer) ForClusters() ([]RestConfig, error) {
-	return rcp.getRestConfigs()
 }
 
 func (rcp *Producer) getRestConfigs() ([]RestConfig, error) {
@@ -231,6 +318,10 @@ func ForBroker(submariner *v1alpha1.Submariner, serviceDisc *v1alpha1.ServiceDis
 func clientConfigAndClusterName(rules *clientcmd.ClientConfigLoadingRules, overrides *clientcmd.ConfigOverrides) (RestConfig, error) {
 	config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, overrides)
 
+	return getRestConfigFromConfig(config, overrides)
+}
+
+func getRestConfigFromConfig(config clientcmd.ClientConfig, overrides *clientcmd.ConfigOverrides) (RestConfig, error) {
 	clientConfig, err := config.ClientConfig()
 	if err != nil {
 		return RestConfig{}, errors.Wrap(err, "error creating client config")
@@ -250,21 +341,7 @@ func clientConfigAndClusterName(rules *clientcmd.ClientConfigLoadingRules, overr
 	return RestConfig{Config: clientConfig, ClusterName: *clusterName}, nil
 }
 
-func Clients(config *rest.Config) (dynamic.Interface, kubernetes.Interface, error) {
-	dynClient, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "error creating client")
-	}
-
-	clientSet, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "error creating client")
-	}
-
-	return dynClient, clientSet, nil
-}
-
-func (rcp *Producer) ClusterNameFromContext() (*string, error) {
+func (rcp *Producer) clusterNameFromContext() (*string, error) {
 	rawConfig, err := rcp.ClientConfig().RawConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "error retrieving raw client configuration")
@@ -288,7 +365,7 @@ func clusterNameFromContext(rawConfig *api.Config, overridesContext string) *str
 }
 
 func (rcp *Producer) GetClusterID() (string, error) {
-	clusterName, err := rcp.ClusterNameFromContext()
+	clusterName, err := rcp.clusterNameFromContext()
 	if err != nil {
 		return "", err
 	}
@@ -316,14 +393,26 @@ func (rcp *Producer) ClientConfig() clientcmd.ClientConfig {
 }
 
 func (rcp *Producer) CheckVersionMismatch(cmd *cobra.Command, args []string) error {
+	if rcp.defaultClientConfig != nil {
+		// We're using clientcmd kubeconfig flags
+		return rcp.RunOnSelectedContext(func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+			return checkVersionMismatch(clusterInfo.ClientProducer.ForGeneral())
+		}, cli.NewReporter())
+	}
+
+	// Legacy flag handling
 	config, err := rcp.ForCluster()
 	exit.OnErrorWithMessage(err, "The provided kubeconfig is invalid")
 
-	client, err := controllerClient.New(config.Config, controllerClient.Options{})
+	crClient, err := controllerClient.New(config.Config, controllerClient.Options{})
 	exit.OnErrorWithMessage(err, "Error creating client")
 
+	return checkVersionMismatch(crClient)
+}
+
+func checkVersionMismatch(crClient controllerClient.Client) error {
 	submariner := &v1alpha1.Submariner{}
-	err = client.Get(context.TODO(), controllerClient.ObjectKey{
+	err := crClient.Get(context.TODO(), controllerClient.ObjectKey{
 		Namespace: constants.OperatorNamespace,
 		Name:      names.SubmarinerCrName,
 	}, submariner)
@@ -371,7 +460,7 @@ func ConfigureTestFramework(args []string) error {
 	for _, config := range args {
 		rcp := NewProducerFrom(config, "")
 
-		clusterName, err := rcp.ClusterNameFromContext()
+		clusterName, err := rcp.clusterNameFromContext()
 		if err != nil {
 			// nolint:nilerr // This is intentional.
 			return nil

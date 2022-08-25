@@ -39,7 +39,7 @@ var (
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on RHOS cloud for Submariner installation.",
 		PreRunE: checkRHOSFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := prepare.RHOS(&rhosRestConfigProducer, &cloudPorts, &rhosConfig, cli.NewReporter())
+			err := prepare.RHOS(rhosRestConfigProducer, &cloudPorts, &rhosConfig, cli.NewReporter())
 			exit.OnError(err)
 		},
 	}
@@ -51,7 +51,7 @@ var (
 			" cloud after Submariner uninstallation.",
 		PreRunE: checkRHOSFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := cleanup.RHOS(&rhosRestConfigProducer, &rhosConfig, cli.NewReporter())
+			err := cleanup.RHOS(rhosRestConfigProducer, &rhosConfig, cli.NewReporter())
 			exit.OnError(err)
 		},
 	}

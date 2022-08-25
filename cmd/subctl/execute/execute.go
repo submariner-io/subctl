@@ -31,7 +31,7 @@ import (
 
 type OnClusterFn func(*cluster.Info, reporter.Interface) bool
 
-func OnMultiCluster(restConfigProducer restconfig.Producer, run OnClusterFn) {
+func OnMultiCluster(restConfigProducer *restconfig.Producer, run OnClusterFn) {
 	restConfigs := restConfigProducer.MustGetForClusters()
 	if len(restConfigs) == 0 {
 		fmt.Println("No kube config was provided. Please use the --kubeconfig flag or set the KUBECONFIG environment variable")
