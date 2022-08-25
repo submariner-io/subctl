@@ -36,11 +36,12 @@ import (
 )
 
 type Info struct {
-	Name           string
-	RestConfig     *rest.Config
-	ClientProducer client.Producer
-	Submariner     *v1alpha1.Submariner
-	nodeCount      int
+	Name             string
+	RestConfig       *rest.Config
+	ClientProducer   client.Producer
+	Submariner       *v1alpha1.Submariner
+	ServiceDiscovery *v1alpha1.ServiceDiscovery
+	nodeCount        int
 }
 
 func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
@@ -67,6 +68,18 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 		info.Submariner = submariner
 	} else if !apierrors.IsNotFound(err) {
 		return nil, errors.Wrap(err, "error retrieving Submariner")
+	}
+
+	serviceDiscovery := &v1alpha1.ServiceDiscovery{}
+	err = info.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
+		Namespace: constants.SubmarinerNamespace,
+		Name:      names.ServiceDiscoveryCrName,
+	}, serviceDiscovery)
+
+	if err == nil {
+		info.ServiceDiscovery = serviceDiscovery
+	} else if !apierrors.IsNotFound(err) {
+		return nil, errors.Wrap(err, "error retrieving ServiceDiscovery")
 	}
 
 	return info, nil
