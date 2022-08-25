@@ -40,7 +40,7 @@ var (
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on AWS cloud for Submariner installation.",
 		PreRunE: checkAWSFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := prepare.AWS(&awsRestConfigProducer, &cloudPorts, &awsConfig, cli.NewReporter())
+			err := prepare.AWS(awsRestConfigProducer, &cloudPorts, &awsConfig, cli.NewReporter())
 			exit.OnError(err)
 		},
 	}
@@ -52,7 +52,7 @@ var (
 			" cloud after Submariner uninstallation.",
 		PreRunE: checkAWSFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := cleanup.AWS(&awsRestConfigProducer, &awsConfig, cli.NewReporter())
+			err := cleanup.AWS(awsRestConfigProducer, &awsConfig, cli.NewReporter())
 			exit.OnError(err)
 		},
 	}

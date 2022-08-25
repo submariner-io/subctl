@@ -43,7 +43,7 @@ var (
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on GCP cloud for Submariner installation.",
 		PreRunE: checkGCPFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := prepare.GCP(&gcpRestConfigProducer, &cloudPorts, &gcpConfig, cli.NewReporter())
+			err := prepare.GCP(gcpRestConfigProducer, &cloudPorts, &gcpConfig, cli.NewReporter())
 			exit.OnError(err)
 		},
 	}
@@ -54,7 +54,7 @@ var (
 		Long:    "This command cleans up an installer-provisioned infrastructure (IPI) on GCP-based cloud after Submariner uninstallation.",
 		PreRunE: checkGCPFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := cleanup.GCP(&gcpRestConfigProducer, &gcpConfig, cli.NewReporter())
+			err := cleanup.GCP(gcpRestConfigProducer, &gcpConfig, cli.NewReporter())
 			exit.OnError(err)
 		},
 	}
