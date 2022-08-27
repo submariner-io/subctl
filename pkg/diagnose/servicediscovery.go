@@ -85,7 +85,7 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 			if apierrors.IsNotFound(err) {
 				status.Failure("No EndpointSlice found for exported service %s/%s", se.Namespace, se.Name)
 			} else {
-				status.Failure("Error retrieving EndPointSlice for exported service %s/%s", se.Namespace, se.Name)
+				status.Failure("Error retrieving EndPointSlice for exported service %s/%s: %v", se.Namespace, se.Name, err)
 				return
 			}
 		}
@@ -97,7 +97,7 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 			if apierrors.IsNotFound(err) {
 				status.Failure("No ServiceImport found for exported service %s/%s", se.Namespace, se.Name)
 			} else {
-				status.Failure("Error retrieving ServiceImport for exported service %s/%s", se.Namespace, se.Name)
+				status.Failure("Error retrieving ServiceImport for exported service %s/%s: %v", se.Namespace, se.Name, err)
 			}
 		}
 	}

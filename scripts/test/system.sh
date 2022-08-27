@@ -16,7 +16,7 @@ function deploy_env_once() {
 
     # Print GHA groups to make looking at CI output easier
     printf "::group::Deploying the environment"
-    make deploy SETTINGS="$SETTINGS" using="${USING}" -o package/.image.subctl
+    make deploy SETTINGS="$SETTINGS" using="${USING}"
     declare_kubeconfig
     echo "::endgroup::"
 }
@@ -87,6 +87,40 @@ EOF
     echo "::endgroup::"
 }
 
+function test_subctl_diagnose_in_cluster() {
+    echo "::group::Validating 'subctl diagnose' in-cluster"
+
+    job_name="submariner-diagnose"
+    kubectl apply -f - <<EOF
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: ${job_name}
+        namespace: ${subm_ns}
+      spec:
+        template:
+          metadata:
+            labels:
+              submariner.io/transient: "true"
+          spec:
+            containers:
+            - name: submariner-diagnose
+              image: localhost:5000/subctl:local
+              command: ["subctl", "diagnose", "all", "--in-cluster"]
+            restartPolicy: Never
+            serviceAccountName: submariner-diagnose
+        backoffLimit: 0
+EOF
+
+    echo "Print diagnose logs"
+    with_retries 15 sleep_on_fail 1s kubectl logs "job/${job_name}" -n "${subm_ns}" -f
+
+    kubectl wait --for=condition=Complete --timeout=15s -n "$subm_ns" "job/${job_name}"
+
+    kubectl delete job "${job_name}" -n "${subm_ns}"
+    echo "::endgroup::"
+}
+
 ### Main ###
 
 subm_ns=submariner-operator
@@ -117,6 +151,10 @@ _subctl diagnose firewall inter-cluster --validation-timeout 20 "${KUBECONFIGS_D
 # Deprecated firewall nat-discovery variant
 _subctl diagnose firewall nat-discovery --validation-timeout 20 "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2
 
+# Test subctl diagnose in-cluster
+
+with_context "${clusters[0]}" test_subctl_diagnose_in_cluster
+
 # Test subctl benchmark invocations
 
 _subctl benchmark latency --intra-cluster --kubecontexts cluster1
@@ -135,4 +173,3 @@ _subctl cloud prepare generic --kubecontext cluster1
 
 _subctl uninstall -y --context cluster2
 _subctl uninstall -y --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1
-
