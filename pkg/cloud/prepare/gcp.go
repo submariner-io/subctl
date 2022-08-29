@@ -22,19 +22,19 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
 	"github.com/submariner-io/subctl/internal/cli"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud"
 	"github.com/submariner-io/subctl/pkg/cloud/gcp"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func GCP(restConfigProducer *restconfig.Producer, ports *cloud.Ports, config *gcp.Config, status reporter.Interface) error {
-	gwPorts, input, err := getPortConfig(restConfigProducer, ports, false)
+func GCP(clusterInfo *cluster.Info, ports *cloud.Ports, config *gcp.Config, status reporter.Interface) error {
+	gwPorts, input, err := getPortConfig(clusterInfo.ClientProducer, ports, false)
 	if err != nil {
 		return status.Error(err, "Failed to prepare the cloud")
 	}
 
 	// nolint:wrapcheck // No need to wrap errors here.
-	err = gcp.RunOn(restConfigProducer, config, cli.NewReporter(),
+	err = gcp.RunOn(clusterInfo, config, cli.NewReporter(),
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if config.Gateways > 0 {
 				gwInput := api.GatewayDeployInput{

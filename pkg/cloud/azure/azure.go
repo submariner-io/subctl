@@ -30,10 +30,8 @@ import (
 	"github.com/submariner-io/cloud-prepare/pkg/azure"
 	"github.com/submariner-io/cloud-prepare/pkg/k8s"
 	"github.com/submariner-io/cloud-prepare/pkg/ocp"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
 type Config struct {
@@ -46,7 +44,7 @@ type Config struct {
 	GWInstanceType   string
 }
 
-func RunOn(restConfigProducer *restconfig.Producer, config *Config, status reporter.Interface,
+func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 	function func(api.Cloud, api.GatewayDeployer, reporter.Interface) error,
 ) error {
 	if config.OcpMetadataFile != "" {
@@ -82,28 +80,16 @@ func RunOn(restConfigProducer *restconfig.Producer, config *Config, status repor
 		return status.Error(err, "Error getting an authorizer for Azure")
 	}
 
-	k8sConfig, err := restConfigProducer.ForCluster()
-	if err != nil {
-		return status.Error(err, "Failed to initialize a Kubernetes config")
-	}
-
-	clientSet, err := kubernetes.NewForConfig(k8sConfig.Config)
-	if err != nil {
-		return status.Error(err, "Failed to create Kubernetes client")
-	}
-
+	restConfig := clusterInfo.RestConfig
+	clientSet := clusterInfo.ClientProducer.ForKubernetes()
 	k8sClientSet := k8s.NewInterface(clientSet)
 
-	restMapper, err := util.BuildRestMapper(k8sConfig.Config)
+	restMapper, err := util.BuildRestMapper(restConfig)
 	if err != nil {
 		return status.Error(err, "Failed to create restmapper")
 	}
 
-	dynamicClient, err := dynamic.NewForConfig(k8sConfig.Config)
-	if err != nil {
-		return status.Error(err, "Failed to create dynamic client")
-	}
-
+	dynamicClient := clusterInfo.ClientProducer.ForDynamic()
 	msDeployer := ocp.NewK8sMachinesetDeployer(restMapper, dynamicClient)
 
 	cloudInfo := &azure.CloudInfo{

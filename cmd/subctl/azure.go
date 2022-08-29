@@ -16,22 +16,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// nolint:dupl // Similar code in aws.go, azure.go, rhos.go, but not duplicate
 package subctl
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud/azure"
 	"github.com/submariner-io/subctl/pkg/cloud/cleanup"
 	"github.com/submariner-io/subctl/pkg/cloud/prepare"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
 var (
 	azureConfig azure.Config
-
-	azureRestConfigProducer = restconfig.NewProducer()
 
 	azurePrepareCmd = &cobra.Command{
 		Use:     "azure",
@@ -39,8 +39,10 @@ var (
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on Azure cloud for Submariner installation.",
 		PreRunE: checkAzureFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := prepare.Azure(azureRestConfigProducer, &cloudPorts, &azureConfig, cli.NewReporter())
-			exit.OnError(err)
+			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
+				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					return prepare.Azure(clusterInfo, &cloudPorts, &azureConfig, status) // nolint:wrapcheck // No need to wrap errors here.
+				}, cli.NewReporter()))
 		},
 	}
 
@@ -51,15 +53,16 @@ var (
 			" cloud after Submariner uninstallation.",
 		PreRunE: checkAzureFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := cleanup.Azure(azureRestConfigProducer, &azureConfig, cli.NewReporter())
-			exit.OnError(err)
+			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
+				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					return cleanup.Azure(clusterInfo, &azureConfig, status) // nolint:wrapcheck // No need to wrap errors here.
+				}, cli.NewReporter()))
 		},
 	}
 )
 
 func init() {
 	addGeneralAzureFlags := func(command *cobra.Command) {
-		azureRestConfigProducer.AddKubeContextFlag(command)
 		command.Flags().StringVar(&azureConfig.InfraID, infraIDFlag, "", "Azure infra ID")
 		command.Flags().StringVar(&azureConfig.Region, regionFlag, "", "Azure region")
 		command.Flags().StringVar(&azureConfig.OcpMetadataFile, "ocp-metadata", "",

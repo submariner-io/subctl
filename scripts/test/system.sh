@@ -120,6 +120,8 @@ _subctl benchmark throughput --verbose --kubecontexts cluster1,cluster2
 
 # Test subctl cloud prepare invocations
 
+_subctl cloud prepare generic --context cluster1
+# Deprecated variant
 _subctl cloud prepare generic --kubecontext cluster1
 
 # Test subctl uninstall invocations

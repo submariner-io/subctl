@@ -24,18 +24,17 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud/cleanup"
 	"github.com/submariner-io/subctl/pkg/cloud/gcp"
 	"github.com/submariner-io/subctl/pkg/cloud/prepare"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
 var (
 	gcpConfig gcp.Config
-
-	gcpRestConfigProducer = restconfig.NewProducer()
 
 	gcpPrepareCmd = &cobra.Command{
 		Use:     "gcp",
@@ -43,8 +42,10 @@ var (
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on GCP cloud for Submariner installation.",
 		PreRunE: checkGCPFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := prepare.GCP(gcpRestConfigProducer, &cloudPorts, &gcpConfig, cli.NewReporter())
-			exit.OnError(err)
+			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
+				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					return prepare.GCP(clusterInfo, &cloudPorts, &gcpConfig, status) // nolint:wrapcheck // No need to wrap errors here.
+				}, cli.NewReporter()))
 		},
 	}
 
@@ -54,15 +55,16 @@ var (
 		Long:    "This command cleans up an installer-provisioned infrastructure (IPI) on GCP-based cloud after Submariner uninstallation.",
 		PreRunE: checkGCPFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := cleanup.GCP(gcpRestConfigProducer, &gcpConfig, cli.NewReporter())
-			exit.OnError(err)
+			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
+				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					return cleanup.GCP(clusterInfo, &gcpConfig, status) // nolint:wrapcheck // No need to wrap errors here.
+				}, cli.NewReporter()))
 		},
 	}
 )
 
 func init() {
 	addGCPGeneralFlags := func(command *cobra.Command) {
-		gcpRestConfigProducer.AddKubeContextFlag(command)
 		command.Flags().StringVar(&gcpConfig.InfraID, infraIDFlag, "", "GCP infra ID")
 		command.Flags().StringVar(&gcpConfig.Region, regionFlag, "", "GCP region")
 		command.Flags().StringVar(&gcpConfig.ProjectID, projectIDFlag, "", "GCP project ID")

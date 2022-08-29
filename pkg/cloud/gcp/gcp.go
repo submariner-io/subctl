@@ -31,13 +31,11 @@ import (
 	gcpClientIface "github.com/submariner-io/cloud-prepare/pkg/gcp/client"
 	"github.com/submariner-io/cloud-prepare/pkg/k8s"
 	"github.com/submariner-io/cloud-prepare/pkg/ocp"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud"
+	"github.com/submariner-io/subctl/pkg/cluster"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/dns/v1"
 	"google.golang.org/api/option"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 )
 
 type Config struct {
@@ -53,7 +51,7 @@ type Config struct {
 
 // RunOn runs the given function on GCP, supplying it with a cloud instance connected to GCP and a reporter that writes to CLI.
 // The functions makes sure that infraID and region are specified, and extracts the credentials from a secret in order to connect to GCP.
-func RunOn(restConfigProducer *restconfig.Producer, config *Config, status reporter.Interface,
+func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 	function func(api.Cloud, api.GatewayDeployer, reporter.Interface) error,
 ) error {
 	var err error
@@ -90,27 +88,16 @@ func RunOn(restConfigProducer *restconfig.Producer, config *Config, status repor
 
 	status.End()
 
-	k8sConfig, err := restConfigProducer.ForCluster()
-	if err != nil {
-		return status.Error(err, "error initializing Kubernetes config")
-	}
-
-	clientSet, err := kubernetes.NewForConfig(k8sConfig.Config)
-	if err != nil {
-		return status.Error(err, "error creating Kubernetes client")
-	}
-
+	restConfig := clusterInfo.RestConfig
+	clientSet := clusterInfo.ClientProducer.ForKubernetes()
 	k8sClientSet := k8s.NewInterface(clientSet)
 
-	restMapper, err := util.BuildRestMapper(k8sConfig.Config)
+	restMapper, err := util.BuildRestMapper(restConfig)
 	if err != nil {
 		return status.Error(err, "error creating REST mapper")
 	}
 
-	dynamicClient, err := dynamic.NewForConfig(k8sConfig.Config)
-	if err != nil {
-		return status.Error(err, "error creating dynamic client")
-	}
+	dynamicClient := clusterInfo.ClientProducer.ForDynamic()
 
 	gcpCloudInfo := gcp.CloudInfo{
 		ProjectID: config.ProjectID,
