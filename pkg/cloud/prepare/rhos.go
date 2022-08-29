@@ -22,19 +22,19 @@ import (
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud"
 	"github.com/submariner-io/subctl/pkg/cloud/rhos"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func RHOS(restConfigProducer *restconfig.Producer, ports *cloud.Ports, config *rhos.Config, status reporter.Interface) error {
-	gwPorts, input, err := getPortConfig(restConfigProducer, ports, false)
+func RHOS(clusterInfo *cluster.Info, ports *cloud.Ports, config *rhos.Config, status reporter.Interface) error {
+	gwPorts, input, err := getPortConfig(clusterInfo.ClientProducer, ports, false)
 	if err != nil {
 		return status.Error(err, "Failed to prepare the cloud")
 	}
 
 	// nolint:wrapcheck // No need to wrap errors here.
-	err = rhos.RunOn(restConfigProducer, config, status,
+	err = rhos.RunOn(clusterInfo, config, status,
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if config.Gateways > 0 {
 				gwInput := api.GatewayDeployInput{

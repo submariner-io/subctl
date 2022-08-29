@@ -21,12 +21,12 @@ package cleanup
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud/generic"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func GenericCluster(restConfigProducer *restconfig.Producer, status reporter.Interface) error {
-	err := generic.RunOnCluster(restConfigProducer, status,
+func GenericCluster(clusterInfo *cluster.Info, status reporter.Interface) error {
+	err := generic.RunOnCluster(clusterInfo, status,
 		func(gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			return gwDeployer.Cleanup(status) // nolint:wrapcheck // No need to wrap here
 		})

@@ -23,25 +23,14 @@ import (
 	"github.com/submariner-io/cloud-prepare/pkg/api"
 	"github.com/submariner-io/cloud-prepare/pkg/generic"
 	"github.com/submariner-io/cloud-prepare/pkg/k8s"
-	"github.com/submariner-io/subctl/internal/restconfig"
-	"k8s.io/client-go/kubernetes"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func RunOnCluster(restConfigProducer *restconfig.Producer, status reporter.Interface,
+func RunOnCluster(clusterInfo *cluster.Info, status reporter.Interface,
 	function func(api.GatewayDeployer, reporter.Interface) error,
 ) error {
-	k8sConfig, err := restConfigProducer.ForCluster()
-	if err != nil {
-		return status.Error(err, "error initializing Kubernetes config")
-	}
-
-	clientSet, err := kubernetes.NewForConfig(k8sConfig.Config)
-	if err != nil {
-		return status.Error(err, "error creating Kubernetes client")
-	}
-
+	clientSet := clusterInfo.ClientProducer.ForKubernetes()
 	k8sClientSet := k8s.NewInterface(clientSet)
-
 	gwDeployer := generic.NewGatewayDeployer(k8sClientSet)
 
 	return function(gwDeployer, status)

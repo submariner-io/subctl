@@ -21,13 +21,13 @@ package prepare
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud/generic"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func GenericCluster(restConfigProducer *restconfig.Producer, gateways int, status reporter.Interface) error {
+func GenericCluster(clusterInfo *cluster.Info, gateways int, status reporter.Interface) error {
 	// nolint:wrapcheck // No need to wrap errors here.
-	err := generic.RunOnCluster(restConfigProducer, status,
+	err := generic.RunOnCluster(clusterInfo, status,
 		func(gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if gateways > 0 {
 				gwInput := api.GatewayDeployInput{

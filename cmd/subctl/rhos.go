@@ -16,22 +16,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// nolint:dupl // Similar code in aws.go, azure.go, rhos.go, but not duplicate
 package subctl
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud/cleanup"
 	"github.com/submariner-io/subctl/pkg/cloud/prepare"
 	"github.com/submariner-io/subctl/pkg/cloud/rhos"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
 var (
 	rhosConfig rhos.Config
-
-	rhosRestConfigProducer = restconfig.NewProducer()
 
 	rhosPrepareCmd = &cobra.Command{
 		Use:     "rhos",
@@ -39,8 +39,10 @@ var (
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on RHOS cloud for Submariner installation.",
 		PreRunE: checkRHOSFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := prepare.RHOS(rhosRestConfigProducer, &cloudPorts, &rhosConfig, cli.NewReporter())
-			exit.OnError(err)
+			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
+				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					return prepare.RHOS(clusterInfo, &cloudPorts, &rhosConfig, status) // nolint:wrapcheck // No need to wrap errors here.
+				}, cli.NewReporter()))
 		},
 	}
 
@@ -51,15 +53,16 @@ var (
 			" cloud after Submariner uninstallation.",
 		PreRunE: checkRHOSFlags,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := cleanup.RHOS(rhosRestConfigProducer, &rhosConfig, cli.NewReporter())
-			exit.OnError(err)
+			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
+				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					return cleanup.RHOS(clusterInfo, &rhosConfig, status) // nolint:wrapcheck // No need to wrap errors here.
+				}, cli.NewReporter()))
 		},
 	}
 )
 
 func init() {
 	addGeneralRHOSFlags := func(command *cobra.Command) {
-		rhosRestConfigProducer.AddKubeContextFlag(command)
 		command.Flags().StringVar(&rhosConfig.InfraID, infraIDFlag, "", "RHOS infra ID")
 		command.Flags().StringVar(&rhosConfig.Region, regionFlag, "", "RHOS region")
 		command.Flags().StringVar(&rhosConfig.ProjectID, projectIDFlag, "", "RHOS project ID")

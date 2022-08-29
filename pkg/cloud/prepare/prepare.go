@@ -24,25 +24,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
 	"github.com/submariner-io/subctl/internal/constants"
-	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/cloud"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/network"
 	"github.com/submariner-io/submariner/pkg/cni"
-	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func getNetworkDetails(restCfgProducer *restconfig.Producer) (*network.ClusterNetwork, error) {
-	k8sConfig, err := restCfgProducer.ForCluster()
-	if err != nil {
-		return nil, errors.Wrapf(err, "error creating the restConfig")
-	}
-
-	client, err := controllerClient.New(k8sConfig.Config, controllerClient.Options{})
-	if err != nil {
-		return nil, errors.Wrap(err, "error creating controller client")
-	}
-
-	networkDetails, err := network.Discover(client, constants.OperatorNamespace)
+func getNetworkDetails(clientProducer client.Producer) (*network.ClusterNetwork, error) {
+	networkDetails, err := network.Discover(clientProducer.ForGeneral(), constants.OperatorNamespace)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to discover network details")
 	} else if networkDetails == nil {
@@ -52,7 +41,7 @@ func getNetworkDetails(restCfgProducer *restconfig.Producer) (*network.ClusterNe
 	return networkDetails, nil
 }
 
-func getPortConfig(restcfg *restconfig.Producer, ports *cloud.Ports, useNumericESP bool,
+func getPortConfig(clientProducer client.Producer, ports *cloud.Ports, useNumericESP bool,
 ) ([]api.PortSpec, api.PrepareForSubmarinerInput, error) {
 	gwPorts := []api.PortSpec{
 		{Port: ports.Natt, Protocol: "udp"},
@@ -76,7 +65,7 @@ func getPortConfig(restcfg *restconfig.Producer, ports *cloud.Ports, useNumericE
 
 	input := api.PrepareForSubmarinerInput{}
 
-	nwDetails, err := getNetworkDetails(restcfg)
+	nwDetails, err := getNetworkDetails(clientProducer)
 	if err != nil {
 		return gwPorts, input, errors.Wrapf(err, "failed to discover the network details in the cluster")
 	}

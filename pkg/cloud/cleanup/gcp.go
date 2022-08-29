@@ -21,12 +21,12 @@ package cleanup
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud/gcp"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func GCP(restConfigProducer *restconfig.Producer, config *gcp.Config, status reporter.Interface) error {
-	err := gcp.RunOn(restConfigProducer, config, status,
+func GCP(clusterInfo *cluster.Info, config *gcp.Config, status reporter.Interface) error {
+	err := gcp.RunOn(clusterInfo, config, status,
 		// nolint:wrapcheck // No need to wrap errors here
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			err := gwDeployer.Cleanup(status)

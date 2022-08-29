@@ -25,9 +25,8 @@ import (
 	"github.com/submariner-io/cloud-prepare/pkg/api"
 	"github.com/submariner-io/cloud-prepare/pkg/aws"
 	"github.com/submariner-io/cloud-prepare/pkg/ocp"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud"
-	"k8s.io/client-go/dynamic"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
 type Config struct {
@@ -42,7 +41,7 @@ type Config struct {
 
 // RunOn runs the given function on AWS, supplying it with a cloud instance connected to AWS and a reporter that writes to CLI.
 // The functions makes sure that infraID and region are specified, and extracts the credentials from a secret in order to connect to AWS.
-func RunOn(restConfigProducer *restconfig.Producer, config *Config, status reporter.Interface,
+func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 	function func(api.Cloud, api.GatewayDeployer, reporter.Interface) error,
 ) error {
 	if config.OcpMetadataFile != "" {
@@ -65,21 +64,12 @@ func RunOn(restConfigProducer *restconfig.Producer, config *Config, status repor
 
 	status.End()
 
-	k8sConfig, err := restConfigProducer.ForCluster()
-	if err != nil {
-		return status.Error(err, "error initializing Kubernetes config")
-	}
-
-	restMapper, err := util.BuildRestMapper(k8sConfig.Config)
+	restMapper, err := util.BuildRestMapper(clusterInfo.RestConfig)
 	if err != nil {
 		return status.Error(err, "error creating REST mapper")
 	}
 
-	dynamicClient, err := dynamic.NewForConfig(k8sConfig.Config)
-	if err != nil {
-		return status.Error(err, "error creating dynamic client")
-	}
-
+	dynamicClient := clusterInfo.ClientProducer.ForDynamic()
 	msDeployer := ocp.NewK8sMachinesetDeployer(restMapper, dynamicClient)
 
 	gwDeployer, err := aws.NewOcpGatewayDeployer(awsCloud, msDeployer, config.GWInstanceType)

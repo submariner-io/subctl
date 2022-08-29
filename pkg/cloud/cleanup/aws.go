@@ -21,12 +21,12 @@ package cleanup
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud/aws"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func AWS(restConfigProducer *restconfig.Producer, config *aws.Config, status reporter.Interface) error {
-	err := aws.RunOn(restConfigProducer, config, status,
+func AWS(clusterInfo *cluster.Info, config *aws.Config, status reporter.Interface) error {
+	err := aws.RunOn(clusterInfo, config, status,
 		// nolint:wrapcheck // No need to wrap errors here
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			err := gwDeployer.Cleanup(status)

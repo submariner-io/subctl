@@ -20,11 +20,12 @@ package subctl
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cloud/cleanup"
 	"github.com/submariner-io/subctl/pkg/cloud/prepare"
+	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
 var (
@@ -32,14 +33,16 @@ var (
 		gateways int
 	}
 
-	genericRestConfigProducer = restconfig.NewProducer()
-
 	genericPrepareCmd = &cobra.Command{
 		Use:   "generic",
 		Short: "Prepares a generic cluster for Submariner",
 		Long:  "This command labels the required number of gateway nodes for Submariner installation.",
 		Run: func(cmd *cobra.Command, args []string) {
-			exit.OnError(prepare.GenericCluster(genericRestConfigProducer, genericCloudConfig.gateways, cli.NewReporter()))
+			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
+				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					return prepare.GenericCluster( // nolint:wrapcheck // No need to wrap errors here.
+						clusterInfo, genericCloudConfig.gateways, status)
+				}, cli.NewReporter()))
 		},
 	}
 
@@ -48,16 +51,17 @@ var (
 		Short: "Cleans up a cluster after Submariner uninstallation",
 		Long:  "This command removes the labels from gateway nodes after Submariner uninstallation.",
 		Run: func(cmd *cobra.Command, args []string) {
-			exit.OnError(cleanup.GenericCluster(genericRestConfigProducer, cli.NewReporter()))
+			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
+				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					return cleanup.GenericCluster(clusterInfo, status) // nolint:wrapcheck // No need to wrap errors here.
+				}, cli.NewReporter()))
 		},
 	}
 )
 
 func init() {
-	genericRestConfigProducer.AddKubeContextFlag(genericPrepareCmd)
 	genericPrepareCmd.Flags().IntVar(&genericCloudConfig.gateways, "gateways", defaultNumGateways, "Number of gateways to deploy")
 	cloudPrepareCmd.AddCommand(genericPrepareCmd)
 
-	genericRestConfigProducer.AddKubeContextFlag(genericCleanupCmd)
 	cloudCleanupCmd.AddCommand(genericCleanupCmd)
 }
