@@ -180,12 +180,6 @@ func (rcp *Producer) AddKubeConfigFlag(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVar(&rcp.kubeConfig, "kubeconfig", "", "absolute path(s) to the kubeconfig file(s)")
 }
 
-// AddKubeContextFlag adds a "kubeconfig" flag and a single "kubecontext" flag that can be used once and only once.
-func (rcp *Producer) AddKubeContextFlag(cmd *cobra.Command) {
-	rcp.AddKubeConfigFlag(cmd)
-	cmd.PersistentFlags().StringVar(&rcp.kubeContext, "kubecontext", "", "kubeconfig context to use")
-}
-
 // AddKubeContextMultiFlag adds a "kubeconfig" flag and a "kubecontext" flag that can be specified multiple times (or comma separated).
 func (rcp *Producer) AddKubeContextMultiFlag(cmd *cobra.Command, usage string) {
 	rcp.AddKubeConfigFlag(cmd)
@@ -357,7 +351,7 @@ func getRestConfigFromConfig(config clientcmd.ClientConfig, overrides *clientcmd
 }
 
 func (rcp *Producer) clusterNameFromContext() (*string, error) {
-	rawConfig, err := rcp.ClientConfig().RawConfig()
+	rawConfig, err := rcp.clientConfig().RawConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "error retrieving raw client configuration")
 	}
@@ -379,8 +373,8 @@ func clusterNameFromContext(rawConfig *api.Config, overridesContext string) *str
 	return &configContext.Cluster
 }
 
-// ClientConfig returns a clientcmd.ClientConfig to use when communicating with K8s.
-func (rcp *Producer) ClientConfig() clientcmd.ClientConfig {
+// clientConfig returns a clientcmd.ClientConfig to use when communicating with K8s.
+func (rcp *Producer) clientConfig() clientcmd.ClientConfig {
 	rules := clientcmd.NewDefaultClientConfigLoadingRules()
 	rules.ExplicitPath = rcp.kubeConfig
 
