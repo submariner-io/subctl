@@ -124,5 +124,6 @@ _subctl cloud prepare generic --kubecontext cluster1
 
 # Test subctl uninstall invocations
 
+_subctl uninstall -y --context cluster2
 _subctl uninstall -y --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1
 

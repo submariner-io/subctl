@@ -23,20 +23,20 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
+	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
-	"github.com/submariner-io/subctl/pkg/client"
+	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/uninstall"
 )
 
 var uninstallOptions struct {
-	noPrompt  bool
-	namespace string
+	noPrompt bool
 }
 
-var uninstallRestConfigProducer = restconfig.NewProducer()
+var uninstallRestConfigProducer = restconfig.NewProducer().WithDefaultNamespace(constants.OperatorNamespace)
 
 var uninstallCmd = &cobra.Command{
 	Use:     "uninstall",
@@ -44,37 +44,32 @@ var uninstallCmd = &cobra.Command{
 	Long:    "This command uninstalls Submariner and its components",
 	PreRunE: uninstallRestConfigProducer.CheckVersionMismatch,
 	Run: func(cmd *cobra.Command, args []string) {
-		status := cli.NewReporter()
-
-		config, err := uninstallRestConfigProducer.ForCluster()
-		exit.OnError(status.Error(err, "Error creating REST config"))
-
-		clientProducer, err := client.NewProducerFromRestConfig(config.Config)
-		exit.OnError(status.Error(err, "Error creating client producer"))
-
-		if !uninstallOptions.noPrompt {
-			result := false
-			prompt := &survey.Confirm{
-				Message: fmt.Sprintf("This will completely uninstall Submariner from the cluster %q. Are you sure you want to continue?",
-					config.ClusterName),
-			}
-
-			_ = survey.AskOne(prompt, &result)
-
-			if !result {
-				return
-			}
-		}
-
-		exit.OnError(uninstall.All(clientProducer, config.ClusterName, uninstallOptions.namespace, status))
+		exit.OnError(uninstallRestConfigProducer.RunOnSelectedContext(uninstallInContext, cli.NewReporter()))
 	},
 }
 
 func init() {
-	uninstallCmd.Flags().StringVarP(&uninstallOptions.namespace, "namespace", "n", constants.OperatorNamespace,
-		"namespace in which Submariner is installed")
 	uninstallCmd.Flags().BoolVarP(&uninstallOptions.noPrompt, "yes", "y", false, "automatically answer yes to confirmation prompt")
-
-	uninstallRestConfigProducer.AddKubeConfigFlag(uninstallCmd)
+	uninstallRestConfigProducer.SetupFlags(uninstallCmd.Flags())
 	rootCmd.AddCommand(uninstallCmd)
+}
+
+func uninstallInContext(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+	if !uninstallOptions.noPrompt {
+		result := false
+		prompt := &survey.Confirm{
+			Message: fmt.Sprintf(
+				"This will completely uninstall Submariner from the cluster %q. Are you sure you want to continue?",
+				clusterInfo.Name),
+		}
+
+		_ = survey.AskOne(prompt, &result)
+
+		if !result {
+			return nil
+		}
+	}
+
+	return uninstall.All( // nolint:wrapcheck // No need to wrap errors here.
+		clusterInfo.ClientProducer, clusterInfo.Name, namespace, status)
 }

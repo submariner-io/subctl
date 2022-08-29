@@ -66,6 +66,7 @@ type Producer struct {
 	defaultClientConfig *configAndOverrides
 	inCluster           bool
 	namespaceFlag       bool
+	defaultNamespace    *string
 }
 
 // NewProducer initialises a blank producer which needs to be set up with flags (see SetupFlags).
@@ -86,6 +87,16 @@ func NewProducerFrom(kubeConfig, kubeContext string) *Producer {
 // The chosen namespace will be passed to the PerContextFn used to process the context.
 func (rcp *Producer) WithNamespace() *Producer {
 	rcp.namespaceFlag = true
+
+	return rcp
+}
+
+// WithDefaultNamespace configures the producer to set up a namespace flag,
+// with the given default value.
+// The chosen namespace will be passed to the PerContextFn used to process the context.
+func (rcp *Producer) WithDefaultNamespace(defaultNamespace string) *Producer {
+	rcp.namespaceFlag = true
+	rcp.defaultNamespace = &defaultNamespace
 
 	return rcp
 }
@@ -153,9 +164,13 @@ func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter
 		return status.Error(err, "error building the cluster.Info for the default configuration")
 	}
 
-	namespace, _, err := rcp.defaultClientConfig.config.Namespace()
+	namespace, overridden, err := rcp.defaultClientConfig.config.Namespace()
 	if err != nil {
 		return status.Error(err, "error retrieving the namespace for the default configuration")
+	}
+
+	if !overridden && rcp.defaultNamespace != nil {
+		namespace = *rcp.defaultNamespace
 	}
 
 	return function(clusterInfo, namespace, status)
