@@ -364,19 +364,6 @@ func clusterNameFromContext(rawConfig *api.Config, overridesContext string) *str
 	return &configContext.Cluster
 }
 
-func (rcp *Producer) GetClusterID() (string, error) {
-	clusterName, err := rcp.clusterNameFromContext()
-	if err != nil {
-		return "", err
-	}
-
-	if clusterName != nil {
-		return *clusterName, nil
-	}
-
-	return "", nil
-}
-
 // ClientConfig returns a clientcmd.ClientConfig to use when communicating with K8s.
 func (rcp *Producer) ClientConfig() clientcmd.ClientConfig {
 	rules := clientcmd.NewDefaultClientConfigLoadingRules()
