@@ -29,6 +29,7 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
@@ -66,7 +67,7 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 
 	if err == nil {
 		info.Submariner = submariner
-	} else if !apierrors.IsNotFound(err) {
+	} else if !apierrors.IsNotFound(err) && !meta.IsNoMatchError(err) {
 		return nil, errors.Wrap(err, "error retrieving Submariner")
 	}
 
@@ -78,7 +79,7 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 
 	if err == nil {
 		info.ServiceDiscovery = serviceDiscovery
-	} else if !apierrors.IsNotFound(err) {
+	} else if !apierrors.IsNotFound(err) && !meta.IsNoMatchError(err) {
 		return nil, errors.Wrap(err, "error retrieving ServiceDiscovery")
 	}
 
