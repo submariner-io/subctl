@@ -6,7 +6,8 @@ on:
     branches:
       - devel
 
-permissions: {}
+permissions:
+  contents: write
 
 jobs:
   release-subctl-on-push:
