@@ -231,8 +231,11 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, optio
 	}
 
 	clientMessage := string(uuid.NewUUID())[0:8]
-	podCommand := fmt.Sprintf("timeout %d tcpdump -ln -Q in -A -s 100 -i any udp and %s | grep '%s'",
-		options.ValidationTimeout, portFilter, clientMessage)
+	// The following construct ensures that tcpdump will be stopped as soon as the message is seen, instead of waiting
+	// for a timeout; but when the message isn't seen, it will be killed once the timeout expires
+	podCommand := fmt.Sprintf(
+		"(tcpdump --immediate-mode -ln -Q in -A -s 100 -i any udp and %s & pid=\"$!\"; (sleep %d; kill \"$pid\") &) | grep -m1 '%s'",
+		portFilter, options.ValidationTimeout, clientMessage)
 
 	sPod, err := spawnSnifferPodOnNode(localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, options.PodNamespace, podCommand,
 		localClusterInfo.GetImageRepositoryInfo())
