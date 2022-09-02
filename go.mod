@@ -14,12 +14,12 @@ require (
 	github.com/openshift/api v0.0.0-20220414050251-a83e6f8f1d50
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.5.0
-	github.com/submariner-io/admiral v0.14.0-m0
+	github.com/submariner-io/admiral v0.14.0-m0.0.20220826191654-859c17d6b3c9
 	github.com/submariner-io/cloud-prepare v0.14.0-m0
 	github.com/submariner-io/lighthouse v0.14.0-m0
 	github.com/submariner-io/shipyard v0.14.0-m0
 	github.com/submariner-io/submariner v0.13.0-m2.0.20220608112640-7f4a6a79da0d
-	github.com/submariner-io/submariner-operator v0.14.0-m0.0.20220829114334-d4f5001ad84b
+	github.com/submariner-io/submariner-operator v0.14.0-m0.0.20220902152236-9f5bc5865ea7
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
 	google.golang.org/api v0.94.0
