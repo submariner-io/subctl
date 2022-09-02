@@ -57,7 +57,7 @@ var calicoGVR = schema.GroupVersionResource{
 	Resource: "ippools",
 }
 
-func CNIConfig(clusterInfo *cluster.Info, status reporter.Interface) bool {
+func CNIConfig(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	mustHaveSubmariner(clusterInfo)
 
 	status.Start("Checking Submariner support for the CNI network plugin")
@@ -73,9 +73,9 @@ func CNIConfig(clusterInfo *cluster.Info, status reporter.Interface) bool {
 	}
 
 	if !isSupportedPlugin {
-		status.Failure("The detected CNI network plugin (%q) is not supported by Submariner."+
-			" Supported network plugins: %v\n", clusterInfo.Submariner.Status.NetworkPlugin, supportedNetworkPlugins)
-		return false
+		status.Failure("The detected CNI plugin (%q) is not supported by Submariner. Supported plugins: %v",
+			clusterInfo.Submariner.Status.NetworkPlugin, supportedNetworkPlugins)
+		return errors.New("unsupported CNI plugin")
 	}
 
 	if clusterInfo.Submariner.Status.NetworkPlugin == cni.Generic {
@@ -107,44 +107,39 @@ func detectCalicoConfigMap(clientSet kubernetes.Interface) (bool, error) {
 	return false, nil
 }
 
-func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface) bool {
+func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface) error {
 	status.Start("Trying to detect the Calico ConfigMap")
 	defer status.End()
 
 	found, err := detectCalicoConfigMap(info.ClientProducer.ForKubernetes())
 	if err != nil {
-		status.Failure("Error trying to detect the Calico ConfigMap: %s", err)
-		return false
+		return status.Error(err, "Error trying to detect the Calico ConfigMap")
 	}
 
 	if !found {
-		return true
+		return nil
 	}
 
 	status.Start("Calico CNI detected, checking if the Submariner IPPool pre-requisites are configured")
 
 	gateways, err := info.GetGateways()
 	if err != nil {
-		status.Failure("Error retrieving Gateways: %v", err)
-		return false
+		return status.Error(err, "Error retrieving Gateways")
 	}
 
 	if len(gateways) == 0 {
-		status.Warning("There are no gateways detected on the cluster")
-		return false
+		return status.Error(errors.New("no gateways detected on the cluster"), "")
 	}
 
 	client := info.ClientProducer.ForDynamic().Resource(calicoGVR)
 
 	ippoolList, err := client.List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		status.Failure("Error obtaining IPPools: %v", err)
-		return false
+		return status.Error(err, "Error obtaining IPPools")
 	}
 
 	if len(ippoolList.Items) < 1 {
-		status.Failure("Could not find any IPPools in the cluster")
-		return false
+		return status.Error(errors.New("no IPPools in the cluster"), "")
 	}
 
 	tracker := reporter.NewTracker(status)
@@ -167,7 +162,11 @@ func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface
 
 	checkGatewaySubnets(gateways, ippools, tracker)
 
-	return !tracker.HasFailures()
+	if tracker.HasFailures() {
+		return errors.New("failures while diagnosing CNI")
+	}
+
+	return nil
 }
 
 func checkGatewaySubnets(gateways []submv1.Gateway, ippools map[string]unstructured.Unstructured, status reporter.Interface) {
@@ -224,7 +223,7 @@ func mustHaveSubmariner(clusterInfo *cluster.Info) {
 	}
 }
 
-func checkOVNVersion(info *cluster.Info, status reporter.Interface) bool {
+func checkOVNVersion(info *cluster.Info, status reporter.Interface) error {
 	status.Start("Checking OVN version")
 	defer status.End()
 
@@ -232,24 +231,22 @@ func checkOVNVersion(info *cluster.Info, status reporter.Interface) bool {
 
 	ovnPod, err := mustFindPod(clientSet, ovnKubeDBPodLabel)
 	if err != nil {
-		status.Failure("Failed to get OVNKubeDB Pod %v", err)
-		return false
+		return status.Error(err, "Failed to get OVNKubeDB Pod")
 	}
 
 	ovnNBVersion, err := getOVNNBVersion(clientSet, info.RestConfig, ovnPod)
 	if err != nil {
-		status.Failure("Failed to get ovn-nb database version %v", err)
-		return false
+		return status.Error(err, "Failed to get ovn-nb database version")
 	}
 
 	if version.Compare(ovnNBVersion, minOVNNBVersion, "<") {
 		status.Failure("The ovn-nb database version %v is less than the minimum supported version %v", ovnNBVersion, minOVNNBVersion)
-		return false
+		return errors.New("unsupported ovn-nb database version")
 	}
 
 	status.Success("The ovn-nb database version %v is supported", ovnNBVersion)
 
-	return true
+	return nil
 }
 
 func mustFindPod(clientSet kubernetes.Interface, labelSelector string) (*corev1.Pod, error) {
