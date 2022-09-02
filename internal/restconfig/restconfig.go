@@ -42,6 +42,7 @@ import (
 	subv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	k8serrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -67,6 +68,7 @@ type Producer struct {
 	defaultClientConfig   *loadingRulesAndOverrides
 	prefixedClientConfigs map[string]*loadingRulesAndOverrides
 	prefixedKubeConfigs   map[string]*string
+	inClusterFlag         bool
 	inCluster             bool
 	namespaceFlag         bool
 	defaultNamespace      *string
@@ -112,8 +114,20 @@ func (rcp *Producer) WithPrefixedContext(prefix string) *Producer {
 	return rcp
 }
 
+// WithInClusterFlag configures the producer to handle an --in-cluster flag, requesting the use
+// of a Kubernetes-provided context.
+func (rcp *Producer) WithInClusterFlag() *Producer {
+	rcp.inClusterFlag = true
+
+	return rcp
+}
+
 // SetupFlags configures the given flags to control the producer settings.
 func (rcp *Producer) SetupFlags(flags *pflag.FlagSet) {
+	if rcp.inClusterFlag {
+		flags.BoolVar(&rcp.inCluster, "in-cluster", false, "use the in-cluster configuration to connect to Kubernetes")
+	}
+
 	// The base loading rules are shared across all clientcmd setups.
 	// This means that alternative kubeconfig setups (remoteconfig etc.) need to
 	// be handled manually, but there's no way around that if we want to allow
@@ -238,7 +252,7 @@ func runInCluster(function PerContextFn, status reporter.Interface) error {
 	return function(clusterInfo, "default", status)
 }
 
-// RunOnSelectedContext runs the given function on the selected prefixed context.
+// RunOnSelectedPrefixedContext runs the given function on the selected prefixed context.
 func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerContextFn, status reporter.Interface) error {
 	clientConfig, ok := rcp.prefixedClientConfigs[prefix]
 	if ok {
@@ -277,6 +291,51 @@ func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerCon
 	return nil
 }
 
+// RunOnAllContexts runs the given function on all accessible non-prefixed contexts.
+// If the user has explicitly selected one or more contexts, only those contexts are used.
+// All appropriate contexts are processed, and any errors are aggregated.
+// Returns an error if no contexts are found.
+func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Interface) error {
+	if rcp.inCluster {
+		return runInCluster(function, status)
+	}
+
+	if rcp.defaultClientConfig == nil {
+		// If we get here, no context was set up, which means SetupFlags() wasn't called
+		return status.Error(errors.New("no context provided (this is a programming error)"), "")
+	}
+
+	if rcp.defaultClientConfig.overrides.CurrentContext != "" {
+		// The user has explicitly chosen a context, use that only
+		return rcp.RunOnSelectedContext(function, status)
+	}
+
+	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		rcp.defaultClientConfig.loadingRules, rcp.defaultClientConfig.overrides)
+
+	rawConfig, err := clientConfig.RawConfig()
+	if err != nil {
+		return status.Error(err, "error retrieving the raw kubeconfig setup")
+	}
+
+	if len(rawConfig.Contexts) == 0 {
+		return status.Error(errors.New("no Kubernetes configuration or context was found"), "")
+	}
+
+	contextErrors := []error{}
+
+	for contextName, context := range rawConfig.Contexts {
+		fmt.Printf("Cluster %q\n", context.Cluster)
+
+		rcp.defaultClientConfig.overrides.CurrentContext = contextName
+		contextErrors = append(contextErrors, rcp.RunOnSelectedContext(function, status))
+
+		fmt.Println()
+	}
+
+	return k8serrors.NewAggregate(contextErrors)
+}
+
 func (rcp *Producer) AddKubeConfigFlag(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVar(&rcp.kubeConfig, "kubeconfig", "", "absolute path(s) to the kubeconfig file(s)")
 }
@@ -291,11 +350,6 @@ func (rcp *Producer) AddKubeContextMultiFlag(cmd *cobra.Command, usage string) {
 	}
 
 	cmd.PersistentFlags().StringSliceVar(&rcp.kubeContexts, "kubecontexts", nil, usage)
-}
-
-// AddInClusterConfigFlag adds a flag enabling in-cluster configurations for processes running in pods.
-func (rcp *Producer) AddInClusterConfigFlag(cmd *cobra.Command) {
-	cmd.PersistentFlags().BoolVar(&rcp.inCluster, "in-cluster", false, "use the in-cluster configuration to connect to Kubernetes")
 }
 
 func (rcp *Producer) PopulateTestFramework() {
@@ -567,4 +621,40 @@ func ConfigureTestFramework(args []string) error {
 	}
 
 	return nil
+}
+
+func IfSubmarinerInstalled(functions ...PerContextFn) PerContextFn {
+	return func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+		if clusterInfo.Submariner == nil {
+			status.Warning(constants.SubmarinerNotInstalled)
+
+			return nil
+		}
+
+		aggregateErrors := []error{}
+
+		for _, function := range functions {
+			aggregateErrors = append(aggregateErrors, function(clusterInfo, namespace, status))
+		}
+
+		return k8serrors.NewAggregate(aggregateErrors)
+	}
+}
+
+func IfServiceDiscoveryInstalled(functions ...PerContextFn) PerContextFn {
+	return func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+		if clusterInfo.ServiceDiscovery == nil {
+			status.Warning(constants.ServiceDiscoveryNotInstalled)
+
+			return nil
+		}
+
+		aggregateErrors := []error{}
+
+		for _, function := range functions {
+			aggregateErrors = append(aggregateErrors, function(clusterInfo, namespace, status))
+		}
+
+		return k8serrors.NewAggregate(aggregateErrors)
+	}
 }

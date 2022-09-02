@@ -20,25 +20,24 @@ package diagnose
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 )
 
-func Connections(clusterInfo *cluster.Info, status reporter.Interface) bool {
+func Connections(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Checking gateway connections")
 	defer status.End()
 
 	gateways, err := clusterInfo.GetGateways()
 	if err != nil {
-		status.Failure("Error retrieving gateways: %v", err)
-		return false
+		return status.Error(err, "Error retrieving gateways")
 	}
 
 	if len(gateways) == 0 {
-		status.Failure("There are no gateways detected")
-		return false
+		return status.Error(errors.New("no gateways were detected"), "")
 	}
 
 	tracker := reporter.NewTracker(status)
@@ -77,10 +76,10 @@ func Connections(clusterInfo *cluster.Info, status reporter.Interface) bool {
 	}
 
 	if tracker.HasFailures() {
-		return false
+		return errors.New("failures while diagnosing connections")
 	}
 
 	status.Success("All connections are established")
 
-	return true
+	return nil
 }

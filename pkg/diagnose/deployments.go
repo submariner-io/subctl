@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/cluster"
@@ -34,13 +35,21 @@ import (
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func Deployments(clusterInfo *cluster.Info, status reporter.Interface) bool {
+func Deployments(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	mustHaveSubmariner(clusterInfo)
-	return checkOverlappingCIDRs(clusterInfo, status) && checkPods(clusterInfo, status) &&
-		checkMetricsConfig(clusterInfo, status)
+
+	if err := checkOverlappingCIDRs(clusterInfo, status); err != nil {
+		return err
+	}
+
+	if err := checkPods(clusterInfo, status); err != nil {
+		return err
+	}
+
+	return checkMetricsConfig(clusterInfo, status)
 }
 
-func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface) bool {
+func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface) error {
 	if clusterInfo.Submariner.Spec.GlobalCIDR != "" {
 		status.Start("Globalnet deployment detected - checking if globalnet CIDRs overlap")
 	} else {
@@ -54,8 +63,7 @@ func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface)
 	err := clusterInfo.ClientProducer.ForGeneral().List(context.TODO(), endpointList,
 		controllerClient.InNamespace(clusterInfo.Submariner.Namespace))
 	if err != nil {
-		status.Failure("Error listing the Submariner endpoints: %v", err)
-		return false
+		return status.Error(err, "Error listing the Submariner endpoints")
 	}
 
 	tracker := reporter.NewTracker(status)
@@ -92,7 +100,7 @@ func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface)
 	}
 
 	if tracker.HasFailures() {
-		return false
+		return errors.New("failures while diagnosing overlapping CIDRs")
 	}
 
 	if clusterInfo.Submariner.Spec.GlobalCIDR != "" {
@@ -101,10 +109,10 @@ func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface)
 		status.Success("Clusters do not have overlapping CIDRs")
 	}
 
-	return true
+	return nil
 }
 
-func checkPods(clusterInfo *cluster.Info, status reporter.Interface) bool {
+func checkPods(clusterInfo *cluster.Info, status reporter.Interface) error {
 	status.Start("Checking Submariner pods")
 	defer status.End()
 
@@ -134,12 +142,12 @@ func checkPods(clusterInfo *cluster.Info, status reporter.Interface) bool {
 	checkPodsStatus(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, tracker)
 
 	if tracker.HasFailures() {
-		return false
+		return errors.New("failures while diagnosing pods")
 	}
 
 	status.Success("All Submariner pods are up and running")
 
-	return true
+	return nil
 }
 
 func checkDeployment(k8sClient kubernetes.Interface, namespace, deploymentName string, status reporter.Interface) {

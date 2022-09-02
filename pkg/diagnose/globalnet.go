@@ -20,6 +20,7 @@ package diagnose
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -35,12 +36,12 @@ import (
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
-func GlobalnetConfig(clusterInfo *cluster.Info, status reporter.Interface) bool {
+func GlobalnetConfig(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	mustHaveSubmariner(clusterInfo)
 
 	if clusterInfo.Submariner.Spec.GlobalCIDR == "" {
 		status.Success("Globalnet is not installed - skipping")
-		return true
+		return nil
 	}
 
 	status.Start("Checking Globalnet configuration")
@@ -53,12 +54,12 @@ func GlobalnetConfig(clusterInfo *cluster.Info, status reporter.Interface) bool 
 	checkGlobalIngressIPs(clusterInfo, tracker)
 
 	if tracker.HasFailures() {
-		return false
+		return errors.New("failures while diagnosing Globalnet")
 	}
 
 	status.Success("Globalnet is properly configured and functioning")
 
-	return true
+	return nil
 }
 
 func checkClusterGlobalEgressIPs(clusterInfo *cluster.Info, status reporter.Interface) {
