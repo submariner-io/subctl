@@ -19,28 +19,24 @@ limitations under the License.
 package show
 
 import (
+	"errors"
+
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/show/table"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 )
 
-func Connections(clusterInfo *cluster.Info, status reporter.Interface) bool {
+func Connections(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Showing Connections")
 
 	gateways, err := clusterInfo.GetGateways()
 	if err != nil {
-		status.Failure("Error retrieving gateways: %v", err)
-		status.End()
-
-		return false
+		return status.Error(err, "Error retrieving gateways")
 	}
 
 	if len(gateways) == 0 {
-		status.Failure("There are no gateways detected")
-		status.End()
-
-		return false
+		return status.Error(errors.New("no gateways detected"), "")
 	}
 
 	printer := table.Printer{Columns: []table.Column{
@@ -73,16 +69,13 @@ func Connections(clusterInfo *cluster.Info, status reporter.Interface) bool {
 	}
 
 	if printer.Empty() {
-		status.Failure("No connections found")
-		status.End()
-
-		return false
+		return status.Error(errors.New("no connections found"), "")
 	}
 
 	status.End()
 	printer.Print()
 
-	return true
+	return nil
 }
 
 func getAverageRTTForConnection(connection *submv1.Connection) string {
