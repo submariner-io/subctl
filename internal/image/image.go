@@ -26,7 +26,18 @@ import (
 	submariner "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/images"
 	"github.com/submariner-io/submariner-operator/pkg/names"
+	"k8s.io/utils/strings/slices"
 )
+
+var validOverrides = []string{
+	names.OperatorComponent,
+	names.GatewayComponent,
+	names.RouteAgentComponent,
+	names.GlobalnetComponent,
+	names.NetworkPluginSyncerComponent,
+	names.ServiceDiscoveryComponent,
+	names.LighthouseCoreDNSComponent,
+}
 
 func ForOperator(imageVersion, repo string, imageOverrideArr []string) (string, error) {
 	if imageVersion == "" {
@@ -52,6 +63,10 @@ func GetOverrides(imageOverrideArr []string) (map[string]string, error) {
 		key, value, found := strings.Cut(s, "=")
 		if !found {
 			return nil, fmt.Errorf("invalid override %s provided. Please use `a=b` syntax", s)
+		}
+
+		if !slices.Contains(validOverrides, key) {
+			return nil, fmt.Errorf("invalid override component %s provided. Please choose from %q", key, validOverrides)
 		}
 
 		imageOverrides[key] = value
