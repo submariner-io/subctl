@@ -46,31 +46,16 @@ func ForOperator(imageVersion, repo string, imageOverrideArr []string) (string, 
 }
 
 func GetOverrides(imageOverrideArr []string) (map[string]string, error) {
-	if len(imageOverrideArr) > 0 {
-		imageOverrides := make(map[string]string)
+	imageOverrides := make(map[string]string)
 
-		for _, s := range imageOverrideArr {
-			key := strings.Split(s, "=")[0]
-			if invalidImageName(key) {
-				return nil, fmt.Errorf("invalid image name %s provided. Please choose from %q", key, names.ValidImageNames)
-			}
-
-			value := strings.Split(s, "=")[1]
-			imageOverrides[key] = value
+	for _, s := range imageOverrideArr {
+		key, value, found := strings.Cut(s, "=")
+		if !found {
+			return nil, fmt.Errorf("invalid override %s provided. Please use `a=b` syntax", s)
 		}
 
-		return imageOverrides, nil
+		imageOverrides[key] = value
 	}
 
-	return map[string]string{}, nil
-}
-
-func invalidImageName(key string) bool {
-	for _, name := range names.ValidImageNames {
-		if key == name {
-			return false
-		}
-	}
-
-	return true
+	return imageOverrides, nil
 }
