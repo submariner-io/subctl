@@ -289,3 +289,25 @@ func getVerifyPatterns(csv string, includeDisruptive bool) ([]string, []string, 
 
 	return outputPatterns, outputVerifications, nil
 }
+
+func setUpTestFramework(args []string, restConfigProducer *restconfig.Producer, submarinerNS string) error {
+	if len(args) > 0 {
+		err := restconfig.ConfigureTestFramework(args)
+		if err != nil {
+			return err //nolint:wrapcheck // error can't be wrapped
+		}
+	} else {
+		restConfigProducer.PopulateTestFramework()
+	}
+
+	framework.TestContext.OperationTimeout = operationTimeout
+	framework.TestContext.ConnectionTimeout = connectionTimeout
+	framework.TestContext.ConnectionAttempts = connectionAttempts
+	framework.TestContext.JunitReport = junitReport
+	framework.TestContext.SubmarinerNamespace = submarinerNS
+
+	config.DefaultReporterConfig.Verbose = verboseConnectivityVerification
+	config.DefaultReporterConfig.SlowSpecThreshold = 60
+
+	return nil
+}

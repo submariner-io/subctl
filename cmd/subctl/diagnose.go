@@ -268,12 +268,13 @@ func runLocalRemoteCommand(command *cobra.Command, localRemoteRestConfigProducer
 	} else {
 		exit.OnError(localRemoteRestConfigProducer.RunOnSelectedContext(
 			func(localClusterInfo *cluster.Info, localNamespace string, status reporter.Interface) error {
-				return localRemoteRestConfigProducer.RunOnSelectedPrefixedContext( // nolint:wrapcheck // No need to wrap errors here.
+				_, err := localRemoteRestConfigProducer.RunOnSelectedPrefixedContext(
 					"remote",
 					func(remoteClusterInfo *cluster.Info, remoteNamespace string, status reporter.Interface) error {
 						diagnoseFirewallOptions.PodNamespace = remoteNamespace
 						return function(localClusterInfo, remoteClusterInfo, diagnoseFirewallOptions, status)
 					}, status)
+				return err // nolint:wrapcheck // No need to wrap errors here.
 			}, status))
 	}
 }
