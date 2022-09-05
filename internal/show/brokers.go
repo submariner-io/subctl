@@ -30,17 +30,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func Brokers(clusterInfo *cluster.Info, status reporter.Interface) bool {
+func Brokers(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Detecting broker(s)")
 
 	brokerList := &v1alpha1.BrokerList{}
 	err := clusterInfo.ClientProducer.ForGeneral().List(context.TODO(), brokerList, client.InNamespace(metav1.NamespaceAll))
 
 	if err != nil && !apierrors.IsNotFound(err) {
-		status.Failure(err.Error())
-		status.End()
-
-		return false
+		return status.Error(err, "Error retrieving brokers")
 	}
 
 	status.End()
@@ -48,7 +45,7 @@ func Brokers(clusterInfo *cluster.Info, status reporter.Interface) bool {
 	brokers := brokerList.Items
 	if len(brokers) == 0 {
 		status.Success("No brokers found")
-		return true
+		return nil
 	}
 
 	printer := table.Printer{Columns: []table.Column{
@@ -76,5 +73,5 @@ func Brokers(clusterInfo *cluster.Info, status reporter.Interface) bool {
 	status.End()
 	printer.Print()
 
-	return true
+	return nil
 }

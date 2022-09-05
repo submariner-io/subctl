@@ -336,13 +336,13 @@ func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Int
 	return k8serrors.NewAggregate(contextErrors)
 }
 
-func (rcp *Producer) AddKubeConfigFlag(cmd *cobra.Command) {
+func (rcp *Producer) addKubeConfigFlag(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVar(&rcp.kubeConfig, "kubeconfig", "", "absolute path(s) to the kubeconfig file(s)")
 }
 
 // AddKubeContextMultiFlag adds a "kubeconfig" flag and a "kubecontext" flag that can be specified multiple times (or comma separated).
 func (rcp *Producer) AddKubeContextMultiFlag(cmd *cobra.Command, usage string) {
-	rcp.AddKubeConfigFlag(cmd)
+	rcp.addKubeConfigFlag(cmd)
 
 	if usage == "" {
 		usage = "comma-separated list of kubeconfig contexts to use, can be specified multiple times.\n" +
@@ -378,21 +378,6 @@ func (rcp *Producer) CountRequestedClusters() int {
 	}
 	// Current context or rcp.kubeContext
 	return 1
-}
-
-func (rcp *Producer) forCluster() (RestConfig, error) {
-	var restConfig RestConfig
-
-	restConfigs, err := rcp.getRestConfigs()
-	if err != nil {
-		return restConfig, err
-	}
-
-	if len(restConfigs) > 0 {
-		return restConfigs[0], nil
-	}
-
-	return restConfig, errors.New("error getting restconfig")
 }
 
 func (rcp *Producer) getRestConfigs() ([]RestConfig, error) {
@@ -544,48 +529,34 @@ func (rcp *Producer) clientConfig() clientcmd.ClientConfig {
 }
 
 func (rcp *Producer) CheckVersionMismatch(cmd *cobra.Command, args []string) error {
-	if rcp.defaultClientConfig != nil {
-		// We're using clientcmd kubeconfig flags
-		return rcp.RunOnSelectedContext(func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-			return checkVersionMismatch(clusterInfo.ClientProducer.ForGeneral())
-		}, cli.NewReporter())
-	}
+	return rcp.RunOnSelectedContext(func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+		crClient := clusterInfo.ClientProducer.ForGeneral()
 
-	// Legacy flag handling
-	config, err := rcp.forCluster()
-	exit.OnErrorWithMessage(err, "The provided kubeconfig is invalid")
+		submariner := &v1alpha1.Submariner{}
+		err := crClient.Get(context.TODO(), controllerClient.ObjectKey{
+			Namespace: constants.OperatorNamespace,
+			Name:      names.SubmarinerCrName,
+		}, submariner)
 
-	crClient, err := controllerClient.New(config.Config, controllerClient.Options{})
-	exit.OnErrorWithMessage(err, "Error creating client")
-
-	return checkVersionMismatch(crClient)
-}
-
-func checkVersionMismatch(crClient controllerClient.Client) error {
-	submariner := &v1alpha1.Submariner{}
-	err := crClient.Get(context.TODO(), controllerClient.ObjectKey{
-		Namespace: constants.OperatorNamespace,
-		Name:      names.SubmarinerCrName,
-	}, submariner)
-
-	if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
-		return nil
-	}
-
-	exit.OnErrorWithMessage(err, fmt.Sprintf("Error retrieving Submariner object %s", names.SubmarinerCrName))
-
-	if submariner != nil && submariner.Spec.Version != "" {
-		subctlVer, _ := semver.NewVersion(version.Version)
-		submarinerVer, _ := semver.NewVersion(submariner.Spec.Version)
-
-		if subctlVer != nil && submarinerVer != nil && subctlVer.LessThan(*submarinerVer) {
-			return fmt.Errorf(
-				"the subctl version %q is older than the deployed Submariner version %q. Please upgrade your subctl version",
-				version.Version, submariner.Spec.Version)
+		if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
+			return nil
 		}
-	}
 
-	return nil
+		exit.OnErrorWithMessage(err, fmt.Sprintf("Error retrieving Submariner object %s", names.SubmarinerCrName))
+
+		if submariner != nil && submariner.Spec.Version != "" {
+			subctlVer, _ := semver.NewVersion(version.Version)
+			submarinerVer, _ := semver.NewVersion(submariner.Spec.Version)
+
+			if subctlVer != nil && submarinerVer != nil && subctlVer.LessThan(*submarinerVer) {
+				return fmt.Errorf(
+					"the subctl version %q is older than the deployed Submariner version %q. Please upgrade your subctl version",
+					version.Version, submariner.Spec.Version)
+			}
+		}
+
+		return nil
+	}, cli.NewReporter())
 }
 
 func ConfigureTestFramework(args []string) error {
