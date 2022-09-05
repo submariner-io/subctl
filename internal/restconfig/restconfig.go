@@ -226,6 +226,8 @@ func (rcp *Producer) setupFromConfig(kubeConfig, kubeContext string) {
 	}
 }
 
+type AllContextFn func(clusterInfos []*cluster.Info, namespaces []string, status reporter.Interface) error
+
 type PerContextFn func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error
 
 // RunOnSelectedContext runs the given function on the selected context.
@@ -281,8 +283,9 @@ func runInCluster(function PerContextFn, status reporter.Interface) error {
 	return function(clusterInfo, "default", status)
 }
 
-// RunOnSelectedPrefixedContext runs the given function on the selected prefixed context.
-func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerContextFn, status reporter.Interface) error {
+// RunOnSelectedContext runs the given function on the selected prefixed context.
+// Returns true if there was a selected prefix context, false otherwise.
+func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerContextFn, status reporter.Interface) (bool, error) {
 	clientConfig, ok := rcp.prefixedClientConfigs[prefix]
 	if ok {
 		loadingRules := clientConfig.loadingRules
@@ -293,31 +296,88 @@ func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerCon
 			loadingRules.ExplicitPath = *contextKubeConfig
 		}
 
+		// Has the user actually specified a value for the prefixed context?
+		if loadingRules.ExplicitPath == "" && areOverridesEmpty(clientConfig.overrides) {
+			return false, nil
+		}
+
 		contextClientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, clientConfig.overrides)
 
 		restConfig, err := getRestConfigFromConfig(contextClientConfig, clientConfig.overrides)
 		if err != nil {
-			return status.Error(err, "error retrieving the configuration for prefix %s", prefix)
+			return true, status.Error(err, "error retrieving the configuration for prefix %s", prefix)
 		}
 
 		clusterInfo, err := cluster.NewInfo(restConfig.ClusterName, restConfig.Config)
 		if err != nil {
-			return status.Error(err, "error building the cluster.Info for the configuration for prefix %s", prefix)
+			return true, status.Error(err, "error building the cluster.Info for the configuration for prefix %s", prefix)
 		}
 
 		namespace, overridden, err := contextClientConfig.Namespace()
 		if err != nil {
-			return status.Error(err, "error retrieving the namespace for the configuration for prefix %s", prefix)
+			return true, status.Error(err, "error retrieving the namespace for the configuration for prefix %s", prefix)
 		}
 
 		if !overridden && rcp.defaultNamespace != nil {
 			namespace = *rcp.defaultNamespace
 		}
 
-		return function(clusterInfo, namespace, status)
+		return true, function(clusterInfo, namespace, status)
 	}
 
-	return nil
+	return false, nil
+}
+
+// RunOnSelectedContexts runs the given function on all selected contexts, passing them simultaneously.
+// This specifically handles the "--contexts" (plural) flag.
+// Returns true if there was at least one selected context, false otherwise.
+func (rcp *Producer) RunOnSelectedContexts(function AllContextFn, status reporter.Interface) (bool, error) {
+	if rcp.inCluster {
+		return true, runInCluster(func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+			return function([]*cluster.Info{clusterInfo}, []string{namespace}, status)
+		}, status)
+	}
+
+	if rcp.defaultClientConfig != nil {
+		if len(rcp.contexts) > 0 {
+			// Loop over explicitly-chosen contexts
+			clusterInfos := []*cluster.Info{}
+			namespaces := []string{}
+
+			for _, contextName := range rcp.contexts {
+				rcp.defaultClientConfig.overrides.CurrentContext = contextName
+				clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+					rcp.defaultClientConfig.loadingRules, rcp.defaultClientConfig.overrides)
+
+				restConfig, err := getRestConfigFromConfig(clientConfig, rcp.defaultClientConfig.overrides)
+				if err != nil {
+					return true, status.Error(err, "error retrieving the configuration for context %s", contextName)
+				}
+
+				clusterInfo, err := cluster.NewInfo(restConfig.ClusterName, restConfig.Config)
+				if err != nil {
+					return true, status.Error(err, "error building the cluster.Info for context %s", contextName)
+				}
+
+				clusterInfos = append(clusterInfos, clusterInfo)
+
+				namespace, overridden, err := clientConfig.Namespace()
+				if err != nil {
+					return true, status.Error(err, "error retrieving the namespace for context %s", contextName)
+				}
+
+				if !overridden && rcp.defaultNamespace != nil {
+					namespace = *rcp.defaultNamespace
+				}
+
+				namespaces = append(namespaces, namespace)
+			}
+
+			return true, function(clusterInfos, namespaces, status)
+		}
+	}
+
+	return false, nil
 }
 
 // RunOnAllContexts runs the given function on all accessible non-prefixed contexts.
@@ -619,4 +679,21 @@ func IfServiceDiscoveryInstalled(functions ...PerContextFn) PerContextFn {
 
 		return k8serrors.NewAggregate(aggregateErrors)
 	}
+}
+
+func areOverridesEmpty(overrides *clientcmd.ConfigOverrides) bool {
+	return overrides.AuthInfo.ClientCertificate == "" &&
+		overrides.AuthInfo.ClientKey == "" &&
+		overrides.AuthInfo.Token == "" &&
+		overrides.AuthInfo.TokenFile == "" &&
+		overrides.AuthInfo.Username == "" &&
+		overrides.AuthInfo.Password == "" &&
+		overrides.ClusterInfo.CertificateAuthority == "" &&
+		overrides.ClusterInfo.ProxyURL == "" &&
+		overrides.ClusterInfo.Server == "" &&
+		overrides.ClusterInfo.TLSServerName == "" &&
+		overrides.CurrentContext == "" &&
+		overrides.Context.Cluster == "" &&
+		overrides.Context.AuthInfo == "" &&
+		overrides.Context.Namespace == ""
 }

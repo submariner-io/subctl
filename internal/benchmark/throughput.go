@@ -30,7 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func StartThroughputTests(intraCluster, verbose bool) {
+func StartThroughputTests(intraCluster, verbose bool) error {
 	var f *framework.Framework
 
 	if verbose {
@@ -81,6 +81,8 @@ func StartThroughputTests(intraCluster, verbose bool) {
 		fmt.Printf("Performing throughput tests from Non-Gateway pod to Gateway pod on cluster %q\n", clusterAName)
 		runThroughputTest(f, testIntraClusterParams, verbose)
 	}
+
+	return nil
 }
 
 func initFramework(baseName string, verbose bool) *framework.Framework {
@@ -91,7 +93,6 @@ func initFramework(baseName string, verbose bool) *framework.Framework {
 		}
 	})
 
-	framework.ValidateFlags(framework.TestContext)
 	framework.BeforeSuite()
 	f.BeforeEach()
 
