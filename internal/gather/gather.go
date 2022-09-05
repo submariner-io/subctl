@@ -66,7 +66,7 @@ var gatherFuncs = map[string]func(string, Info) bool{
 	component.Operator:         gatherOperator,
 }
 
-func Data(clusterInfo *cluster.Info, status reporter.Interface, options Options) bool {
+func Data(clusterInfo *cluster.Info, status reporter.Interface, options Options) error {
 	var warningsBuf bytes.Buffer
 
 	rest.SetDefaultWarningHandler(rest.NewWarningWriter(&warningsBuf, rest.WarningWriterOptions{
@@ -92,7 +92,7 @@ func Data(clusterInfo *cluster.Info, status reporter.Interface, options Options)
 		fmt.Printf("\nEncountered following Kubernetes warnings while running:\n%s", warnings)
 	}
 
-	return true
+	return nil
 }
 
 func gatherDataByCluster(clusterInfo *cluster.Info, options Options) {
