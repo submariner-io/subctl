@@ -15,11 +15,11 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.5.0
 	github.com/submariner-io/admiral v0.14.0-m1
-	github.com/submariner-io/cloud-prepare v0.14.0-m0
-	github.com/submariner-io/lighthouse v0.14.0-m0
+	github.com/submariner-io/cloud-prepare v0.14.0-m1
+	github.com/submariner-io/lighthouse v0.14.0-m1
 	github.com/submariner-io/shipyard v0.14.0-m1
-	github.com/submariner-io/submariner v0.13.0-m2.0.20220608112640-7f4a6a79da0d
-	github.com/submariner-io/submariner-operator v0.14.0-m0.0.20220902152236-9f5bc5865ea7
+	github.com/submariner-io/submariner v0.14.0-m1
+	github.com/submariner-io/submariner-operator v0.14.0-m1
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
 	google.golang.org/api v0.94.0
@@ -49,7 +49,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.18 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.12 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.19 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.52.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.54.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.12 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.11.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.16.13 // indirect
