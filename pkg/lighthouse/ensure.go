@@ -20,8 +20,10 @@ package lighthouse
 
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/subctl/pkg/lighthouse/scc"
 	"github.com/submariner-io/subctl/pkg/lighthouse/serviceaccount"
+	"github.com/submariner-io/subctl/pkg/operator/ocp"
+	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
+	"github.com/submariner-io/submariner-operator/pkg/names"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
@@ -35,10 +37,23 @@ func Ensure(status reporter.Interface, kubeClient kubernetes.Interface, dynClien
 		status.Success("Created lighthouse service account and role")
 	}
 
-	if created, err := scc.Ensure(dynClient, operatorNamespace); err != nil {
+	componentsRbac := []ocp.RbacInfo{
+		{
+			ComponentName:          names.ServiceDiscoveryComponent,
+			ClusterRoleFile:        embeddedyamls.Config_rbac_lighthouse_agent_ocp_cluster_role_yaml,
+			ClusterRoleBindingFile: embeddedyamls.Config_rbac_lighthouse_agent_ocp_cluster_role_binding_yaml,
+		},
+		{
+			ComponentName:          names.LighthouseCoreDNSComponent,
+			ClusterRoleFile:        embeddedyamls.Config_rbac_lighthouse_coredns_ocp_cluster_role_yaml,
+			ClusterRoleBindingFile: embeddedyamls.Config_rbac_lighthouse_coredns_cluster_role_binding_yaml,
+		},
+	}
+
+	if created, err := ocp.EnsureRBAC(dynClient, kubeClient, operatorNamespace, componentsRbac); err != nil {
 		return err // nolint:wrapcheck // No need to wrap here
 	} else if created {
-		status.Success("Updated the privileged SCC")
+		status.Success("Updated the OCP roles")
 	}
 
 	return nil
