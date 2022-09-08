@@ -2,9 +2,9 @@
 
 set -em -o pipefail
 
-source ${DAPPER_SOURCE}/scripts/test/lib_subctl_gather_test.sh
-source ${SCRIPTS_DIR}/lib/debug_functions
-source ${SCRIPTS_DIR}/lib/utils
+source "${DAPPER_SOURCE}"/scripts/test/lib_subctl_gather_test.sh
+source "${SCRIPTS_DIR}"/lib/debug_functions
+source "${SCRIPTS_DIR}"/lib/utils
 
 ### Functions ###
 
@@ -23,7 +23,7 @@ function deploy_env_once() {
 
 function _subctl() {
     # Print GHA groups to make looking at CI output easier
-    echo "::group::Running 'subctl $@'"
+    echo "::group::Running 'subctl $*'"
     "${DAPPER_SOURCE}"/cmd/bin/subctl "$@"
     echo "::endgroup::"
 }
