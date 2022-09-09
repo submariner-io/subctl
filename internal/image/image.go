@@ -26,7 +26,18 @@ import (
 	submariner "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/images"
 	"github.com/submariner-io/submariner-operator/pkg/names"
+	"k8s.io/utils/strings/slices"
 )
+
+var validOverrides = []string{
+	names.OperatorComponent,
+	names.GatewayComponent,
+	names.RouteAgentComponent,
+	names.GlobalnetComponent,
+	names.NetworkPluginSyncerComponent,
+	names.ServiceDiscoveryComponent,
+	names.LighthouseCoreDNSComponent,
+}
 
 func ForOperator(imageVersion, repo string, imageOverrideArr []string) (string, error) {
 	if imageVersion == "" {
@@ -46,31 +57,20 @@ func ForOperator(imageVersion, repo string, imageOverrideArr []string) (string, 
 }
 
 func GetOverrides(imageOverrideArr []string) (map[string]string, error) {
-	if len(imageOverrideArr) > 0 {
-		imageOverrides := make(map[string]string)
+	imageOverrides := make(map[string]string)
 
-		for _, s := range imageOverrideArr {
-			key := strings.Split(s, "=")[0]
-			if invalidImageName(key) {
-				return nil, fmt.Errorf("invalid image name %s provided. Please choose from %q", key, names.ValidImageNames)
-			}
-
-			value := strings.Split(s, "=")[1]
-			imageOverrides[key] = value
+	for _, s := range imageOverrideArr {
+		key, value, found := strings.Cut(s, "=")
+		if !found {
+			return nil, fmt.Errorf("invalid override %s provided. Please use `a=b` syntax", s)
 		}
 
-		return imageOverrides, nil
-	}
-
-	return map[string]string{}, nil
-}
-
-func invalidImageName(key string) bool {
-	for _, name := range names.ValidImageNames {
-		if key == name {
-			return false
+		if !slices.Contains(validOverrides, key) {
+			return nil, fmt.Errorf("invalid override component %s provided. Please choose from %q", key, validOverrides)
 		}
+
+		imageOverrides[key] = value
 	}
 
-	return true
+	return imageOverrides, nil
 }
