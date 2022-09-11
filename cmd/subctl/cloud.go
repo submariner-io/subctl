@@ -34,7 +34,10 @@ const (
 )
 
 var (
-	cloudPorts cloud.Ports
+	cloudPorts   cloud.Ports
+	cloudOptions struct {
+		useLoadBalancer bool
+	}
 
 	cloudRestConfigProducer = restconfig.NewProducer()
 
@@ -72,6 +75,7 @@ func init() {
 	cloudPrepareCmd.PersistentFlags().Var(&uint16Slice{value: &ports}, "metrics-ports", "Metrics ports")
 	_ = cloudPrepareCmd.PersistentFlags().MarkDeprecated("metrics-ports", "Metrics ports are no longer used, this flag is ignored")
 
+	addLoadBalancerFlag(cloudPrepareCmd, &cloudOptions.useLoadBalancer)
 	cloudCmd.AddCommand(cloudPrepareCmd)
 
 	cloudCmd.AddCommand(cloudCleanupCmd)

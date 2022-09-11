@@ -41,7 +41,7 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-					return prepare.Azure(clusterInfo, &cloudPorts, &azureConfig, status) //nolint:wrapcheck // No need to wrap errors here.
+					return prepare.Azure(clusterInfo, &cloudPorts, &azureConfig, cloudOptions.useLoadBalancer, status) //nolint:wrapcheck // Not needed.
 				}, cli.NewReporter()))
 		},
 	}
