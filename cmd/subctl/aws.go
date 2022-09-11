@@ -42,7 +42,7 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-					return prepare.AWS(clusterInfo, &cloudPorts, &awsConfig, status) //nolint:wrapcheck // No need to wrap errors here.
+					return prepare.AWS(clusterInfo, &cloudPorts, &awsConfig, cloudOptions.useLoadBalancer, status) //nolint:wrapcheck // Not needed.
 				}, cli.NewReporter()))
 		},
 	}

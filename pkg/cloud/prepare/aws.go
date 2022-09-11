@@ -26,7 +26,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func AWS(clusterInfo *cluster.Info, ports *cloud.Ports, config *aws.Config, status reporter.Interface) error {
+func AWS(clusterInfo *cluster.Info, ports *cloud.Ports, config *aws.Config, useLoadBalancer bool, status reporter.Interface) error {
 	status.Start("Preparing AWS cloud for Submariner deployment")
 
 	gwPorts, input, err := getPortConfig(clusterInfo.ClientProducer, ports, true)
@@ -35,7 +35,7 @@ func AWS(clusterInfo *cluster.Info, ports *cloud.Ports, config *aws.Config, stat
 	}
 
 	// For load-balanced gateways we want these ports open internally to facilitate private-ip to pivate-ip gateways communications.
-	if config.Gateways == 0 {
+	if useLoadBalancer {
 		input.InternalPorts = append(input.InternalPorts, gwPorts...)
 	}
 
@@ -44,8 +44,9 @@ func AWS(clusterInfo *cluster.Info, ports *cloud.Ports, config *aws.Config, stat
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if config.Gateways > 0 {
 				gwInput := api.GatewayDeployInput{
-					PublicPorts: gwPorts,
-					Gateways:    config.Gateways,
+					PublicPorts:     gwPorts,
+					Gateways:        config.Gateways,
+					UseLoadBalancer: useLoadBalancer,
 				}
 				err := gwDeployer.Deploy(gwInput, status)
 				if err != nil {

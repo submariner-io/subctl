@@ -27,7 +27,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func GCP(clusterInfo *cluster.Info, ports *cloud.Ports, config *gcp.Config, status reporter.Interface) error {
+func GCP(clusterInfo *cluster.Info, ports *cloud.Ports, config *gcp.Config, useLoadBalancer bool, status reporter.Interface) error {
 	gwPorts, input, err := getPortConfig(clusterInfo.ClientProducer, ports, false)
 	if err != nil {
 		return status.Error(err, "Failed to prepare the cloud")
@@ -38,8 +38,9 @@ func GCP(clusterInfo *cluster.Info, ports *cloud.Ports, config *gcp.Config, stat
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if config.Gateways > 0 {
 				gwInput := api.GatewayDeployInput{
-					PublicPorts: gwPorts,
-					Gateways:    config.Gateways,
+					PublicPorts:     gwPorts,
+					Gateways:        config.Gateways,
+					UseLoadBalancer: useLoadBalancer,
 				}
 				err := gwDeployer.Deploy(gwInput, status)
 				if err != nil {

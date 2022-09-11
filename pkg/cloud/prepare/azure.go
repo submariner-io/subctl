@@ -27,7 +27,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func Azure(clusterInfo *cluster.Info, ports *cloud.Ports, config *azure.Config, status reporter.Interface) error {
+func Azure(clusterInfo *cluster.Info, ports *cloud.Ports, config *azure.Config, useLoadBalancer bool, status reporter.Interface) error {
 	status.Start("Preparing Azure cloud for Submariner deployment")
 
 	gwPorts, input, err := getPortConfig(clusterInfo.ClientProducer, ports, false)
@@ -40,8 +40,9 @@ func Azure(clusterInfo *cluster.Info, ports *cloud.Ports, config *azure.Config, 
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if config.Gateways > 0 {
 				gwInput := api.GatewayDeployInput{
-					PublicPorts: gwPorts,
-					Gateways:    config.Gateways,
+					PublicPorts:     gwPorts,
+					Gateways:        config.Gateways,
+					UseLoadBalancer: useLoadBalancer,
 				}
 
 				err := gwDeployer.Deploy(gwInput, status)

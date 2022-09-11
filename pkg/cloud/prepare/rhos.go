@@ -27,7 +27,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func RHOS(clusterInfo *cluster.Info, ports *cloud.Ports, config *rhos.Config, status reporter.Interface) error {
+func RHOS(clusterInfo *cluster.Info, ports *cloud.Ports, config *rhos.Config, useLoadBalancer bool, status reporter.Interface) error {
 	gwPorts, input, err := getPortConfig(clusterInfo.ClientProducer, ports, false)
 	if err != nil {
 		return status.Error(err, "Failed to prepare the cloud")
@@ -38,8 +38,9 @@ func RHOS(clusterInfo *cluster.Info, ports *cloud.Ports, config *rhos.Config, st
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if config.Gateways > 0 {
 				gwInput := api.GatewayDeployInput{
-					PublicPorts: gwPorts,
-					Gateways:    config.Gateways,
+					PublicPorts:     gwPorts,
+					Gateways:        config.Gateways,
+					UseLoadBalancer: useLoadBalancer,
 				}
 
 				err := gwDeployer.Deploy(gwInput, status)
