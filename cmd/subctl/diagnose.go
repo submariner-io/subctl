@@ -1,10 +1,14 @@
 /*
 SPDX-License-Identifier: Apache-2.0
+
 Copyright Contributors to the Submariner project.
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
     http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -150,6 +154,15 @@ var (
 			execute.OnMultiCluster(restConfigProducer, diagnoseAll)
 		},
 	}
+
+	diagnoseServiceDiscoveryCmd = &cobra.Command{
+		Use:   "service-discovery",
+		Short: "Check service discovery functionality",
+		Long:  "This command checks if service discovery is functioning properly.",
+		Run: func(command *cobra.Command, args []string) {
+			execute.OnMultiCluster(restConfigProducer, execute.IfServiceDiscoveryInstalled(diagnose.ServiceDiscovery))
+		},
+	}
 )
 
 func init() {
@@ -172,6 +185,7 @@ func addDiagnoseSubCommands() {
 	diagnoseCmd.AddCommand(diagnoseKubeProxyModeCmd)
 	diagnoseCmd.AddCommand(diagnoseAllCmd)
 	diagnoseCmd.AddCommand(diagnoseFirewallCmd)
+	diagnoseCmd.AddCommand(diagnoseServiceDiscoveryCmd)
 }
 
 func addDiagnoseFirewallSubCommands() {
@@ -270,6 +284,14 @@ func diagnoseAll(clusterInfo *cluster.Info, status reporter.Interface) bool {
 
 	fmt.Printf("Skipping inter-cluster firewall check as it requires two kubeconfigs." +
 		" Please run \"subctl diagnose firewall inter-cluster\" command manually.\n")
+
+	if clusterInfo.ServiceDiscovery != nil {
+		success = diagnose.ServiceDiscovery(clusterInfo, status) && success
+	} else {
+		status.Success("Service discovery is not installed - skipping")
+	}
+
+	fmt.Println()
 
 	return success
 }
