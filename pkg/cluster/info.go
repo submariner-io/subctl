@@ -60,7 +60,7 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 
 	submariner := &v1alpha1.Submariner{}
 	err = info.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
-		Namespace: constants.SubmarinerNamespace,
+		Namespace: constants.OperatorNamespace,
 		Name:      names.SubmarinerCrName,
 	}, submariner)
 
@@ -72,7 +72,7 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 
 	serviceDiscovery := &v1alpha1.ServiceDiscovery{}
 	err = info.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
-		Namespace: constants.SubmarinerNamespace,
+		Namespace: constants.OperatorNamespace,
 		Name:      names.ServiceDiscoveryCrName,
 	}, serviceDiscovery)
 
@@ -171,4 +171,16 @@ func (c *Info) GetImageRepositoryInfo() *image.RepositoryInfo {
 	}
 
 	return info
+}
+
+func (c *Info) OperatorNamespace() string {
+	if c.Submariner != nil {
+		return c.Submariner.Namespace
+	}
+
+	if c.ServiceDiscovery != nil {
+		return c.ServiceDiscovery.Namespace
+	}
+
+	return constants.OperatorNamespace
 }
