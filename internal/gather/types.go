@@ -20,23 +20,19 @@ package gather
 
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/subctl/pkg/client"
+	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/rest"
 )
 
 type Info struct {
-	RestConfig           *rest.Config
+	cluster.Info
 	Status               reporter.Interface
-	Submariner           *v1alpha1.Submariner
-	ServiceDiscovery     *v1alpha1.ServiceDiscovery
 	ClusterName          string
 	DirName              string
 	IncludeSensitiveData bool
 	Summary              *Summary
-	ClientProducer       client.Producer
 }
 
 type Summary struct {

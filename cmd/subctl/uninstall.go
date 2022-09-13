@@ -68,7 +68,7 @@ var uninstallCmd = &cobra.Command{
 }
 
 func init() {
-	uninstallCmd.Flags().StringVarP(&uninstallOptions.namespace, "namespace", "n", constants.SubmarinerNamespace,
+	uninstallCmd.Flags().StringVarP(&uninstallOptions.namespace, "namespace", "n", constants.OperatorNamespace,
 		"namespace in which Submariner is installed")
 	uninstallCmd.Flags().BoolVarP(&uninstallOptions.noPrompt, "yes", "y", false, "automatically answer yes to confirmation prompt")
 
