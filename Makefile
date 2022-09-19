@@ -24,7 +24,6 @@ ifneq (,$(DAPPER_HOST_ARCH))
 
 PLATFORMS ?= linux/amd64,linux/arm64
 IMAGES = subctl
-PRELOAD_IMAGES := submariner-operator submariner-gateway submariner-globalnet submariner-route-agent lighthouse-agent lighthouse-coredns
 MULTIARCH_IMAGES := subctl
 
 ifneq (,$(filter ovn,$(USING)))
