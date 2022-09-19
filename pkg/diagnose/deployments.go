@@ -129,6 +129,8 @@ func checkPods(clusterInfo *cluster.Info, status reporter.Interface) bool {
 		checkDeployment(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-networkplugin-syncer", tracker)
 	}
 
+	checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), clusterInfo.Submariner.Namespace, "submariner-metrics-proxy", tracker)
+
 	checkPodsStatus(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, tracker)
 
 	if tracker.HasFailures() {

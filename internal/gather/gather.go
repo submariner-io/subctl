@@ -101,14 +101,11 @@ func gatherDataByCluster(clusterInfo *cluster.Info, options Options) {
 	fmt.Printf("Gathering information from cluster %q\n", clusterName)
 
 	info := Info{
-		RestConfig:           clusterInfo.RestConfig,
+		Info:                 *clusterInfo,
 		ClusterName:          clusterName,
 		DirName:              options.Directory,
 		IncludeSensitiveData: options.IncludeSensitiveData,
 		Summary:              &Summary{},
-		ClientProducer:       clusterInfo.ClientProducer,
-		Submariner:           clusterInfo.Submariner,
-		ServiceDiscovery:     clusterInfo.ServiceDiscovery,
 	}
 
 	for _, module := range options.Modules {
@@ -141,9 +138,9 @@ func gatherConnectivity(dataType string, info Info) bool {
 		gatherCNIResources(&info, info.Submariner.Status.NetworkPlugin)
 		gatherCableDriverResources(&info, info.Submariner.Spec.CableDriver)
 		gatherOVNResources(&info, info.Submariner.Status.NetworkPlugin)
-		gatherEndpoints(&info, constants.SubmarinerNamespace)
-		gatherClusters(&info, constants.SubmarinerNamespace)
-		gatherGateways(&info, constants.SubmarinerNamespace)
+		gatherEndpoints(&info, info.Submariner.Spec.Namespace)
+		gatherClusters(&info, info.Submariner.Spec.Namespace)
+		gatherGateways(&info, info.Submariner.Spec.Namespace)
 		gatherClusterGlobalEgressIPs(&info)
 		gatherGlobalEgressIPs(&info)
 		gatherGlobalIngressIPs(&info)
@@ -169,7 +166,7 @@ func gatherDiscovery(dataType string, info Info) bool {
 		gatherServiceExports(&info, corev1.NamespaceAll)
 		gatherServiceImports(&info, corev1.NamespaceAll)
 		gatherEndpointSlices(&info, corev1.NamespaceAll)
-		gatherConfigMapLighthouseDNS(&info, constants.SubmarinerNamespace)
+		gatherConfigMapLighthouseDNS(&info, info.ServiceDiscovery.Namespace)
 		gatherConfigMapCoreDNS(&info)
 		gatherLabeledServices(&info, internalSvcLabel)
 	default:
@@ -235,15 +232,15 @@ func gatherOperator(dataType string, info Info) bool {
 	case Logs:
 		gatherSubmarinerOperatorPodLogs(&info)
 	case Resources:
-		gatherSubmariners(&info, constants.SubmarinerNamespace)
-		gatherServiceDiscoveries(&info, constants.SubmarinerNamespace)
-		gatherSubmarinerOperatorDeployment(&info, constants.SubmarinerNamespace)
-		gatherGatewayDaemonSet(&info, constants.SubmarinerNamespace)
-		gatherRouteAgentDaemonSet(&info, constants.SubmarinerNamespace)
-		gatherGlobalnetDaemonSet(&info, constants.SubmarinerNamespace)
-		gatherNetworkPluginSyncerDeployment(&info, constants.SubmarinerNamespace)
-		gatherLighthouseAgentDeployment(&info, constants.SubmarinerNamespace)
-		gatherLighthouseCoreDNSDeployment(&info, constants.SubmarinerNamespace)
+		gatherSubmariners(&info, info.OperatorNamespace())
+		gatherServiceDiscoveries(&info, info.OperatorNamespace())
+		gatherSubmarinerOperatorDeployment(&info, info.OperatorNamespace())
+		gatherGatewayDaemonSet(&info, info.OperatorNamespace())
+		gatherRouteAgentDaemonSet(&info, info.OperatorNamespace())
+		gatherGlobalnetDaemonSet(&info, info.OperatorNamespace())
+		gatherNetworkPluginSyncerDeployment(&info, info.OperatorNamespace())
+		gatherLighthouseAgentDeployment(&info, info.OperatorNamespace())
+		gatherLighthouseCoreDNSDeployment(&info, info.OperatorNamespace())
 	default:
 		return false
 	}

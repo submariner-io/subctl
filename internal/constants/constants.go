@@ -24,7 +24,6 @@ const (
 	OperatorNamespace            = "submariner-operator"
 	SubmarinerBrokerAdminSA      = "submariner-k8s-broker-admin"
 	SubmarinerGatewayLabel       = "submariner.io/gateway"
-	SubmarinerNamespace          = "submariner-operator"
 	SubmarinerNotInstalled       = "Submariner is not installed"
 	ServiceDiscoveryNotInstalled = "Service discovery is not installed"
 	TransientLabel               = "submariner.io/transient"

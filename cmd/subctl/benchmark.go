@@ -47,7 +47,7 @@ var (
 			return checkBenchmarkArguments(args, intraCluster)
 		},
 		Run: func(command *cobra.Command, args []string) {
-			err := setUpTestFramework(args, restConfigProducer)
+			err := setUpTestFramework(args, restConfigProducer, constants.OperatorNamespace)
 			exit.OnErrorWithMessage(err, "error setting up test framework")
 			benchmark.StartThroughputTests(intraCluster, verbose)
 		},
@@ -60,7 +60,7 @@ var (
 			return checkBenchmarkArguments(args, intraCluster)
 		},
 		Run: func(command *cobra.Command, args []string) {
-			err := setUpTestFramework(args, restConfigProducer)
+			err := setUpTestFramework(args, restConfigProducer, constants.OperatorNamespace)
 			exit.OnErrorWithMessage(err, "error setting up test framework")
 			benchmark.StartLatencyTests(intraCluster, verbose)
 		},
@@ -109,7 +109,7 @@ func checkBenchmarkArguments(args []string, intraCluster bool) error {
 	return nil
 }
 
-func setUpTestFramework(args []string, restConfigProducer restconfig.Producer) error {
+func setUpTestFramework(args []string, restConfigProducer restconfig.Producer, submarinerNS string) error {
 	if len(args) > 0 {
 		err := restconfig.ConfigureTestFramework(args)
 		if err != nil {
@@ -123,7 +123,7 @@ func setUpTestFramework(args []string, restConfigProducer restconfig.Producer) e
 	framework.TestContext.ConnectionTimeout = connectionTimeout
 	framework.TestContext.ConnectionAttempts = connectionAttempts
 	framework.TestContext.JunitReport = junitReport
-	framework.TestContext.SubmarinerNamespace = constants.SubmarinerNamespace
+	framework.TestContext.SubmarinerNamespace = submarinerNS
 
 	config.DefaultReporterConfig.Verbose = verboseConnectivityVerification
 	config.DefaultReporterConfig.SlowSpecThreshold = 60
