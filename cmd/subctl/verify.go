@@ -78,7 +78,7 @@ The following verifications are deemed disruptive:
 		if len(args) > 0 {
 			fmt.Println("subctl verify with kubeconfig arguments is deprecated, please use --kubecontexts instead")
 		}
-		err := setUpTestFramework(args, restConfigProducer)
+		err := setUpTestFramework(args, restConfigProducer, submarinerNamespace)
 		exit.OnErrorWithMessage(err, "error setting up test framework")
 
 		disruptive := extractDisruptiveVerifications(verifyOnly)

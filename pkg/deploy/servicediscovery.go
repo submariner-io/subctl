@@ -69,7 +69,7 @@ func populateServiceDiscoverySpec(options *ServiceDiscoveryOptions, brokerInfo *
 		BrokerK8sInsecure:        options.BrokerK8sInsecure,
 		Debug:                    options.SubmarinerDebug,
 		ClusterID:                options.ClusterID,
-		Namespace:                constants.SubmarinerNamespace,
+		Namespace:                constants.OperatorNamespace,
 		ImageOverrides:           imageOverrides,
 	}
 
