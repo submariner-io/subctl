@@ -68,7 +68,7 @@ func setupTestFrameworkBeforeSuite() {
 
 	framework.TestContext.GlobalnetEnabled = clusterInfo.Submariner.Spec.GlobalCIDR != ""
 
-	framework.TestContext.NettestImageURL = clusterInfo.GetImageRepositoryInfo().GetNettestImageURL()
+	framework.TestContext.NettestImageURL = clusterInfo.GetImageRepositoryInfo().GetNettestImage()
 }
 
 func compareFiles(file1, file2 string) (bool, error) {

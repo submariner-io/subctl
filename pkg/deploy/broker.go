@@ -24,9 +24,12 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/stringset"
 	"github.com/submariner-io/subctl/internal/component"
+	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/brokercr"
 	"github.com/submariner-io/subctl/pkg/client"
+	"github.com/submariner-io/subctl/pkg/image"
+	"github.com/submariner-io/subctl/pkg/operator"
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
@@ -89,7 +92,9 @@ func deploy(options *BrokerOptions, status reporter.Interface, clientProducer cl
 
 	status.Start("Deploying the Submariner operator")
 
-	err = Operator(status, options.ImageVersion, options.Repository, nil, options.OperatorDebug, clientProducer)
+	repositoryInfo := image.NewRepositoryInfo(options.Repository, options.ImageVersion, nil)
+
+	err = operator.Ensure(status, clientProducer, constants.OperatorNamespace, repositoryInfo.GetOperatorImage(), options.OperatorDebug)
 	if err != nil {
 		return status.Error(err, "error deploying Submariner operator")
 	}
