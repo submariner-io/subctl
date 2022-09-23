@@ -55,7 +55,7 @@ func NewBrokerAdminRole() *rbacv1.Role {
 				Resources: []string{"clusters", "endpoints"},
 			},
 			{
-				Verbs:     []string{"create", "get", "list", "update", "delete"},
+				Verbs:     []string{"create", "get", "list", "update", "delete", "watch"},
 				APIGroups: []string{""},
 				Resources: []string{"serviceaccounts", "secrets", "configmaps"},
 			},
@@ -101,7 +101,7 @@ func NewBrokerClusterRole() *rbacv1.Role {
 				Resources: []string{"endpointslices", "endpointslices/restricted"},
 			},
 			{
-				Verbs:     []string{"get", "list"},
+				Verbs:     []string{"get", "list", "watch"},
 				APIGroups: []string{""},
 				Resources: []string{"secrets"},
 			},
