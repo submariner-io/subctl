@@ -137,7 +137,7 @@ func (np *Scheduled) schedule() error {
 			Containers: []v1.Container{
 				{
 					Name:    np.Config.Name,
-					Image:   np.Config.ImageRepositoryInfo.GetNettestImageURL(),
+					Image:   np.Config.ImageRepositoryInfo.GetNettestImage(),
 					Command: []string{"sh", "-c", "$(COMMAND) >/dev/termination-log 2>&1 || exit 0"},
 					Env: []v1.EnvVar{
 						{Name: "COMMAND", Value: np.Config.Command},

@@ -25,6 +25,7 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/client"
+	"github.com/submariner-io/subctl/pkg/image"
 	"github.com/submariner-io/subctl/pkg/servicediscoverycr"
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
@@ -41,9 +42,9 @@ type ServiceDiscoveryOptions struct {
 }
 
 func ServiceDiscovery(clientProducer client.Producer, options *ServiceDiscoveryOptions, brokerInfo *broker.Info,
-	brokerSecret *v1.Secret, imageOverrides map[string]string, status reporter.Interface,
+	brokerSecret *v1.Secret, repositoryInfo *image.RepositoryInfo, status reporter.Interface,
 ) error {
-	serviceDiscoverySpec := populateServiceDiscoverySpec(options, brokerInfo, brokerSecret, imageOverrides)
+	serviceDiscoverySpec := populateServiceDiscoverySpec(options, brokerInfo, brokerSecret, repositoryInfo)
 
 	err := servicediscoverycr.Ensure(clientProducer.ForGeneral(), constants.OperatorNamespace, serviceDiscoverySpec)
 	if err != nil {
@@ -54,7 +55,7 @@ func ServiceDiscovery(clientProducer client.Producer, options *ServiceDiscoveryO
 }
 
 func populateServiceDiscoverySpec(options *ServiceDiscoveryOptions, brokerInfo *broker.Info, brokerSecret *v1.Secret,
-	imageOverrides map[string]string,
+	repositoryInfo *image.RepositoryInfo,
 ) *operatorv1alpha1.ServiceDiscoverySpec {
 	brokerURL := removeSchemaPrefix(brokerInfo.BrokerURL)
 
@@ -70,7 +71,7 @@ func populateServiceDiscoverySpec(options *ServiceDiscoveryOptions, brokerInfo *
 		Debug:                    options.SubmarinerDebug,
 		ClusterID:                options.ClusterID,
 		Namespace:                constants.OperatorNamespace,
-		ImageOverrides:           imageOverrides,
+		ImageOverrides:           repositoryInfo.Overrides,
 	}
 
 	if options.CoreDNSCustomConfigMap != "" {
