@@ -19,11 +19,9 @@ limitations under the License.
 package subctl
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/exit"
@@ -66,20 +64,6 @@ func setupTestFrameworkBeforeSuite() {
 	framework.TestContext.GlobalnetEnabled = clusterInfo.Submariner.Spec.GlobalCIDR != ""
 
 	framework.TestContext.NettestImageURL = clusterInfo.GetImageRepositoryInfo().GetNettestImage()
-}
-
-func compareFiles(file1, file2 string) (bool, error) {
-	first, err := os.ReadFile(file1)
-	if err != nil {
-		return false, errors.Wrapf(err, "error reading file %q", file1)
-	}
-
-	second, err := os.ReadFile(file2)
-	if err != nil {
-		return false, errors.Wrapf(err, "error reading file %q", file2)
-	}
-
-	return bytes.Equal(first, second), nil
 }
 
 // expectFlag exits with an error if the flag value is empty.

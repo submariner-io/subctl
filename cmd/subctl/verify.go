@@ -31,16 +31,20 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/onsi/ginkgo/config"
 	"github.com/spf13/cobra"
+	"github.com/submariner-io/admiral/pkg/reporter"
 	_ "github.com/submariner-io/lighthouse/test/e2e/discovery"
 	_ "github.com/submariner-io/lighthouse/test/e2e/framework"
 	"github.com/submariner-io/shipyard/test/e2e"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
+	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/cluster"
 	_ "github.com/submariner-io/submariner/test/e2e/dataplane"
 	_ "github.com/submariner-io/submariner/test/e2e/redundancy"
+	"k8s.io/client-go/rest"
 )
 
 var (
@@ -54,10 +58,13 @@ var (
 	disruptiveTests                 bool
 )
 
-var verifyRestConfigProducer = restconfig.NewProducer()
+var verifyRestConfigProducer = restconfig.NewProducer().
+	WithDeprecatedKubeContexts("use --context and --tocontext instead").
+	WithPrefixedContext("to").
+	WithDefaultNamespace(constants.OperatorNamespace)
 
 var verifyCmd = &cobra.Command{
-	Use:   "verify --kubecontexts <kubeContext1>,<kubeContext2>",
+	Use:   "verify --context <kubeContext1> --tocontext <kubeContext2>",
 	Short: "Run verifications between two clusters",
 	Long: `This command performs various tests to verify that a Submariner deployment between two clusters
 is functioning properly. The verifications performed are controlled by the --only and --enable-disruptive
@@ -70,19 +77,12 @@ the --enable-disruptive flag is also specified. If running non-interactively (th
 The following verifications are deemed disruptive:
 
     ` + strings.Join(disruptiveVerificationNames(), "\n    "),
-	Args: func(cmd *cobra.Command, args []string) error {
-		if err := checkValidateArguments(args); err != nil {
-			return err
-		}
-		return checkVerifyArguments()
-	},
+	Args: checkVerifyArguments,
 	Run: func(cmd *cobra.Command, args []string) {
 		testType := ""
 		if len(args) > 0 {
-			fmt.Println("subctl verify with kubeconfig arguments is deprecated, please use --kubecontexts instead")
+			fmt.Println("subctl verify with kubeconfig arguments is deprecated, please use --context and --tocontext instead")
 		}
-		err := setUpTestFramework(args, verifyRestConfigProducer, submarinerNamespace)
-		exit.OnErrorWithMessage(err, "error setting up test framework")
 
 		disruptive := extractDisruptiveVerifications(verifyOnly)
 		if !disruptiveTests && len(disruptive) > 0 {
@@ -111,14 +111,56 @@ prompt for confirmation therefore you must specify --enable-disruptive to run th
 
 		fmt.Printf("Performing the following verifications: %s\n", strings.Join(verifications, ", "))
 
-		if !e2e.RunE2ETests(&testing.T{}) {
-			exit.WithMessage(fmt.Sprintf("[%s] E2E failed", testType))
+		// Deprecated variants:
+		// - kubeconfigs on the command line
+		if len(args) == 2 {
+			exit.OnError(restconfig.NewProducerFrom(args[0], "").RunOnSelectedContext(
+				func(fromClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					return restconfig.NewProducerFrom(args[1], "").RunOnSelectedContext( //nolint:wrapcheck // No need to wrap errors here.
+						func(toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+							return runVerify(fromClusterInfo, toClusterInfo, namespace, testType)
+						}, status)
+				}, cli.NewReporter()))
+
+			return
 		}
+
+		// - kubecontext(s)
+		selectedContextsPresent, err := verifyRestConfigProducer.RunOnSelectedContexts(
+			func(clusterInfos []*cluster.Info, namespaces []string, status reporter.Interface) error {
+				if len(clusterInfos) < 2 {
+					return status.Error(errors.New("two kubecontexts must be specified"), "")
+				}
+
+				return runVerify(clusterInfos[0], clusterInfos[1], namespaces[0], testType)
+			}, cli.NewReporter())
+
+		if selectedContextsPresent {
+			exit.OnError(err)
+			return
+		}
+
+		// Explicit kubeconfigs and/or contexts
+		exit.OnError(verifyRestConfigProducer.RunOnSelectedContext(
+			func(fromClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+				// Try to run using the "to" context
+				toContextPresent, err := verifyRestConfigProducer.RunOnSelectedPrefixedContext(
+					"to",
+					func(toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+						return runVerify(fromClusterInfo, toClusterInfo, namespace, testType)
+					}, status)
+
+				if toContextPresent {
+					return err //nolint:wrapcheck // No need to wrap errors here.
+				}
+
+				return status.Error(errors.New("two kubecontexts must be specified"), "")
+			}, cli.NewReporter()))
 	},
 }
 
 func init() {
-	verifyRestConfigProducer.AddKubeContextMultiFlag(verifyCmd, "comma-separated list of exactly two kubeconfig contexts to use.")
+	verifyRestConfigProducer.SetupFlags(verifyCmd.Flags())
 	addVerifyFlags(verifyCmd)
 	rootCmd.AddCommand(verifyCmd)
 
@@ -155,26 +197,7 @@ func isNonInteractive(err error) bool {
 	return false
 }
 
-func checkValidateArguments(args []string) error {
-	if len(args) != 2 && verifyRestConfigProducer.CountRequestedClusters() != 2 {
-		return fmt.Errorf("two kubecontexts must be specified")
-	}
-
-	if len(args) == 2 {
-		if args[0] == args[1] {
-			return fmt.Errorf("kubeconfig file <kubeConfig1> and <kubeConfig2> cannot be the same file")
-		}
-
-		same, err := compareFiles(args[0], args[1])
-		if err != nil {
-			return err
-		}
-
-		if same {
-			return fmt.Errorf("kubeconfig file <kubeConfig1> and <kubeConfig2> need to have a unique content")
-		}
-	}
-
+func checkVerifyArguments(cmd *cobra.Command, args []string) error {
 	if connectionAttempts < 1 {
 		return fmt.Errorf("--connection-attempts must be >=1")
 	}
@@ -183,10 +206,6 @@ func checkValidateArguments(args []string) error {
 		return fmt.Errorf("--connection-timeout must be >=20")
 	}
 
-	return nil
-}
-
-func checkVerifyArguments() error {
 	if _, _, err := getVerifyPatterns(verifyOnly, true); err != nil {
 		return err
 	}
@@ -290,24 +309,25 @@ func getVerifyPatterns(csv string, includeDisruptive bool) ([]string, []string, 
 	return outputPatterns, outputVerifications, nil
 }
 
-func setUpTestFramework(args []string, restConfigProducer *restconfig.Producer, submarinerNS string) error {
-	if len(args) > 0 {
-		err := restconfig.ConfigureTestFramework(args)
-		if err != nil {
-			return err //nolint:wrapcheck // error can't be wrapped
-		}
-	} else {
-		restConfigProducer.PopulateTestFramework()
-	}
+func runVerify(
+	fromClusterInfo, toClusterInfo *cluster.Info, namespace, testType string,
+) error {
+	framework.RestConfigs = []*rest.Config{fromClusterInfo.RestConfig, toClusterInfo.RestConfig}
+	framework.TestContext.ClusterIDs = []string{fromClusterInfo.Name, toClusterInfo.Name}
+	framework.TestContext.KubeContexts = []string{fromClusterInfo.Name, toClusterInfo.Name}
 
 	framework.TestContext.OperationTimeout = operationTimeout
 	framework.TestContext.ConnectionTimeout = connectionTimeout
 	framework.TestContext.ConnectionAttempts = connectionAttempts
 	framework.TestContext.JunitReport = junitReport
-	framework.TestContext.SubmarinerNamespace = submarinerNS
+	framework.TestContext.SubmarinerNamespace = namespace
 
 	config.DefaultReporterConfig.Verbose = verboseConnectivityVerification
 	config.DefaultReporterConfig.SlowSpecThreshold = 60
+
+	if !e2e.RunE2ETests(&testing.T{}) {
+		return fmt.Errorf("[%s] E2E failed", testType)
+	}
 
 	return nil
 }
