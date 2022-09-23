@@ -21,7 +21,6 @@ package restconfig
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/pkg/errors"
@@ -29,7 +28,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/resource"
-	"github.com/submariner-io/admiral/pkg/stringset"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
@@ -62,7 +60,6 @@ type loadingRulesAndOverrides struct {
 
 type Producer struct {
 	kubeConfig                    string
-	kubeContext                   string
 	contexts                      []string
 	contextPrefixes               []string
 	defaultClientConfig           *loadingRulesAndOverrides
@@ -453,41 +450,11 @@ func (rcp *Producer) overrideContextAndRun(clusterName, contextName string, func
 	return nil
 }
 
-func (rcp *Producer) addKubeConfigFlag(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVar(&rcp.kubeConfig, "kubeconfig", "", "absolute path(s) to the kubeconfig file(s)")
-}
-
-// AddKubeContextMultiFlag adds a "kubeconfig" flag and a "kubecontext" flag that can be specified multiple times (or comma separated).
-func (rcp *Producer) AddKubeContextMultiFlag(cmd *cobra.Command, usage string) {
-	rcp.addKubeConfigFlag(cmd)
-
-	if usage == "" {
-		usage = "comma-separated list of kubeconfig contexts to use, can be specified multiple times.\n" +
-			"If none specified, all contexts referenced by the kubeconfig are used"
-	}
-
-	cmd.PersistentFlags().StringSliceVar(&rcp.contexts, "kubecontexts", nil, usage)
-}
-
 func (rcp *Producer) PopulateTestFramework() {
 	framework.TestContext.KubeContexts = rcp.contexts
 	if rcp.kubeConfig != "" {
 		framework.TestContext.KubeConfig = rcp.kubeConfig
 	}
-}
-
-func (rcp *Producer) CountRequestedClusters() int {
-	if len(rcp.contexts) > 0 {
-		// Count unique contexts
-		contexts := stringset.New()
-		for i := range rcp.contexts {
-			contexts.Add(rcp.contexts[i])
-		}
-
-		return contexts.Size()
-	}
-	// Current context or rcp.kubeContext
-	return 1
 }
 
 func ForBroker(submariner *v1alpha1.Submariner, serviceDisc *v1alpha1.ServiceDiscovery) (*rest.Config, string, error) {
@@ -541,15 +508,6 @@ func getRestConfigFromConfig(config clientcmd.ClientConfig, overrides *clientcmd
 	return RestConfig{Config: clientConfig, ClusterName: *clusterName}, nil
 }
 
-func (rcp *Producer) clusterNameFromContext() (*string, error) {
-	rawConfig, err := rcp.clientConfig().RawConfig()
-	if err != nil {
-		return nil, errors.Wrap(err, "error retrieving raw client configuration")
-	}
-
-	return clusterNameFromContext(&rawConfig, rcp.kubeContext), nil
-}
-
 func clusterNameFromContext(rawConfig *api.Config, overridesContext string) *string {
 	if overridesContext == "" {
 		// No context provided, use the current context.
@@ -562,21 +520,6 @@ func clusterNameFromContext(rawConfig *api.Config, overridesContext string) *str
 	}
 
 	return &configContext.Cluster
-}
-
-// clientConfig returns a clientcmd.ClientConfig to use when communicating with K8s.
-func (rcp *Producer) clientConfig() clientcmd.ClientConfig {
-	rules := clientcmd.NewDefaultClientConfigLoadingRules()
-	rules.ExplicitPath = rcp.kubeConfig
-
-	rules.DefaultClientConfig = &clientcmd.DefaultClientConfig
-	overrides := &clientcmd.ConfigOverrides{ClusterDefaults: clientcmd.ClusterDefaults}
-
-	if rcp.kubeContext != "" {
-		overrides.CurrentContext = rcp.kubeContext
-	}
-
-	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, overrides)
 }
 
 func (rcp *Producer) CheckVersionMismatch(cmd *cobra.Command, args []string) error {
@@ -608,41 +551,6 @@ func (rcp *Producer) CheckVersionMismatch(cmd *cobra.Command, args []string) err
 
 		return nil
 	}, cli.NewReporter())
-}
-
-func ConfigureTestFramework(args []string) error {
-	// Legacy handling: if arguments are files, assume they are kubeconfigs;
-	// otherwise, use contexts from --kubecontexts
-	_, err1 := os.Stat(args[0])
-	var err2 error
-
-	if len(args) > 1 {
-		_, err2 = os.Stat(args[1])
-	}
-
-	if err1 != nil || err2 != nil {
-		// Something happened (possibly IsNotExist, but we don’t care about specifics)
-		return fmt.Errorf("the provided arguments (%v) aren't accessible files", args)
-	}
-
-	// The files exist and can be examined without error
-	framework.TestContext.KubeConfig = ""
-	framework.TestContext.KubeConfigs = args
-
-	// Read the cluster names from the given kubeconfigs
-	for _, config := range args {
-		rcp := NewProducerFrom(config, "")
-
-		clusterName, err := rcp.clusterNameFromContext()
-		if err != nil {
-			//nolint:nilerr // This is intentional.
-			return nil
-		}
-
-		framework.TestContext.ClusterIDs = append(framework.TestContext.ClusterIDs, *clusterName)
-	}
-
-	return nil
 }
 
 func IfSubmarinerInstalled(functions ...PerContextFn) PerContextFn {
