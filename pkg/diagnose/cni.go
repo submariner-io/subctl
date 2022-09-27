@@ -48,6 +48,7 @@ const (
 var supportedNetworkPlugins = []string{
 	cni.Generic, cni.CanalFlannel, cni.WeaveNet,
 	cni.OpenShiftSDN, cni.OVNKubernetes, cni.Calico,
+	cni.KindNet,
 }
 
 var calicoGVR = schema.GroupVersionResource{
