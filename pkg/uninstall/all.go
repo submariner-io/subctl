@@ -174,7 +174,7 @@ func deleteClusterRolesAndBindings(clients client.Producer, clusterName string, 
 		}
 
 		err = clients.ForKubernetes().RbacV1().ClusterRoles().Delete(context.TODO(), list.Items[i].RoleRef.Name, metav1.DeleteOptions{})
-		if err != nil {
+		if err != nil && !apierrors.IsNotFound(err) {
 			return status.Error(err, "Error deleting ClusterRole %q", list.Items[i].RoleRef.Name)
 		}
 
