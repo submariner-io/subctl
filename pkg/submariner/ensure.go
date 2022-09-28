@@ -20,8 +20,10 @@ package submariner
 
 import (
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/subctl/pkg/submariner/scc"
+	"github.com/submariner-io/subctl/pkg/operator/ocp"
 	"github.com/submariner-io/subctl/pkg/submariner/serviceaccount"
+	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
+	"github.com/submariner-io/submariner-operator/pkg/names"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
@@ -35,10 +37,38 @@ func Ensure(status reporter.Interface, kubeClient kubernetes.Interface, dynClien
 		status.Success("Created submariner service account and role")
 	}
 
-	if created, err := scc.Ensure(dynClient, operatorNamespace); err != nil {
+	componentsRbac := []ocp.RbacInfo{
+		{
+			ComponentName:          names.GatewayComponent,
+			ClusterRoleFile:        embeddedyamls.Config_rbac_submariner_gateway_ocp_cluster_role_yaml,
+			ClusterRoleBindingFile: embeddedyamls.Config_rbac_submariner_gateway_ocp_cluster_role_binding_yaml,
+		},
+		{
+			ComponentName:          names.RouteAgentComponent,
+			ClusterRoleFile:        embeddedyamls.Config_rbac_submariner_route_agent_ocp_cluster_role_yaml,
+			ClusterRoleBindingFile: embeddedyamls.Config_rbac_submariner_route_agent_ocp_cluster_role_binding_yaml,
+		},
+		{
+			ComponentName:          names.GatewayComponent,
+			ClusterRoleFile:        embeddedyamls.Config_rbac_submariner_globalnet_ocp_cluster_role_yaml,
+			ClusterRoleBindingFile: embeddedyamls.Config_rbac_submariner_globalnet_ocp_cluster_role_binding_yaml,
+		},
+		{
+			ComponentName:          "submariner-diagnose",
+			ClusterRoleFile:        embeddedyamls.Config_rbac_submariner_diagnose_ocp_cluster_role_yaml,
+			ClusterRoleBindingFile: embeddedyamls.Config_rbac_submariner_diagnose_ocp_cluster_role_binding_yaml,
+		},
+		{
+			ComponentName:          names.NetworkPluginSyncerComponent,
+			ClusterRoleFile:        embeddedyamls.Config_rbac_networkplugin_syncer_ocp_cluster_role_yaml,
+			ClusterRoleBindingFile: embeddedyamls.Config_rbac_networkplugin_syncer_ocp_cluster_role_binding_yaml,
+		},
+	}
+
+	if created, err := ocp.EnsureRBAC(dynClient, kubeClient, operatorNamespace, componentsRbac); err != nil {
 		return err // nolint:wrapcheck // No need to wrap here
 	} else if created {
-		status.Success("Updated the privileged SCC")
+		status.Success("Updated the OCP roles")
 	}
 
 	return nil

@@ -25,10 +25,12 @@ import (
 	"github.com/submariner-io/subctl/pkg/namespace"
 	opcrds "github.com/submariner-io/subctl/pkg/operator/crds"
 	"github.com/submariner-io/subctl/pkg/operator/deployment"
-	"github.com/submariner-io/subctl/pkg/operator/scc"
+	"github.com/submariner-io/subctl/pkg/operator/ocp"
 	"github.com/submariner-io/subctl/pkg/operator/serviceaccount"
 	"github.com/submariner-io/subctl/pkg/submariner"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
+	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
+	"github.com/submariner-io/submariner-operator/pkg/names"
 )
 
 // nolint:wrapcheck // No need to wrap errors here.
@@ -56,10 +58,19 @@ func Ensure(status reporter.Interface, clientProducer client.Producer, operatorN
 		status.Success("Created operator service account and role")
 	}
 
-	if created, err := scc.Ensure(clientProducer.ForDynamic(), operatorNamespace); err != nil {
+	componentsRbac := []ocp.RbacInfo{
+		{
+			ComponentName:          names.OperatorComponent,
+			ClusterRoleFile:        embeddedyamls.Config_rbac_submariner_operator_cluster_role_yaml,
+			ClusterRoleBindingFile: embeddedyamls.Config_rbac_submariner_operator_ocp_cluster_role_binding_yaml,
+		},
+	}
+
+	if created, err := ocp.EnsureRBAC(clientProducer.ForDynamic(), clientProducer.ForKubernetes(),
+		operatorNamespace, componentsRbac); err != nil {
 		return err
 	} else if created {
-		status.Success("Updated the privileged SCC")
+		status.Success("Updated the OCP roles")
 	}
 
 	if err := submariner.Ensure(status, clientProducer.ForKubernetes(), clientProducer.ForDynamic(), operatorNamespace); err != nil {
