@@ -18,7 +18,7 @@ require (
 	github.com/submariner-io/cloud-prepare v0.14.0-m1
 	github.com/submariner-io/lighthouse v0.14.0-m1
 	github.com/submariner-io/shipyard v0.14.0-m1
-	github.com/submariner-io/submariner v0.14.0-m1
+	github.com/submariner-io/submariner v0.14.0-m1.0.20220926163523-c1aa0f37d980
 	github.com/submariner-io/submariner-operator v0.14.0-m1.0.20220922140358-2c7d9c921f7a
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
