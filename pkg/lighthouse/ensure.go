@@ -46,7 +46,7 @@ func Ensure(status reporter.Interface, kubeClient kubernetes.Interface, dynClien
 		{
 			ComponentName:          names.LighthouseCoreDNSComponent,
 			ClusterRoleFile:        embeddedyamls.Config_rbac_lighthouse_coredns_ocp_cluster_role_yaml,
-			ClusterRoleBindingFile: embeddedyamls.Config_rbac_lighthouse_coredns_cluster_role_binding_yaml,
+			ClusterRoleBindingFile: embeddedyamls.Config_rbac_lighthouse_coredns_ocp_cluster_role_binding_yaml,
 		},
 	}
 
