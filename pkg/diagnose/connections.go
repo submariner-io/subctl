@@ -19,6 +19,8 @@ limitations under the License.
 package diagnose
 
 import (
+	"encoding/json"
+
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
@@ -59,7 +61,13 @@ func Connections(clusterInfo *cluster.Info, status reporter.Interface) bool {
 			if connection.Status == submv1.Connecting {
 				tracker.Failure("Connection to cluster %q is in progress", connection.Endpoint.ClusterID)
 			} else if connection.Status == submv1.ConnectionError {
-				tracker.Failure("Connection to cluster %q is not established", connection.Endpoint.ClusterID)
+				out, err := json.MarshalIndent(connection, "", "  ")
+				if err != nil {
+					tracker.Warning("Unable to marshal Connection to json: %v", err)
+				}
+
+				tracker.Failure("Connection to cluster %q is not established. Connection details:\n%s",
+					connection.Endpoint.ClusterID, out)
 			}
 		}
 	}
