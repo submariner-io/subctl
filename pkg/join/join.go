@@ -170,6 +170,7 @@ func submarinerOptionsFrom(joinOptions *Options) *deploy.SubmarinerOptions {
 		NATTraversal:                  joinOptions.NATTraversal,
 		IPSecDebug:                    joinOptions.IPSecDebug,
 		SubmarinerDebug:               joinOptions.SubmarinerDebug,
+		AirGappedDeployment:           joinOptions.AirGappedDeployment,
 		LoadBalancerEnabled:           joinOptions.LoadBalancerEnabled,
 		HealthCheckEnabled:            joinOptions.HealthCheckEnabled,
 		NATTPort:                      joinOptions.NATTPort,

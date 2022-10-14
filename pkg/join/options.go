@@ -27,6 +27,7 @@ type Options struct {
 	IPSecDebug                    bool
 	SubmarinerDebug               bool
 	OperatorDebug                 bool
+	AirGappedDeployment           bool
 	LoadBalancerEnabled           bool
 	HealthCheckEnabled            bool
 	BrokerK8sSecure               bool
