@@ -52,6 +52,7 @@ func StartLatencyTests(intraCluster, verbose bool) {
 	})
 
 	f = initFramework("latency", verbose)
+	defer cleanupFramework(f)
 
 	clusterAName := framework.TestContext.ClusterIDs[framework.ClusterA]
 
@@ -60,7 +61,6 @@ func StartLatencyTests(intraCluster, verbose bool) {
 
 		if framework.TestContext.GlobalnetEnabled {
 			fmt.Println("Latency test is not supported with Globalnet enabled, skipping the test...")
-			cleanupFramework(f)
 
 			return
 		}
@@ -92,8 +92,6 @@ func StartLatencyTests(intraCluster, verbose bool) {
 		fmt.Printf("Performing latency tests from Non-Gateway pod to Gateway pod on cluster %q\n", clusterAName)
 		runLatencyTest(f, latencyTestIntraClusterParams, verbose)
 	}
-
-	cleanupFramework(f)
 }
 
 func runLatencyTest(f *framework.Framework, testParams benchmarkTestParams, verbose bool) {
