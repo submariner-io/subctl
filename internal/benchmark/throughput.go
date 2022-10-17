@@ -47,6 +47,7 @@ func StartThroughputTests(intraCluster, verbose bool) {
 	})
 
 	f = initFramework("throughput", verbose)
+	defer cleanupFramework(f)
 
 	clusterAName := framework.TestContext.ClusterIDs[framework.ClusterA]
 
@@ -80,8 +81,6 @@ func StartThroughputTests(intraCluster, verbose bool) {
 		fmt.Printf("Performing throughput tests from Non-Gateway pod to Gateway pod on cluster %q\n", clusterAName)
 		runThroughputTest(f, testIntraClusterParams, verbose)
 	}
-
-	cleanupFramework(f)
 }
 
 func initFramework(baseName string, verbose bool) *framework.Framework {
