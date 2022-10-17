@@ -83,6 +83,8 @@ func addJoinFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&joinFlags.PreferredServer, "preferred-server", false,
 		"enable this cluster as a preferred server for dataplane connections")
 
+	cmd.Flags().BoolVar(&joinFlags.AirGappedDeployment, "air-gapped", false,
+		"specifies that the cluster is in an air-gapped environment")
 	cmd.Flags().BoolVar(&joinFlags.LoadBalancerEnabled, "load-balancer", false,
 		"enable automatic LoadBalancer in front of the gateways")
 
