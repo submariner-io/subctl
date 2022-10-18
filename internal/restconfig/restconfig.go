@@ -54,9 +54,9 @@ type RestConfig struct {
 	ClusterName string
 }
 
-type configAndOverrides struct {
-	config    clientcmd.ClientConfig
-	overrides *clientcmd.ConfigOverrides
+type loadingRulesAndOverrides struct {
+	loadingRules *clientcmd.ClientConfigLoadingRules
+	overrides    *clientcmd.ConfigOverrides
 }
 
 type Producer struct {
@@ -64,8 +64,9 @@ type Producer struct {
 	kubeContext           string
 	kubeContexts          []string
 	contextPrefixes       []string
-	defaultClientConfig   *configAndOverrides
-	prefixedClientConfigs map[string]*configAndOverrides
+	defaultClientConfig   *loadingRulesAndOverrides
+	prefixedClientConfigs map[string]*loadingRulesAndOverrides
+	prefixedKubeConfigs   map[string]*string
 	inCluster             bool
 	namespaceFlag         bool
 	defaultNamespace      *string
@@ -134,15 +135,18 @@ func (rcp *Producer) SetupFlags(flags *pflag.FlagSet) {
 	_ = flags.MarkDeprecated("kubecontext", "use --context instead")
 
 	// Other prefixes
-	rcp.prefixedClientConfigs = make(map[string]*configAndOverrides, len(rcp.contextPrefixes))
+	rcp.prefixedClientConfigs = make(map[string]*loadingRulesAndOverrides, len(rcp.contextPrefixes))
+	rcp.prefixedKubeConfigs = make(map[string]*string, len(rcp.contextPrefixes))
+
 	for _, prefix := range rcp.contextPrefixes {
+		rcp.prefixedKubeConfigs[prefix] = flags.String(prefix+"config", "", "absolute path(s) to the "+prefix+" kubeconfig file(s)")
 		rcp.prefixedClientConfigs[prefix] = rcp.setupContextFlags(loadingRules, flags, prefix)
 	}
 }
 
 func (rcp *Producer) setupContextFlags(
 	loadingRules *clientcmd.ClientConfigLoadingRules, flags *pflag.FlagSet, prefix string,
-) *configAndOverrides {
+) *loadingRulesAndOverrides {
 	// Default un-prefixed context
 	overrides := clientcmd.ConfigOverrides{ClusterDefaults: clientcmd.ClusterDefaults}
 	kflags := clientcmd.RecommendedConfigOverrideFlags(prefix)
@@ -157,9 +161,9 @@ func (rcp *Producer) setupContextFlags(
 
 	clientcmd.BindOverrideFlags(&overrides, flags, kflags)
 
-	return &configAndOverrides{
-		config:    clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &overrides),
-		overrides: &overrides,
+	return &loadingRulesAndOverrides{
+		loadingRules: loadingRules,
+		overrides:    &overrides,
 	}
 }
 
@@ -173,9 +177,9 @@ func (rcp *Producer) setupFromConfig(kubeConfig, kubeContext string) {
 		overrides.CurrentContext = kubeContext
 	}
 
-	rcp.defaultClientConfig = &configAndOverrides{
-		config:    clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &overrides),
-		overrides: &overrides,
+	rcp.defaultClientConfig = &loadingRulesAndOverrides{
+		loadingRules: loadingRules,
+		overrides:    &overrides,
 	}
 }
 
@@ -184,20 +188,7 @@ type PerContextFn func(clusterInfo *cluster.Info, namespace string, status repor
 // RunOnSelectedContext runs the given function on the selected context.
 func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter.Interface) error {
 	if rcp.inCluster {
-		restConfig, err := rest.InClusterConfig()
-		if err != nil {
-			return status.Error(err, "error retrieving the in-cluster configuration")
-		}
-
-		// In-cluster configurations don't give a cluster name, use "in-cluster"
-		clusterInfo, err := cluster.NewInfo("in-cluster", restConfig)
-		if err != nil {
-			return status.Error(err, "error building the cluster.Info for the in-cluster configuration")
-		}
-
-		// In-cluster configurations don't specify a namespace, use the default
-		// When using the in-cluster configuration, that's the only configuration we want
-		return function(clusterInfo, "default", status)
+		return runInCluster(function, status)
 	}
 
 	if rcp.defaultClientConfig == nil {
@@ -205,7 +196,10 @@ func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter
 		return status.Error(errors.New("no context provided (this is a programming error)"), "")
 	}
 
-	restConfig, err := getRestConfigFromConfig(rcp.defaultClientConfig.config, rcp.defaultClientConfig.overrides)
+	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		rcp.defaultClientConfig.loadingRules, rcp.defaultClientConfig.overrides)
+
+	restConfig, err := getRestConfigFromConfig(clientConfig, rcp.defaultClientConfig.overrides)
 	if err != nil {
 		return status.Error(err, "error retrieving the default configuration")
 	}
@@ -215,7 +209,7 @@ func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter
 		return status.Error(err, "error building the cluster.Info for the default configuration")
 	}
 
-	namespace, overridden, err := rcp.defaultClientConfig.config.Namespace()
+	namespace, overridden, err := clientConfig.Namespace()
 	if err != nil {
 		return status.Error(err, "error retrieving the namespace for the default configuration")
 	}
@@ -227,11 +221,38 @@ func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter
 	return function(clusterInfo, namespace, status)
 }
 
+func runInCluster(function PerContextFn, status reporter.Interface) error {
+	restConfig, err := rest.InClusterConfig()
+	if err != nil {
+		return status.Error(err, "error retrieving the in-cluster configuration")
+	}
+
+	// In-cluster configurations don't give a cluster name, use "in-cluster"
+	clusterInfo, err := cluster.NewInfo("in-cluster", restConfig)
+	if err != nil {
+		return status.Error(err, "error building the cluster.Info for the in-cluster configuration")
+	}
+
+	// In-cluster configurations don't specify a namespace, use the default
+	// When using the in-cluster configuration, that's the only configuration we want
+	return function(clusterInfo, "default", status)
+}
+
 // RunOnSelectedContext runs the given function on the selected prefixed context.
 func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerContextFn, status reporter.Interface) error {
 	clientConfig, ok := rcp.prefixedClientConfigs[prefix]
 	if ok {
-		restConfig, err := getRestConfigFromConfig(clientConfig.config, clientConfig.overrides)
+		loadingRules := clientConfig.loadingRules
+
+		// If the user specified a kubeconfig for this prefix, use that instead
+		contextKubeConfig, ok := rcp.prefixedKubeConfigs[prefix]
+		if ok && contextKubeConfig != nil && *contextKubeConfig != "" {
+			loadingRules.ExplicitPath = *contextKubeConfig
+		}
+
+		contextClientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, clientConfig.overrides)
+
+		restConfig, err := getRestConfigFromConfig(contextClientConfig, clientConfig.overrides)
 		if err != nil {
 			return status.Error(err, "error retrieving the configuration for prefix %s", prefix)
 		}
@@ -241,7 +262,7 @@ func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerCon
 			return status.Error(err, "error building the cluster.Info for the configuration for prefix %s", prefix)
 		}
 
-		namespace, overridden, err := clientConfig.config.Namespace()
+		namespace, overridden, err := contextClientConfig.Namespace()
 		if err != nil {
 			return status.Error(err, "error retrieving the namespace for the configuration for prefix %s", prefix)
 		}
