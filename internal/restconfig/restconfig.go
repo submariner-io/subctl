@@ -458,7 +458,7 @@ func ConfigureTestFramework(args []string) error {
 
 		clusterName, err := rcp.clusterNameFromContext()
 		if err != nil {
-			// nolint:nilerr // This is intentional.
+			//nolint:nilerr // This is intentional.
 			return nil
 		}
 

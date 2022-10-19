@@ -125,7 +125,7 @@ func readMetadataFile(fileName string) (string, string, string, error) {
 
 	err := cloud.ReadMetadataFile(fileName, &metadata)
 
-	return metadata.InfraID, metadata.GCP.Region, metadata.GCP.ProjectID, err // nolint:wrapcheck // No need to wrap here
+	return metadata.InfraID, metadata.GCP.Region, metadata.GCP.ProjectID, err //nolint:wrapcheck // No need to wrap here
 }
 
 func getCredentials(credentialsFile string) (*google.Credentials, error) {

@@ -28,7 +28,7 @@ import (
 func GenericCluster(clusterInfo *cluster.Info, status reporter.Interface) error {
 	err := generic.RunOnCluster(clusterInfo, status,
 		func(gwDeployer api.GatewayDeployer, status reporter.Interface) error {
-			return gwDeployer.Cleanup(status) // nolint:wrapcheck // No need to wrap here
+			return gwDeployer.Cleanup(status) //nolint:wrapcheck // No need to wrap here
 		})
 
 	return status.Error(err, "Failed to cleanup generic K8s cluster")

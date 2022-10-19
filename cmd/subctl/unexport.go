@@ -55,7 +55,7 @@ var (
 						return status.Error(err, "Error creating client")
 					}
 
-					return service.Unexport(mcsClient, namespace, args[0], status) // nolint:wrapcheck // No need to wrap errors here.
+					return service.Unexport(mcsClient, namespace, args[0], status) //nolint:wrapcheck // No need to wrap errors here.
 				}, cli.NewReporter()))
 		},
 	}

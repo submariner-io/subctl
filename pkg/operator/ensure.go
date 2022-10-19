@@ -33,7 +33,7 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/names"
 )
 
-// nolint:wrapcheck // No need to wrap errors here.
+//nolint:wrapcheck // No need to wrap errors here.
 func Ensure(status reporter.Interface, clientProducer client.Producer, operatorNamespace, operatorImage string, debug bool) error {
 	if created, err := opcrds.Ensure(crd.UpdaterFromControllerClient(clientProducer.ForGeneral())); err != nil {
 		return err

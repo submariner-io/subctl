@@ -115,7 +115,7 @@ func addLabels(clientset kubernetes.Interface, nodeName string, labelsToAdd map[
 		_, lastErr = clientset.CoreV1().Nodes().Patch(context.TODO(), nodeName, types.MergePatchType, []byte(patch), metav1.PatchOptions{})
 		if lastErr != nil {
 			if !k8serrors.IsConflict(lastErr) {
-				return false, lastErr // nolint:wrapcheck // No need to wrap here
+				return false, lastErr //nolint:wrapcheck // No need to wrap here
 			}
 
 			return false, nil
@@ -125,10 +125,10 @@ func addLabels(clientset kubernetes.Interface, nodeName string, labelsToAdd map[
 	})
 
 	if goerrors.Is(err, wait.ErrWaitTimeout) {
-		return lastErr // nolint:wrapcheck // No need to wrap here
+		return lastErr //nolint:wrapcheck // No need to wrap here
 	}
 
-	return err // nolint:wrapcheck // No need to wrap here
+	return err //nolint:wrapcheck // No need to wrap here
 }
 
 var nodeLabelBackoff wait.Backoff = wait.Backoff{

@@ -122,7 +122,7 @@ func isValidComponents(componentSet stringset.Interface) error {
 	return nil
 }
 
-// nolint:wrapcheck // No need to wrap errors here.
+//nolint:wrapcheck // No need to wrap errors here.
 func checkGlobalnetConfig(options *BrokerOptions) error {
 	var err error
 

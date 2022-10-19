@@ -59,7 +59,7 @@ func gatherPodLogsByContainer(podLabelSelector, container string, info *Info) {
 	}
 }
 
-// nolint:gocritic // hugeParam: podLogOptions - purposely passed by value.
+//nolint:gocritic // hugeParam: podLogOptions - purposely passed by value.
 func outputPodLogs(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, info *Info) (podLogInfo LogInfo) {
 	podLogInfo.Namespace = pod.Namespace
 	podLogInfo.PodState = pod.Status.Phase
@@ -128,7 +128,7 @@ func findPods(clientSet kubernetes.Interface, byLabelSelector string) (*corev1.P
 	return pods, nil
 }
 
-// nolint:gocritic // hugeParam: podLogOptions - purposely passed by value.
+//nolint:gocritic // hugeParam: podLogOptions - purposely passed by value.
 func outputPreviousPodLog(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, info *Info, podLogInfo *LogInfo) error {
 	podLogOptions.Previous = true
 	logRequest := info.ClientProducer.ForKubernetes().CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOptions)
@@ -157,7 +157,7 @@ func outputPreviousPodLog(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, i
 	return nil
 }
 
-// nolint:gocritic // hugeParam: podLogOptions - purposely passed by value.
+//nolint:gocritic // hugeParam: podLogOptions - purposely passed by value.
 func outputCurrentPodLog(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, info *Info, podLogInfo *LogInfo) error {
 	// Running with Previous = false on the same pod
 	podLogOptions.Previous = false
