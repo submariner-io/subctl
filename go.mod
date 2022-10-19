@@ -22,8 +22,8 @@ require (
 	github.com/submariner-io/submariner v0.14.0-m1.0.20220926163523-c1aa0f37d980
 	github.com/submariner-io/submariner-operator v0.14.0-m2.0.20221014112443-3df6539abaf1
 	github.com/uw-labs/lichen v0.1.7
-	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
-	google.golang.org/api v0.98.0
+	golang.org/x/oauth2 v0.0.0-20221006150949-b44042a4b9c1
+	google.golang.org/api v0.99.0
 	k8s.io/api v0.25.0
 	k8s.io/apiextensions-apiserver v0.25.0
 	k8s.io/apimachinery v0.25.0
@@ -35,7 +35,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.7.0 // indirect
+	cloud.google.com/go/compute v1.10.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.1.4 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.0.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute v1.0.0 // indirect
@@ -71,12 +71,12 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
-	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/licenseclassifier v0.0.0-20201113175434-78a70215ca36 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.1.0 // indirect
-	github.com/googleapis/gax-go/v2 v2.4.0 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
+	github.com/googleapis/gax-go/v2 v2.5.1 // indirect
 	github.com/gophercloud/gophercloud v1.0.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -106,14 +106,14 @@ require (
 	github.com/urfave/cli/v2 v2.4.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220511200225-c6db032c6c88 // indirect
-	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
+	golang.org/x/net v0.0.0-20221012135044-0b7e1fb9d458 // indirect
 	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261 // indirect
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
 	golang.org/x/text v0.3.8-0.20220509174342-b4bca84b0361 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220624142145-8cd45d7dbd1f // indirect
-	google.golang.org/grpc v1.47.0 // indirect
+	google.golang.org/genproto v0.0.0-20221010155953-15ba04fc1c0e // indirect
+	google.golang.org/grpc v1.50.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect

@@ -40,6 +40,7 @@ type SubmarinerOptions struct {
 	NATTraversal                  bool
 	IPSecDebug                    bool
 	SubmarinerDebug               bool
+	AirGappedDeployment           bool
 	LoadBalancerEnabled           bool
 	HealthCheckEnabled            bool
 	BrokerK8sInsecure             bool
@@ -106,6 +107,7 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 		CableDriver:              options.CableDriver,
 		ServiceDiscoveryEnabled:  brokerInfo.IsServiceDiscoveryEnabled(),
 		ImageOverrides:           repositoryInfo.Overrides,
+		AirGappedDeployment:      options.AirGappedDeployment,
 		LoadBalancerEnabled:      options.LoadBalancerEnabled,
 		ConnectionHealthCheck: &operatorv1alpha1.HealthCheckSpec{
 			Enabled:            options.HealthCheckEnabled,
