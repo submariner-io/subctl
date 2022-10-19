@@ -35,7 +35,7 @@ func generateRandomPSK(n int) ([]byte, error) {
 	psk := make([]byte, n)
 	_, err := rand.Read(psk)
 
-	return psk, err // nolint:wrapcheck // No need to wrap here
+	return psk, err //nolint:wrapcheck // No need to wrap here
 }
 
 func newIPSECPSKSecret() (*v1.Secret, error) {

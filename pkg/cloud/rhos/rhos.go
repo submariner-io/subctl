@@ -117,5 +117,5 @@ func readMetadataFile(fileName string) (string, string, error) {
 
 	err := cloud.ReadMetadataFile(fileName, &metadata)
 
-	return metadata.InfraID, metadata.RHOS.ProjectID, err // nolint:wrapcheck // No need to wrap here
+	return metadata.InfraID, metadata.RHOS.ProjectID, err //nolint:wrapcheck // No need to wrap here
 }

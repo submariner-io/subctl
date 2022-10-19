@@ -33,7 +33,7 @@ func RHOS(clusterInfo *cluster.Info, ports *cloud.Ports, config *rhos.Config, st
 		return status.Error(err, "Failed to prepare the cloud")
 	}
 
-	// nolint:wrapcheck // No need to wrap errors here.
+	//nolint:wrapcheck // No need to wrap errors here.
 	err = rhos.RunOn(clusterInfo, config, status,
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if config.Gateways > 0 {

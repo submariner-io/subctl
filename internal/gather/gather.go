@@ -120,7 +120,7 @@ func gatherDataByCluster(clusterInfo *cluster.Info, options Options) {
 	gatherClusterSummary(&info)
 }
 
-// nolint:gocritic // hugeParam: info - purposely passed by value.
+//nolint:gocritic // hugeParam: info - purposely passed by value.
 func gatherConnectivity(dataType string, info Info) bool {
 	if info.Submariner == nil {
 		info.Status.Warning("The Submariner connectivity components are not installed")
@@ -151,7 +151,7 @@ func gatherConnectivity(dataType string, info Info) bool {
 	return true
 }
 
-// nolint:gocritic // hugeParam: info - purposely passed by value.
+//nolint:gocritic // hugeParam: info - purposely passed by value.
 func gatherDiscovery(dataType string, info Info) bool {
 	if info.ServiceDiscovery == nil {
 		info.Status.Warning("The Submariner service discovery components are not installed")
@@ -176,7 +176,7 @@ func gatherDiscovery(dataType string, info Info) bool {
 	return true
 }
 
-// nolint:gocritic // hugeParam: info - purposely passed by value.
+//nolint:gocritic // hugeParam: info - purposely passed by value.
 func gatherBroker(dataType string, info Info) bool {
 	switch dataType {
 	case Resources:
@@ -226,7 +226,7 @@ func gatherBroker(dataType string, info Info) bool {
 	return true
 }
 
-// nolint:gocritic // hugeParam: info - purposely passed by value.
+//nolint:gocritic // hugeParam: info - purposely passed by value.
 func gatherOperator(dataType string, info Info) bool {
 	switch dataType {
 	case Logs:

@@ -44,7 +44,7 @@ const (
 )
 
 // ensureFromYAML creates the given service account.
-// nolint:wrapcheck // No need to wrap errors here.
+//nolint:wrapcheck // No need to wrap errors here.
 func ensureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (*corev1.ServiceAccount, error) {
 	sa := &corev1.ServiceAccount{}
 
@@ -61,7 +61,7 @@ func ensureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (*c
 	return sa, err
 }
 
-// nolint:wrapcheck // No need to wrap errors here.
+//nolint:wrapcheck // No need to wrap errors here.
 func ensure(kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount, onlyCreate bool) error {
 	if onlyCreate {
 		_, err := kubeClient.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), sa.Name, metav1.GetOptions{})
@@ -76,7 +76,7 @@ func ensure(kubeClient kubernetes.Interface, namespace string, sa *corev1.Servic
 	return err
 }
 
-// nolint:wrapcheck // No need to wrap errors here.
+//nolint:wrapcheck // No need to wrap errors here.
 func Ensure(kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount, onlyCreate bool) (*corev1.ServiceAccount, error) {
 	err := ensure(kubeClient, namespace, sa, onlyCreate)
 	if err != nil {
@@ -192,7 +192,7 @@ func getSecretForSA(client kubernetes.Interface, sa *corev1.ServiceAccount) (*co
 	}, sa.Name)
 }
 
-// nolint:gosec // we need a pseudo random string for name.
+//nolint:gosec // we need a pseudo random string for name.
 func generateRandomString(length int) string {
 	rand.Seed(time.Now().UnixNano())
 

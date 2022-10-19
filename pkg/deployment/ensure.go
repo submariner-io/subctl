@@ -27,7 +27,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// nolint:wrapcheck // No need to wrap errors here.
+//nolint:wrapcheck // No need to wrap errors here.
 func Ensure(kubeClient kubernetes.Interface, namespace string, deployment *appsv1.Deployment) (bool, error) {
 	return resourceutil.CreateOrUpdate(context.TODO(), resource.ForDeployment(kubeClient, namespace), deployment)
 }

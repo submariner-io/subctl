@@ -206,7 +206,7 @@ func getFormattedIP(ipAddrList, ipaddr string) string {
 	return ipaddr
 }
 
-// nolint:gocritic // hugeParam: listOptions - match K8s API.
+//nolint:gocritic // hugeParam: listOptions - match K8s API.
 func listNodes(info *Info, listOptions metav1.ListOptions) (*v1.NodeList, error) {
 	nodes, err := info.ClientProducer.ForKubernetes().CoreV1().Nodes().List(context.TODO(), listOptions)
 	if err != nil {
