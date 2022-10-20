@@ -20,9 +20,11 @@ package diagnose
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
+	lhconstants "github.com/submariner-io/lighthouse/pkg/constants"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/gvr"
 	"github.com/submariner-io/subctl/pkg/cluster"
@@ -72,48 +74,47 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 			continue
 		}
 
-		ns := se.GetNamespace()
-		name := se.GetName()
-		conditions := se.Status.Conditions
-		var serviceExportValid *mcsv1a1.ServiceExportCondition
+		verifyStatusCondition(se, mcsv1a1.ServiceExportValid, status)
+		verifyStatusCondition(se, lhconstants.ServiceExportSynced, status)
 
-		for i := range conditions {
-			if conditions[i].Type == mcsv1a1.ServiceExportValid {
-				serviceExportValid = &conditions[i]
-			}
-		}
-
-		if serviceExportValid == nil {
-			status.Failure("ServiceExport for %s/%s is missing the %s condition type", ns, name, mcsv1a1.ServiceExportValid)
-			continue
-		}
-
-		if serviceExportValid.Status != corev1.ConditionTrue {
-			status.Failure("Export failed or has not yet completed for service %s/%s: %s", ns, name, serviceExportValid.Message)
-			continue
-		}
-
-		ep := clusterInfo.ClientProducer.ForKubernetes().DiscoveryV1().EndpointSlices(ns)
-		_, err = ep.Get(context.TODO(), fmt.Sprintf("%s-%s", name, clusterInfo.Submariner.Spec.ClusterID), metav1.GetOptions{})
+		ep := clusterInfo.ClientProducer.ForKubernetes().DiscoveryV1().EndpointSlices(se.Namespace)
+		_, err = ep.Get(context.TODO(), fmt.Sprintf("%s-%s", se.Name, clusterInfo.Submariner.Spec.ClusterID), metav1.GetOptions{})
 
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				status.Failure("No EndpointSlice found for exported service %s/%s", ns, name)
+				status.Failure("No EndpointSlice found for exported service %s/%s", se.Namespace, se.Name)
 			} else {
-				status.Failure("Error retrieving EndPointSlice for exported service %s/%s", ns, name)
+				status.Failure("Error retrieving EndPointSlice for exported service %s/%s", se.Namespace, se.Name)
 				return
 			}
 		}
 
 		_, err := clusterInfo.ClientProducer.ForDynamic().Resource(serviceImportsGVR).
 			Namespace(constants.OperatorNamespace).Get(context.TODO(),
-			fmt.Sprintf("%s-%s-%s", name, ns, clusterInfo.Submariner.Spec.ClusterID), metav1.GetOptions{})
+			fmt.Sprintf("%s-%s-%s", se.Name, se.Namespace, clusterInfo.Submariner.Spec.ClusterID), metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				status.Failure("No ServiceImport found for exported service %s/%s", ns, name)
+				status.Failure("No ServiceImport found for exported service %s/%s", se.Namespace, se.Name)
 			} else {
-				status.Failure("Error retrieving ServiceImport for exported service %s/%s", ns, name)
+				status.Failure("Error retrieving ServiceImport for exported service %s/%s", se.Namespace, se.Name)
 			}
 		}
 	}
+}
+
+func verifyStatusCondition(se *mcsv1a1.ServiceExport, condType mcsv1a1.ServiceExportConditionType, status reporter.Interface) {
+	for i := range se.Status.Conditions {
+		condition := &se.Status.Conditions[i]
+		if condition.Type == condType {
+			if condition.Status != corev1.ConditionTrue {
+				out, _ := json.MarshalIndent(condition, "", "  ")
+				status.Failure("The ServiceExport %q status condition type for %s/%s is not satisfied:\n%s",
+					condType, se.Namespace, se.Name, out)
+			}
+
+			return
+		}
+	}
+
+	status.Failure("The ServiceExport for %s/%s is missing the %q status condition type", se.Namespace, se.Name, condType)
 }
