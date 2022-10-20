@@ -60,13 +60,15 @@ type configAndOverrides struct {
 }
 
 type Producer struct {
-	kubeConfig          string
-	kubeContext         string
-	kubeContexts        []string
-	defaultClientConfig *configAndOverrides
-	inCluster           bool
-	namespaceFlag       bool
-	defaultNamespace    *string
+	kubeConfig            string
+	kubeContext           string
+	kubeContexts          []string
+	contextPrefixes       []string
+	defaultClientConfig   *configAndOverrides
+	prefixedClientConfigs map[string]*configAndOverrides
+	inCluster             bool
+	namespaceFlag         bool
+	defaultNamespace      *string
 }
 
 // NewProducer initialises a blank producer which needs to be set up with flags (see SetupFlags).
@@ -77,10 +79,11 @@ func NewProducer() *Producer {
 // NewProducerFrom initialises a producer using the given kubeconfig file and context.
 // The context may be empty, in which case the default context will be used.
 func NewProducerFrom(kubeConfig, kubeContext string) *Producer {
-	return &Producer{
-		kubeConfig:  kubeConfig,
-		kubeContext: kubeContext,
-	}
+	producer := &Producer{}
+
+	producer.setupFromConfig(kubeConfig, kubeContext)
+
+	return producer
 }
 
 // WithNamespace configures the producer to set up a namespace flag.
@@ -101,25 +104,73 @@ func (rcp *Producer) WithDefaultNamespace(defaultNamespace string) *Producer {
 	return rcp
 }
 
+// WithPrefixedContext configures the producer to set up flags using the given prefix.
+func (rcp *Producer) WithPrefixedContext(prefix string) *Producer {
+	rcp.contextPrefixes = append(rcp.contextPrefixes, prefix)
+
+	return rcp
+}
+
 // SetupFlags configures the given flags to control the producer settings.
 func (rcp *Producer) SetupFlags(flags *pflag.FlagSet) {
+	// The base loading rules are shared across all clientcmd setups.
+	// This means that alternative kubeconfig setups (remoteconfig etc.) need to
+	// be handled manually, but there's no way around that if we want to allow
+	// both --kubeconfig and --remoteconfig (only one set of flags can be configured
+	// for a given prefix).
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
 
 	flags.StringVar(&loadingRules.ExplicitPath, "kubeconfig", "", "absolute path(s) to the kubeconfig file(s)")
 
-	// Default un-prefixed context
-	overrides := clientcmd.ConfigOverrides{ClusterDefaults: clientcmd.ClusterDefaults}
-	kflags := clientcmd.RecommendedConfigOverrideFlags("")
-	clientcmd.BindOverrideFlags(&overrides, flags, kflags)
+	// TODO Alternate kubeconfigs are tracked separately
+
+	// Default prefix
+	rcp.defaultClientConfig = rcp.setupContextFlags(loadingRules, flags, "")
 
 	// Support deprecated --kubecontext; TODO remove in 0.15
 	legacyFlags := clientcmd.RecommendedConfigOverrideFlags("kube")
-	legacyFlags.CurrentContext.BindStringFlag(flags, &overrides.CurrentContext)
+	legacyFlags.CurrentContext.BindStringFlag(flags, &rcp.defaultClientConfig.overrides.CurrentContext)
 	_ = flags.MarkDeprecated("kubecontext", "use --context instead")
 
+	// Other prefixes
+	rcp.prefixedClientConfigs = make(map[string]*configAndOverrides, len(rcp.contextPrefixes))
+	for _, prefix := range rcp.contextPrefixes {
+		rcp.prefixedClientConfigs[prefix] = rcp.setupContextFlags(loadingRules, flags, prefix)
+	}
+}
+
+func (rcp *Producer) setupContextFlags(
+	loadingRules *clientcmd.ClientConfigLoadingRules, flags *pflag.FlagSet, prefix string,
+) *configAndOverrides {
+	// Default un-prefixed context
+	overrides := clientcmd.ConfigOverrides{ClusterDefaults: clientcmd.ClusterDefaults}
+	kflags := clientcmd.RecommendedConfigOverrideFlags(prefix)
+
 	if !rcp.namespaceFlag {
-		_ = flags.MarkHidden("namespace")
+		// Drop the namespace flag (an empty long name disables a flag)
+		kflags.ContextOverrideFlags.Namespace.LongName = ""
+	} else if prefix != "" {
+		// Avoid attempting to define "-n" twice
+		kflags.ContextOverrideFlags.Namespace.ShortName = ""
+	}
+
+	clientcmd.BindOverrideFlags(&overrides, flags, kflags)
+
+	return &configAndOverrides{
+		config:    clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &overrides),
+		overrides: &overrides,
+	}
+}
+
+func (rcp *Producer) setupFromConfig(kubeConfig, kubeContext string) {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
+	loadingRules.ExplicitPath = kubeConfig
+
+	overrides := clientcmd.ConfigOverrides{ClusterDefaults: clientcmd.ClusterDefaults}
+	if kubeContext != "" {
+		overrides.CurrentContext = kubeContext
 	}
 
 	rcp.defaultClientConfig = &configAndOverrides{
@@ -176,6 +227,35 @@ func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter
 	return function(clusterInfo, namespace, status)
 }
 
+// RunOnSelectedContext runs the given function on the selected prefixed context.
+func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerContextFn, status reporter.Interface) error {
+	clientConfig, ok := rcp.prefixedClientConfigs[prefix]
+	if ok {
+		restConfig, err := getRestConfigFromConfig(clientConfig.config, clientConfig.overrides)
+		if err != nil {
+			return status.Error(err, "error retrieving the configuration for prefix %s", prefix)
+		}
+
+		clusterInfo, err := cluster.NewInfo(restConfig.ClusterName, restConfig.Config)
+		if err != nil {
+			return status.Error(err, "error building the cluster.Info for the configuration for prefix %s", prefix)
+		}
+
+		namespace, overridden, err := clientConfig.config.Namespace()
+		if err != nil {
+			return status.Error(err, "error retrieving the namespace for the configuration for prefix %s", prefix)
+		}
+
+		if !overridden && rcp.defaultNamespace != nil {
+			namespace = *rcp.defaultNamespace
+		}
+
+		return function(clusterInfo, namespace, status)
+	}
+
+	return nil
+}
+
 func (rcp *Producer) AddKubeConfigFlag(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVar(&rcp.kubeConfig, "kubeconfig", "", "absolute path(s) to the kubeconfig file(s)")
 }
@@ -225,7 +305,7 @@ func (rcp *Producer) CountRequestedClusters() int {
 	return 1
 }
 
-func (rcp *Producer) ForCluster() (RestConfig, error) {
+func (rcp *Producer) forCluster() (RestConfig, error) {
 	var restConfig RestConfig
 
 	restConfigs, err := rcp.getRestConfigs()
@@ -397,7 +477,7 @@ func (rcp *Producer) CheckVersionMismatch(cmd *cobra.Command, args []string) err
 	}
 
 	// Legacy flag handling
-	config, err := rcp.ForCluster()
+	config, err := rcp.forCluster()
 	exit.OnErrorWithMessage(err, "The provided kubeconfig is invalid")
 
 	crClient, err := controllerClient.New(config.Config, controllerClient.Options{})
@@ -458,7 +538,7 @@ func ConfigureTestFramework(args []string) error {
 
 		clusterName, err := rcp.clusterNameFromContext()
 		if err != nil {
-			// nolint:nilerr // This is intentional.
+			//nolint:nilerr // This is intentional.
 			return nil
 		}
 

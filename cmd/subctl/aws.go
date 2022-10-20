@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// nolint:dupl // Similar code in aws.go, azure.go, rhos.go, but not duplicate
+//nolint:dupl // Similar code in aws.go, azure.go, rhos.go, but not duplicate
 package subctl
 
 import (
@@ -42,7 +42,7 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-					return prepare.AWS(clusterInfo, &cloudPorts, &awsConfig, status) // nolint:wrapcheck // No need to wrap errors here.
+					return prepare.AWS(clusterInfo, &cloudPorts, &awsConfig, status) //nolint:wrapcheck // No need to wrap errors here.
 				}, cli.NewReporter()))
 		},
 	}
@@ -56,7 +56,7 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-					return cleanup.AWS(clusterInfo, &awsConfig, status) // nolint:wrapcheck // No need to wrap errors here.
+					return cleanup.AWS(clusterInfo, &awsConfig, status) //nolint:wrapcheck // No need to wrap errors here.
 				}, cli.NewReporter()))
 		},
 	}

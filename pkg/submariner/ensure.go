@@ -32,7 +32,7 @@ func Ensure(status reporter.Interface, kubeClient kubernetes.Interface, dynClien
 	operatorNamespace string,
 ) error {
 	if created, err := serviceaccount.Ensure(kubeClient, operatorNamespace); err != nil {
-		return err // nolint:wrapcheck // No need to wrap here
+		return err //nolint:wrapcheck // No need to wrap here
 	} else if created {
 		status.Success("Created submariner service account and role")
 	}
@@ -66,7 +66,7 @@ func Ensure(status reporter.Interface, kubeClient kubernetes.Interface, dynClien
 	}
 
 	if created, err := ocp.EnsureRBAC(dynClient, kubeClient, operatorNamespace, componentsRbac); err != nil {
-		return err // nolint:wrapcheck // No need to wrap here
+		return err //nolint:wrapcheck // No need to wrap here
 	} else if created {
 		status.Success("Updated the OCP roles")
 	}

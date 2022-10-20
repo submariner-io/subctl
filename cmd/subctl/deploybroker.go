@@ -86,10 +86,10 @@ func addDeployBrokerFlags() {
 
 func deployBrokerInContext(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 	if err := deploy.Broker(&deployflags, clusterInfo.ClientProducer, status); err != nil {
-		return err // nolint:wrapcheck // No need to wrap errors here.
+		return err //nolint:wrapcheck // No need to wrap errors here.
 	}
 
-	return broker.WriteInfoToFile( // nolint:wrapcheck // No need to wrap errors here.
+	return broker.WriteInfoToFile( //nolint:wrapcheck // No need to wrap errors here.
 		clusterInfo.RestConfig, deployflags.BrokerNamespace, ipsecSubmFile,
 		stringset.New(deployflags.BrokerSpec.Components...), deployflags.BrokerSpec.DefaultCustomDomains, status)
 }

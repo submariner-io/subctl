@@ -26,7 +26,7 @@ import (
 )
 
 func GenericCluster(clusterInfo *cluster.Info, gateways int, status reporter.Interface) error {
-	// nolint:wrapcheck // No need to wrap errors here.
+	//nolint:wrapcheck // No need to wrap errors here.
 	err := generic.RunOnCluster(clusterInfo, status,
 		func(gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if gateways > 0 {

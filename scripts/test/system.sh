@@ -108,7 +108,14 @@ test_subctl_gather
 # Test subctl diagnose invocations
 
 _subctl diagnose all --validation-timeout 20
+#_subctl diagnose firewall inter-cluster --validation-timeout 20 --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1 --remoteconfig "${KUBECONFIGS_DIR}"/kind-config-cluster2
+_subctl diagnose firewall inter-cluster --validation-timeout 20 --context cluster1 --remotecontext cluster2
+#_subctl diagnose firewall nat-discovery --validation-timeout 20 --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1 --remoteconfig "${KUBECONFIGS_DIR}"/kind-config-cluster2
+_subctl diagnose firewall nat-discovery --validation-timeout 20 --context cluster1 --remotecontext cluster2
+# Deprecated firewall inter-cluster variant
 _subctl diagnose firewall inter-cluster --validation-timeout 20 "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2
+# Deprecated firewall nat-discovery variant
+_subctl diagnose firewall nat-discovery --validation-timeout 20 "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2
 
 # Test subctl benchmark invocations
 

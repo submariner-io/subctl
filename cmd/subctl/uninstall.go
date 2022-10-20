@@ -70,6 +70,6 @@ func uninstallInContext(clusterInfo *cluster.Info, namespace string, status repo
 		}
 	}
 
-	return uninstall.All( // nolint:wrapcheck // No need to wrap errors here.
+	return uninstall.All( //nolint:wrapcheck // No need to wrap errors here.
 		clusterInfo.ClientProducer, clusterInfo.Name, namespace, status)
 }

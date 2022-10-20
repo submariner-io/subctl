@@ -185,7 +185,7 @@ func (np *Scheduled) Delete() {
 	_ = pc.Delete(context.TODO(), np.Pod.Name, metav1.DeleteOptions{})
 }
 
-// nolint:wrapcheck // No need to wrap errors here.
+//nolint:wrapcheck // No need to wrap errors here.
 func (np *Scheduled) awaitUntilScheduled() error {
 	pods := np.Config.ClientSet.CoreV1().Pods(np.Config.Namespace)
 
@@ -213,7 +213,7 @@ func (np *Scheduled) awaitUntilScheduled() error {
 	return nil
 }
 
-// nolint:wrapcheck // No need to wrap errors here.
+//nolint:wrapcheck // No need to wrap errors here.
 func (np *Scheduled) AwaitCompletion() error {
 	pods := np.Config.ClientSet.CoreV1().Pods(np.Config.Namespace)
 
@@ -223,7 +223,7 @@ func (np *Scheduled) AwaitCompletion() error {
 		}, func(result interface{}) (bool, string, error) {
 			np.Pod = result.(*v1.Pod)
 
-			switch np.Pod.Status.Phase { // nolint:exhaustive // 'missing cases in switch' - OK
+			switch np.Pod.Status.Phase { //nolint:exhaustive // 'missing cases in switch' - OK
 			case v1.PodSucceeded:
 				return true, "", nil
 			case v1.PodFailed:

@@ -71,7 +71,7 @@ func Ensure(crdUpdater crd.Updater, kubeClient kubernetes.Interface, componentAr
 	// Create the namespace
 	_, err := namespace.Ensure(kubeClient, brokerNS, brokerNamespaceLabels)
 	if err != nil {
-		return err // nolint:wrapcheck // No need to wrap here
+		return err //nolint:wrapcheck // No need to wrap here
 	}
 
 	// Create administrator SA, Role, and bind them
@@ -172,7 +172,7 @@ func WaitForClientToken(kubeClient kubernetes.Interface, submarinerBrokerSA, inN
 	err := wait.ExponentialBackoff(backoff, func() (bool, error) {
 		secret, lastErr = rbac.GetClientTokenSecret(kubeClient, inNamespace, submarinerBrokerSA)
 		if lastErr != nil {
-			// nolint:nilerr // Intentional - the error is propagated via the outer-scoped var 'lastErr'
+			//nolint:nilerr // Intentional - the error is propagated via the outer-scoped var 'lastErr'
 			return false, nil
 		}
 
@@ -180,23 +180,23 @@ func WaitForClientToken(kubeClient kubernetes.Interface, submarinerBrokerSA, inN
 	})
 
 	if goerrors.Is(err, wait.ErrWaitTimeout) {
-		return nil, lastErr // nolint:wrapcheck // No need to wrap here
+		return nil, lastErr //nolint:wrapcheck // No need to wrap here
 	}
 
-	return secret, err // nolint:wrapcheck // No need to wrap here
+	return secret, err //nolint:wrapcheck // No need to wrap here
 }
 
-// nolint:wrapcheck // No need to wrap here
+//nolint:wrapcheck // No need to wrap here
 func CreateOrUpdateClusterBrokerRole(kubeClient kubernetes.Interface, inNamespace string) (bool, error) {
 	return role.Ensure(kubeClient, inNamespace, NewBrokerClusterRole())
 }
 
-// nolint:wrapcheck // No need to wrap here
+//nolint:wrapcheck // No need to wrap here
 func CreateOrUpdateBrokerAdminRole(clientset kubernetes.Interface, inNamespace string) (created bool, err error) {
 	return role.Ensure(clientset, inNamespace, NewBrokerAdminRole())
 }
 
-// nolint:wrapcheck // No need to wrap here
+//nolint:wrapcheck // No need to wrap here
 func CreateNewBrokerRoleBinding(kubeClient kubernetes.Interface, serviceAccount, roleName, inNamespace string) (
 	brokerRoleBinding *rbacv1.RoleBinding, err error,
 ) {
@@ -204,7 +204,7 @@ func CreateNewBrokerRoleBinding(kubeClient kubernetes.Interface, serviceAccount,
 		context.TODO(), NewBrokerRoleBinding(serviceAccount, roleName, inNamespace), metav1.CreateOptions{})
 }
 
-// nolint:wrapcheck // No need to wrap here
+//nolint:wrapcheck // No need to wrap here
 func CreateNewBrokerSA(kubeClient kubernetes.Interface, submarinerBrokerSA, inNamespace string) (err error) {
 	sa := NewBrokerSA(submarinerBrokerSA)
 	_, err = serviceaccount.Ensure(kubeClient, inNamespace, sa, true)

@@ -50,7 +50,7 @@ func GetClientTokenSecret(kubeClient kubernetes.Interface, namespace, serviceAcc
 
 	for _, secret := range sa.Secrets {
 		if strings.HasPrefix(secret.Name, tokenPrefix) {
-			// nolint:wrapcheck // No need to wrap here
+			//nolint:wrapcheck // No need to wrap here
 			return kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), secret.Name, metav1.GetOptions{})
 		}
 	}
