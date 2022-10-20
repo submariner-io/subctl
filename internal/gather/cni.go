@@ -200,7 +200,7 @@ func logVxlanCmds(info *Info, pod *v1.Pod) {
 	}
 }
 
-// nolint:wrapcheck // No need to wrap errors here.
+//nolint:wrapcheck // No need to wrap errors here.
 func execCmdInBash(info *Info, pod *v1.Pod, cmd string) (string, string, error) {
 	execOptions := pods.ExecOptionsFromPod(pod)
 	execConfig := pods.ExecConfig{

@@ -136,7 +136,7 @@ func joinInContext(brokerInfo *broker.Info, clusterInfo *cluster.Info, status re
 		joinFlags.CustomDomains = *brokerInfo.CustomDomains
 	}
 
-	return join.ClusterToBroker( // nolint:wrapcheck // No need to wrap errors here.
+	return join.ClusterToBroker( //nolint:wrapcheck // No need to wrap errors here.
 		brokerInfo, &joinFlags, clusterInfo.ClientProducer, status)
 }
 
@@ -201,7 +201,7 @@ func askForGatewayNode(workerNodeNames []string) (string, error) {
 
 	err := survey.Ask(qs, &answers)
 	if err != nil {
-		return "", err // nolint:wrapcheck // No need to wrap here
+		return "", err //nolint:wrapcheck // No need to wrap here
 	}
 
 	return answers.Node, nil
@@ -226,7 +226,7 @@ func askForClusterID() (string, error) {
 				return nil
 			}
 
-			return cluster.IsValidID(str) // nolint:wrapcheck // No need to wrap
+			return cluster.IsValidID(str) //nolint:wrapcheck // No need to wrap
 		},
 	})
 
@@ -237,7 +237,7 @@ func askForClusterID() (string, error) {
 	err := survey.Ask(qs, &answers)
 	// Most likely a programming error
 	if err != nil {
-		return "", err // nolint:wrapcheck // No need to wrap
+		return "", err //nolint:wrapcheck // No need to wrap
 	}
 
 	return answers.ClusterID, nil
@@ -256,7 +256,7 @@ func askForCIDR(name string) (string, error) {
 
 	err := survey.Ask(qs, &answers)
 	if err != nil {
-		return "", err // nolint:wrapcheck // No need to wrap here
+		return "", err //nolint:wrapcheck // No need to wrap here
 	}
 
 	return strings.TrimSpace(answers.Cidr), nil

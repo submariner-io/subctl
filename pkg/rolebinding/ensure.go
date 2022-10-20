@@ -28,7 +28,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// nolint:wrapcheck // No need to wrap errors here.
+//nolint:wrapcheck // No need to wrap errors here.
 func EnsureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (bool, error) {
 	roleBinding := &rbacv1.RoleBinding{}
 
@@ -40,7 +40,7 @@ func EnsureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (bo
 	return Ensure(kubeClient, namespace, roleBinding)
 }
 
-// nolint:wrapcheck // No need to wrap errors here.
+//nolint:wrapcheck // No need to wrap errors here.
 func Ensure(kubeClient kubernetes.Interface, namespace string, roleBinding *rbacv1.RoleBinding) (bool, error) {
 	return resourceutil.CreateOrUpdate(context.TODO(), resource.ForRoleBinding(kubeClient, namespace), roleBinding)
 }

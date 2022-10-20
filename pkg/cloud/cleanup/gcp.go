@@ -27,7 +27,7 @@ import (
 
 func GCP(clusterInfo *cluster.Info, config *gcp.Config, status reporter.Interface) error {
 	err := gcp.RunOn(clusterInfo, config, status,
-		// nolint:wrapcheck // No need to wrap errors here
+		//nolint:wrapcheck // No need to wrap errors here
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			err := gwDeployer.Cleanup(status)
 			if err != nil {

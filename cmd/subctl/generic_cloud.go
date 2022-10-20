@@ -40,7 +40,7 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-					return prepare.GenericCluster( // nolint:wrapcheck // No need to wrap errors here.
+					return prepare.GenericCluster( //nolint:wrapcheck // No need to wrap errors here.
 						clusterInfo, genericCloudConfig.gateways, status)
 				}, cli.NewReporter()))
 		},
@@ -53,7 +53,7 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-					return cleanup.GenericCluster(clusterInfo, status) // nolint:wrapcheck // No need to wrap errors here.
+					return cleanup.GenericCluster(clusterInfo, status) //nolint:wrapcheck // No need to wrap errors here.
 				}, cli.NewReporter()))
 		},
 	}

@@ -39,7 +39,7 @@ func AWS(clusterInfo *cluster.Info, ports *cloud.Ports, config *aws.Config, stat
 		input.InternalPorts = append(input.InternalPorts, gwPorts...)
 	}
 
-	// nolint:wrapcheck // No need to wrap errors here.
+	//nolint:wrapcheck // No need to wrap errors here.
 	err = aws.RunOn(clusterInfo, config, status,
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if config.Gateways > 0 {

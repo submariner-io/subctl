@@ -18,7 +18,7 @@ limitations under the License.
 
 package subctl
 
-// nolint:revive // Blank imports below are intentional.
+//nolint:revive // Blank imports below are intentional.
 import (
 	"errors"
 	"fmt"

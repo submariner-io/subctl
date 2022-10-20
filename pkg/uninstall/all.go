@@ -102,7 +102,7 @@ func unlabelGatewayNodes(clients client.Producer, clusterName string, status rep
 		return status.Error(err, "Error listing Nodes")
 	}
 
-	// nolint:wrapcheck // Let the caller wrap errors
+	//nolint:wrapcheck // Let the caller wrap errors
 	nodeInterface := &resource.InterfaceFuncs{
 		GetFunc: func(ctx context.Context, name string, options metav1.GetOptions) (runtime.Object, error) {
 			return clients.ForKubernetes().CoreV1().Nodes().Get(ctx, name, options)
@@ -246,7 +246,7 @@ func ensureDeleted(controllerClient controller.Client, obj controller.Object) er
 	const maxWait = componentReadyTimeout + time.Second*30
 	const checkInterval = 2 * time.Second
 
-	// nolint:wrapcheck // Let the caller wrap errors
+	//nolint:wrapcheck // Let the caller wrap errors
 	return wait.PollImmediate(checkInterval, maxWait, func() (bool, error) {
 		err := controllerClient.Delete(context.TODO(), obj)
 		if apierrors.IsNotFound(err) {

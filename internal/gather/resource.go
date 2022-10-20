@@ -36,7 +36,7 @@ import (
 
 var fileNameRegexp = regexp.MustCompile(`[<>:"/\|?*]`)
 
-// nolint:gocritic // hugeParam: listOptions - match K8s API.
+//nolint:gocritic // hugeParam: listOptions - match K8s API.
 func ResourcesToYAMLFile(info *Info, ofType schema.GroupVersionResource, namespace string, listOptions metav1.ListOptions) {
 	err := func() error {
 		list, err := info.ClientProducer.ForDynamic().Resource(ofType).Namespace(namespace).List(context.TODO(), listOptions)
@@ -94,17 +94,17 @@ func ResourcesToYAMLFile(info *Info, ofType schema.GroupVersionResource, namespa
 	}
 }
 
-// nolint:gocritic // hugeParam: listOptions - match K8s API.
+//nolint:gocritic // hugeParam: listOptions - match K8s API.
 func gatherDaemonSet(info *Info, namespace string, listOptions metav1.ListOptions) {
 	ResourcesToYAMLFile(info, appsv1.SchemeGroupVersion.WithResource("daemonsets"), namespace, listOptions)
 }
 
-// nolint:gocritic // hugeParam: listOptions - match K8s API.
+//nolint:gocritic // hugeParam: listOptions - match K8s API.
 func gatherDeployment(info *Info, namespace string, listOptions metav1.ListOptions) {
 	ResourcesToYAMLFile(info, appsv1.SchemeGroupVersion.WithResource("deployments"), namespace, listOptions)
 }
 
-// nolint:gocritic // hugeParam: listOptions - match K8s API.
+//nolint:gocritic // hugeParam: listOptions - match K8s API.
 func gatherConfigMaps(info *Info, namespace string, listOptions metav1.ListOptions) {
 	ResourcesToYAMLFile(info, corev1.SchemeGroupVersion.WithResource("configmaps"), namespace, listOptions)
 }

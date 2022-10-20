@@ -95,7 +95,7 @@ func (c *Info) GetGateways() ([]submarinerv1.Gateway, error) {
 			return []submarinerv1.Gateway{}, nil
 		}
 
-		return nil, err // nolint:wrapcheck // error can't be wrapped.
+		return nil, err //nolint:wrapcheck // error can't be wrapped.
 	}
 
 	return gateways.Items, nil

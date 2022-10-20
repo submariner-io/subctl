@@ -123,7 +123,7 @@ func readMetadataFile(fileName string) (string, string, error) {
 
 	err := cloud.ReadMetadataFile(fileName, &metadata)
 
-	return metadata.InfraID, metadata.Azure.Region, err // nolint:wrapcheck // No need to wrap here
+	return metadata.InfraID, metadata.Azure.Region, err //nolint:wrapcheck // No need to wrap here
 }
 
 func initializeFromAuthFile(authFile string) (string, error) {

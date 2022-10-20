@@ -125,5 +125,5 @@ func backupIfExists(fileName string) (string, error) {
 	nowStr := strings.ReplaceAll(now.Format(time.RFC3339), ":", "_")
 	newFilename := fileName + "." + nowStr
 
-	return newFilename, os.Rename(fileName, newFilename) // nolint:wrapcheck // No need to wrap here
+	return newFilename, os.Rename(fileName, newFilename) //nolint:wrapcheck // No need to wrap here
 }
