@@ -49,6 +49,7 @@ var validOverrides = []string{
 	names.NetworkPluginSyncerComponent,
 	names.ServiceDiscoveryComponent,
 	names.LighthouseCoreDNSComponent,
+	names.NettestComponent,
 }
 
 func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer client.Producer, status reporter.Interface,

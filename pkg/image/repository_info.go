@@ -49,7 +49,7 @@ func NewRepositoryInfo(name, verion string, overrides map[string]string) *Reposi
 }
 
 func (i *RepositoryInfo) GetNettestImage() string {
-	return images.GetImagePath(i.Name, i.Version, "nettest", "nettest", i.Overrides)
+	return images.GetImagePath(i.Name, i.Version, names.NettestImage, names.NettestComponent, i.Overrides)
 }
 
 func (i *RepositoryInfo) GetOperatorImage() string {
