@@ -712,8 +712,8 @@ github.com/submariner-io/shipyard v0.13.1 h1:h5Qjlb14uAHjyIiJhuKpPkW9dAUpXZzBey4
 github.com/submariner-io/shipyard v0.13.1/go.mod h1:f7+5soL//qKdoK/0vUvLgto/3JFPYtpXJu4e2iWAicM=
 github.com/submariner-io/submariner v0.13.0 h1:4ezPyOC0ldaTFIya+W6oqWHSUR6L64ZSRTJkUEPj19U=
 github.com/submariner-io/submariner v0.13.0/go.mod h1:NRYeNN1tJXXIJIqPqyU3CuYCg8nfpwyNc+tVcP5Eox0=
-github.com/submariner-io/submariner-operator v0.13.0 h1:ex4HEZ6veWDnv3vSjpzJnsjORUVyYZMUY+hzU0RgZtY=
-github.com/submariner-io/submariner-operator v0.13.0/go.mod h1:NydGPO7XscaWpJN0JDercOJV6SXCGpHbcsIc5Q5AqOA=
+github.com/submariner-io/submariner-operator v0.13.2-0.20221027104449-f4add84950b4 h1:Tz0Shs8adn6GeDafw45d0pPZqq1uhteVvcn1URy11dk=
+github.com/submariner-io/submariner-operator v0.13.2-0.20221027104449-f4add84950b4/go.mod h1:xqVV7H6FiC2TwQSkEB+yz3jHtbeUC7eWKvyCf+jYWpQ=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=

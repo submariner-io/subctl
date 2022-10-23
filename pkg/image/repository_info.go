@@ -18,7 +18,10 @@ limitations under the License.
 
 package image
 
-import "github.com/submariner-io/submariner-operator/pkg/images"
+import (
+	"github.com/submariner-io/submariner-operator/pkg/images"
+	"github.com/submariner-io/submariner-operator/pkg/names"
+)
 
 type RepositoryInfo struct {
 	Name      string
@@ -27,5 +30,5 @@ type RepositoryInfo struct {
 }
 
 func (i *RepositoryInfo) GetNettestImageURL() string {
-	return images.GetImagePath(i.Name, i.Version, "nettest", "nettest", i.Overrides)
+	return images.GetImagePath(i.Name, i.Version, names.NettestImage, names.NettestComponent, i.Overrides)
 }
