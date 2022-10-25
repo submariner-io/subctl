@@ -58,7 +58,6 @@ const (
 type FirewallOptions struct {
 	ValidationTimeout uint
 	VerboseOutput     bool
-	PodNamespace      string
 }
 
 func spawnClientPodOnNonGatewayNode(client kubernetes.Interface, namespace, podCommand string,
@@ -183,7 +182,7 @@ func getGatewayIP(clusterInfo *cluster.Info, localClusterID string, status repor
 		clusterInfo.Name, localClusterID), "Error")
 }
 
-func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, options FirewallOptions,
+func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, namespace string, options FirewallOptions,
 	status reporter.Interface, targetPort TargetPort, message string,
 ) error {
 	mustHaveSubmariner(localClusterInfo)
@@ -237,7 +236,7 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, optio
 		"(tcpdump --immediate-mode -ln -Q in -A -s 100 -i any udp and %s & pid=\"$!\"; (sleep %d; kill \"$pid\") &) | grep -m1 '%s'",
 		portFilter, options.ValidationTimeout, clientMessage)
 
-	sPod, err := spawnSnifferPodOnNode(localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, options.PodNamespace, podCommand,
+	sPod, err := spawnSnifferPodOnNode(localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, namespace, podCommand,
 		localClusterInfo.GetImageRepositoryInfo())
 	if err != nil {
 		return status.Error(err, "Error spawning the sniffer pod on the Gateway node %q", gwNodeName)
@@ -255,7 +254,7 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, optio
 
 	// Spawn the pod on the nonGateway node. If we spawn the pod on Gateway node, the tunnel process can
 	// sometimes drop the udp traffic from client pod until the tunnels are properly setup.
-	cPod, err := spawnClientPodOnNonGatewayNodeWithHostNet(remoteClusterInfo.ClientProducer.ForKubernetes(), options.PodNamespace,
+	cPod, err := spawnClientPodOnNonGatewayNodeWithHostNet(remoteClusterInfo.ClientProducer.ForKubernetes(), namespace,
 		podCommand, localClusterInfo.GetImageRepositoryInfo())
 	if err != nil {
 		return status.Error(err, "Error spawning the client pod on non-Gateway node of cluster %q", remoteClusterInfo.Name)

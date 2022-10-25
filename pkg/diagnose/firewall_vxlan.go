@@ -31,7 +31,7 @@ const (
 	tcpSniffVxLANCommand = "tcpdump -ln -c 3 -i vx-submariner tcp and port 8080 and 'tcp[tcpflags] == tcp-syn'"
 )
 
-func FirewallIntraVxLANConfig(clusterInfo *cluster.Info, options FirewallOptions, status reporter.Interface) error {
+func FirewallIntraVxLANConfig(clusterInfo *cluster.Info, namespace string, options FirewallOptions, status reporter.Interface) error {
 	mustHaveSubmariner(clusterInfo)
 
 	status.Start("Checking the firewall configuration to determine if intra-cluster VXLAN traffic is allowed")
@@ -49,7 +49,7 @@ func FirewallIntraVxLANConfig(clusterInfo *cluster.Info, options FirewallOptions
 
 	tracker := reporter.NewTracker(status)
 
-	checkFWConfig(clusterInfo, options, tracker)
+	checkFWConfig(clusterInfo, namespace, options, tracker)
 
 	if tracker.HasFailures() {
 		return errors.New("failures while diagnosing the intra-VXLAN firewall configuration")
@@ -60,7 +60,7 @@ func FirewallIntraVxLANConfig(clusterInfo *cluster.Info, options FirewallOptions
 	return nil
 }
 
-func checkFWConfig(clusterInfo *cluster.Info, options FirewallOptions, status reporter.Interface) {
+func checkFWConfig(clusterInfo *cluster.Info, namespace string, options FirewallOptions, status reporter.Interface) {
 	if clusterInfo.Submariner.Status.NetworkPlugin == "OVNKubernetes" {
 		status.Success("This check is not necessary for the OVNKubernetes CNI plugin")
 		return
@@ -86,7 +86,7 @@ func checkFWConfig(clusterInfo *cluster.Info, options FirewallOptions, status re
 
 	podCommand := fmt.Sprintf("timeout %d %s", options.ValidationTimeout, tcpSniffVxLANCommand)
 
-	sPod, err := spawnSnifferPodOnNode(clusterInfo.ClientProducer.ForKubernetes(), gwNodeName, options.PodNamespace, podCommand,
+	sPod, err := spawnSnifferPodOnNode(clusterInfo.ClientProducer.ForKubernetes(), gwNodeName, namespace, podCommand,
 		clusterInfo.GetImageRepositoryInfo())
 	if err != nil {
 		status.Failure("Error spawning the sniffer pod on the Gateway node: %v", err)
@@ -98,7 +98,7 @@ func checkFWConfig(clusterInfo *cluster.Info, options FirewallOptions, status re
 	remoteClusterIP := strings.Split(remoteEndpoint.Spec.Subnets[0], "/")[0]
 	podCommand = fmt.Sprintf("nc -w %d %s 8080", options.ValidationTimeout/2, remoteClusterIP)
 
-	cPod, err := spawnClientPodOnNonGatewayNode(clusterInfo.ClientProducer.ForKubernetes(), options.PodNamespace, podCommand,
+	cPod, err := spawnClientPodOnNonGatewayNode(clusterInfo.ClientProducer.ForKubernetes(), namespace, podCommand,
 		clusterInfo.GetImageRepositoryInfo())
 	if err != nil {
 		status.Failure("Error spawning the client pod on non-Gateway node: %v", err)
