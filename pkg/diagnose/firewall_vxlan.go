@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
@@ -30,7 +31,7 @@ const (
 	tcpSniffVxLANCommand = "tcpdump -ln -c 3 -i vx-submariner tcp and port 8080 and 'tcp[tcpflags] == tcp-syn'"
 )
 
-func FirewallIntraVxLANConfig(clusterInfo *cluster.Info, options FirewallOptions, status reporter.Interface) bool {
+func FirewallIntraVxLANConfig(clusterInfo *cluster.Info, options FirewallOptions, status reporter.Interface) error {
 	mustHaveSubmariner(clusterInfo)
 
 	status.Start("Checking the firewall configuration to determine if intra-cluster VXLAN traffic is allowed")
@@ -38,13 +39,12 @@ func FirewallIntraVxLANConfig(clusterInfo *cluster.Info, options FirewallOptions
 
 	singleNode, err := clusterInfo.HasSingleNode()
 	if err != nil {
-		status.Failure(err.Error())
-		return false
+		return status.Error(err, "Error determining whether the cluster has a single node")
 	}
 
 	if singleNode {
 		status.Success(singleNodeMessage)
-		return true
+		return nil
 	}
 
 	tracker := reporter.NewTracker(status)
@@ -52,12 +52,12 @@ func FirewallIntraVxLANConfig(clusterInfo *cluster.Info, options FirewallOptions
 	checkFWConfig(clusterInfo, options, tracker)
 
 	if tracker.HasFailures() {
-		return false
+		return errors.New("failures while diagnosing the intra-VXLAN firewall configuration")
 	}
 
 	status.Success("The firewall configuration allows intra-cluster VXLAN traffic")
 
-	return true
+	return nil
 }
 
 func checkFWConfig(clusterInfo *cluster.Info, options FirewallOptions, status reporter.Interface) {

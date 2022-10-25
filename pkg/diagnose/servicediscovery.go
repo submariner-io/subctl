@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	lhconstants "github.com/submariner-io/lighthouse/pkg/constants"
 	"github.com/submariner-io/subctl/internal/constants"
@@ -35,7 +36,7 @@ import (
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
-func ServiceDiscovery(clusterInfo *cluster.Info, status reporter.Interface) bool {
+func ServiceDiscovery(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Checking if services have been exported properly")
 	defer status.End()
 
@@ -44,12 +45,12 @@ func ServiceDiscovery(clusterInfo *cluster.Info, status reporter.Interface) bool
 	checkServiceExport(clusterInfo, tracker)
 
 	if tracker.HasFailures() {
-		return false
+		return errors.New("failures while diagnosing service discovery")
 	}
 
 	status.Success("All services have been exported properly")
 
-	return true
+	return nil
 }
 
 // This function checks if all ServiceExports have a matching ServiceImport and if an EndpointSlice has been created for the service.
@@ -84,7 +85,7 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 			if apierrors.IsNotFound(err) {
 				status.Failure("No EndpointSlice found for exported service %s/%s", se.Namespace, se.Name)
 			} else {
-				status.Failure("Error retrieving EndPointSlice for exported service %s/%s", se.Namespace, se.Name)
+				status.Failure("Error retrieving EndPointSlice for exported service %s/%s: %v", se.Namespace, se.Name, err)
 				return
 			}
 		}
@@ -96,7 +97,7 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 			if apierrors.IsNotFound(err) {
 				status.Failure("No ServiceImport found for exported service %s/%s", se.Namespace, se.Name)
 			} else {
-				status.Failure("Error retrieving ServiceImport for exported service %s/%s", se.Namespace, se.Name)
+				status.Failure("Error retrieving ServiceImport for exported service %s/%s: %v", se.Namespace, se.Name, err)
 			}
 		}
 	}

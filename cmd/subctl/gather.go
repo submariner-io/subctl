@@ -25,7 +25,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/subctl/cmd/subctl/execute"
+	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/gather"
 	"github.com/submariner-io/subctl/internal/restconfig"
@@ -34,7 +34,7 @@ import (
 
 var options gather.Options
 
-var gatherRestConfigProducer = restconfig.NewProducer()
+var gatherRestConfigProducer = restconfig.NewProducer().WithContextsFlag().WithDeprecatedKubeContexts("use --contexts instead")
 
 var gatherCmd = &cobra.Command{
 	Use:   "gather",
@@ -47,17 +47,19 @@ var gatherCmd = &cobra.Command{
 			options.Directory = "submariner-" + time.Now().UTC().Format("20060102150405") // submariner-YYYYMMDDHHMMSS
 		}
 
-		execute.OnMultiCluster(gatherRestConfigProducer, func(info *cluster.Info, status reporter.Interface) bool {
-			err := checkGatherArguments()
-			exit.OnErrorWithMessage(err, "Invalid argument")
+		err := checkGatherArguments()
+		exit.OnErrorWithMessage(err, "Invalid argument")
 
-			return gather.Data(info, status, options)
-		})
+		status := cli.NewReporter()
+
+		exit.OnError(gatherRestConfigProducer.RunOnAllContexts(
+			func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+				return gather.Data(clusterInfo, status, options) // nolint:wrapcheck // No need to wrap errors here.
+			}, status))
 	},
 }
 
 func init() {
-	gatherRestConfigProducer.AddKubeContextMultiFlag(gatherCmd, "")
 	addGatherFlags(gatherCmd)
 	rootCmd.AddCommand(gatherCmd)
 }
@@ -72,6 +74,7 @@ func addGatherFlags(gatherCmd *cobra.Command) {
 			"is created in the current directory")
 	gatherCmd.Flags().BoolVar(&options.IncludeSensitiveData, "include-sensitive-data", false,
 		"do not redact sensitive data such as credentials and security tokens")
+	gatherRestConfigProducer.SetupFlags(gatherCmd.Flags())
 }
 
 func checkGatherArguments() error {

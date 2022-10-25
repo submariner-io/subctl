@@ -19,19 +19,19 @@ limitations under the License.
 package diagnose
 
 import (
+	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/version"
-	"k8s.io/client-go/kubernetes"
 )
 
-func K8sVersion(client kubernetes.Interface, status reporter.Interface) bool {
+func K8sVersion(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 	status.Start("Checking Submariner support for the Kubernetes version")
 	defer status.End()
 
-	k8sVersion, failedRequirements, err := version.CheckRequirements(client)
+	k8sVersion, failedRequirements, err := version.CheckRequirements(clusterInfo.ClientProducer.ForKubernetes())
 	if err != nil {
-		status.Failure(err.Error())
-		return false
+		return status.Error(err, "Error checking the version requirements")
 	}
 
 	tracker := reporter.NewTracker(status)
@@ -41,10 +41,10 @@ func K8sVersion(client kubernetes.Interface, status reporter.Interface) bool {
 	}
 
 	if tracker.HasFailures() {
-		return false
+		return errors.New("failures while diagnosing the Kubernetes version")
 	}
 
 	status.Success("Kubernetes version %q is supported", k8sVersion)
 
-	return true
+	return nil
 }

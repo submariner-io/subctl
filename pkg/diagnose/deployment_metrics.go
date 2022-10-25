@@ -21,8 +21,10 @@ package diagnose
 import (
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	apierrors "k8s.io/apimachinery/pkg/util/errors"
 )
 
 const (
@@ -31,53 +33,54 @@ const (
 	gnCurlMetricsCommand = curlCmd + " submariner-globalnet-metrics.submariner-operator.svc.cluster.local:8081/metrics"
 )
 
-func checkMetricsConfig(clusterInfo *cluster.Info, status reporter.Interface) bool {
-	result := checkComponentMetrics(clusterInfo, status, "gateway", gwCurlMetricsCommand)
-
-	if clusterInfo.Submariner.Spec.GlobalCIDR != "" {
-		result = checkComponentMetrics(clusterInfo, status, "globalnet", gnCurlMetricsCommand) && result
+func checkMetricsConfig(clusterInfo *cluster.Info, status reporter.Interface) error {
+	metricsErrors := []error{}
+	if err := checkComponentMetrics(clusterInfo, status, "gateway", gwCurlMetricsCommand); err != nil {
+		metricsErrors = append(metricsErrors, err)
 	}
 
-	return result
+	if clusterInfo.Submariner.Spec.GlobalCIDR != "" {
+		if err := checkComponentMetrics(clusterInfo, status, "globalnet", gnCurlMetricsCommand); err != nil {
+			metricsErrors = append(metricsErrors, err)
+		}
+	}
+
+	return apierrors.NewAggregate(metricsErrors)
 }
 
-func checkComponentMetrics(clusterInfo *cluster.Info, status reporter.Interface, component, command string) bool {
+func checkComponentMetrics(clusterInfo *cluster.Info, status reporter.Interface, component, command string) error {
 	status.Start("Checking if %s metrics are accessible from non-gateway nodes", component)
 	defer status.End()
 
 	singleNode, err := clusterInfo.HasSingleNode()
 	if err != nil {
-		status.Failure(err.Error())
-		return false
+		return status.Error(err, "Error determining whether the cluster has a single node")
 	}
 
 	if singleNode {
 		status.Success(singleNodeMessage)
-		return true
+		return nil
 	}
 
 	cPod, err := spawnClientPodOnNonGatewayNode(clusterInfo.ClientProducer.ForKubernetes(),
 		clusterInfo.Submariner.Namespace, command, clusterInfo.GetImageRepositoryInfo())
 	if err != nil {
-		status.Failure("Error spawning the client pod on non-Gateway node: %v", err)
-		return false
+		return status.Error(err, "Error spawning the client pod on non-Gateway node")
 	}
 
 	defer cPod.Delete()
 
 	if err = cPod.AwaitCompletion(); err != nil {
-		status.Failure("Error waiting for the client pod to finish its execution: %v", err)
-		return false
+		return status.Error(err, "Error waiting for the client pod to finish its execution")
 	}
 
 	// Expected response: "HTTP/1.1 200 OK"
 	if !strings.Contains(cPod.PodOutput, "200 OK") {
-		status.Failure("Unable to access %s metrics service in submariner-operator "+
-			"namespace %v", component, cPod.PodOutput)
-		return false
+		return status.Error(errors.Errorf("Unexpected output %v", cPod.PodOutput),
+			"Unable to access %s metrics service in submariner-operator namespace", component)
 	}
 
 	status.Success("The %s metrics are accessible", component)
 
-	return true
+	return nil
 }

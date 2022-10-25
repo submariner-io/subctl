@@ -20,7 +20,8 @@ package subctl
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/submariner-io/subctl/cmd/subctl/execute"
+	"github.com/submariner-io/subctl/internal/cli"
+	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/internal/show"
 )
@@ -40,7 +41,8 @@ var (
 		Long:    `This command shows information about Submariner endpoint connections with other clusters.`,
 		PreRunE: showRestConfigProducer.CheckVersionMismatch,
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(showRestConfigProducer, execute.IfSubmarinerInstalled(show.Connections))
+			exit.OnError(
+				showRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(show.Connections), cli.NewReporter()))
 		},
 	}
 	endpointsCmd = &cobra.Command{
@@ -49,7 +51,8 @@ var (
 		Long:    `This command shows information about Submariner endpoints in a cluster.`,
 		PreRunE: showRestConfigProducer.CheckVersionMismatch,
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(showRestConfigProducer, execute.IfSubmarinerInstalled(show.Endpoints))
+			exit.OnError(
+				showRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(show.Endpoints), cli.NewReporter()))
 		},
 	}
 	gatewaysCmd = &cobra.Command{
@@ -58,7 +61,8 @@ var (
 		Long:    `This command shows summary information about the Submariner gateways in a cluster.`,
 		PreRunE: showRestConfigProducer.CheckVersionMismatch,
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(showRestConfigProducer, execute.IfSubmarinerInstalled(show.Gateways))
+			exit.OnError(
+				showRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(show.Gateways), cli.NewReporter()))
 		},
 	}
 	networksCmd = &cobra.Command{
@@ -67,7 +71,8 @@ var (
 		Long:    `This command shows the status of Submariner in your cluster, and the relevant network details from your cluster.`,
 		PreRunE: showRestConfigProducer.CheckVersionMismatch,
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(showRestConfigProducer, show.Network)
+			exit.OnError(
+				showRestConfigProducer.RunOnAllContexts(show.Network, cli.NewReporter()))
 		},
 	}
 	versionCmd = &cobra.Command{
@@ -76,7 +81,8 @@ var (
 		Long:    `This command shows the versions of the Submariner components in the cluster.`,
 		PreRunE: showRestConfigProducer.CheckVersionMismatch,
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(showRestConfigProducer, show.Versions)
+			exit.OnError(
+				showRestConfigProducer.RunOnAllContexts(show.Versions, cli.NewReporter()))
 		},
 	}
 	brokersCmd = &cobra.Command{
@@ -85,7 +91,8 @@ var (
 		Long:    "This command shows information about the Broker in the cluster",
 		PreRunE: showRestConfigProducer.CheckVersionMismatch,
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(showRestConfigProducer, show.Brokers)
+			exit.OnError(
+				showRestConfigProducer.RunOnAllContexts(show.Brokers, cli.NewReporter()))
 		},
 	}
 	allCmd = &cobra.Command{
@@ -95,13 +102,14 @@ var (
 		      networks, endpoints, gateways, connections, broker and component versions.`,
 		PreRunE: showRestConfigProducer.CheckVersionMismatch,
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(showRestConfigProducer, show.All)
+			exit.OnError(
+				showRestConfigProducer.RunOnAllContexts(show.All, cli.NewReporter()))
 		},
 	}
 )
 
 func init() {
-	showRestConfigProducer.AddKubeConfigFlag(showCmd)
+	showRestConfigProducer.SetupFlags(showCmd.PersistentFlags())
 	rootCmd.AddCommand(showCmd)
 	showCmd.AddCommand(connectionsCmd)
 	showCmd.AddCommand(endpointsCmd)

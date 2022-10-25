@@ -19,22 +19,26 @@ limitations under the License.
 package subctl
 
 import (
-	"fmt"
-
 	"github.com/onsi/ginkgo/config"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/benchmark"
+	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/cluster"
+	"k8s.io/client-go/rest"
 )
 
 var (
 	intraCluster bool
 	verbose      bool
 
-	benchmarkRestConfigProducer = restconfig.NewProducer()
+	benchmarkRestConfigProducer = restconfig.NewProducer().
+					WithDeprecatedKubeContexts("use --context and --tocontext instead").WithPrefixedContext("to")
 
 	benchmarkCmd = &cobra.Command{
 		Use:   "benchmark",
@@ -42,36 +46,21 @@ var (
 		Long:  "This command runs various benchmark tests",
 	}
 	benchmarkThroughputCmd = &cobra.Command{
-		Use:   "throughput --kubecontexts <kubeContext1>[,<kubeContext2>]",
+		Use:   "throughput --context <kubeContext1> [--tocontext <kubeContext2>]",
 		Short: "Benchmark throughput",
 		Long:  "This command runs throughput tests within a cluster or between two clusters",
-		Args: func(cmd *cobra.Command, args []string) error {
-			return checkBenchmarkArguments(args, intraCluster)
-		},
-		Run: func(command *cobra.Command, args []string) {
-			err := setUpTestFramework(args, benchmarkRestConfigProducer, constants.OperatorNamespace)
-			exit.OnErrorWithMessage(err, "error setting up test framework")
-			benchmark.StartThroughputTests(intraCluster, verbose)
-		},
+		Run:   buildBenchmarkRunner(benchmark.StartThroughputTests),
 	}
 	benchmarkLatencyCmd = &cobra.Command{
-		Use:   "latency --kubecontexts <kubeContext1>[,<kubeContext2>]",
+		Use:   "latency --context <kubeContext1> [--tocontext <kubeContext2>]",
 		Short: "Benchmark latency",
 		Long:  "This command runs latency benchmark tests within a cluster or between two clusters",
-		Args: func(cmd *cobra.Command, args []string) error {
-			return checkBenchmarkArguments(args, intraCluster)
-		},
-		Run: func(command *cobra.Command, args []string) {
-			err := setUpTestFramework(args, benchmarkRestConfigProducer, constants.OperatorNamespace)
-			exit.OnErrorWithMessage(err, "error setting up test framework")
-			benchmark.StartLatencyTests(intraCluster, verbose)
-		},
+		Run:   buildBenchmarkRunner(benchmark.StartLatencyTests),
 	}
 )
 
 func init() {
-	addBenchmarkFlags(benchmarkLatencyCmd)
-	addBenchmarkFlags(benchmarkThroughputCmd)
+	addBenchmarkFlags(benchmarkCmd)
 
 	benchmarkCmd.AddCommand(benchmarkThroughputCmd)
 	benchmarkCmd.AddCommand(benchmarkLatencyCmd)
@@ -81,54 +70,89 @@ func init() {
 }
 
 func addBenchmarkFlags(cmd *cobra.Command) {
-	benchmarkRestConfigProducer.AddKubeContextMultiFlag(cmd, "comma-separated list of one or two kubeconfig contexts to use.")
+	benchmarkRestConfigProducer.SetupFlags(cmd.PersistentFlags())
+
+	// TODO Remove in 0.15
 	cmd.PersistentFlags().BoolVar(&intraCluster, "intra-cluster", false, "run the test within a single cluster")
+	_ = cmd.PersistentFlags().MarkDeprecated("intra-cluster",
+		"specify a single context for intra-cluster benchmarks, two contexts for inter-cluster benchmarks")
+
 	cmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "produce verbose logs during benchmark tests")
 }
 
-func checkBenchmarkArguments(args []string, intraCluster bool) error {
-	if !intraCluster && len(args) != 2 && benchmarkRestConfigProducer.CountRequestedClusters() != 2 {
-		return fmt.Errorf("two kubecontexts must be specified")
-	} else if intraCluster && len(args) != 1 && benchmarkRestConfigProducer.CountRequestedClusters() != 1 {
-		return fmt.Errorf("only one kubecontext should be specified")
+func buildBenchmarkRunner(run func(intraCluster, verbose bool) error) func(command *cobra.Command, args []string) {
+	return func(command *cobra.Command, args []string) {
+		// Deprecated variants:
+		// - kubeconfigs on the command line
+		if len(args) == 2 {
+			exit.OnError(restconfig.NewProducerFrom(args[0], "").RunOnSelectedContext(
+				func(fromClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					return restconfig.NewProducerFrom(args[1], "").RunOnSelectedContext( //nolint:wrapcheck // No need to wrap errors here.
+						func(toClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+							return runBenchmark(run, fromClusterInfo, toClusterInfo, verbose)
+						}, status)
+				}, cli.NewReporter()))
+
+			return
+		}
+
+		// - kubecontext(s)
+		selectedContextsPresent, err := benchmarkRestConfigProducer.RunOnSelectedContexts(
+			func(clusterInfos []*cluster.Info, namespaces []string, status reporter.Interface) error {
+				if len(clusterInfos) >= 2 {
+					return runBenchmark(run, clusterInfos[0], clusterInfos[1], verbose)
+				} else if len(clusterInfos) >= 1 {
+					return runBenchmark(run, clusterInfos[0], nil, verbose)
+				}
+				return errors.New("no contexts were specified")
+			}, cli.NewReporter())
+
+		if selectedContextsPresent {
+			exit.OnError(err)
+			return
+		}
+
+		// Explicit kubeconfigs and/or contexts
+		exit.OnError(benchmarkRestConfigProducer.RunOnSelectedContext(
+			func(fromClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+				// Try to run using the "to" context
+				toContextPresent, err := benchmarkRestConfigProducer.RunOnSelectedPrefixedContext(
+					"to",
+					func(toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+						return runBenchmark(run, fromClusterInfo, toClusterInfo, verbose)
+					}, status)
+
+				if toContextPresent {
+					return err //nolint:wrapcheck // No need to wrap errors here.
+				}
+
+				return runBenchmark(run, fromClusterInfo, nil, verbose)
+			}, cli.NewReporter()))
 	}
-
-	if len(args) == 2 {
-		if args[0] == args[1] {
-			return fmt.Errorf("kubeconfig file <kubeConfig1> and <kubeConfig2> cannot be the same file")
-		}
-
-		same, err := compareFiles(args[0], args[1])
-		if err != nil {
-			return err
-		}
-
-		if same {
-			return fmt.Errorf("kubeconfig file <kubeConfig1> and <kubeConfig2> need to have a unique content")
-		}
-	}
-
-	return nil
 }
 
-func setUpTestFramework(args []string, restConfigProducer *restconfig.Producer, submarinerNS string) error {
-	if len(args) > 0 {
-		err := restconfig.ConfigureTestFramework(args)
-		if err != nil {
-			return err //nolint:wrapcheck // error can't be wrapped
-		}
+func runBenchmark(
+	run func(intraCluster, verbose bool) error, fromClusterInfo, toClusterInfo *cluster.Info, verbose bool,
+) error {
+	framework.RestConfigs = []*rest.Config{fromClusterInfo.RestConfig}
+	framework.TestContext.ClusterIDs = []string{fromClusterInfo.Name}
+
+	if toClusterInfo != nil {
+		framework.RestConfigs = append(framework.RestConfigs, toClusterInfo.RestConfig)
+		framework.TestContext.ClusterIDs = append(framework.TestContext.ClusterIDs, toClusterInfo.Name)
+		intraCluster = false
 	} else {
-		restConfigProducer.PopulateTestFramework()
+		intraCluster = true
 	}
 
 	framework.TestContext.OperationTimeout = operationTimeout
 	framework.TestContext.ConnectionTimeout = connectionTimeout
 	framework.TestContext.ConnectionAttempts = connectionAttempts
 	framework.TestContext.JunitReport = junitReport
-	framework.TestContext.SubmarinerNamespace = submarinerNS
+	framework.TestContext.SubmarinerNamespace = constants.OperatorNamespace
 
 	config.DefaultReporterConfig.Verbose = verboseConnectivityVerification
 	config.DefaultReporterConfig.SlowSpecThreshold = 60
 
-	return nil
+	return run(intraCluster, verbose)
 }

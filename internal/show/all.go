@@ -23,41 +23,41 @@ import (
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	"k8s.io/apimachinery/pkg/util/errors"
 )
 
-func All(clusterInfo *cluster.Info, status reporter.Interface) bool {
-	success := Brokers(clusterInfo, status)
+var showAllSubmarinerFunctions = []restconfig.PerContextFn{
+	Connections,
+	Endpoints,
+	Gateways,
+	Network,
+	Versions,
+}
+
+func All(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+	allErrors := []error{}
+
+	allErrors = append(allErrors, Brokers(clusterInfo, namespace, status))
 
 	fmt.Println()
 
 	if clusterInfo.Submariner == nil {
-		success = Versions(clusterInfo, status) && success
+		allErrors = append(allErrors, Versions(clusterInfo, namespace, status))
 
 		fmt.Println()
 
 		status.Warning(constants.SubmarinerNotInstalled)
 
-		return success
+		return errors.NewAggregate(allErrors)
 	}
 
-	success = Connections(clusterInfo, status) && success
+	for _, function := range showAllSubmarinerFunctions {
+		allErrors = append(allErrors, function(clusterInfo, namespace, status))
 
-	fmt.Println()
+		fmt.Println()
+	}
 
-	success = Endpoints(clusterInfo, status) && success
-
-	fmt.Println()
-
-	success = Gateways(clusterInfo, status) && success
-
-	fmt.Println()
-
-	success = Network(clusterInfo, status) && success
-
-	fmt.Println()
-
-	success = Versions(clusterInfo, status) && success
-
-	return success
+	return errors.NewAggregate(allErrors)
 }

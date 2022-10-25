@@ -35,7 +35,7 @@ type benchmarkTestParams struct {
 	ClientPodScheduling framework.NetworkPodScheduling
 }
 
-func StartLatencyTests(intraCluster, verbose bool) {
+func StartLatencyTests(intraCluster, verbose bool) error {
 	var f *framework.Framework
 
 	if verbose {
@@ -62,7 +62,7 @@ func StartLatencyTests(intraCluster, verbose bool) {
 		if framework.TestContext.GlobalnetEnabled {
 			fmt.Println("Latency test is not supported with Globalnet enabled, skipping the test...")
 
-			return
+			return nil
 		}
 
 		latencyTestParams := benchmarkTestParams{
@@ -92,6 +92,8 @@ func StartLatencyTests(intraCluster, verbose bool) {
 		fmt.Printf("Performing latency tests from Non-Gateway pod to Gateway pod on cluster %q\n", clusterAName)
 		runLatencyTest(f, latencyTestIntraClusterParams, verbose)
 	}
+
+	return nil
 }
 
 func runLatencyTest(f *framework.Framework, testParams benchmarkTestParams, verbose bool) {

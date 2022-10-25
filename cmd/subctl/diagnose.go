@@ -23,23 +23,19 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/subctl/cmd/subctl/execute"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/diagnose"
+	k8serrors "k8s.io/apimachinery/pkg/util/errors"
 )
 
 var (
 	diagnoseFirewallOptions diagnose.FirewallOptions
 
-	diagnoseKubeProxyOptions struct {
-		podNamespace string
-	}
-
-	diagnoseRestConfigProducer = restconfig.NewProducer()
+	diagnoseRestConfigProducer = restconfig.NewProducer().WithDefaultNamespace(constants.OperatorNamespace).WithInClusterFlag()
 
 	diagnoseFirewallTunnelRestConfigProducer = restconfig.NewProducer().
 							WithDefaultNamespace(constants.OperatorNamespace).WithPrefixedContext("remote")
@@ -57,7 +53,8 @@ var (
 		Short: "Check the CNI network plugin",
 		Long:  "This command checks if the detected CNI network plugin is supported by Submariner.",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(diagnoseRestConfigProducer, execute.IfSubmarinerInstalled(diagnose.CNIConfig))
+			exit.OnError(
+				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(diagnose.CNIConfig), cli.NewReporter()))
 		},
 	}
 
@@ -66,7 +63,8 @@ var (
 		Short: "Check the Gateway connections",
 		Long:  "This command checks that the Gateway connections to other clusters are all established",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(diagnoseRestConfigProducer, execute.IfSubmarinerInstalled(diagnose.Connections))
+			exit.OnError(
+				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(diagnose.Connections), cli.NewReporter()))
 		},
 	}
 
@@ -75,7 +73,8 @@ var (
 		Short: "Check the Submariner deployment",
 		Long:  "This command checks that the Submariner components are properly deployed and running with no overlapping CIDRs.",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(diagnoseRestConfigProducer, execute.IfSubmarinerInstalled(diagnose.Deployments))
+			exit.OnError(
+				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(diagnose.Deployments), cli.NewReporter()))
 		},
 	}
 
@@ -84,9 +83,7 @@ var (
 		Short: "Check the Kubernetes version",
 		Long:  "This command checks if Submariner can be deployed on the Kubernetes version.",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(diagnoseRestConfigProducer, func(info *cluster.Info, status reporter.Interface) bool {
-				return diagnose.K8sVersion(info.ClientProducer.ForKubernetes(), status)
-			})
+			exit.OnError(diagnoseRestConfigProducer.RunOnAllContexts(diagnose.K8sVersion, cli.NewReporter()))
 		},
 	}
 
@@ -95,11 +92,8 @@ var (
 		Short: "Check the kube-proxy mode",
 		Long:  "This command checks if the kube-proxy mode is supported by Submariner.",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(diagnoseRestConfigProducer, execute.IfSubmarinerInstalled(
-				func(info *cluster.Info, status reporter.Interface) bool {
-					return diagnose.KubeProxyMode(info.ClientProducer, diagnoseKubeProxyOptions.podNamespace,
-						info.GetImageRepositoryInfo(), status)
-				}))
+			exit.OnError(
+				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(diagnose.KubeProxyMode), cli.NewReporter()))
 		},
 	}
 
@@ -120,10 +114,8 @@ var (
 		Short: "Check firewall access for intra-cluster Submariner VxLAN traffic",
 		Long:  "This command checks if the firewall configuration allows traffic over vx-submariner interface.",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(diagnoseRestConfigProducer, execute.IfSubmarinerInstalled(
-				func(info *cluster.Info, status reporter.Interface) bool {
-					return diagnose.FirewallIntraVxLANConfig(info, diagnoseFirewallOptions, status)
-				}))
+			exit.OnError(
+				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(firewallIntraVxLANConfig), cli.NewReporter()))
 		},
 	}
 
@@ -150,7 +142,7 @@ var (
 		Short: "Run all diagnostic checks (except those requiring two kubecontexts)",
 		Long:  "This command runs all diagnostic checks (except those requiring two kubecontexts) and reports any issues",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(diagnoseRestConfigProducer, diagnoseAll)
+			exit.OnError(diagnoseAll(cli.NewReporter()))
 		},
 	}
 
@@ -159,14 +151,15 @@ var (
 		Short: "Check service discovery functionality",
 		Long:  "This command checks if service discovery is functioning properly.",
 		Run: func(command *cobra.Command, args []string) {
-			execute.OnMultiCluster(diagnoseRestConfigProducer, execute.IfServiceDiscoveryInstalled(diagnose.ServiceDiscovery))
+			exit.OnError(
+				diagnoseRestConfigProducer.RunOnAllContexts(
+					restconfig.IfServiceDiscoveryInstalled(diagnose.ServiceDiscovery), cli.NewReporter()))
 		},
 	}
 )
 
 func init() {
-	diagnoseRestConfigProducer.AddKubeConfigFlag(diagnoseCmd)
-	diagnoseRestConfigProducer.AddInClusterConfigFlag(diagnoseCmd)
+	diagnoseRestConfigProducer.SetupFlags(diagnoseCmd.PersistentFlags())
 	rootCmd.AddCommand(diagnoseCmd)
 
 	addDiagnoseSubCommands()
@@ -174,7 +167,6 @@ func init() {
 }
 
 func addDiagnoseSubCommands() {
-	addDiagnosePodNamespaceFlag(diagnoseKubeProxyModeCmd, &diagnoseKubeProxyOptions.podNamespace)
 	addDiagnoseFWConfigFlags(diagnoseAllCmd)
 	addDiagnosePodNamespaceFlag(diagnoseAllCmd, &diagnoseFirewallOptions.PodNamespace)
 
@@ -215,54 +207,41 @@ func addDiagnoseFWConfigFlags(command *cobra.Command) {
 		"produce verbose output while validating the firewall")
 }
 
-func diagnoseAll(clusterInfo *cluster.Info, status reporter.Interface) bool {
-	success := diagnose.K8sVersion(clusterInfo.ClientProducer.ForKubernetes(), status)
+func firewallIntraVxLANConfig(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+	return diagnose.FirewallIntraVxLANConfig( // nolint:wrapcheck // No need to wrap errors here.
+		clusterInfo, diagnoseFirewallOptions, status)
+}
 
-	fmt.Println()
+var allDiagnoseCommands = []restconfig.PerContextFn{
+	diagnose.K8sVersion,
+	restconfig.IfSubmarinerInstalled(
+		diagnose.CNIConfig,
+		diagnose.Connections,
+		diagnose.Deployments,
+		diagnose.KubeProxyMode,
+		firewallIntraVxLANConfig,
+		diagnose.GlobalnetConfig),
+	restconfig.IfServiceDiscoveryInstalled(diagnose.ServiceDiscovery),
+}
 
-	if clusterInfo.Submariner == nil {
-		status.Warning(constants.SubmarinerNotInstalled)
+func diagnoseAll(status reporter.Interface) error {
+	err := diagnoseRestConfigProducer.RunOnAllContexts(
+		func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+			diagnoseErrors := []error{}
 
-		return success
-	}
+			for _, command := range allDiagnoseCommands {
+				diagnoseErrors = append(diagnoseErrors, command(clusterInfo, namespace, status))
 
-	success = diagnose.CNIConfig(clusterInfo, status) && success
+				fmt.Println()
+			}
 
-	fmt.Println()
-
-	success = diagnose.Connections(clusterInfo, status) && success
-
-	fmt.Println()
-
-	success = diagnose.Deployments(clusterInfo, status) && success
-
-	fmt.Println()
-
-	success = diagnose.KubeProxyMode(clusterInfo.ClientProducer, diagnoseKubeProxyOptions.podNamespace,
-		clusterInfo.GetImageRepositoryInfo(), status) && success
-
-	fmt.Println()
-
-	success = diagnose.FirewallIntraVxLANConfig(clusterInfo, diagnoseFirewallOptions, status) && success
-
-	fmt.Println()
-
-	success = diagnose.GlobalnetConfig(clusterInfo, status) && success
-
-	fmt.Println()
+			return k8serrors.NewAggregate(diagnoseErrors)
+		}, status)
 
 	fmt.Printf("Skipping inter-cluster firewall check as it requires two kubeconfigs." +
 		" Please run \"subctl diagnose firewall inter-cluster\" command manually.\n")
 
-	if clusterInfo.ServiceDiscovery != nil {
-		success = diagnose.ServiceDiscovery(clusterInfo, status) && success
-	} else {
-		status.Success("Service discovery is not installed - skipping")
-	}
-
-	fmt.Println()
-
-	return success
+	return err // nolint:wrapcheck // No need to wrap errors here.
 }
 
 func runLocalRemoteCommand(command *cobra.Command, localRemoteRestConfigProducer *restconfig.Producer, args []string,
@@ -289,12 +268,13 @@ func runLocalRemoteCommand(command *cobra.Command, localRemoteRestConfigProducer
 	} else {
 		exit.OnError(localRemoteRestConfigProducer.RunOnSelectedContext(
 			func(localClusterInfo *cluster.Info, localNamespace string, status reporter.Interface) error {
-				return localRemoteRestConfigProducer.RunOnSelectedPrefixedContext( // nolint:wrapcheck // No need to wrap errors here.
+				_, err := localRemoteRestConfigProducer.RunOnSelectedPrefixedContext(
 					"remote",
 					func(remoteClusterInfo *cluster.Info, remoteNamespace string, status reporter.Interface) error {
 						diagnoseFirewallOptions.PodNamespace = remoteNamespace
 						return function(localClusterInfo, remoteClusterInfo, diagnoseFirewallOptions, status)
 					}, status)
+				return err // nolint:wrapcheck // No need to wrap errors here.
 			}, status))
 	}
 }

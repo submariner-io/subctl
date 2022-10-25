@@ -73,14 +73,7 @@ func printDeploymentVersions(clusterInfo *cluster.Info, printer *table.Printer, 
 	return nil
 }
 
-func fail(status reporter.Interface, err error) bool {
-	status.Failure("Unable to determine versions: %v", err)
-	status.End()
-
-	return false
-}
-
-func Versions(clusterInfo *cluster.Info, status reporter.Interface) bool {
+func Versions(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Showing versions")
 
 	printer := table.Printer{Columns: []table.Column{
@@ -91,17 +84,17 @@ func Versions(clusterInfo *cluster.Info, status reporter.Interface) bool {
 
 	err := printDaemonSetVersions(clusterInfo, &printer, names.GatewayComponent, names.RouteAgentComponent, names.GlobalnetComponent)
 	if err != nil {
-		return fail(status, err)
+		return status.Error(err, "Error retrieving DaemonSet versions")
 	}
 
 	err = printDeploymentVersions(
 		clusterInfo, &printer, names.OperatorComponent, names.ServiceDiscoveryComponent, names.LighthouseCoreDNSComponent)
 	if err != nil {
-		return fail(status, err)
+		return status.Error(err, "Error retrieving Deployment versions")
 	}
 
 	status.End()
 	printer.Print()
 
-	return true
+	return nil
 }
