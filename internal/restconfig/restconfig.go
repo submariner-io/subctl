@@ -280,7 +280,7 @@ func runInCluster(function PerContextFn, status reporter.Interface) error {
 
 	// In-cluster configurations don't specify a namespace, use the default
 	// When using the in-cluster configuration, that's the only configuration we want
-	return function(clusterInfo, "default", status)
+	return function(clusterInfo, "", status)
 }
 
 // RunOnSelectedContext runs the given function on the selected prefixed context.
