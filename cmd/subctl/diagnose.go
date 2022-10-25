@@ -168,7 +168,6 @@ func init() {
 
 func addDiagnoseSubCommands() {
 	addDiagnoseFWConfigFlags(diagnoseAllCmd)
-	addDiagnosePodNamespaceFlag(diagnoseAllCmd, &diagnoseFirewallOptions.PodNamespace)
 
 	diagnoseCmd.AddCommand(diagnoseCNICmd)
 	diagnoseCmd.AddCommand(diagnoseConnectionsCmd)
@@ -182,9 +181,7 @@ func addDiagnoseSubCommands() {
 
 func addDiagnoseFirewallSubCommands() {
 	addDiagnoseFWConfigFlags(diagnoseFirewallMetricsCmd)
-	addDiagnosePodNamespaceFlag(diagnoseFirewallMetricsCmd, &diagnoseFirewallOptions.PodNamespace)
 	addDiagnoseFWConfigFlags(diagnoseFirewallVxLANCmd)
-	addDiagnosePodNamespaceFlag(diagnoseFirewallVxLANCmd, &diagnoseFirewallOptions.PodNamespace)
 	diagnoseFirewallTunnelRestConfigProducer.SetupFlags(diagnoseFirewallTunnelCmd.Flags())
 	addDiagnoseFWConfigFlags(diagnoseFirewallTunnelCmd)
 	diagnoseFirewallNatDiscoveryRestConfigProducer.SetupFlags(diagnoseFirewallNatDiscovery.Flags())
@@ -196,10 +193,6 @@ func addDiagnoseFirewallSubCommands() {
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallNatDiscovery)
 }
 
-func addDiagnosePodNamespaceFlag(command *cobra.Command, value *string) {
-	command.Flags().StringVar(value, "namespace", constants.OperatorNamespace, "namespace in which validation pods should be deployed")
-}
-
 func addDiagnoseFWConfigFlags(command *cobra.Command) {
 	command.Flags().UintVar(&diagnoseFirewallOptions.ValidationTimeout, "validation-timeout", 90,
 		"time to run in seconds while validating the firewall")
@@ -207,9 +200,9 @@ func addDiagnoseFWConfigFlags(command *cobra.Command) {
 		"produce verbose output while validating the firewall")
 }
 
-func firewallIntraVxLANConfig(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+func firewallIntraVxLANConfig(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 	return diagnose.FirewallIntraVxLANConfig( // nolint:wrapcheck // No need to wrap errors here.
-		clusterInfo, diagnoseFirewallOptions, status)
+		clusterInfo, namespace, diagnoseFirewallOptions, status)
 }
 
 var allDiagnoseCommands = []restconfig.PerContextFn{
@@ -246,7 +239,7 @@ func diagnoseAll(status reporter.Interface) error {
 
 func runLocalRemoteCommand(command *cobra.Command, localRemoteRestConfigProducer *restconfig.Producer, args []string,
 	function func(
-		localClusterInfo, remoteClusterInfo *cluster.Info, options diagnose.FirewallOptions, status reporter.Interface,
+		localClusterInfo, remoteClusterInfo *cluster.Info, namespace string, options diagnose.FirewallOptions, status reporter.Interface,
 	) error,
 ) {
 	status := cli.NewReporter()
@@ -261,8 +254,7 @@ func runLocalRemoteCommand(command *cobra.Command, localRemoteRestConfigProducer
 			func(localClusterInfo *cluster.Info, localNamespace string, status reporter.Interface) error {
 				return remoteProducer.RunOnSelectedContext( // nolint:wrapcheck // No need to wrap errors here.
 					func(remoteClusterInfo *cluster.Info, remoteNamespace string, status reporter.Interface) error {
-						diagnoseFirewallOptions.PodNamespace = remoteNamespace
-						return function(localClusterInfo, remoteClusterInfo, diagnoseFirewallOptions, status)
+						return function(localClusterInfo, remoteClusterInfo, localNamespace, diagnoseFirewallOptions, status)
 					}, status)
 			}, status))
 	} else {
@@ -271,8 +263,7 @@ func runLocalRemoteCommand(command *cobra.Command, localRemoteRestConfigProducer
 				_, err := localRemoteRestConfigProducer.RunOnSelectedPrefixedContext(
 					"remote",
 					func(remoteClusterInfo *cluster.Info, remoteNamespace string, status reporter.Interface) error {
-						diagnoseFirewallOptions.PodNamespace = remoteNamespace
-						return function(localClusterInfo, remoteClusterInfo, diagnoseFirewallOptions, status)
+						return function(localClusterInfo, remoteClusterInfo, localNamespace, diagnoseFirewallOptions, status)
 					}, status)
 				return err // nolint:wrapcheck // No need to wrap errors here.
 			}, status))
