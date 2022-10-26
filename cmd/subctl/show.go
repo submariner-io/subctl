@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	showRestConfigProducer = restconfig.NewProducer()
+	showRestConfigProducer = restconfig.NewProducer().WithContextsFlag()
 
 	// showCmd represents the show command.
 	showCmd = &cobra.Command{
