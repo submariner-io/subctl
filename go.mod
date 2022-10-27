@@ -16,11 +16,11 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/submariner-io/admiral v0.14.0-rc1
-	github.com/submariner-io/cloud-prepare v0.14.0-m2
-	github.com/submariner-io/lighthouse v0.14.0-m2.0.20221013155253-8a8c1fbfc8d3
+	github.com/submariner-io/cloud-prepare v0.14.0-rc1
+	github.com/submariner-io/lighthouse v0.14.0-rc1
 	github.com/submariner-io/shipyard v0.14.0-rc1
-	github.com/submariner-io/submariner v0.14.0-m2.0.20221026132459-6fcc5867053b
-	github.com/submariner-io/submariner-operator v0.14.0-m2.0.20221024122505-adc24314a409
+	github.com/submariner-io/submariner v0.14.0-rc1
+	github.com/submariner-io/submariner-operator v0.14.0-rc1
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
 	google.golang.org/api v0.100.0
@@ -43,18 +43,18 @@ require (
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.5.1 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.16.16 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.17.8 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.12.21 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.17 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.23 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.17 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.24 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.63.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.17 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.11.23 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.16.19 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.17.0 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.17.9 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.12.22 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.18 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.24 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.18 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.25 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.63.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.18 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.11.24 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.17.0 // indirect
 	github.com/aws/smithy-go v1.13.3 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -109,7 +109,7 @@ require (
 	golang.org/x/net v0.0.0-20221014081412-f15817d10f9b // indirect
 	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261 // indirect
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
-	golang.org/x/text v0.3.8-0.20220509174342-b4bca84b0361 // indirect
+	golang.org/x/text v0.3.9-0.20221012202458-252bee03417d // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20221014213838-99cd37c6964a // indirect
@@ -120,7 +120,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog v1.0.0 // indirect
-	k8s.io/klog/v2 v2.80.0 // indirect
+	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803164354-a70c9af30aea // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
