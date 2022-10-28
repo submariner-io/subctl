@@ -133,7 +133,13 @@ deploy_env_once
 
 # Test subctl show invocations
 
-_subctl show all
+_subctl show all | tee /dev/stderr | sponge | grep -q 'Cluster "cluster2"'
+# Single-context variants don't say 'Cluster "foo"', check what cluster is considered local
+_subctl show all --context cluster1 | tee /dev/stderr | sponge | grep -qv 'cluster2.*local'
+_subctl show all --context cluster2 | tee /dev/stderr | sponge | grep -q 'cluster2.*local'
+# Multiple-context variants list the clusters, even when there's only one
+_subctl show all --contexts cluster1 | tee /dev/stderr | sponge | grep -qv 'Cluster "cluster2"'
+_subctl show all --contexts cluster2 | tee /dev/stderr | sponge | grep -q 'Cluster "cluster2"'
 
 # Test subctl gather invocations
 
