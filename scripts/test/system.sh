@@ -133,13 +133,13 @@ deploy_env_once
 
 # Test subctl show invocations
 
-_subctl show all | tee /dev/stderr | sponge | grep -q 'Cluster "cluster2"'
+_subctl show all | tee /dev/stderr | (sponge ||:) | grep -q 'Cluster "cluster2"'
 # Single-context variants don't say 'Cluster "foo"', check what cluster is considered local
-_subctl show all --context cluster1 | tee /dev/stderr | sponge | grep -qv 'cluster2.*local'
-_subctl show all --context cluster2 | tee /dev/stderr | sponge | grep -q 'cluster2.*local'
+_subctl show all --context cluster1 | tee /dev/stderr | (sponge ||:) | grep -qv 'cluster2.*local'
+_subctl show all --context cluster2 | tee /dev/stderr | (sponge ||:) | grep -q 'cluster2.*local'
 # Multiple-context variants list the clusters, even when there's only one
-_subctl show all --contexts cluster1 | tee /dev/stderr | sponge | grep -qv 'Cluster "cluster2"'
-_subctl show all --contexts cluster2 | tee /dev/stderr | sponge | grep -q 'Cluster "cluster2"'
+_subctl show all --contexts cluster1 | tee /dev/stderr | (sponge ||:) | grep -qv 'Cluster "cluster2"'
+_subctl show all --contexts cluster2 | tee /dev/stderr | (sponge ||:) | grep -q 'Cluster "cluster2"'
 
 # Test subctl gather invocations
 
@@ -163,21 +163,21 @@ with_context "${clusters[0]}" test_subctl_diagnose_in_cluster
 
 # Test subctl benchmark invocations
 
-_subctl benchmark latency --context cluster1 | tee /dev/stderr | sponge | grep -q 'Performing latency tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
-_subctl benchmark latency --context cluster1 --tocontext cluster2 | tee /dev/stderr | sponge | grep -qE '(Performing latency tests from Gateway pod on cluster "cluster1" to Gateway pod on cluster "cluster2"|Latency test is not supported with Globalnet enabled, skipping the test)'
+_subctl benchmark latency --context cluster1 | tee /dev/stderr | (sponge ||:) | grep -q 'Performing latency tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
+_subctl benchmark latency --context cluster1 --tocontext cluster2 | tee /dev/stderr | (sponge ||:) | grep -qE '(Performing latency tests from Gateway pod on cluster "cluster1" to Gateway pod on cluster "cluster2"|Latency test is not supported with Globalnet enabled, skipping the test)'
 
-_subctl benchmark throughput --context cluster1 | tee /dev/stderr | sponge | grep -q 'Performing throughput tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
+_subctl benchmark throughput --context cluster1 | tee /dev/stderr | (sponge ||:) | grep -q 'Performing throughput tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
 _subctl benchmark throughput --context cluster1 --tocontext cluster2
 
 # Deprecated variant with contexts
-_subctl benchmark latency --intra-cluster --kubecontexts cluster1 | tee /dev/stderr | sponge | grep -q 'Performing latency tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
-_subctl benchmark latency --kubecontexts cluster1,cluster2 | tee /dev/stderr | sponge | grep -qE '(Performing latency tests from Gateway pod on cluster "cluster1" to Gateway pod on cluster "cluster2"|Latency test is not supported with Globalnet enabled, skipping the test)'
+_subctl benchmark latency --intra-cluster --kubecontexts cluster1 | tee /dev/stderr | (sponge ||:) | grep -q 'Performing latency tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
+_subctl benchmark latency --kubecontexts cluster1,cluster2 | tee /dev/stderr | (sponge ||:) | grep -qE '(Performing latency tests from Gateway pod on cluster "cluster1" to Gateway pod on cluster "cluster2"|Latency test is not supported with Globalnet enabled, skipping the test)'
 
-_subctl benchmark throughput --intra-cluster --kubecontexts cluster1 | tee /dev/stderr | sponge | grep -q 'Performing throughput tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
+_subctl benchmark throughput --intra-cluster --kubecontexts cluster1 | tee /dev/stderr | (sponge ||:) | grep -q 'Performing throughput tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
 _subctl benchmark throughput --kubecontexts cluster1,cluster2
 
 # Deprecated variant with kubeconfigs
-_subctl benchmark latency "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 | tee /dev/stderr | sponge | grep -qE '(Performing latency tests from Gateway pod on cluster "cluster1" to Gateway pod on cluster "cluster2"|Latency test is not supported with Globalnet enabled, skipping the test)'
+_subctl benchmark latency "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 | tee /dev/stderr | (sponge ||:) | grep -qE '(Performing latency tests from Gateway pod on cluster "cluster1" to Gateway pod on cluster "cluster2"|Latency test is not supported with Globalnet enabled, skipping the test)'
 
 _subctl benchmark throughput "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2
 
