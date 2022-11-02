@@ -42,8 +42,7 @@ func Ensure(status reporter.Interface, clientProducer client.Producer, operatorN
 	}
 
 	operatorNamespaceLabels := map[string]string{
-		"pod-security.kubernetes.io/enforce": "privileged", "pod-security.kubernetes.io/audit": "privileged",
-		"pod-security.kubernetes.io/warn": "privileged",
+		"pod-security.kubernetes.io/enforce": "privileged",
 	}
 
 	if created, err := namespace.Ensure(clientProducer.ForKubernetes(), operatorNamespace, operatorNamespaceLabels); err != nil {
