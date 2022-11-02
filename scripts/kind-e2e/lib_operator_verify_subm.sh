@@ -46,8 +46,6 @@ function verify_subm_operator() {
 
   # Verify SubM operator namespace has required pod security labels
   kubectl get ns $subm_ns -o=jsonpath='{.metadata.labels}' | grep '\"pod-security.kubernetes.io/enforce\":\"privileged\"'
-  kubectl get ns $subm_ns -o=jsonpath='{.metadata.labels}' | grep '\"pod-security.kubernetes.io/audit\":\"privileged\"'
-  kubectl get ns $subm_ns -o=jsonpath='{.metadata.labels}' | grep '\"pod-security.kubernetes.io/warn\":\"privileged\"'
 
   # Verify SubM Operator CRD
   kubectl get crds submariners.submariner.io
