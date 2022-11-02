@@ -294,29 +294,29 @@ func checkNSLabels(config *Config) error {
 		"pod-security.kubernetes.io/warn":    "privileged",
 	}
 
-	missingLabels := map[string]string{}
+	foundOne := false
 
 	for key, expectedLabel := range expectedLabels {
 		actualLabel, found := ns.Labels[key]
-		if !found || actualLabel != expectedLabel {
-			missingLabels[key] = expectedLabel
+		if found && actualLabel == expectedLabel {
+			foundOne = true
+			break
 		}
 	}
 
-	if len(missingLabels) != 0 {
-		warnAbout(missingLabels, ns.Name)
+	if foundOne {
+		return nil
 	}
 
-	return nil
-}
+	labelStr := ""
+	for key, val := range expectedLabels {
+		labelStr += fmt.Sprintf("  %s=%s", key, val) + "\n"
+	}
 
-func warnAbout(missingLabels map[string]string, namespace string) {
 	status := cli.NewReporter()
 	status.Warning("Starting with Kubernetes 1.23, the Pod Security admission controller expects namespaces to have security labels."+
 		" Without these, you will see warnings in subctl's output. subctl should work fine, but you can avoid the warnings and ensure "+
-		"correct behavior by adding these labels to the namespace %s:", namespace)
+		"correct behavior by adding at least one of these labels to the namespace %q:\n%s", config.Namespace, labelStr)
 
-	for key, val := range missingLabels {
-		status.Warning(fmt.Sprintf("%s %s", key, val))
-	}
+	return nil
 }
