@@ -42,7 +42,9 @@ var (
 	defaultComponents = []string{component.ServiceDiscovery, component.Connectivity}
 )
 
-var deployRestConfigProducer = restconfig.NewProducer()
+var deployRestConfigProducer = restconfig.NewProducer().
+	WithDefaultNamespace(constants.DefaultBrokerNamespace).
+	WithDeprecatedNamespaceFlag("broker-namespace")
 
 // deployBroker represents the deployBroker command.
 var deployBroker = &cobra.Command{
@@ -80,16 +82,16 @@ func addDeployBrokerFlags() {
 	deployBroker.PersistentFlags().StringVar(&deployflags.ImageVersion, "version", "", "image version")
 
 	deployBroker.PersistentFlags().BoolVar(&deployflags.OperatorDebug, "operator-debug", false, "enable operator debugging (verbose logging)")
-	deployBroker.PersistentFlags().StringVar(&deployflags.BrokerNamespace, "broker-namespace", constants.DefaultBrokerNamespace,
-		"namespace for broker")
 }
 
 func deployBrokerInContext(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+	deployflags.BrokerNamespace = namespace
+
 	if err := deploy.Broker(&deployflags, clusterInfo.ClientProducer, status); err != nil {
 		return err //nolint:wrapcheck // No need to wrap errors here.
 	}
 
 	return broker.WriteInfoToFile( //nolint:wrapcheck // No need to wrap errors here.
-		clusterInfo.RestConfig, deployflags.BrokerNamespace, ipsecSubmFile,
+		clusterInfo.RestConfig, namespace, ipsecSubmFile,
 		stringset.New(deployflags.BrokerSpec.Components...), deployflags.BrokerSpec.DefaultCustomDomains, status)
 }
