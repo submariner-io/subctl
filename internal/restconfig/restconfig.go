@@ -71,6 +71,7 @@ type Producer struct {
 	contextsFlag                  bool
 	deprecatedKubeContextsMessage *string
 	defaultNamespace              *string
+	deprecatedNamespaceFlag       *string
 }
 
 // NewProducer initialises a blank producer which needs to be set up with flags (see SetupFlags).
@@ -133,6 +134,14 @@ func (rcp *Producer) WithDeprecatedKubeContexts(message string) *Producer {
 // of a Kubernetes-provided context.
 func (rcp *Producer) WithInClusterFlag() *Producer {
 	rcp.inClusterFlag = true
+
+	return rcp
+}
+
+// WithDeprecatedNamespace flag sets up a deprecated alias for --namespace.
+func (rcp *Producer) WithDeprecatedNamespaceFlag(namespaceFlag string) *Producer {
+	rcp.namespaceFlag = true
+	rcp.deprecatedNamespaceFlag = &namespaceFlag
 
 	return rcp
 }
@@ -200,6 +209,17 @@ func (rcp *Producer) setupContextFlags(
 	}
 
 	clientcmd.BindOverrideFlags(&overrides, flags, kflags)
+
+	// TODO Remove in 0.15 or 0.16 (depending on when this is merged)
+	if rcp.deprecatedNamespaceFlag != nil {
+		deprecatedNamespaceFlag := clientcmd.FlagInfo{
+			LongName:    *rcp.deprecatedNamespaceFlag,
+			Default:     kflags.ContextOverrideFlags.Namespace.Default,
+			Description: kflags.ContextOverrideFlags.Namespace.Description,
+		}
+		deprecatedNamespaceFlag.BindTransformingStringFlag(flags, &overrides.Context.Namespace, clientcmd.RemoveNamespacesPrefix)
+		_ = flags.MarkDeprecated(*rcp.deprecatedNamespaceFlag, "use --namespace instead")
+	}
 
 	return &loadingRulesAndOverrides{
 		loadingRules: loadingRules,

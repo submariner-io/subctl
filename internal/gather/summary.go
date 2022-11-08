@@ -36,6 +36,7 @@ import (
 )
 
 // Embed the file content as string.
+//
 //go:embed layout.gohtml
 var layout string
 

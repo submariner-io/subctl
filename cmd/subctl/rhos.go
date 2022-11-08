@@ -63,13 +63,13 @@ var (
 
 func init() {
 	addGeneralRHOSFlags := func(command *cobra.Command) {
-		command.Flags().StringVar(&rhosConfig.InfraID, infraIDFlag, "", "RHOS infra ID")
-		command.Flags().StringVar(&rhosConfig.Region, regionFlag, "", "RHOS region")
-		command.Flags().StringVar(&rhosConfig.ProjectID, projectIDFlag, "", "RHOS project ID")
+		command.Flags().StringVar(&rhosConfig.InfraID, infraIDFlag, "", "OpenStack infra ID")
+		command.Flags().StringVar(&rhosConfig.Region, regionFlag, "", "OpenStack region")
+		command.Flags().StringVar(&rhosConfig.ProjectID, projectIDFlag, "", "OpenStack project ID")
 		command.Flags().StringVar(&rhosConfig.OcpMetadataFile, "ocp-metadata", "",
 			"OCP metadata.json file (or the directory containing it) from which to read the RHOS infra ID "+
 				"and region from (takes precedence over the specific flags)")
-		command.Flags().StringVar(&rhosConfig.CloudEntry, cloudEntryFlag, "", "the cloud entry to use")
+		command.Flags().StringVar(&rhosConfig.CloudEntry, cloudEntryFlag, "", "Specific cloud configuration to use from the clouds.yaml")
 	}
 
 	addGeneralRHOSFlags(rhosPrepareCmd)
