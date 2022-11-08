@@ -118,7 +118,8 @@ prompt for confirmation therefore you must specify --enable-disruptive to run th
 				func(fromClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 					return restconfig.NewProducerFrom(args[1], "").RunOnSelectedContext( //nolint:wrapcheck // No need to wrap errors here.
 						func(toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-							return runVerify(fromClusterInfo, toClusterInfo, namespace, testType)
+							// This deprecated variant doesn't handle a namespace argument
+							return runVerify(fromClusterInfo, toClusterInfo, constants.OperatorNamespace, testType)
 						}, status)
 				}, cli.NewReporter()))
 
