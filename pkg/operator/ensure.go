@@ -60,7 +60,7 @@ func Ensure(status reporter.Interface, clientProducer client.Producer, operatorN
 	componentsRbac := []ocp.RbacInfo{
 		{
 			ComponentName:          names.OperatorComponent,
-			ClusterRoleFile:        embeddedyamls.Config_rbac_submariner_operator_cluster_role_yaml,
+			ClusterRoleFile:        embeddedyamls.Config_rbac_submariner_operator_ocp_cluster_role_yaml,
 			ClusterRoleBindingFile: embeddedyamls.Config_rbac_submariner_operator_ocp_cluster_role_binding_yaml,
 		},
 	}
