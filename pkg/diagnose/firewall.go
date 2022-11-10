@@ -244,7 +244,7 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 
 	defer sPod.Delete()
 
-	gatewayPodIP, err := getGatewayIP(remoteClusterInfo, localClusterInfo.Name, status)
+	gatewayPodIP, err := getGatewayIP(remoteClusterInfo, localClusterInfo.Submariner.Status.ClusterID, status)
 	if err != nil {
 		return status.Error(err, "Error retrieving the gateway IP of cluster %q", localClusterInfo.Name)
 	}
