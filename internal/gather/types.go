@@ -48,6 +48,9 @@ type version struct {
 
 type clusterConfig struct {
 	CNIPlugin        string
+	ServiceCIDR      string
+	ClusterCIDR      string
+	GlobalCIDR       string
 	CloudProvider    v1alpha1.CloudProvider
 	TotalNode        int
 	GatewayNode      map[string]types.UID
