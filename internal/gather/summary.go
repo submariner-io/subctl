@@ -92,10 +92,17 @@ func getClusterConfig(info *Info) clusterConfig {
 	}
 
 	config.CNIPlugin = "Not found"
+	config.GlobalCIDR = "N/A"
 	config.CloudProvider = "N/A" // Broker clusters won't have Submariner to gather information from
 
 	if info.Submariner != nil {
 		config.CNIPlugin = info.Submariner.Status.NetworkPlugin
+		config.ClusterCIDR = info.Submariner.Status.ClusterCIDR
+		config.ServiceCIDR = info.Submariner.Status.ServiceCIDR
+
+		if len(info.Submariner.Status.GlobalCIDR) > 0 {
+			config.GlobalCIDR = info.Submariner.Status.GlobalCIDR
+		}
 	}
 
 	return config
