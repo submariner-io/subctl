@@ -201,7 +201,7 @@ func addDiagnoseFWConfigFlags(command *cobra.Command) {
 }
 
 func firewallIntraVxLANConfig(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-	return diagnose.FirewallIntraVxLANConfig( // nolint:wrapcheck // No need to wrap errors here.
+	return diagnose.FirewallIntraVxLANConfig( //nolint:wrapcheck // No need to wrap errors here.
 		clusterInfo, namespace, diagnoseFirewallOptions, status)
 }
 
@@ -234,7 +234,7 @@ func diagnoseAll(status reporter.Interface) error {
 	fmt.Printf("Skipping inter-cluster firewall check as it requires two kubeconfigs." +
 		" Please run \"subctl diagnose firewall inter-cluster\" command manually.\n")
 
-	return err // nolint:wrapcheck // No need to wrap errors here.
+	return err //nolint:wrapcheck // No need to wrap errors here.
 }
 
 func runLocalRemoteCommand(command *cobra.Command, localRemoteRestConfigProducer *restconfig.Producer, args []string,
@@ -252,7 +252,7 @@ func runLocalRemoteCommand(command *cobra.Command, localRemoteRestConfigProducer
 
 		exit.OnError(localProducer.RunOnSelectedContext(
 			func(localClusterInfo *cluster.Info, localNamespace string, status reporter.Interface) error {
-				return remoteProducer.RunOnSelectedContext( // nolint:wrapcheck // No need to wrap errors here.
+				return remoteProducer.RunOnSelectedContext( //nolint:wrapcheck // No need to wrap errors here.
 					func(remoteClusterInfo *cluster.Info, remoteNamespace string, status reporter.Interface) error {
 						return function(localClusterInfo, remoteClusterInfo, localNamespace, diagnoseFirewallOptions, status)
 					}, status)
@@ -265,7 +265,7 @@ func runLocalRemoteCommand(command *cobra.Command, localRemoteRestConfigProducer
 					func(remoteClusterInfo *cluster.Info, remoteNamespace string, status reporter.Interface) error {
 						return function(localClusterInfo, remoteClusterInfo, localNamespace, diagnoseFirewallOptions, status)
 					}, status)
-				return err // nolint:wrapcheck // No need to wrap errors here.
+				return err //nolint:wrapcheck // No need to wrap errors here.
 			}, status))
 	}
 }
