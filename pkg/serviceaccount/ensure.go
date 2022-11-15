@@ -44,13 +44,12 @@ const (
 )
 
 // ensureFromYAML creates the given service account.
-//nolint:wrapcheck // No need to wrap errors here.
 func ensureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (*corev1.ServiceAccount, error) {
 	sa := &corev1.ServiceAccount{}
 
 	err := embeddedyamls.GetObject(yaml, sa)
 	if err != nil {
-		return nil, err
+		return nil, err //nolint:wrapcheck // No need to wrap errors here.
 	}
 
 	err = ensure(kubeClient, namespace, sa, true)
