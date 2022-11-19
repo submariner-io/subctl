@@ -30,8 +30,10 @@ import (
 	"github.com/submariner-io/subctl/internal/gvr"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	corev1 "k8s.io/api/core/v1"
+	discovery "k8s.io/api/discovery/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
@@ -79,18 +81,24 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 		verifyStatusCondition(se, lhconstants.ServiceExportSynced, status)
 
 		ep := clusterInfo.ClientProducer.ForKubernetes().DiscoveryV1().EndpointSlices(se.Namespace)
-		_, err = ep.Get(context.TODO(), fmt.Sprintf("%s-%s", se.Name, clusterInfo.Submariner.Spec.ClusterID), metav1.GetOptions{})
 
+		epsList, err := ep.List(context.TODO(), metav1.ListOptions{
+			LabelSelector: labels.SelectorFromSet(map[string]string{
+				discovery.LabelManagedBy:          lhconstants.LabelValueManagedBy,
+				lhconstants.MCSLabelServiceName:   se.Name,
+				lhconstants.MCSLabelSourceCluster: clusterInfo.Submariner.Spec.ClusterID,
+			}).String(),
+		})
 		if err != nil {
-			if apierrors.IsNotFound(err) {
-				status.Failure("No EndpointSlice found for exported service %s/%s", se.Namespace, se.Name)
-			} else {
-				status.Failure("Error retrieving EndPointSlice for exported service %s/%s: %v", se.Namespace, se.Name, err)
-				return
-			}
+			status.Failure("Error retrieving EndPointSlice for exported service %s/%s: %v", se.Namespace, se.Name, err)
+			return
 		}
 
-		_, err := clusterInfo.ClientProducer.ForDynamic().Resource(serviceImportsGVR).
+		if len(epsList.Items) == 0 {
+			status.Failure("No EndpointSlice found for exported service %s/%s", se.Namespace, se.Name)
+		}
+
+		_, err = clusterInfo.ClientProducer.ForDynamic().Resource(serviceImportsGVR).
 			Namespace(constants.OperatorNamespace).Get(context.TODO(),
 			fmt.Sprintf("%s-%s-%s", se.Name, se.Namespace, clusterInfo.Submariner.Spec.ClusterID), metav1.GetOptions{})
 		if err != nil {
