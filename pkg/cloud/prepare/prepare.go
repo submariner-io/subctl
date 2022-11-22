@@ -19,6 +19,7 @@ limitations under the License.
 package prepare
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -31,7 +32,7 @@ import (
 )
 
 func getNetworkDetails(clientProducer client.Producer) (*network.ClusterNetwork, error) {
-	networkDetails, err := network.Discover(clientProducer.ForGeneral(), constants.OperatorNamespace)
+	networkDetails, err := network.Discover(context.TODO(), clientProducer.ForGeneral(), constants.OperatorNamespace)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to discover network details")
 	} else if networkDetails == nil {

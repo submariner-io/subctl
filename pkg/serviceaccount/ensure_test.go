@@ -54,7 +54,7 @@ var _ = Describe("EnsureFromYAML", func() {
 
 	When("the ServiceAccount doesn't exist", func() {
 		It("should create it", func() {
-			created, err := serviceaccount.EnsureFromYAML(client, namespace, roleYAML)
+			created, err := serviceaccount.EnsureFromYAML(context.TODO(), client, namespace, roleYAML)
 			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
 			assertServiceAccount()
@@ -63,7 +63,7 @@ var _ = Describe("EnsureFromYAML", func() {
 
 	When("the ServiceAccount already exists", func() {
 		It("should not return any error", func() {
-			_, err := serviceaccount.Ensure(client, namespace, &corev1.ServiceAccount{
+			_, err := serviceaccount.Ensure(context.TODO(), client, namespace, &corev1.ServiceAccount{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ServiceAccount",
 					APIVersion: corev1.SchemeGroupVersion.String(),
@@ -75,7 +75,7 @@ var _ = Describe("EnsureFromYAML", func() {
 			Expect(err).To(Succeed())
 			assertServiceAccount()
 
-			created, err := serviceaccount.EnsureFromYAML(client, namespace, roleYAML)
+			created, err := serviceaccount.EnsureFromYAML(context.TODO(), client, namespace, roleYAML)
 			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
 		})

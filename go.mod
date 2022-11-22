@@ -15,12 +15,12 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
-	github.com/submariner-io/admiral v0.14.0-m2
-	github.com/submariner-io/cloud-prepare v0.14.0-m2
-	github.com/submariner-io/lighthouse v0.14.0-m2.0.20221013155253-8a8c1fbfc8d3
-	github.com/submariner-io/shipyard v0.14.0-m2
-	github.com/submariner-io/submariner v0.14.0-m1.0.20220926163523-c1aa0f37d980
-	github.com/submariner-io/submariner-operator v0.14.0-m2.0.20221024122505-adc24314a409
+	github.com/submariner-io/admiral v0.14.0-m2.0.20221117084828-07357c094bd0
+	github.com/submariner-io/cloud-prepare v0.14.0-m2.0.20221121171008-e3c01af790b5
+	github.com/submariner-io/lighthouse v0.14.0-m2.0.20221122104343-03c2e924fd9b
+	github.com/submariner-io/shipyard v0.14.0-m2.0.20221121173616-41b20b7d46e1
+	github.com/submariner-io/submariner v0.14.0-m2.0.20221122092810-c3c4cb4ea0e9
+	github.com/submariner-io/submariner-operator v0.14.0-m2.0.20221115181201-e6890cc75dfa
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
 	google.golang.org/api v0.103.0
@@ -37,26 +37,26 @@ require (
 require (
 	cloud.google.com/go/compute v1.12.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.1 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.1.4 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.2.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.0.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute v1.0.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork v1.1.0 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.16.16 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.17.8 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.12.21 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.17 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.23 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.17 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.24 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.63.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.17 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.11.23 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.16.19 // indirect
-	github.com/aws/smithy-go v1.13.3 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.17.1 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.18.0 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.0 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.19 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.25 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.19 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.26 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.70.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.19 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.11.25 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.17.2 // indirect
+	github.com/aws/smithy-go v1.13.4 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
@@ -111,7 +111,7 @@ require (
 	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/term v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
-	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
+	golang.org/x/time v0.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c // indirect
 	google.golang.org/grpc v1.50.1 // indirect
@@ -121,7 +121,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog v1.0.0 // indirect
-	k8s.io/klog/v2 v2.80.0 // indirect
+	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803164354-a70c9af30aea // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect

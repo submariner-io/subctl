@@ -19,6 +19,7 @@ limitations under the License.
 package deploy
 
 import (
+	"context"
 	"encoding/base64"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -41,12 +42,12 @@ type ServiceDiscoveryOptions struct {
 	CustomDomains          []string
 }
 
-func ServiceDiscovery(clientProducer client.Producer, options *ServiceDiscoveryOptions, brokerInfo *broker.Info,
+func ServiceDiscovery(ctx context.Context, clientProducer client.Producer, options *ServiceDiscoveryOptions, brokerInfo *broker.Info,
 	brokerSecret *v1.Secret, repositoryInfo *image.RepositoryInfo, status reporter.Interface,
 ) error {
 	serviceDiscoverySpec := populateServiceDiscoverySpec(options, brokerInfo, brokerSecret, repositoryInfo)
 
-	err := servicediscoverycr.Ensure(clientProducer.ForGeneral(), constants.OperatorNamespace, serviceDiscoverySpec)
+	err := servicediscoverycr.Ensure(ctx, clientProducer.ForGeneral(), constants.OperatorNamespace, serviceDiscoverySpec)
 	if err != nil {
 		return status.Error(err, "Service discovery deployment failed")
 	}

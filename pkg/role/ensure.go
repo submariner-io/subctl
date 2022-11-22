@@ -29,7 +29,7 @@ import (
 )
 
 //nolint:wrapcheck // No need to wrap errors here.
-func EnsureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (bool, error) {
+func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namespace, yaml string) (bool, error) {
 	role := &rbacv1.Role{}
 
 	err := embeddedyamls.GetObject(yaml, role)
@@ -37,10 +37,10 @@ func EnsureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (bo
 		return false, err
 	}
 
-	return Ensure(kubeClient, namespace, role)
+	return Ensure(ctx, kubeClient, namespace, role)
 }
 
 //nolint:wrapcheck // No need to wrap errors here.
-func Ensure(kubeClient kubernetes.Interface, namespace string, role *rbacv1.Role) (bool, error) {
-	return resourceutil.CreateOrUpdate(context.TODO(), resource.ForRole(kubeClient, namespace), role)
+func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string, role *rbacv1.Role) (bool, error) {
+	return resourceutil.CreateOrUpdate(ctx, resource.ForRole(kubeClient, namespace), role)
 }

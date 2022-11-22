@@ -19,6 +19,7 @@ limitations under the License.
 package show
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -45,7 +46,7 @@ func Network(clusterInfo *cluster.Info, _ string, status reporter.Interface) err
 	} else {
 		msg = "    Discovered network details"
 
-		clusterNetwork, err = network.Discover(clusterInfo.ClientProducer.ForGeneral(), constants.OperatorNamespace)
+		clusterNetwork, err = network.Discover(context.TODO(), clusterInfo.ClientProducer.ForGeneral(), constants.OperatorNamespace)
 		if err != nil {
 			return status.Error(err, "Error discovering network details for this cluster")
 		}

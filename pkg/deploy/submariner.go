@@ -19,6 +19,7 @@ limitations under the License.
 package deploy
 
 import (
+	"context"
 	"encoding/base64"
 	"strings"
 
@@ -57,17 +58,17 @@ type SubmarinerOptions struct {
 	CustomDomains                 []string
 }
 
-func Submariner(clientProducer client.Producer, options *SubmarinerOptions, brokerInfo *broker.Info,
+func Submariner(ctx context.Context, clientProducer client.Producer, options *SubmarinerOptions, brokerInfo *broker.Info,
 	brokerSecret *v1.Secret, netconfig globalnet.Config, repositoryInfo *image.RepositoryInfo, status reporter.Interface,
 ) error {
-	pskSecret, err := secret.Ensure(clientProducer.ForKubernetes(), constants.OperatorNamespace, brokerInfo.IPSecPSK)
+	pskSecret, err := secret.Ensure(ctx, clientProducer.ForKubernetes(), constants.OperatorNamespace, brokerInfo.IPSecPSK)
 	if err != nil {
 		return status.Error(err, "Error creating PSK secret for cluster")
 	}
 
 	submarinerSpec := populateSubmarinerSpec(options, brokerInfo, brokerSecret, pskSecret, netconfig, repositoryInfo)
 
-	err = submarinercr.Ensure(clientProducer.ForGeneral(), constants.OperatorNamespace, submarinerSpec)
+	err = submarinercr.Ensure(ctx, clientProducer.ForGeneral(), constants.OperatorNamespace, submarinerSpec)
 	if err != nil {
 		return status.Error(err, "Submariner deployment failed")
 	}

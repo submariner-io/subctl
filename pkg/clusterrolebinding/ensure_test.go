@@ -67,7 +67,7 @@ var _ = Describe("EnsureFromYAML", func() {
 
 	When("the ClusterRoleBinding doesn't exist", func() {
 		It("should create it", func() {
-			created, err := clusterrolebinding.EnsureFromYAML(client, namespace, clusterRoleBindingYAML)
+			created, err := clusterrolebinding.EnsureFromYAML(context.TODO(), client, namespace, clusterRoleBindingYAML)
 			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
 			assertClusterRoleBinding()
@@ -76,7 +76,7 @@ var _ = Describe("EnsureFromYAML", func() {
 
 	When("the ClusterRoleBinding already exists", func() {
 		It("should not update it", func() {
-			_, err := clusterrolebinding.Ensure(client, &rbacv1.ClusterRoleBinding{
+			_, err := clusterrolebinding.Ensure(context.TODO(), client, &rbacv1.ClusterRoleBinding{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ClusterRoleBinding",
 					APIVersion: rbacv1.SchemeGroupVersion.String(),
@@ -99,7 +99,7 @@ var _ = Describe("EnsureFromYAML", func() {
 			Expect(err).To(Succeed())
 			assertClusterRoleBinding()
 
-			created, err := clusterrolebinding.EnsureFromYAML(client, namespace, clusterRoleBindingYAML)
+			created, err := clusterrolebinding.EnsureFromYAML(context.TODO(), client, namespace, clusterRoleBindingYAML)
 			Expect(created).To(BeFalse())
 			Expect(err).To(Succeed())
 		})
