@@ -1367,8 +1367,9 @@ github.com/submariner-io/cloud-prepare v0.13.1/go.mod h1:aB18vLmVDOzsY424cZ+5lEK
 github.com/submariner-io/lighthouse v0.13.1 h1:/YxDNSMXJuaB9lHaxNwbb1cWlnk64uuyFD6zFqdZgzs=
 github.com/submariner-io/lighthouse v0.13.1/go.mod h1:5PeRzT5DkcSxKry8p3nWm8KdiUdoXiBoQSGLLbzTAt0=
 github.com/submariner-io/shipyard v0.13.0/go.mod h1:QC3tq6LKRCaavN3/pGw/QqSVIsVJKA9rbmNueihTydE=
-github.com/submariner-io/shipyard v0.13.1 h1:h5Qjlb14uAHjyIiJhuKpPkW9dAUpXZzBey4ICJNkNxc=
 github.com/submariner-io/shipyard v0.13.1/go.mod h1:f7+5soL//qKdoK/0vUvLgto/3JFPYtpXJu4e2iWAicM=
+github.com/submariner-io/shipyard v0.13.2 h1:It7XdowisyHO3FfGNq7RdfxJkpZ769zctbGEKAgAhC8=
+github.com/submariner-io/shipyard v0.13.2/go.mod h1:ht4eXvPKlBTUvPy/9hHdxKj2ZwAoyJ6EnsVEVsU+fI8=
 github.com/submariner-io/submariner v0.13.0 h1:4ezPyOC0ldaTFIya+W6oqWHSUR6L64ZSRTJkUEPj19U=
 github.com/submariner-io/submariner v0.13.0/go.mod h1:NRYeNN1tJXXIJIqPqyU3CuYCg8nfpwyNc+tVcP5Eox0=
 github.com/submariner-io/submariner-operator v0.13.2-0.20221124161114-04be7b0d50f2 h1:Iks071gHx9yilZZilgn2SXQnSl3PBRKUgaheGAZkQyE=
@@ -2396,8 +2397,9 @@ k8s.io/utils v0.0.0-20200912215256-4140de9c8800/go.mod h1:jPW/WVKK9YHAvNhRxK0md/
 k8s.io/utils v0.0.0-20201110183641-67b214c5f920/go.mod h1:jPW/WVKK9YHAvNhRxK0md/EJ228hCsBRufyofKtW8HA=
 k8s.io/utils v0.0.0-20210305010621-2afb4311ab10/go.mod h1:jPW/WVKK9YHAvNhRxK0md/EJ228hCsBRufyofKtW8HA=
 k8s.io/utils v0.0.0-20210802155522-efc7438f0176/go.mod h1:jPW/WVKK9YHAvNhRxK0md/EJ228hCsBRufyofKtW8HA=
-k8s.io/utils v0.0.0-20211116205334-6203023598ed h1:ck1fRPWPJWsMd8ZRFsWc6mh/zHp5fZ/shhbrgPUxDAE=
 k8s.io/utils v0.0.0-20211116205334-6203023598ed/go.mod h1:jPW/WVKK9YHAvNhRxK0md/EJ228hCsBRufyofKtW8HA=
+k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed h1:jAne/RjBTyawwAy0utX5eqigAwz/lQhTmy+Hr/Cpue4=
+k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed/go.mod h1:jPW/WVKK9YHAvNhRxK0md/EJ228hCsBRufyofKtW8HA=
 modernc.org/cc v1.0.0/go.mod h1:1Sk4//wdnYJiUIxnW8ddKpaOJCF37yAdqYnkxUpaYxw=
 modernc.org/golex v1.0.0/go.mod h1:b/QX9oBD/LhixY6NDh+IdGv17hgB+51fET1i2kPSmvk=
 modernc.org/mathutil v1.0.0/go.mod h1:wU0vUrJsVWBZ4P6e7xtFJEhFSNsfRLJ8H458uRjg03k=
