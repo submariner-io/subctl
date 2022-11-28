@@ -20,7 +20,7 @@ require (
 	github.com/submariner-io/admiral v0.13.1
 	github.com/submariner-io/cloud-prepare v0.13.1
 	github.com/submariner-io/lighthouse v0.13.1
-	github.com/submariner-io/shipyard v0.13.1
+	github.com/submariner-io/shipyard v0.13.2
 	github.com/submariner-io/submariner v0.13.0
 	github.com/submariner-io/submariner-operator v0.13.2-0.20221124161114-04be7b0d50f2
 	github.com/uw-labs/lichen v0.1.7
@@ -29,7 +29,7 @@ require (
 	k8s.io/api v0.23.5
 	k8s.io/apimachinery v0.23.5
 	k8s.io/client-go v12.0.0+incompatible
-	k8s.io/utils v0.0.0-20211116205334-6203023598ed
+	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed
 	sigs.k8s.io/mcs-api v0.1.0
 	sigs.k8s.io/yaml v1.3.0
 )
