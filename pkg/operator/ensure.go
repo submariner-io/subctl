@@ -31,11 +31,14 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	"github.com/submariner-io/submariner-operator/pkg/names"
+	"golang.org/x/net/context"
 )
 
 //nolint:wrapcheck // No need to wrap errors here.
-func Ensure(status reporter.Interface, clientProducer client.Producer, operatorNamespace, operatorImage string, debug bool) error {
-	if created, err := opcrds.Ensure(crd.UpdaterFromControllerClient(clientProducer.ForGeneral())); err != nil {
+func Ensure(ctx context.Context,
+	status reporter.Interface, clientProducer client.Producer, operatorNamespace, operatorImage string, debug bool,
+) error {
+	if created, err := opcrds.Ensure(ctx, crd.UpdaterFromControllerClient(clientProducer.ForGeneral())); err != nil {
 		return err
 	} else if created {
 		status.Success("Created operator CRDs")
@@ -45,13 +48,13 @@ func Ensure(status reporter.Interface, clientProducer client.Producer, operatorN
 		"pod-security.kubernetes.io/enforce": "privileged",
 	}
 
-	if created, err := namespace.Ensure(clientProducer.ForKubernetes(), operatorNamespace, operatorNamespaceLabels); err != nil {
+	if created, err := namespace.Ensure(ctx, clientProducer.ForKubernetes(), operatorNamespace, operatorNamespaceLabels); err != nil {
 		return err
 	} else if created {
 		status.Success("Created operator namespace: %s", operatorNamespace)
 	}
 
-	if created, err := serviceaccount.Ensure(clientProducer.ForKubernetes(), operatorNamespace); err != nil {
+	if created, err := serviceaccount.Ensure(ctx, clientProducer.ForKubernetes(), operatorNamespace); err != nil {
 		return err
 	} else if created {
 		status.Success("Created operator service account and role")
@@ -65,22 +68,22 @@ func Ensure(status reporter.Interface, clientProducer client.Producer, operatorN
 		},
 	}
 
-	if created, err := ocp.EnsureRBAC(clientProducer.ForDynamic(), clientProducer.ForKubernetes(),
+	if created, err := ocp.EnsureRBAC(ctx, clientProducer.ForDynamic(), clientProducer.ForKubernetes(),
 		operatorNamespace, componentsRbac); err != nil {
 		return err
 	} else if created {
 		status.Success("Updated the OCP roles")
 	}
 
-	if err := submariner.Ensure(status, clientProducer.ForKubernetes(), clientProducer.ForDynamic(), operatorNamespace); err != nil {
+	if err := submariner.Ensure(ctx, status, clientProducer.ForKubernetes(), clientProducer.ForDynamic(), operatorNamespace); err != nil {
 		return err
 	}
 
-	if err := lighthouse.Ensure(status, clientProducer.ForKubernetes(), clientProducer.ForDynamic(), operatorNamespace); err != nil {
+	if err := lighthouse.Ensure(ctx, status, clientProducer.ForKubernetes(), clientProducer.ForDynamic(), operatorNamespace); err != nil {
 		return err
 	}
 
-	if created, err := deployment.Ensure(clientProducer.ForKubernetes(), operatorNamespace, operatorImage, debug); err != nil {
+	if created, err := deployment.Ensure(ctx, clientProducer.ForKubernetes(), operatorNamespace, operatorImage, debug); err != nil {
 		return err
 	} else if created {
 		status.Success("Deployed the operator successfully")

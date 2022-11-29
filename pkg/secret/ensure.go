@@ -30,9 +30,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func Ensure(client kubernetes.Interface, namespace string, secret *v1.Secret) (*v1.Secret, error) {
+func Ensure(ctx context.Context, client kubernetes.Interface, namespace string, secret *v1.Secret) (*v1.Secret, error) {
 	//nolint:wrapcheck // No need to wrap errors here
-	object, err := util.CreateAnew(context.TODO(), &resource.InterfaceFuncs{
+	object, err := util.CreateAnew(ctx, &resource.InterfaceFuncs{
 		GetFunc: func(ctx context.Context, name string, options metav1.GetOptions) (runtime.Object, error) {
 			return client.CoreV1().Secrets(namespace).Get(ctx, name, options)
 		},

@@ -38,7 +38,9 @@ func init() {
 	}
 }
 
-func Ensure(client controllerClient.Client, namespace string, serviceDiscoverySpec *operatorv1alpha1.ServiceDiscoverySpec) error {
+func Ensure(ctx context.Context,
+	client controllerClient.Client, namespace string, serviceDiscoverySpec *operatorv1alpha1.ServiceDiscoverySpec,
+) error {
 	sd := &operatorv1alpha1.ServiceDiscovery{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
@@ -47,7 +49,7 @@ func Ensure(client controllerClient.Client, namespace string, serviceDiscoverySp
 		Spec: *serviceDiscoverySpec,
 	}
 
-	_, err := resourceutil.CreateOrUpdate(context.TODO(), resource.ForControllerClient(client, namespace,
+	_, err := resourceutil.CreateOrUpdate(ctx, resource.ForControllerClient(client, namespace,
 		&operatorv1alpha1.ServiceDiscovery{}), sd)
 
 	return errors.Wrap(err, "error creating/updating ServiceDiscovery resource")

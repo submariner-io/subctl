@@ -30,7 +30,7 @@ import (
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func Ensure(client controllerClient.Client, namespace string, submarinerSpec *operatorv1alpha1.SubmarinerSpec) error {
+func Ensure(ctx context.Context, client controllerClient.Client, namespace string, submarinerSpec *operatorv1alpha1.SubmarinerSpec) error {
 	submarinerCR := &operatorv1alpha1.Submariner{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      names.SubmarinerCrName,
@@ -41,7 +41,7 @@ func Ensure(client controllerClient.Client, namespace string, submarinerSpec *op
 
 	propagationPolicy := metav1.DeletePropagationForeground
 
-	_, err := util.CreateAnew(context.TODO(), resource.ForControllerClient(client, namespace, &operatorv1alpha1.Submariner{}),
+	_, err := util.CreateAnew(ctx, resource.ForControllerClient(client, namespace, &operatorv1alpha1.Submariner{}),
 		submarinerCR, metav1.CreateOptions{}, metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
 
 	return errors.Wrap(err, "error creating Submariner resource")

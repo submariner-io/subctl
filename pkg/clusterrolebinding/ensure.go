@@ -29,7 +29,7 @@ import (
 )
 
 //nolint:wrapcheck // No need to wrap errors here.
-func EnsureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (bool, error) {
+func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namespace, yaml string) (bool, error) {
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{}
 
 	err := embeddedyamls.GetObject(yaml, clusterRoleBinding)
@@ -39,10 +39,10 @@ func EnsureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (bo
 
 	clusterRoleBinding.Subjects[0].Namespace = namespace
 
-	return Ensure(kubeClient, clusterRoleBinding)
+	return Ensure(ctx, kubeClient, clusterRoleBinding)
 }
 
 //nolint:wrapcheck // No need to wrap errors here.
-func Ensure(kubeClient kubernetes.Interface, clusterRoleBinding *rbacv1.ClusterRoleBinding) (bool, error) {
-	return resourceutil.CreateOrUpdate(context.TODO(), resource.ForClusterRoleBinding(kubeClient), clusterRoleBinding)
+func Ensure(ctx context.Context, kubeClient kubernetes.Interface, clusterRoleBinding *rbacv1.ClusterRoleBinding) (bool, error) {
+	return resourceutil.CreateOrUpdate(ctx, resource.ForClusterRoleBinding(kubeClient), clusterRoleBinding)
 }

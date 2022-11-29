@@ -19,6 +19,7 @@ limitations under the License.
 package deploy
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -48,6 +49,7 @@ var ValidComponents = []string{component.ServiceDiscovery, component.Connectivit
 func Broker(options *BrokerOptions, clientProducer client.Producer, status reporter.Interface,
 ) error {
 	componentSet := stringset.New(options.BrokerSpec.Components...)
+	ctx := context.TODO()
 
 	if err := isValidComponents(componentSet); err != nil {
 		return status.Error(err, "invalid components parameter")
@@ -61,18 +63,18 @@ func Broker(options *BrokerOptions, clientProducer client.Producer, status repor
 		return status.Error(err, "invalid GlobalCIDR configuration")
 	}
 
-	err := deploy(options, status, clientProducer)
+	err := deploy(ctx, options, status, clientProducer)
 	if err != nil {
 		return err
 	}
 
 	if options.BrokerSpec.GlobalnetEnabled {
-		if err = globalnet.ValidateExistingGlobalNetworks(clientProducer.ForGeneral(), options.BrokerNamespace); err != nil {
+		if err = globalnet.ValidateExistingGlobalNetworks(ctx, clientProducer.ForGeneral(), options.BrokerNamespace); err != nil {
 			return status.Error(err, "error validating existing globalCIDR configmap")
 		}
 	}
 
-	if err = globalnet.CreateConfigMap(clientProducer.ForGeneral(), options.BrokerSpec.GlobalnetEnabled,
+	if err = globalnet.CreateConfigMap(ctx, clientProducer.ForGeneral(), options.BrokerSpec.GlobalnetEnabled,
 		options.BrokerSpec.GlobalnetCIDRRange, options.BrokerSpec.DefaultGlobalnetClusterSize, options.BrokerNamespace); err != nil {
 		return status.Error(err, "error creating globalCIDR configmap on Broker")
 	}
@@ -80,11 +82,11 @@ func Broker(options *BrokerOptions, clientProducer client.Producer, status repor
 	return nil
 }
 
-func deploy(options *BrokerOptions, status reporter.Interface, clientProducer client.Producer) error {
+func deploy(ctx context.Context, options *BrokerOptions, status reporter.Interface, clientProducer client.Producer) error {
 	status.Start("Setting up broker RBAC")
 	defer status.End()
 
-	err := broker.Ensure(crd.UpdaterFromControllerClient(clientProducer.ForGeneral()), clientProducer.ForKubernetes(),
+	err := broker.Ensure(ctx, crd.UpdaterFromControllerClient(clientProducer.ForGeneral()), clientProducer.ForKubernetes(),
 		options.BrokerSpec.Components, false, options.BrokerNamespace)
 	if err != nil {
 		return status.Error(err, "error setting up broker RBAC")
@@ -94,14 +96,14 @@ func deploy(options *BrokerOptions, status reporter.Interface, clientProducer cl
 
 	repositoryInfo := image.NewRepositoryInfo(options.Repository, options.ImageVersion, nil)
 
-	err = operator.Ensure(status, clientProducer, constants.OperatorNamespace, repositoryInfo.GetOperatorImage(), options.OperatorDebug)
+	err = operator.Ensure(ctx, status, clientProducer, constants.OperatorNamespace, repositoryInfo.GetOperatorImage(), options.OperatorDebug)
 	if err != nil {
 		return status.Error(err, "error deploying Submariner operator")
 	}
 
 	status.Start("Deploying the broker")
 
-	err = brokercr.Ensure(clientProducer.ForGeneral(), options.BrokerNamespace, options.BrokerSpec)
+	err = brokercr.Ensure(ctx, clientProducer.ForGeneral(), options.BrokerNamespace, options.BrokerSpec)
 
 	return status.Error(err, "Broker deployment failed")
 }

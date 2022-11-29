@@ -26,32 +26,33 @@ import (
 	"github.com/submariner-io/subctl/pkg/rolebinding"
 	"github.com/submariner-io/subctl/pkg/serviceaccount"
 	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
+	"golang.org/x/net/context"
 	"k8s.io/client-go/kubernetes"
 )
 
 // Ensure functions updates or installs the operator CRDs in the cluster.
-func Ensure(kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdSA, err := ensureServiceAccounts(kubeClient, namespace)
+func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
+	createdSA, err := ensureServiceAccounts(ctx, kubeClient, namespace)
 	if err != nil {
 		return false, err
 	}
 
-	createdRole, err := ensureRoles(kubeClient, namespace)
+	createdRole, err := ensureRoles(ctx, kubeClient, namespace)
 	if err != nil {
 		return false, err
 	}
 
-	createdRB, err := ensureRoleBindings(kubeClient, namespace)
+	createdRB, err := ensureRoleBindings(ctx, kubeClient, namespace)
 	if err != nil {
 		return false, err
 	}
 
-	createdCR, err := ensureClusterRoles(kubeClient)
+	createdCR, err := ensureClusterRoles(ctx, kubeClient)
 	if err != nil {
 		return false, err
 	}
 
-	createdCRB, err := ensureClusterRoleBindings(kubeClient, namespace)
+	createdCRB, err := ensureClusterRoleBindings(ctx, kubeClient, namespace)
 	if err != nil {
 		return false, err
 	}
@@ -59,31 +60,31 @@ func Ensure(kubeClient kubernetes.Interface, namespace string) (bool, error) {
 	return createdSA || createdRole || createdRB || createdCR || createdCRB, nil
 }
 
-func ensureServiceAccounts(kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdOperatorSA, err := serviceaccount.EnsureFromYAML(kubeClient, namespace,
+func ensureServiceAccounts(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
+	createdOperatorSA, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_operator_service_account_yaml)
 	return createdOperatorSA, errors.Wrap(err, "error provisioning operator ServiceAccount resource")
 }
 
-func ensureClusterRoles(kubeClient kubernetes.Interface) (bool, error) {
-	createdOperatorCR, err := clusterrole.EnsureFromYAML(kubeClient, embeddedyamls.Config_rbac_submariner_operator_cluster_role_yaml)
+func ensureClusterRoles(ctx context.Context, kubeClient kubernetes.Interface) (bool, error) {
+	createdOperatorCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, embeddedyamls.Config_rbac_submariner_operator_cluster_role_yaml)
 	return createdOperatorCR, errors.Wrap(err, "error provisioning operator ClusterRole resource")
 }
 
-func ensureClusterRoleBindings(kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdOperatorCRB, err := clusterrolebinding.EnsureFromYAML(kubeClient, namespace,
+func ensureClusterRoleBindings(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
+	createdOperatorCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_operator_cluster_role_binding_yaml)
 	return createdOperatorCRB, errors.Wrap(err, "error provisioning operator ClusterRoleBinding resource")
 }
 
-func ensureRoles(kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdOperatorRole, err := role.EnsureFromYAML(kubeClient, namespace,
+func ensureRoles(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
+	createdOperatorRole, err := role.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_operator_role_yaml)
 	return createdOperatorRole, errors.Wrap(err, "error provisioning operator Role resource")
 }
 
-func ensureRoleBindings(kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdOperatorRB, err := rolebinding.EnsureFromYAML(kubeClient, namespace,
+func ensureRoleBindings(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
+	createdOperatorRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_operator_role_binding_yaml)
 	return createdOperatorRB, errors.Wrap(err, "error provisioning operator RoleBinding resource")
 }

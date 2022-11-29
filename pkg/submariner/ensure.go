@@ -24,14 +24,15 @@ import (
 	"github.com/submariner-io/subctl/pkg/submariner/serviceaccount"
 	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	"github.com/submariner-io/submariner-operator/pkg/names"
+	"golang.org/x/net/context"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
 
-func Ensure(status reporter.Interface, kubeClient kubernetes.Interface, dynClient dynamic.Interface,
+func Ensure(ctx context.Context, status reporter.Interface, kubeClient kubernetes.Interface, dynClient dynamic.Interface,
 	operatorNamespace string,
 ) error {
-	if created, err := serviceaccount.Ensure(kubeClient, operatorNamespace); err != nil {
+	if created, err := serviceaccount.Ensure(ctx, kubeClient, operatorNamespace); err != nil {
 		return err //nolint:wrapcheck // No need to wrap here
 	} else if created {
 		status.Success("Created submariner service account and role")
@@ -65,7 +66,7 @@ func Ensure(status reporter.Interface, kubeClient kubernetes.Interface, dynClien
 		},
 	}
 
-	if created, err := ocp.EnsureRBAC(dynClient, kubeClient, operatorNamespace, componentsRbac); err != nil {
+	if created, err := ocp.EnsureRBAC(ctx, dynClient, kubeClient, operatorNamespace, componentsRbac); err != nil {
 		return err //nolint:wrapcheck // No need to wrap here
 	} else if created {
 		status.Success("Updated the OCP roles")

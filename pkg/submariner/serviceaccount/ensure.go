@@ -26,32 +26,33 @@ import (
 	"github.com/submariner-io/subctl/pkg/rolebinding"
 	"github.com/submariner-io/subctl/pkg/serviceaccount"
 	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
+	"golang.org/x/net/context"
 	"k8s.io/client-go/kubernetes"
 )
 
 // Ensure functions updates or installs the operator CRDs in the cluster.
-func Ensure(kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdSA, err := ensureServiceAccounts(kubeClient, namespace)
+func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
+	createdSA, err := ensureServiceAccounts(ctx, kubeClient, namespace)
 	if err != nil {
 		return false, err
 	}
 
-	createdRole, err := ensureRoles(kubeClient, namespace)
+	createdRole, err := ensureRoles(ctx, kubeClient, namespace)
 	if err != nil {
 		return false, err
 	}
 
-	createdRB, err := ensureRoleBindings(kubeClient, namespace)
+	createdRB, err := ensureRoleBindings(ctx, kubeClient, namespace)
 	if err != nil {
 		return false, err
 	}
 
-	createdCR, err := ensureClusterRoles(kubeClient)
+	createdCR, err := ensureClusterRoles(ctx, kubeClient)
 	if err != nil {
 		return false, err
 	}
 
-	createdCRB, err := ensureClusterRoleBindings(kubeClient, namespace)
+	createdCRB, err := ensureClusterRoleBindings(ctx, kubeClient, namespace)
 	if err != nil {
 		return false, err
 	}
@@ -59,155 +60,159 @@ func Ensure(kubeClient kubernetes.Interface, namespace string) (bool, error) {
 	return createdSA || createdRole || createdRB || createdCR || createdCRB, nil
 }
 
-func ensureServiceAccounts(kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdSubmarinerSA, err := serviceaccount.EnsureFromYAML(kubeClient, namespace,
+//nolint:dupl // Similar code in ensureClusterRoleBindings, ensureRoles, ensureRoleBindings but not duplicated
+func ensureServiceAccounts(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
+	createdSubmarinerSA, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_gateway_service_account_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning gateway ServiceAccount resource")
 	}
 
-	createdRouteAgentSA, err := serviceaccount.EnsureFromYAML(kubeClient, namespace,
+	createdRouteAgentSA, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_route_agent_service_account_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning route agent ServiceAccount resource")
 	}
 
-	createdGlobalnetSA, err := serviceaccount.EnsureFromYAML(kubeClient, namespace,
+	createdGlobalnetSA, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_globalnet_service_account_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning globalnet ServiceAccount resource")
 	}
 
-	createdDiagnoseSA, err := serviceaccount.EnsureFromYAML(kubeClient, namespace,
+	createdDiagnoseSA, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_diagnose_service_account_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning diagnose ServiceAccount resource")
 	}
 
-	createdNPSyncerSA, err := serviceaccount.EnsureFromYAML(kubeClient, namespace,
+	createdNPSyncerSA, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_networkplugin_syncer_service_account_yaml)
 
 	return createdSubmarinerSA || createdRouteAgentSA || createdGlobalnetSA || createdNPSyncerSA || createdDiagnoseSA,
 		errors.Wrap(err, "error provisioning operator networkplugin syncer resource")
 }
 
-func ensureClusterRoles(kubeClient kubernetes.Interface) (bool, error) {
-	createdSubmarinerCR, err := clusterrole.EnsureFromYAML(kubeClient, embeddedyamls.Config_rbac_submariner_gateway_cluster_role_yaml)
+func ensureClusterRoles(ctx context.Context, kubeClient kubernetes.Interface) (bool, error) {
+	createdSubmarinerCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, embeddedyamls.Config_rbac_submariner_gateway_cluster_role_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning gateway ClusterRole resource")
 	}
 
-	createdRouteAgentCR, err := clusterrole.EnsureFromYAML(kubeClient, embeddedyamls.Config_rbac_submariner_route_agent_cluster_role_yaml)
+	createdRouteAgentCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, embeddedyamls.Config_rbac_submariner_route_agent_cluster_role_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning route agent ClusterRole resource")
 	}
 
-	createdGlobalnetCR, err := clusterrole.EnsureFromYAML(kubeClient, embeddedyamls.Config_rbac_submariner_globalnet_cluster_role_yaml)
+	createdGlobalnetCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, embeddedyamls.Config_rbac_submariner_globalnet_cluster_role_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning globalnet ClusterRole resource")
 	}
 
-	createdDiagnoseCR, err := clusterrole.EnsureFromYAML(kubeClient, embeddedyamls.Config_rbac_submariner_diagnose_cluster_role_yaml)
+	createdDiagnoseCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, embeddedyamls.Config_rbac_submariner_diagnose_cluster_role_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning diagnose ClusterRole resource")
 	}
 
-	createdNPSyncerCR, err := clusterrole.EnsureFromYAML(kubeClient, embeddedyamls.Config_rbac_networkplugin_syncer_cluster_role_yaml)
+	createdNPSyncerCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, embeddedyamls.Config_rbac_networkplugin_syncer_cluster_role_yaml)
 
 	return createdSubmarinerCR || createdRouteAgentCR || createdGlobalnetCR || createdNPSyncerCR || createdDiagnoseCR,
 		errors.Wrap(err, "error provisioning networkplugin syncer ClusterRole resource")
 }
 
-func ensureClusterRoleBindings(kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdSubmarinerCRB, err := clusterrolebinding.EnsureFromYAML(kubeClient, namespace,
+//nolint:dupl // Similar code in ensureServiceAccounts, ensureRoles, ensureRoleBindings but not duplicated
+func ensureClusterRoleBindings(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
+	createdSubmarinerCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_gateway_cluster_role_binding_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning gateway ClusterRoleBinding resource")
 	}
 
-	createdRouteAgentCRB, err := clusterrolebinding.EnsureFromYAML(kubeClient, namespace,
+	createdRouteAgentCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_route_agent_cluster_role_binding_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning route agent ClusterRoleBinding resource")
 	}
 
-	createdGlobalnetCRB, err := clusterrolebinding.EnsureFromYAML(kubeClient, namespace,
+	createdGlobalnetCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_globalnet_cluster_role_binding_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning globalnet ClusterRoleBinding resource")
 	}
 
-	createdDiagnoseCRB, err := clusterrolebinding.EnsureFromYAML(kubeClient, namespace,
+	createdDiagnoseCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_diagnose_cluster_role_binding_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning diagnose ClusterRoleBinding resource")
 	}
 
-	createdNPSyncerCRB, err := clusterrolebinding.EnsureFromYAML(kubeClient, namespace,
+	createdNPSyncerCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_networkplugin_syncer_cluster_role_binding_yaml)
 
 	return createdSubmarinerCRB || createdRouteAgentCRB || createdGlobalnetCRB || createdNPSyncerCRB || createdDiagnoseCRB,
 		errors.Wrap(err, "error provisioning networkplugin syncer ClusterRoleBinding resource")
 }
 
-func ensureRoles(kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdSubmarinerRole, err := role.EnsureFromYAML(kubeClient, namespace,
+//nolint:dupl // Similar code in ensureServiceAccounts, ensureClusterRoleBindings, ensureRoleBindings but not duplicated
+func ensureRoles(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
+	createdSubmarinerRole, err := role.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_gateway_role_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning gateway Role resource")
 	}
 
-	createdRouteAgentRole, err := role.EnsureFromYAML(kubeClient, namespace,
+	createdRouteAgentRole, err := role.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_route_agent_role_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning route agent Role resource")
 	}
 
-	createdGlobalnetRole, err := role.EnsureFromYAML(kubeClient, namespace,
+	createdGlobalnetRole, err := role.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_globalnet_role_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning globalnet Role resource")
 	}
 
-	createdDiagnoseRole, err := role.EnsureFromYAML(kubeClient, namespace,
+	createdDiagnoseRole, err := role.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_diagnose_role_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning operator Role resource")
 	}
 
-	createdMetricsReaderRole, err := role.EnsureFromYAML(kubeClient, namespace,
+	createdMetricsReaderRole, err := role.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_openshift_rbac_submariner_metrics_reader_role_yaml)
 
 	return createdSubmarinerRole || createdRouteAgentRole || createdGlobalnetRole || createdMetricsReaderRole || createdDiagnoseRole,
 		errors.Wrap(err, "error provisioning _metrics reader Role resource")
 }
 
-func ensureRoleBindings(kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdSubmarinerRB, err := rolebinding.EnsureFromYAML(kubeClient, namespace,
+//nolint:dupl // Similar code in ensureServiceAccounts, ensureClusterRoleBindings, ensureRoles but not duplicated
+func ensureRoleBindings(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
+	createdSubmarinerRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_gateway_role_binding_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning gateway RoleBinding resource")
 	}
 
-	createdRouteAgentRB, err := rolebinding.EnsureFromYAML(kubeClient, namespace,
+	createdRouteAgentRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_route_agent_role_binding_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning route agent RoleBinding resource")
 	}
 
-	createdGlobalnetRB, err := rolebinding.EnsureFromYAML(kubeClient, namespace,
+	createdGlobalnetRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_globalnet_role_binding_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning globalnet RoleBinding resource")
 	}
 
-	createdDiagnoseRB, err := rolebinding.EnsureFromYAML(kubeClient, namespace,
+	createdDiagnoseRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_diagnose_role_binding_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning diagnose RoleBinding resource")
 	}
 
-	createdMetricsReaderRB, err := rolebinding.EnsureFromYAML(kubeClient, namespace,
+	createdMetricsReaderRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_openshift_rbac_submariner_metrics_reader_role_binding_yaml)
 
 	return createdSubmarinerRB || createdRouteAgentRB || createdGlobalnetRB || createdMetricsReaderRB || createdDiagnoseRB,
