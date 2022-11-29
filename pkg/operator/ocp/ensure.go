@@ -36,20 +36,23 @@ type RbacInfo struct {
 	ClusterRoleBindingFile string
 }
 
-func EnsureRBAC(dynClient dynamic.Interface, kubeClient kubernetes.Interface, namespace string, componentsRbac []RbacInfo) (bool, error) {
-	if !IsOcpPlatform(dynClient) {
+func EnsureRBAC(ctx context.Context,
+	dynClient dynamic.Interface, kubeClient kubernetes.Interface, namespace string, componentsRbac []RbacInfo) (
+	bool, error,
+) {
+	if !IsOcpPlatform(ctx, dynClient) {
 		return false, nil
 	}
 
 	updateRbac := false
 
 	for _, componentRbac := range componentsRbac {
-		createdCR, err := clusterrole.EnsureFromYAML(kubeClient, componentRbac.ClusterRoleFile)
+		createdCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, componentRbac.ClusterRoleFile)
 		if err != nil {
 			return false, errors.Wrapf(err, "error provisioning the %s OCP ClusterRole resource", componentRbac.ComponentName)
 		}
 
-		createdCRB, err := clusterrolebinding.EnsureFromYAML(kubeClient, namespace, componentRbac.ClusterRoleBindingFile)
+		createdCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace, componentRbac.ClusterRoleBindingFile)
 		if err != nil {
 			return false, errors.Wrapf(err, "error provisioning the %s OCP ClusterRoleBinding resource", componentRbac.ComponentName)
 		}
@@ -60,9 +63,9 @@ func EnsureRBAC(dynClient dynamic.Interface, kubeClient kubernetes.Interface, na
 	return updateRbac, nil
 }
 
-func IsOcpPlatform(dynClient dynamic.Interface) bool {
+func IsOcpPlatform(ctx context.Context, dynClient dynamic.Interface) bool {
 	sccClient := dynClient.Resource(securityv1.GroupVersion.WithResource("securitycontextconstraints"))
-	_, err := sccClient.Get(context.TODO(), "privileged", metav1.GetOptions{})
+	_, err := sccClient.Get(ctx, "privileged", metav1.GetOptions{})
 
 	return err == nil
 }

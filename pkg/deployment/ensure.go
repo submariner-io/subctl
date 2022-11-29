@@ -28,6 +28,6 @@ import (
 )
 
 //nolint:wrapcheck // No need to wrap errors here.
-func Ensure(kubeClient kubernetes.Interface, namespace string, deployment *appsv1.Deployment) (bool, error) {
-	return resourceutil.CreateOrUpdate(context.TODO(), resource.ForDeployment(kubeClient, namespace), deployment)
+func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string, deployment *appsv1.Deployment) (bool, error) {
+	return resourceutil.CreateOrUpdate(ctx, resource.ForDeployment(kubeClient, namespace), deployment)
 }

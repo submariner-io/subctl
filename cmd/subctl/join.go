@@ -19,6 +19,7 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -127,7 +128,8 @@ func addJoinFlags(cmd *cobra.Command) {
 func joinInContext(brokerInfo *broker.Info, clusterInfo *cluster.Info, status reporter.Interface) error {
 	determineClusterID(clusterInfo.Name, status)
 
-	networkDetails := getNetworkDetails(clusterInfo.ClientProducer, status)
+	ctx := context.TODO()
+	networkDetails := getNetworkDetails(ctx, clusterInfo.ClientProducer, status)
 	determinePodCIDR(networkDetails, status)
 	determineServiceCIDR(networkDetails, status)
 
@@ -140,7 +142,7 @@ func joinInContext(brokerInfo *broker.Info, clusterInfo *cluster.Info, status re
 	}
 
 	return join.ClusterToBroker( //nolint:wrapcheck // No need to wrap errors here.
-		brokerInfo, &joinFlags, clusterInfo.ClientProducer, status)
+		ctx, brokerInfo, &joinFlags, clusterInfo.ClientProducer, status)
 }
 
 func possiblyLabelGateway(kubeClient kubernetes.Interface, status reporter.Interface) {
@@ -290,10 +292,10 @@ func determineClusterID(clusterName string, status reporter.Interface) {
 	}
 }
 
-func getNetworkDetails(clientProducer client.Producer, status reporter.Interface) *network.ClusterNetwork {
+func getNetworkDetails(ctx context.Context, clientProducer client.Producer, status reporter.Interface) *network.ClusterNetwork {
 	status.Start("Discovering network details")
 
-	networkDetails, err := network.Discover(clientProducer.ForGeneral(), constants.OperatorNamespace)
+	networkDetails, err := network.Discover(ctx, clientProducer.ForGeneral(), constants.OperatorNamespace)
 	if err != nil {
 		status.Warning("Unable to discover network details: %s", err)
 	} else if networkDetails == nil {

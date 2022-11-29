@@ -66,21 +66,21 @@ func (d *Info) encode() (string, error) {
 	return base64.URLEncoding.EncodeToString(jsonBytes), nil
 }
 
-func (d *Info) GetBrokerAdministratorConfig(insecure bool) (*rest.Config, error) {
+func (d *Info) GetBrokerAdministratorConfig(ctx context.Context, insecure bool) (*rest.Config, error) {
 	if insecure {
-		return d.getAndCheckBrokerAdministratorConfig(false, true)
+		return d.getAndCheckBrokerAdministratorConfig(ctx, false, true)
 	}
 	// We need to try a connection to determine whether the trust chain needs to be provided
-	config, err := d.getAndCheckBrokerAdministratorConfig(false, false)
+	config, err := d.getAndCheckBrokerAdministratorConfig(ctx, false, false)
 	if resource.IsUnknownAuthorityError(err) {
 		// Certificate error, try with the trust chain
-		config, err = d.getAndCheckBrokerAdministratorConfig(true, false)
+		config, err = d.getAndCheckBrokerAdministratorConfig(ctx, true, false)
 	}
 
 	return config, err
 }
 
-func (d *Info) getAndCheckBrokerAdministratorConfig(private, insecure bool) (*rest.Config, error) {
+func (d *Info) getAndCheckBrokerAdministratorConfig(ctx context.Context, private, insecure bool) (*rest.Config, error) {
 	config := d.getBrokerAdministratorConfig(private, insecure)
 
 	submClientset, err := submarinerClientset.NewForConfig(config)
@@ -92,7 +92,7 @@ func (d *Info) getAndCheckBrokerAdministratorConfig(private, insecure bool) (*re
 	// Successful connections result in either the object, or a “not found” error; anything else
 	// likely means we couldn’t connect
 	_, err = submClientset.SubmarinerV1().Clusters(string(d.ClientToken.Data["namespace"])).List(
-		context.TODO(), metav1.ListOptions{})
+		ctx, metav1.ListOptions{})
 	if apierrors.IsNotFound(err) {
 		err = nil
 	}

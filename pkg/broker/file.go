@@ -19,6 +19,7 @@ limitations under the License.
 package broker
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"os"
@@ -95,7 +96,7 @@ func newDataFrom(kubeClient kubernetes.Interface, brokerNamespace, ipsecFile str
 	var err error
 	data := &Info{}
 
-	data.ClientToken, err = rbac.GetClientTokenSecret(kubeClient, brokerNamespace, constants.SubmarinerBrokerAdminSA)
+	data.ClientToken, err = rbac.GetClientTokenSecret(context.TODO(), kubeClient, brokerNamespace, constants.SubmarinerBrokerAdminSA)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting broker client secret")
 	}

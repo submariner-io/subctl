@@ -33,8 +33,8 @@ import (
 // See k8s.io/apiserver/pkg/storage/names.
 const maxGeneratedNameLength = 63 - 5
 
-func GetClientTokenSecret(kubeClient kubernetes.Interface, namespace, serviceAccountName string) (*v1.Secret, error) {
-	sa, err := kubeClient.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), serviceAccountName, metav1.GetOptions{})
+func GetClientTokenSecret(ctx context.Context, kubeClient kubernetes.Interface, namespace, serviceAccountName string) (*v1.Secret, error) {
+	sa, err := kubeClient.CoreV1().ServiceAccounts(namespace).Get(ctx, serviceAccountName, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrapf(err, "ServiceAccount %s get failed", serviceAccountName)
 	}
@@ -51,7 +51,7 @@ func GetClientTokenSecret(kubeClient kubernetes.Interface, namespace, serviceAcc
 	for _, secret := range sa.Secrets {
 		if strings.HasPrefix(secret.Name, tokenPrefix) {
 			//nolint:wrapcheck // No need to wrap here
-			return kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), secret.Name, metav1.GetOptions{})
+			return kubeClient.CoreV1().Secrets(namespace).Get(ctx, secret.Name, metav1.GetOptions{})
 		}
 	}
 

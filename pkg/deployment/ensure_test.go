@@ -55,7 +55,7 @@ var _ = Describe("Ensure", func() {
 
 	When("the Deployment doesn't exist", func() {
 		It("should create it", func() {
-			created, err := deployment.Ensure(client, testDeployment.Namespace, testDeployment)
+			created, err := deployment.Ensure(context.TODO(), client, testDeployment.Namespace, testDeployment)
 			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
 			assertDeployment()
@@ -67,7 +67,7 @@ var _ = Describe("Ensure", func() {
 			_, err := client.AppsV1().Deployments(testDeployment.Namespace).Create(context.TODO(), testDeployment, metav1.CreateOptions{})
 			Expect(err).To(Succeed())
 
-			created, err := deployment.Ensure(client, testDeployment.Namespace, testDeployment)
+			created, err := deployment.Ensure(context.TODO(), client, testDeployment.Namespace, testDeployment)
 			Expect(created).To(BeFalse())
 			Expect(err).To(Succeed())
 		})

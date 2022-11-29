@@ -65,7 +65,7 @@ var _ = Describe("EnsureFromYAML", func() {
 
 	When("the Role doesn't exist", func() {
 		It("should create it", func() {
-			created, err := role.EnsureFromYAML(client, namespace, roleYAML)
+			created, err := role.EnsureFromYAML(context.TODO(), client, namespace, roleYAML)
 			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
 			assertRole()
@@ -74,7 +74,7 @@ var _ = Describe("EnsureFromYAML", func() {
 
 	When("the Role already exists", func() {
 		It("should not update it", func() {
-			_, err := role.Ensure(client, namespace, &rbacv1.Role{
+			_, err := role.Ensure(context.TODO(), client, namespace, &rbacv1.Role{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Role",
 					APIVersion: rbacv1.SchemeGroupVersion.String(),
@@ -93,7 +93,7 @@ var _ = Describe("EnsureFromYAML", func() {
 			Expect(err).To(Succeed())
 			assertRole()
 
-			created, err := role.EnsureFromYAML(client, namespace, roleYAML)
+			created, err := role.EnsureFromYAML(context.TODO(), client, namespace, roleYAML)
 			Expect(created).To(BeFalse())
 			Expect(err).To(Succeed())
 		})

@@ -32,10 +32,10 @@ import (
 )
 
 // Ensure functions updates or installs the operator CRDs in the cluster.
-func Ensure(kubeClient kubernetes.Interface, namespace string, namespaceLabels map[string]string) (bool, error) {
+func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string, namespaceLabels map[string]string) (bool, error) {
 	ns := &v1.Namespace{ObjectMeta: v1meta.ObjectMeta{Name: namespace, Labels: namespaceLabels}}
 
-	_, err := util.CreateOrUpdate(context.TODO(), resource.ForNamespace(kubeClient), ns, func(existing runtime.Object) (runtime.Object,
+	_, err := util.CreateOrUpdate(ctx, resource.ForNamespace(kubeClient), ns, func(existing runtime.Object) (runtime.Object,
 		error,
 	) {
 		ns := existing.(*v1.Namespace)

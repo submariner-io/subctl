@@ -19,6 +19,7 @@ limitations under the License.
 package join
 
 import (
+	"context"
 	goerrors "errors"
 	"fmt"
 	"strings"
@@ -52,7 +53,8 @@ var validOverrides = []string{
 	names.NettestComponent,
 }
 
-func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer client.Producer, status reporter.Interface,
+func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Options, clientProducer client.Producer,
+	status reporter.Interface,
 ) error {
 	err := checkRequirements(clientProducer.ForKubernetes(), options.IgnoreRequirements, status)
 	if err != nil {
@@ -72,7 +74,7 @@ func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer c
 	status.Start("Gathering relevant information from Broker")
 	defer status.End()
 
-	brokerAdminConfig, err := brokerInfo.GetBrokerAdministratorConfig(!options.BrokerK8sSecure)
+	brokerAdminConfig, err := brokerInfo.GetBrokerAdministratorConfig(ctx, !options.BrokerK8sSecure)
 	if err != nil {
 		return status.Error(err, "Error retrieving broker admin config")
 	}
@@ -90,7 +92,8 @@ func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer c
 	}
 
 	if options.GlobalnetEnabled {
-		err = globalnet.AllocateAndUpdateGlobalCIDRConfigMap(brokerClientProducer.ForGeneral(), brokerNamespace, &netconfig, status)
+		err = globalnet.AllocateAndUpdateGlobalCIDRConfigMap(ctx, brokerClientProducer.ForGeneral(), brokerNamespace, &netconfig,
+			status)
 		if err != nil {
 			return errors.Wrap(err, "unable to determine the global CIDR")
 		}
@@ -100,14 +103,14 @@ func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer c
 
 	repositoryInfo := image.NewRepositoryInfo(options.Repository, options.ImageVersion, imageOverrides)
 
-	err = operator.Ensure(status, clientProducer, constants.OperatorNamespace, repositoryInfo.GetOperatorImage(), options.OperatorDebug)
+	err = operator.Ensure(ctx, status, clientProducer, constants.OperatorNamespace, repositoryInfo.GetOperatorImage(), options.OperatorDebug)
 	if err != nil {
 		return status.Error(err, "Error deploying the operator")
 	}
 
 	status.Start("Creating SA for cluster")
 
-	brokerInfo.ClientToken, err = broker.CreateSAForCluster(brokerClientProducer.ForKubernetes(), options.ClusterID, brokerNamespace)
+	brokerInfo.ClientToken, err = broker.CreateSAForCluster(ctx, brokerClientProducer.ForKubernetes(), options.ClusterID, brokerNamespace)
 	if err != nil {
 		return status.Error(err, "Error creating SA for cluster")
 	}
@@ -115,7 +118,7 @@ func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer c
 	status.Start("Connecting to Broker")
 
 	// We need to connect to the broker in all cases
-	brokerSecret, err := secret.Ensure(clientProducer.ForKubernetes(), constants.OperatorNamespace, populateBrokerSecret(brokerInfo))
+	brokerSecret, err := secret.Ensure(ctx, clientProducer.ForKubernetes(), constants.OperatorNamespace, populateBrokerSecret(brokerInfo))
 	if err != nil {
 		return status.Error(err, "Error creating broker secret for cluster")
 	}
@@ -123,7 +126,7 @@ func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer c
 	if brokerInfo.IsConnectivityEnabled() {
 		status.Start("Deploying submariner")
 
-		err := deploy.Submariner(clientProducer, submarinerOptionsFrom(options), brokerInfo, brokerSecret, netconfig,
+		err := deploy.Submariner(ctx, clientProducer, submarinerOptionsFrom(options), brokerInfo, brokerSecret, netconfig,
 			repositoryInfo, status)
 		if err != nil {
 			return status.Error(err, "Error deploying the Submariner resource")
@@ -133,7 +136,7 @@ func ClusterToBroker(brokerInfo *broker.Info, options *Options, clientProducer c
 	} else if brokerInfo.IsServiceDiscoveryEnabled() {
 		status.Start("Deploying service discovery only")
 
-		err := deploy.ServiceDiscovery(clientProducer, serviceDiscoveryOptionsFrom(options), brokerInfo, brokerSecret,
+		err := deploy.ServiceDiscovery(ctx, clientProducer, serviceDiscoveryOptionsFrom(options), brokerInfo, brokerSecret,
 			repositoryInfo, status)
 		if err != nil {
 			return status.Error(err, "Error deploying the ServiceDiscovery resource")

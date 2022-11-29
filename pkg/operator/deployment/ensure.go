@@ -19,6 +19,7 @@ limitations under the License.
 package deployment
 
 import (
+	"context"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -32,7 +33,7 @@ import (
 )
 
 // Ensure the operator is deployed, and running.
-func Ensure(kubeClient kubernetes.Interface, namespace, image string, debug bool) (bool, error) {
+func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace, image string, debug bool) (bool, error) {
 	operatorName := names.OperatorComponent
 	replicas := int32(1)
 	imagePullPolicy := v1.PullAlways
@@ -97,12 +98,12 @@ func Ensure(kubeClient kubernetes.Interface, namespace, image string, debug bool
 		},
 	}
 
-	created, err := deployment.Ensure(kubeClient, namespace, opDeployment)
+	created, err := deployment.Ensure(ctx, kubeClient, namespace, opDeployment)
 	if err != nil {
 		return false, errors.Wrap(err, "error creating/updating Deployment")
 	}
 
-	err = deployment.AwaitReady(kubeClient, namespace, opDeployment.Name)
+	err = deployment.AwaitReady(ctx, kubeClient, namespace, opDeployment.Name)
 
 	return created, errors.Wrap(err, "error awaiting Deployment ready")
 }

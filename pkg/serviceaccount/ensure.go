@@ -44,7 +44,7 @@ const (
 )
 
 // ensureFromYAML creates the given service account.
-func ensureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (*corev1.ServiceAccount, error) {
+func ensureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namespace, yaml string) (*corev1.ServiceAccount, error) {
 	sa := &corev1.ServiceAccount{}
 
 	err := embeddedyamls.GetObject(yaml, sa)
@@ -52,7 +52,7 @@ func ensureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (*c
 		return nil, err //nolint:wrapcheck // No need to wrap errors here.
 	}
 
-	err = ensure(kubeClient, namespace, sa, true)
+	err = ensure(ctx, kubeClient, namespace, sa, true)
 	if err != nil {
 		return nil, err
 	}
@@ -61,44 +61,47 @@ func ensureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (*c
 }
 
 //nolint:wrapcheck // No need to wrap errors here.
-func ensure(kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount, onlyCreate bool) error {
+func ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount, onlyCreate bool) error {
 	if onlyCreate {
-		_, err := kubeClient.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), sa.Name, metav1.GetOptions{})
+		_, err := kubeClient.CoreV1().ServiceAccounts(namespace).Get(ctx, sa.Name, metav1.GetOptions{})
 
 		if err == nil || !apierrors.IsNotFound(err) {
 			return err
 		}
 	}
 
-	_, err := resourceutil.CreateOrUpdate(context.TODO(), resource.ForServiceAccount(kubeClient, namespace), sa)
+	_, err := resourceutil.CreateOrUpdate(ctx, resource.ForServiceAccount(kubeClient, namespace), sa)
 
 	return err
 }
 
 //nolint:wrapcheck // No need to wrap errors here.
-func Ensure(kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount, onlyCreate bool) (*corev1.ServiceAccount, error) {
-	err := ensure(kubeClient, namespace, sa, onlyCreate)
+func Ensure(ctx context.Context,
+	kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount, onlyCreate bool) (
+	*corev1.ServiceAccount, error,
+) {
+	err := ensure(ctx, kubeClient, namespace, sa, onlyCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = EnsureSecretFromSA(kubeClient, sa.Name, namespace)
+	_, err = EnsureSecretFromSA(ctx, kubeClient, sa.Name, namespace)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get secret for broker SA")
 	}
 
-	return kubeClient.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), sa.Name, metav1.GetOptions{})
+	return kubeClient.CoreV1().ServiceAccounts(namespace).Get(ctx, sa.Name, metav1.GetOptions{})
 }
 
 // EnsureFromYAML creates the given service account and secret for it.
-func EnsureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (bool, error) {
-	sa, err := ensureFromYAML(kubeClient, namespace, yaml)
+func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namespace, yaml string) (bool, error) {
+	sa, err := ensureFromYAML(ctx, kubeClient, namespace, yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning the ServiceAccount resource")
 	}
 
-	saSecret, err := EnsureSecretFromSA(kubeClient, sa.Name, namespace)
+	saSecret, err := EnsureSecretFromSA(ctx, kubeClient, sa.Name, namespace)
 	if err != nil {
 		return false, errors.Wrap(err, "error creating secret for ServiceAccount resource")
 	}
@@ -106,20 +109,20 @@ func EnsureFromYAML(kubeClient kubernetes.Interface, namespace, yaml string) (bo
 	return sa != nil && saSecret != nil, nil
 }
 
-func EnsureSecretFromSA(client kubernetes.Interface, saName, namespace string) (*corev1.Secret, error) {
-	sa, err := client.CoreV1().ServiceAccounts(namespace).Get(context.TODO(), saName, metav1.GetOptions{})
+func EnsureSecretFromSA(ctx context.Context, client kubernetes.Interface, saName, namespace string) (*corev1.Secret, error) {
+	sa, err := client.CoreV1().ServiceAccounts(namespace).Get(ctx, saName, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get ServiceAccount %s/%s", namespace, saName)
 	}
 
-	saSecret := getSecretFromSA(client, sa)
+	saSecret := getSecretFromSA(ctx, client, sa)
 
 	if saSecret != nil {
 		return saSecret, nil
 	}
 
 	// We couldn't find right secret from this SA, search all Secrets
-	saSecret, err = getSecretForSA(client, sa)
+	saSecret, err = getSecretForSA(ctx, client, sa)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
 	}
@@ -137,7 +140,7 @@ func EnsureSecretFromSA(client kubernetes.Interface, saName, namespace string) (
 			Type: corev1.SecretTypeServiceAccountToken,
 		}
 
-		saSecret, err = secret.Ensure(client, newSecret.Namespace, newSecret)
+		saSecret, err = secret.Ensure(ctx, client, newSecret.Namespace, newSecret)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to create secret for ServiceAccount %v", saName)
 		}
@@ -148,7 +151,7 @@ func EnsureSecretFromSA(client kubernetes.Interface, saName, namespace string) (
 	}
 
 	sa.Secrets = append(sa.Secrets, secretRef)
-	err = ensure(client, namespace, sa, false)
+	err = ensure(ctx, client, namespace, sa, false)
 
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to update ServiceAccount %v with Secret reference %v", saName, secretRef.Name)
@@ -157,11 +160,11 @@ func EnsureSecretFromSA(client kubernetes.Interface, saName, namespace string) (
 	return saSecret, nil
 }
 
-func getSecretFromSA(client kubernetes.Interface, sa *corev1.ServiceAccount) *corev1.Secret {
+func getSecretFromSA(ctx context.Context, client kubernetes.Interface, sa *corev1.ServiceAccount) *corev1.Secret {
 	secretNamePrefix := fmt.Sprintf("%s-token-", sa.Name)
 	for _, saSecretRef := range sa.Secrets {
 		if strings.HasPrefix(saSecretRef.Name, secretNamePrefix) {
-			saSecret, _ := client.CoreV1().Secrets(sa.Namespace).Get(context.TODO(), saSecretRef.Name, metav1.GetOptions{})
+			saSecret, _ := client.CoreV1().Secrets(sa.Namespace).Get(ctx, saSecretRef.Name, metav1.GetOptions{})
 			if saSecret.Annotations[corev1.ServiceAccountNameKey] == sa.Name && saSecret.Type == corev1.SecretTypeServiceAccountToken {
 				return saSecret
 			}
@@ -171,8 +174,8 @@ func getSecretFromSA(client kubernetes.Interface, sa *corev1.ServiceAccount) *co
 	return nil
 }
 
-func getSecretForSA(client kubernetes.Interface, sa *corev1.ServiceAccount) (*corev1.Secret, error) {
-	saSecrets, err := client.CoreV1().Secrets(sa.Namespace).List(context.TODO(), metav1.ListOptions{
+func getSecretForSA(ctx context.Context, client kubernetes.Interface, sa *corev1.ServiceAccount) (*corev1.Secret, error) {
+	saSecrets, err := client.CoreV1().Secrets(sa.Namespace).List(ctx, metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("type", "kubernetes.io/service-account-token").String(),
 	})
 	if err != nil {
