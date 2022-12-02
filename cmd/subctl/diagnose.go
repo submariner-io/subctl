@@ -247,8 +247,10 @@ func runLocalRemoteCommand(command *cobra.Command, localRemoteRestConfigProducer
 	if len(args) == 2 {
 		status.Warning("The two-argument form of %s is deprecated, see the documentation for details", command.Name())
 
-		localProducer := restconfig.NewProducerFrom(args[0], "")
-		remoteProducer := restconfig.NewProducerFrom(args[1], "")
+		localProducer := restconfig.NewProducerFrom(args[0], "").
+			WithDefaultNamespace(constants.OperatorNamespace)
+		remoteProducer := restconfig.NewProducerFrom(args[1], "").
+			WithDefaultNamespace(constants.OperatorNamespace)
 
 		exit.OnError(localProducer.RunOnSelectedContext(
 			func(localClusterInfo *cluster.Info, localNamespace string, status reporter.Interface) error {
