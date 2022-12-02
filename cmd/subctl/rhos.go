@@ -41,7 +41,8 @@ var (
 		Run: func(cmd *cobra.Command, args []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-					return prepare.RHOS(clusterInfo, &cloudPorts, &rhosConfig, cloudOptions.useLoadBalancer, status) //nolint:wrapcheck // Not needed.
+					return prepare.RHOS( //nolint:wrapcheck // Not needed.
+						clusterInfo, &cloudOptions.ports, &rhosConfig, cloudOptions.useLoadBalancer, status)
 				}, cli.NewReporter()))
 		},
 	}
