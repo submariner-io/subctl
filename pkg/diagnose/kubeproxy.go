@@ -30,6 +30,7 @@ import (
 const (
 	kubeProxyIPVSIfaceCommand = "ip a s kube-ipvs0"
 	missingInterface          = "ip: can't find device"
+	notEnabled                = "Device \"kube-ipvs0\" does not exist"
 )
 
 func KubeProxyMode(clientProducer client.Producer, podNamespace string, imageRepInfo *image.RepositoryInfo,
@@ -53,7 +54,7 @@ func KubeProxyMode(clientProducer client.Producer, podNamespace string, imageRep
 		return false
 	}
 
-	if !strings.Contains(podOutput, missingInterface) {
+	if !(strings.Contains(podOutput, missingInterface) || strings.Contains(podOutput, notEnabled)) {
 		status.Failure("The cluster is deployed with kube-proxy ipvs mode which Submariner does not support")
 		return false
 	}
