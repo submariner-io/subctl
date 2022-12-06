@@ -34,8 +34,8 @@ const (
 )
 
 var (
-	cloudPorts   cloud.Ports
 	cloudOptions struct {
+		ports           cloud.Ports
 		useLoadBalancer bool
 	}
 
@@ -64,11 +64,11 @@ func init() {
 	cloudRestConfigProducer.SetupFlags(cloudCmd.PersistentFlags())
 	rootCmd.AddCommand(cloudCmd)
 
-	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Natt, "natt-port", port.ExternalTunnel,
+	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudOptions.ports.Natt, "natt-port", port.ExternalTunnel,
 		"IPSec NAT traversal port")
-	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.NatDiscovery, "nat-discovery-port",
+	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudOptions.ports.NatDiscovery, "nat-discovery-port",
 		port.NATTDiscovery, "NAT discovery port")
-	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudPorts.Vxlan, "vxlan-port", port.IntraClusterVxLAN, "Internal VXLAN port")
+	cloudPrepareCmd.PersistentFlags().Uint16Var(&cloudOptions.ports.Vxlan, "vxlan-port", port.IntraClusterVxLAN, "Internal VXLAN port")
 
 	ports := []uint16{}
 
