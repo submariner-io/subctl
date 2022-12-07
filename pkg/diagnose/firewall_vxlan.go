@@ -112,20 +112,22 @@ func checkFWConfig(clusterInfo *cluster.Info, namespace string, options Firewall
 	}
 
 	if options.VerboseOutput {
-		status.Success("tcpdump output from the sniffer pod on Gateway node")
-		status.Success(sPod.PodOutput)
+		status.Success("tcpdump output from the sniffer pod on Gateway node:\n%s", sPod.PodOutput)
 	}
 
 	// Verify that tcpdump output (i.e, from snifferPod) contains the remoteClusterIP
 	if !strings.Contains(sPod.PodOutput, remoteClusterIP) {
 		status.Failure("The tcpdump output from the sniffer pod does not contain the expected remote"+
-			" endpoint IP %s. Please check that your firewall configuration allows UDP/4800 traffic.", remoteClusterIP)
+			" endpoint IP %s. Please check that your firewall configuration allows UDP/4800 traffic. Actual pod output: \n%s",
+			remoteClusterIP, truncate(sPod.PodOutput))
+
 		return
 	}
 
 	// Verify that tcpdump output (i.e, from snifferPod) contains the clientPod IPaddress
 	if !strings.Contains(sPod.PodOutput, cPod.Pod.Status.PodIP) {
 		status.Failure("The tcpdump output from the sniffer pod does not contain the client pod's IP."+
-			" There seems to be some issue with the IPTable rules programmed on the %q node", cPod.Pod.Spec.NodeName)
+			" There seems to be some issue with the IPTable rules programmed on the %q node, Actual pod output: \n%s",
+			cPod.Pod.Spec.NodeName, truncate(sPod.PodOutput))
 	}
 }
