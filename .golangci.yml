@@ -1,5 +1,8 @@
 ---
 linters-settings:
+  depguard:
+    packages:
+      - github.com/mcuadros/go-version
   gocritic:
     enabled-tags:
       - diagnostic

@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mcuadros/go-version"
+	"github.com/coreos/go-semver/semver"
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/cluster"
@@ -40,10 +40,9 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 )
 
-const (
-	ovnKubeDBPodLabel = "ovn-db-pod=true"
-	minOVNNBVersion   = "6.1.0"
-)
+const ovnKubeDBPodLabel = "ovn-db-pod=true"
+
+var minOVNNBVersion = semver.New("6.1.0")
 
 var supportedNetworkPlugins = []string{
 	cni.Generic, cni.CanalFlannel, cni.WeaveNet,
@@ -239,7 +238,7 @@ func checkOVNVersion(info *cluster.Info, status reporter.Interface) error {
 		return status.Error(err, "Failed to get ovn-nb database version")
 	}
 
-	if version.Compare(ovnNBVersion, minOVNNBVersion, "<") {
+	if ovnNBVersion.LessThan(*minOVNNBVersion) {
 		status.Failure("The ovn-nb database version %v is less than the minimum supported version %v", ovnNBVersion, minOVNNBVersion)
 		return errors.New("unsupported ovn-nb database version")
 	}
@@ -265,7 +264,7 @@ func mustFindPod(clientSet kubernetes.Interface, labelSelector string) (*corev1.
 	return &pods.Items[0], nil
 }
 
-func getOVNNBVersion(clientSet kubernetes.Interface, config *rest.Config, pod *corev1.Pod) (string, error) {
+func getOVNNBVersion(clientSet kubernetes.Interface, config *rest.Config, pod *corev1.Pod) (*semver.Version, error) {
 	containerName := ""
 
 	for i := 0; i < len(pod.Spec.Containers); i++ {
@@ -297,7 +296,7 @@ func getOVNNBVersion(clientSet kubernetes.Interface, config *rest.Config, pod *c
 
 	exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
 	if err != nil {
-		return "", errors.WithMessagef(err, "failed to create SPDY executor")
+		return nil, errors.WithMessagef(err, "failed to create SPDY executor")
 	}
 
 	err = exec.Stream(remotecommand.StreamOptions{
@@ -308,14 +307,14 @@ func getOVNNBVersion(clientSet kubernetes.Interface, config *rest.Config, pod *c
 	})
 
 	if err != nil {
-		return "", errors.WithMessagef(err, "failed to execute SPDY command")
+		return nil, errors.WithMessagef(err, "failed to execute SPDY command")
 	}
 
 	results := strings.Split(stdout.String(), "DB Schema")
 
 	if len(results) < 2 {
-		return "", errors.WithMessagef(err, "unable to determine the version from the ovn-nbctl output: %q", stdout.String())
+		return nil, errors.WithMessagef(err, "unable to determine the version from the ovn-nbctl output: %q", stdout.String())
 	}
 
-	return strings.TrimSpace(results[1]), nil
+	return semver.New(strings.TrimSpace(results[1])), nil
 }
