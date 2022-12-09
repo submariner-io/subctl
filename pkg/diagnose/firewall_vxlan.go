@@ -66,19 +66,13 @@ func checkFWConfig(clusterInfo *cluster.Info, namespace string, options Firewall
 		return
 	}
 
-	localEndpoint, err := clusterInfo.GetLocalEndpoint()
-	if err != nil {
-		status.Failure("Unable to obtain the local endpoint: %v", err)
-		return
-	}
-
 	remoteEndpoint, err := clusterInfo.GetAnyRemoteEndpoint()
 	if err != nil {
 		status.Failure("Unable to obtain a remote endpoint: %v", err)
 		return
 	}
 
-	gwNodeName, err := getActiveGatewayNodeName(clusterInfo, localEndpoint.Spec.Hostname, clusterInfo.GetImageRepositoryInfo(), status)
+	gwNodeName, err := getActiveGatewayNodeName(clusterInfo, status)
 	if err != nil {
 		status.Failure("Unable to obtain a gateway node: %v", err)
 		return
