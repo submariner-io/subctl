@@ -30,6 +30,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/utils/pointer"
 )
 
 type schedulingType int
@@ -154,6 +155,12 @@ func (np *Scheduled) schedule() error {
 				Add:  []v1.Capability{"NET_ADMIN", "NET_RAW"},
 				Drop: []v1.Capability{"all"},
 			},
+			// Some containers which run os like rhel/fedora runs tcpdump
+			// as specific user id "72". So it needs pods to be privileged
+			// Also setting the runAsUser prevent the pods from starting with
+			// random user id
+			Privileged: pointer.Bool(true),
+			RunAsUser:  pointer.Int64(0),
 		}
 	}
 
