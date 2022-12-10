@@ -208,7 +208,7 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 	// The following construct ensures that tcpdump will be stopped as soon as the message is seen, instead of waiting
 	// for a timeout; but when the message isn't seen, it will be killed once the timeout expires
 	podCommand := fmt.Sprintf(
-		"(tcpdump --immediate-mode -ln -Q in -A -s 100 -i any udp and %s & pid=\"$!\"; (sleep %d; kill \"$pid\") &) | grep -m1 '%s'",
+		"(tcpdump --immediate-mode -ln -Q in -A -s 100 -i any udp and %s & pid=\"$!\"; (sleep %d; kill \"$pid\") &) | sed '/%s/q'",
 		portFilter, options.ValidationTimeout, clientMessage)
 
 	sPod, err := spawnSnifferPodOnNode(localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, namespace, podCommand,
@@ -246,17 +246,29 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 	}
 
 	if options.VerboseOutput {
-		status.Success("tcpdump output from sniffer pod on Gateway node")
-		status.Success(sPod.PodOutput)
+		status.Success("tcpdump output from sniffer pod on Gateway node:\n%s", sPod.PodOutput)
 	}
 
 	if !strings.Contains(sPod.PodOutput, clientMessage) {
 		return status.Error(fmt.Errorf("the tcpdump output from the sniffer pod does not include the message"+
 			" sent from client pod. Please check that your firewall configuration allows UDP/%d traffic"+
-			" on the %q node", destPort, localEndpoint.Spec.Hostname), "Error")
+			" on the %q node. Actual pod output: \n%s", destPort, localEndpoint.Spec.Hostname, truncate(sPod.PodOutput)), "")
 	}
 
 	return nil
+}
+
+func truncate(s string) string {
+	maxLength := 500
+	r := []rune(s)
+
+	if maxLength >= len(r) {
+		return s
+	}
+
+	truncatedText := "... (truncated)"
+
+	return string(r[:maxLength]) + truncatedText
 }
 
 func getTargetPort(submariner *v1alpha1.Submariner, endpoint *subv1.Endpoint, tgtport TargetPort) (int32, error) {
