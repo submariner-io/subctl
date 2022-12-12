@@ -20,6 +20,7 @@ package pods
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/url"
 	"strings"
@@ -68,7 +69,7 @@ type ExecOptions struct {
 // ExecWithOptions executes a command in the specified container,
 // returning stdout, stderr and error. `options` allowed for
 // additional parameters to be passed.
-func ExecWithOptions(config ExecConfig, options *ExecOptions) (string, string, error) {
+func ExecWithOptions(ctx context.Context, config ExecConfig, options *ExecOptions) (string, string, error) {
 	const tty = false
 
 	req := config.ClientSet.CoreV1().RESTClient().Post().
@@ -87,7 +88,7 @@ func ExecWithOptions(config ExecConfig, options *ExecOptions) (string, string, e
 	}, scheme.ParameterCodec)
 
 	var stdout, stderr bytes.Buffer
-	err := execute("POST", req.URL(), config.RestConfig, options.Stdin, &stdout, &stderr, tty)
+	err := execute(ctx, "POST", req.URL(), config.RestConfig, options.Stdin, &stdout, &stderr, tty)
 
 	if options.PreserveWhitespace {
 		return stdout.String(), stderr.String(), err
@@ -97,13 +98,14 @@ func ExecWithOptions(config ExecConfig, options *ExecOptions) (string, string, e
 }
 
 //nolint:wrapcheck // No need to wrap errors here.
-func execute(method string, link *url.URL, config *rest.Config, stdin io.Reader, stdout, stderr io.Writer, tty bool) error {
+func execute(ctx context.Context, method string, link *url.URL, config *rest.Config, stdin io.Reader, stdout, stderr io.Writer, tty bool,
+) error {
 	exec, err := remotecommand.NewSPDYExecutor(config, method, link)
 	if err != nil {
 		return err
 	}
 
-	return exec.Stream(remotecommand.StreamOptions{
+	return exec.StreamWithContext(ctx, remotecommand.StreamOptions{
 		Stdin:  stdin,
 		Stdout: stdout,
 		Stderr: stderr,
