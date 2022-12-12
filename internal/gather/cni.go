@@ -19,6 +19,8 @@ limitations under the License.
 package gather
 
 import (
+	"context"
+
 	"github.com/submariner-io/subctl/internal/pods"
 	v1 "k8s.io/api/core/v1"
 )
@@ -210,7 +212,7 @@ func execCmdInBash(info *Info, pod *v1.Pod, cmd string) (string, string, error) 
 
 	execOptions.Command = []string{"/bin/bash", "-c", cmd}
 
-	return pods.ExecWithOptions(execConfig, &execOptions)
+	return pods.ExecWithOptions(context.TODO(), execConfig, &execOptions)
 }
 
 func logCmdOutput(info *Info, pod *v1.Pod, cmd, cmdName string, ignoreError bool) {

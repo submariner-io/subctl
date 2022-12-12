@@ -85,7 +85,7 @@ func CNIConfig(clusterInfo *cluster.Info, _ string, status reporter.Interface) e
 	}
 
 	if clusterInfo.Submariner.Status.NetworkPlugin == cni.OVNKubernetes {
-		return checkOVNVersion(clusterInfo, status)
+		return checkOVNVersion(context.TODO(), clusterInfo, status)
 	}
 
 	return checkCalicoIPPoolsIfCalicoCNI(clusterInfo, status)
@@ -222,18 +222,18 @@ func mustHaveSubmariner(clusterInfo *cluster.Info) {
 	}
 }
 
-func checkOVNVersion(info *cluster.Info, status reporter.Interface) error {
+func checkOVNVersion(ctx context.Context, info *cluster.Info, status reporter.Interface) error {
 	status.Start("Checking OVN version")
 	defer status.End()
 
 	clientSet := info.ClientProducer.ForKubernetes()
 
-	ovnPod, err := mustFindPod(clientSet, ovnKubeDBPodLabel)
+	ovnPod, err := mustFindPod(ctx, clientSet, ovnKubeDBPodLabel)
 	if err != nil {
 		return status.Error(err, "Failed to get OVNKubeDB Pod")
 	}
 
-	ovnNBVersion, err := getOVNNBVersion(clientSet, info.RestConfig, ovnPod)
+	ovnNBVersion, err := getOVNNBVersion(ctx, clientSet, info.RestConfig, ovnPod)
 	if err != nil {
 		return status.Error(err, "Failed to get ovn-nb database version")
 	}
@@ -248,8 +248,8 @@ func checkOVNVersion(info *cluster.Info, status reporter.Interface) error {
 	return nil
 }
 
-func mustFindPod(clientSet kubernetes.Interface, labelSelector string) (*corev1.Pod, error) {
-	pods, err := clientSet.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{
+func mustFindPod(ctx context.Context, clientSet kubernetes.Interface, labelSelector string) (*corev1.Pod, error) {
+	pods, err := clientSet.CoreV1().Pods("").List(ctx, metav1.ListOptions{
 		LabelSelector: labelSelector,
 		Limit:         1,
 	})
@@ -264,7 +264,7 @@ func mustFindPod(clientSet kubernetes.Interface, labelSelector string) (*corev1.
 	return &pods.Items[0], nil
 }
 
-func getOVNNBVersion(clientSet kubernetes.Interface, config *rest.Config, pod *corev1.Pod) (*semver.Version, error) {
+func getOVNNBVersion(ctx context.Context, clientSet kubernetes.Interface, config *rest.Config, pod *corev1.Pod) (*semver.Version, error) {
 	containerName := ""
 
 	for i := 0; i < len(pod.Spec.Containers); i++ {
@@ -299,7 +299,7 @@ func getOVNNBVersion(clientSet kubernetes.Interface, config *rest.Config, pod *c
 		return nil, errors.WithMessagef(err, "failed to create SPDY executor")
 	}
 
-	err = exec.Stream(remotecommand.StreamOptions{
+	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
 		Stdin:  nil,
 		Stdout: &stdout,
 		Stderr: &stderr,
