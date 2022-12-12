@@ -30,6 +30,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/image"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
+	"github.com/submariner-io/submariner-operator/pkg/names"
 	subv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"github.com/submariner-io/submariner/pkg/port"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -104,46 +105,21 @@ func spawnSnifferPodOnNode(client kubernetes.Interface, nodeName, namespace, pod
 	return spawnPod(client, scheduling, "validate-sniffer", namespace, podCommand, imageRepInfo)
 }
 
-func getActiveGatewayNodeName(clusterInfo *cluster.Info, hostname string, imageRepInfo *image.RepositoryInfo,
-	status reporter.Interface,
-) (string, error) {
-	nodes, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{
-		LabelSelector: "submariner.io/gateway=true",
-	})
+func getActiveGatewayNodeName(clusterInfo *cluster.Info, status reporter.Interface) (string, error) {
+	gwPods, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Pods(constants.OperatorNamespace).List(context.TODO(),
+		metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("app=%s,gateway.submariner.io/status=active", names.GatewayComponent),
+		})
 	if err != nil {
-		return "", status.Error(err, "Error obtaining the Gateway Nodes in cluster %q", clusterInfo.Name)
+		return "", status.Error(err, "Error listing Pods in cluster %q", clusterInfo.Name)
 	}
 
-	for i := range nodes.Items {
-		node := &nodes.Items[i]
-		if node.Name == hostname {
-			return hostname, nil
-		}
-
-		// On some platforms, the nodeName does not match with the hostname.
-		// Submariner Endpoint stores the hostname info in the endpoint and not the nodeName. So, we spawn a
-		// tiny pod to read the hostname and return the corresponding node.
-		sPod, err := spawnSnifferPodOnNode(clusterInfo.ClientProducer.ForKubernetes(), node.Name, constants.OperatorNamespace, "hostname",
-			imageRepInfo)
-		if err != nil {
-			return "", status.Error(err, "Error spawning the sniffer pod on the node %q: %v", node.Name)
-		}
-
-		err = sPod.AwaitCompletion()
-
-		sPod.Delete()
-
-		if err != nil {
-			return "", status.Error(err, "Error waiting for the sniffer pod to finish its execution on node %q: %v", node.Name)
-		}
-
-		if sPod.PodOutput[:len(sPod.PodOutput)-1] == hostname {
-			return node.Name, nil
-		}
+	if len(gwPods.Items) > 0 {
+		return gwPods.Items[0].Labels["gateway.submariner.io/node"], nil
 	}
 
-	return "", status.Error(fmt.Errorf("could not find the active Gateway node %q in local cluster %q",
-		hostname, clusterInfo.Name), "Error")
+	return "", status.Error(fmt.Errorf("could not find the active Gateway node in local cluster %q",
+		clusterInfo.Name), "")
 }
 
 func getGatewayIP(clusterInfo *cluster.Info, localClusterID string, status reporter.Interface) (string, error) {
@@ -206,8 +182,7 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 		return status.Error(err, "Unable to obtain the local endpoint")
 	}
 
-	gwNodeName, err := getActiveGatewayNodeName(localClusterInfo, localEndpoint.Spec.Hostname,
-		localClusterInfo.GetImageRepositoryInfo(), status)
+	gwNodeName, err := getActiveGatewayNodeName(localClusterInfo, status)
 	if err != nil {
 		return err
 	}
@@ -233,7 +208,7 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 	// The following construct ensures that tcpdump will be stopped as soon as the message is seen, instead of waiting
 	// for a timeout; but when the message isn't seen, it will be killed once the timeout expires
 	podCommand := fmt.Sprintf(
-		"(tcpdump --immediate-mode -ln -Q in -A -s 100 -i any udp and %s & pid=\"$!\"; (sleep %d; kill \"$pid\") &) | grep -m1 '%s'",
+		"(tcpdump --immediate-mode -ln -Q in -A -s 100 -i any udp and %s & pid=\"$!\"; (sleep %d; kill \"$pid\") &) | sed '/%s/q'",
 		portFilter, options.ValidationTimeout, clientMessage)
 
 	sPod, err := spawnSnifferPodOnNode(localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, namespace, podCommand,
@@ -271,17 +246,29 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 	}
 
 	if options.VerboseOutput {
-		status.Success("tcpdump output from sniffer pod on Gateway node")
-		status.Success(sPod.PodOutput)
+		status.Success("tcpdump output from sniffer pod on Gateway node:\n%s", sPod.PodOutput)
 	}
 
 	if !strings.Contains(sPod.PodOutput, clientMessage) {
 		return status.Error(fmt.Errorf("the tcpdump output from the sniffer pod does not include the message"+
 			" sent from client pod. Please check that your firewall configuration allows UDP/%d traffic"+
-			" on the %q node", destPort, localEndpoint.Spec.Hostname), "Error")
+			" on the %q node. Actual pod output: \n%s", destPort, localEndpoint.Spec.Hostname, truncate(sPod.PodOutput)), "")
 	}
 
 	return nil
+}
+
+func truncate(s string) string {
+	maxLength := 500
+	r := []rune(s)
+
+	if maxLength >= len(r) {
+		return s
+	}
+
+	truncatedText := "... (truncated)"
+
+	return string(r[:maxLength]) + truncatedText
 }
 
 func getTargetPort(submariner *v1alpha1.Submariner, endpoint *subv1.Endpoint, tgtport TargetPort) (int32, error) {
