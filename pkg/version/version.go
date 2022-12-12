@@ -31,8 +31,8 @@ import (
 var Version = "devel"
 
 const (
-	minK8sMajor = 1 // We need K8s 1.17 for endpoint slices
-	minK8sMinor = 17
+	minK8sMajor = 1  // We need K8s 1.17 for endpoint slices;
+	minK8sMinor = 19 // 1.19 is the oldest we test with
 )
 
 // PrintSubctlVersion will print the version subctl was compiled under.
