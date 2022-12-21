@@ -20,7 +20,7 @@ require (
 	github.com/submariner-io/admiral v0.13.2
 	github.com/submariner-io/cloud-prepare v0.13.2
 	github.com/submariner-io/lighthouse v0.13.2
-	github.com/submariner-io/shipyard v0.13.2
+	github.com/submariner-io/shipyard v0.13.3
 	github.com/submariner-io/submariner v0.13.0
 	github.com/submariner-io/submariner-operator v0.13.2-0.20221124161114-04be7b0d50f2
 	github.com/uw-labs/lichen v0.1.7
