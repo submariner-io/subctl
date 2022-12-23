@@ -21,7 +21,7 @@ package rolebinding_test
 import (
 	"context"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/submariner-io/subctl/pkg/rolebinding"
 	rbacv1 "k8s.io/api/rbac/v1"

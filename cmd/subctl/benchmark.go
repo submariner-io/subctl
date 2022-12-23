@@ -19,7 +19,7 @@ limitations under the License.
 package subctl
 
 import (
-	"github.com/onsi/ginkgo/config"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
@@ -112,11 +112,12 @@ func runBenchmark(
 	framework.TestContext.OperationTimeout = operationTimeout
 	framework.TestContext.ConnectionTimeout = connectionTimeout
 	framework.TestContext.ConnectionAttempts = connectionAttempts
-	framework.TestContext.JunitReport = junitReport
 	framework.TestContext.SubmarinerNamespace = constants.OperatorNamespace
 
-	config.DefaultReporterConfig.Verbose = verboseConnectivityVerification
-	config.DefaultReporterConfig.SlowSpecThreshold = 60
+	_, reporterConfig := ginkgo.GinkgoConfiguration()
+	reporterConfig.Verbose = verboseConnectivityVerification
+	reporterConfig.JUnitReport = junitReport
+	framework.TestContext.ReporterConfig = &reporterConfig
 
 	return run(intraCluster, verbose)
 }
