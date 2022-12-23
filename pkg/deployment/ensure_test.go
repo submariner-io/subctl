@@ -21,7 +21,7 @@ package deployment_test
 import (
 	"context"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/submariner-io/subctl/pkg/deployment"
 	appsv1 "k8s.io/api/apps/v1"
