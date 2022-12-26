@@ -20,6 +20,7 @@ package gather
 
 import (
 	"github.com/submariner-io/subctl/internal/pods"
+	"github.com/submariner-io/submariner/pkg/cni"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -78,12 +79,15 @@ var ovnCmds = map[string]string{
 }
 
 var networkPluginCNIType = map[string]string{
-	"generic":       typeIPTables,
-	"canal-flannel": typeIPTables,
-	"weave-net":     typeIPTables,
-	"OpenShiftSDN":  typeIPTables,
-	"OVNKubernetes": typeOvn,
-	"unknown":       typeUnknown,
+	cni.Generic:       typeIPTables,
+	cni.Calico:        typeIPTables,
+	cni.CanalFlannel:  typeIPTables,
+	cni.Flannel:       typeIPTables,
+	cni.KindNet:       typeIPTables,
+	cni.OpenShiftSDN:  typeIPTables,
+	cni.OVNKubernetes: typeOvn,
+	cni.WeaveNet:      typeIPTables,
+	"unknown":         typeUnknown,
 }
 
 func gatherCNIResources(info *Info, networkPlugin string) {
