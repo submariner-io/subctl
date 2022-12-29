@@ -50,7 +50,6 @@ var joinCmd = &cobra.Command{
 	Use:     "join",
 	Short:   "Connect a cluster to an existing broker",
 	Args:    cobra.MaximumNArgs(1),
-	PreRunE: joinRestConfigProducer.CheckVersionMismatch,
 	Run: func(cmd *cobra.Command, args []string) {
 		status := cli.NewReporter()
 		checkArgumentPassed(args)
