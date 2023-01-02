@@ -72,6 +72,7 @@ type Producer struct {
 	deprecatedKubeContextsMessage *string
 	defaultNamespace              *string
 	deprecatedNamespaceFlag       *string
+	prefixedDefaultNamespaces     map[string]*string
 }
 
 // NewProducer initialises a blank producer which needs to be set up with flags (see SetupFlags).
@@ -107,6 +108,15 @@ func (rcp *Producer) WithDefaultNamespace(defaultNamespace string) *Producer {
 	return rcp
 }
 
+// WithPrefixedNamespace configures the producer to set up a prefixed namespace flag,
+// with the given default value.
+// The chosen namespace will be passed to the PerContextFn used to process the context.
+func (rcp *Producer) WithPrefixedNamespace(prefix, prefixedNamespace string) *Producer {
+	rcp.prefixedDefaultNamespaces[prefix] = &prefixedNamespace
+
+	return rcp
+}
+
 // WithPrefixedContext configures the producer to set up flags using the given prefix.
 func (rcp *Producer) WithPrefixedContext(prefix string) *Producer {
 	rcp.contextPrefixes = append(rcp.contextPrefixes, prefix)
@@ -138,7 +148,7 @@ func (rcp *Producer) WithInClusterFlag() *Producer {
 	return rcp
 }
 
-// WithDeprecatedNamespace flag sets up a deprecated alias for --namespace.
+// WithDeprecatedNamespaceFlag flag sets up a deprecated alias for --namespace.
 func (rcp *Producer) WithDeprecatedNamespaceFlag(namespaceFlag string) *Producer {
 	rcp.namespaceFlag = true
 	rcp.deprecatedNamespaceFlag = &namespaceFlag
@@ -300,7 +310,7 @@ func runInCluster(function PerContextFn, status reporter.Interface) error {
 	return function(clusterInfo, "", status)
 }
 
-// RunOnSelectedContext runs the given function on the selected prefixed context.
+// RunOnSelectedPrefixedContext runs the given function on the selected prefixed context.
 // Returns true if there was a selected prefix context, false otherwise.
 func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerContextFn, status reporter.Interface) (bool, error) {
 	clientConfig, ok := rcp.prefixedClientConfigs[prefix]
@@ -335,8 +345,12 @@ func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerCon
 			return true, status.Error(err, "error retrieving the namespace for the configuration for prefix %s", prefix)
 		}
 
-		if !overridden && rcp.defaultNamespace != nil {
-			namespace = *rcp.defaultNamespace
+		if !overridden {
+			if rcp.prefixedDefaultNamespaces[prefix] != nil {
+				namespace = *rcp.prefixedDefaultNamespaces[prefix]
+			} else if rcp.defaultNamespace != nil {
+				namespace = *rcp.defaultNamespace
+			}
 		}
 
 		return true, function(clusterInfo, namespace, status)
