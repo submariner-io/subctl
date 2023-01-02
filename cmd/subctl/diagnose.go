@@ -21,6 +21,7 @@ package subctl
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
@@ -103,16 +104,11 @@ var (
 		Long:  "This command checks if the firewall is configured as per Submariner pre-requisites.",
 	}
 
-	diagnoseFirewallMetricsCmd = &cobra.Command{
-		Use:        "metrics",
-		Short:      "Check firewall access to metrics",
-		Deprecated: "Metrics check is now implicitly done as part of deployment check",
-	}
-
 	diagnoseFirewallVxLANCmd = &cobra.Command{
 		Use:   "intra-cluster",
 		Short: "Check firewall access for intra-cluster Submariner VxLAN traffic",
 		Long:  "This command checks if the firewall configuration allows traffic over vx-submariner interface.",
+		Args:  checkNoArguments,
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
 				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(firewallIntraVxLANConfig), cli.NewReporter()))
@@ -123,8 +119,9 @@ var (
 		Use:   "inter-cluster --context <localcontext> --remotecontext <remotecontext>",
 		Short: "Check firewall access to setup tunnels between the Gateway node",
 		Long:  "This command checks if the firewall configuration allows tunnels to be configured on the Gateway nodes.",
+		Args:  checkNoArguments,
 		Run: func(command *cobra.Command, args []string) {
-			runLocalRemoteCommand(command, diagnoseFirewallTunnelRestConfigProducer, args, diagnose.TunnelConfigAcrossClusters)
+			runLocalRemoteCommand(diagnoseFirewallTunnelRestConfigProducer, diagnose.TunnelConfigAcrossClusters)
 		},
 	}
 
@@ -132,8 +129,9 @@ var (
 		Use:   "nat-discovery --context <localcontext> --remotecontext <remotecontext>",
 		Short: "Check firewall access for nat-discovery to function properly",
 		Long:  "This command checks if the firewall configuration allows nat-discovery between the configured Gateway nodes.",
+		Args:  checkNoArguments,
 		Run: func(command *cobra.Command, args []string) {
-			runLocalRemoteCommand(command, diagnoseFirewallNatDiscoveryRestConfigProducer, args, diagnose.NatDiscoveryConfigAcrossClusters)
+			runLocalRemoteCommand(diagnoseFirewallNatDiscoveryRestConfigProducer, diagnose.NatDiscoveryConfigAcrossClusters)
 		},
 	}
 
@@ -180,14 +178,12 @@ func addDiagnoseSubCommands() {
 }
 
 func addDiagnoseFirewallSubCommands() {
-	addDiagnoseFWConfigFlags(diagnoseFirewallMetricsCmd)
 	addDiagnoseFWConfigFlags(diagnoseFirewallVxLANCmd)
 	diagnoseFirewallTunnelRestConfigProducer.SetupFlags(diagnoseFirewallTunnelCmd.Flags())
 	addDiagnoseFWConfigFlags(diagnoseFirewallTunnelCmd)
 	diagnoseFirewallNatDiscoveryRestConfigProducer.SetupFlags(diagnoseFirewallNatDiscovery.Flags())
 	addDiagnoseFWConfigFlags(diagnoseFirewallNatDiscovery)
 
-	diagnoseFirewallCmd.AddCommand(diagnoseFirewallMetricsCmd)
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallVxLANCmd)
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallTunnelCmd)
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallNatDiscovery)
@@ -237,37 +233,26 @@ func diagnoseAll(status reporter.Interface) error {
 	return err //nolint:wrapcheck // No need to wrap errors here.
 }
 
-func runLocalRemoteCommand(command *cobra.Command, localRemoteRestConfigProducer *restconfig.Producer, args []string,
+func runLocalRemoteCommand(localRemoteRestConfigProducer *restconfig.Producer,
 	function func(
 		localClusterInfo, remoteClusterInfo *cluster.Info, namespace string, options diagnose.FirewallOptions, status reporter.Interface,
 	) error,
 ) {
 	status := cli.NewReporter()
 
-	if len(args) == 2 {
-		status.Warning("The two-argument form of %s is deprecated, see the documentation for details", command.Name())
-
-		localProducer := restconfig.NewProducerFrom(args[0], "").
-			WithDefaultNamespace(constants.OperatorNamespace)
-		remoteProducer := restconfig.NewProducerFrom(args[1], "").
-			WithDefaultNamespace(constants.OperatorNamespace)
-
-		exit.OnError(localProducer.RunOnSelectedContext(
-			func(localClusterInfo *cluster.Info, localNamespace string, status reporter.Interface) error {
-				return remoteProducer.RunOnSelectedContext( //nolint:wrapcheck // No need to wrap errors here.
-					func(remoteClusterInfo *cluster.Info, remoteNamespace string, status reporter.Interface) error {
-						return function(localClusterInfo, remoteClusterInfo, localNamespace, diagnoseFirewallOptions, status)
-					}, status)
-			}, status))
-	} else {
-		exit.OnError(localRemoteRestConfigProducer.RunOnSelectedContext(
-			func(localClusterInfo *cluster.Info, localNamespace string, status reporter.Interface) error {
-				_, err := localRemoteRestConfigProducer.RunOnSelectedPrefixedContext(
-					"remote",
-					func(remoteClusterInfo *cluster.Info, remoteNamespace string, status reporter.Interface) error {
-						return function(localClusterInfo, remoteClusterInfo, localNamespace, diagnoseFirewallOptions, status)
-					}, status)
+	exit.OnErrorWithMessage(localRemoteRestConfigProducer.RunOnSelectedContext(
+		func(localClusterInfo *cluster.Info, localNamespace string, status reporter.Interface) error {
+			found, err := localRemoteRestConfigProducer.RunOnSelectedPrefixedContext(
+				"remote",
+				func(remoteClusterInfo *cluster.Info, remoteNamespace string, status reporter.Interface) error {
+					return function(localClusterInfo, remoteClusterInfo, localNamespace, diagnoseFirewallOptions, status)
+				}, status)
+			if err != nil {
 				return err //nolint:wrapcheck // No need to wrap errors here.
-			}, status))
-	}
+			}
+			if !found {
+				return errors.New("no remote context was specified")
+			}
+			return nil
+		}, status), "Error running command")
 }

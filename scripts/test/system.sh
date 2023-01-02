@@ -24,7 +24,7 @@ function deploy_env_once() {
 function _subctl() {
     # Print GHA groups to make looking at CI output easier
     echo "::group::Running 'subctl $*'"
-    "${DAPPER_SOURCE}"/cmd/bin/subctl "$@"
+    "${DAPPER_SOURCE}"/cmd/bin/subctl "$@" || exit "$?"
     echo "::endgroup::"
 }
 
@@ -152,10 +152,10 @@ _subctl diagnose firewall inter-cluster --validation-timeout 20 --kubeconfig "${
 _subctl diagnose firewall inter-cluster --validation-timeout 20 --context cluster1 --remotecontext cluster2
 _subctl diagnose firewall nat-discovery --validation-timeout 20 --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1 --remoteconfig "${KUBECONFIGS_DIR}"/kind-config-cluster2
 _subctl diagnose firewall nat-discovery --validation-timeout 20 --context cluster1 --remotecontext cluster2
-# Deprecated firewall inter-cluster variant
-_subctl diagnose firewall inter-cluster --validation-timeout 20 "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2
-# Deprecated firewall nat-discovery variant
-_subctl diagnose firewall nat-discovery --validation-timeout 20 "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2
+# Obsolete firewall inter-cluster variant
+_subctl diagnose firewall inter-cluster --validation-timeout 20 "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 && exit 1
+# Obsolete firewall nat-discovery variant
+_subctl diagnose firewall nat-discovery --validation-timeout 20 "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 && exit 1
 
 # Test subctl diagnose in-cluster
 
@@ -169,23 +169,23 @@ _subctl benchmark latency --context cluster1 --tocontext cluster2 | tee /dev/std
 _subctl benchmark throughput --context cluster1 | tee /dev/stderr | (sponge ||:) | grep -q 'Performing throughput tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
 _subctl benchmark throughput --context cluster1 --tocontext cluster2
 
-# Deprecated variant with contexts
-_subctl benchmark latency --intra-cluster --kubecontexts cluster1 | tee /dev/stderr | (sponge ||:) | grep -q 'Performing latency tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
-_subctl benchmark latency --kubecontexts cluster1,cluster2 | tee /dev/stderr | (sponge ||:) | grep -qE '(Performing latency tests from Gateway pod on cluster "cluster1" to Gateway pod on cluster "cluster2"|Latency test is not supported with Globalnet enabled, skipping the test)'
+# Obsolete variant with contexts
+_subctl benchmark latency --intra-cluster --kubecontexts cluster1 && exit 1
+_subctl benchmark latency --kubecontexts cluster1,cluster2 && exit 1
 
-_subctl benchmark throughput --intra-cluster --kubecontexts cluster1 | tee /dev/stderr | (sponge ||:) | grep -q 'Performing throughput tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
-_subctl benchmark throughput --kubecontexts cluster1,cluster2
+_subctl benchmark throughput --intra-cluster --kubecontexts cluster1 && exit 1
+_subctl benchmark throughput --kubecontexts cluster1,cluster2 && exit 1
 
-# Deprecated variant with kubeconfigs
-_subctl benchmark latency "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 | tee /dev/stderr | (sponge ||:) | grep -qE '(Performing latency tests from Gateway pod on cluster "cluster1" to Gateway pod on cluster "cluster2"|Latency test is not supported with Globalnet enabled, skipping the test)'
+# Obsolete variant with kubeconfigs
+_subctl benchmark latency "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 && exit 1
 
-_subctl benchmark throughput "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2
+_subctl benchmark throughput "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 && exit 1
 
 # Test subctl cloud prepare invocations
 
 _subctl cloud prepare generic --context cluster1
 # Deprecated variant
-_subctl cloud prepare generic --kubecontext cluster1
+_subctl cloud prepare generic --kubecontext cluster1 && exit 1
 
 # Test subctl uninstall invocations
 

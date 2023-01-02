@@ -34,7 +34,7 @@ import (
 
 var options gather.Options
 
-var gatherRestConfigProducer = restconfig.NewProducer().WithContextsFlag().WithDeprecatedKubeContexts("use --contexts instead")
+var gatherRestConfigProducer = restconfig.NewProducer().WithContextsFlag()
 
 var gatherCmd = &cobra.Command{
 	Use:   "gather",

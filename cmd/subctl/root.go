@@ -23,6 +23,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/exit"
@@ -85,4 +86,13 @@ func expectFlag(flag, value string) {
 	if value == "" {
 		exit.WithMessage(fmt.Sprintf("You must specify the %q flag", flag))
 	}
+}
+
+// checkNoArguments checks that there are no arguments.
+func checkNoArguments(cmd *cobra.Command, args []string) error {
+	if len(args) > 0 {
+		return errors.New("this command doesn't support any arguments")
+	}
+
+	return nil
 }
