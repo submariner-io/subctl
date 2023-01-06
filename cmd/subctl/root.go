@@ -21,6 +21,7 @@ package subctl
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
@@ -30,11 +31,24 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 )
+
+type suppressWarnings struct{}
+
+func (suppressWarnings) HandleWarningHeader(code int, agent, message string) {
+	if code == 299 && strings.Contains(message, "would violate PodSecurity") {
+		return
+	}
+
+	rest.WarningLogger{}.HandleWarningHeader(code, agent, message)
+}
 
 func init() {
 	runtime.Must(apiextensionsv1.AddToScheme(scheme.Scheme))
 	runtime.Must(submarinerv1.AddToScheme(scheme.Scheme))
+
+	rest.SetDefaultWarningHandler(suppressWarnings{})
 }
 
 // rootCmd represents the base command when called without any subcommands.
