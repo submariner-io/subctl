@@ -75,7 +75,7 @@ type Producer struct {
 
 // NewProducer initialises a blank producer which needs to be set up with flags (see SetupFlags).
 func NewProducer() *Producer {
-	return &Producer{}
+	return &Producer{prefixedDefaultNamespaces: make(map[string]*string)}
 }
 
 // WithNamespace configures the producer to set up a namespace flag.
