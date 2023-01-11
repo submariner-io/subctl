@@ -20,7 +20,6 @@ package subctl
 
 import (
 	"github.com/onsi/ginkgo/config"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
@@ -37,8 +36,7 @@ var (
 	intraCluster bool
 	verbose      bool
 
-	benchmarkRestConfigProducer = restconfig.NewProducer().
-					WithDeprecatedKubeContexts("use --context and --tocontext instead").WithPrefixedContext("to")
+	benchmarkRestConfigProducer = restconfig.NewProducer().WithPrefixedContext("to")
 
 	benchmarkCmd = &cobra.Command{
 		Use:   "benchmark",
@@ -49,12 +47,14 @@ var (
 		Use:   "throughput --context <kubeContext1> [--tocontext <kubeContext2>]",
 		Short: "Benchmark throughput",
 		Long:  "This command runs throughput tests within a cluster or between two clusters",
+		Args:  checkNoArguments,
 		Run:   buildBenchmarkRunner(benchmark.StartThroughputTests),
 	}
 	benchmarkLatencyCmd = &cobra.Command{
 		Use:   "latency --context <kubeContext1> [--tocontext <kubeContext2>]",
 		Short: "Benchmark latency",
 		Long:  "This command runs latency benchmark tests within a cluster or between two clusters",
+		Args:  checkNoArguments,
 		Run:   buildBenchmarkRunner(benchmark.StartLatencyTests),
 	}
 )
@@ -72,47 +72,11 @@ func init() {
 func addBenchmarkFlags(cmd *cobra.Command) {
 	benchmarkRestConfigProducer.SetupFlags(cmd.PersistentFlags())
 
-	// TODO Remove in 0.15
-	cmd.PersistentFlags().BoolVar(&intraCluster, "intra-cluster", false, "run the test within a single cluster")
-	_ = cmd.PersistentFlags().MarkDeprecated("intra-cluster",
-		"specify a single context for intra-cluster benchmarks, two contexts for inter-cluster benchmarks")
-
 	cmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "produce verbose logs during benchmark tests")
 }
 
 func buildBenchmarkRunner(run func(intraCluster, verbose bool) error) func(command *cobra.Command, args []string) {
 	return func(command *cobra.Command, args []string) {
-		// Deprecated variants:
-		// - kubeconfigs on the command line
-		if len(args) == 2 {
-			exit.OnError(restconfig.NewProducerFrom(args[0], "").RunOnSelectedContext(
-				func(fromClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-					return restconfig.NewProducerFrom(args[1], "").RunOnSelectedContext( //nolint:wrapcheck // No need to wrap errors here.
-						func(toClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-							return runBenchmark(run, fromClusterInfo, toClusterInfo, verbose)
-						}, status)
-				}, cli.NewReporter()))
-
-			return
-		}
-
-		// - kubecontext(s)
-		selectedContextsPresent, err := benchmarkRestConfigProducer.RunOnSelectedContexts(
-			func(clusterInfos []*cluster.Info, namespaces []string, status reporter.Interface) error {
-				if len(clusterInfos) >= 2 {
-					return runBenchmark(run, clusterInfos[0], clusterInfos[1], verbose)
-				} else if len(clusterInfos) >= 1 {
-					return runBenchmark(run, clusterInfos[0], nil, verbose)
-				}
-				return errors.New("no contexts were specified")
-			}, cli.NewReporter())
-
-		if selectedContextsPresent {
-			exit.OnError(err)
-			return
-		}
-
-		// Explicit kubeconfigs and/or contexts
 		exit.OnError(benchmarkRestConfigProducer.RunOnSelectedContext(
 			func(fromClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 				// Try to run using the "to" context
