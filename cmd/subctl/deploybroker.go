@@ -43,8 +43,7 @@ var (
 )
 
 var deployRestConfigProducer = restconfig.NewProducer().
-	WithDefaultNamespace(constants.DefaultBrokerNamespace).
-	WithDeprecatedNamespaceFlag("broker-namespace")
+	WithDefaultNamespace(constants.DefaultBrokerNamespace)
 
 // deployBroker represents the deployBroker command.
 var deployBroker = &cobra.Command{

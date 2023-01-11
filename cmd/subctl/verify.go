@@ -59,7 +59,6 @@ var (
 )
 
 var verifyRestConfigProducer = restconfig.NewProducer().
-	WithDeprecatedKubeContexts("use --context and --tocontext instead").
 	WithPrefixedContext("to").
 	WithDefaultNamespace(constants.OperatorNamespace)
 
@@ -80,9 +79,6 @@ The following verifications are deemed disruptive:
 	Args: checkVerifyArguments,
 	Run: func(cmd *cobra.Command, args []string) {
 		testType := ""
-		if len(args) > 0 {
-			fmt.Println("subctl verify with kubeconfig arguments is deprecated, please use --context and --tocontext instead")
-		}
 
 		disruptive := extractDisruptiveVerifications(verifyOnly)
 		if !disruptiveTests && len(disruptive) > 0 {
@@ -111,37 +107,6 @@ prompt for confirmation therefore you must specify --enable-disruptive to run th
 
 		fmt.Printf("Performing the following verifications: %s\n", strings.Join(verifications, ", "))
 
-		// Deprecated variants:
-		// - kubeconfigs on the command line
-		if len(args) == 2 {
-			exit.OnError(restconfig.NewProducerFrom(args[0], "").RunOnSelectedContext(
-				func(fromClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-					return restconfig.NewProducerFrom(args[1], "").RunOnSelectedContext( //nolint:wrapcheck // No need to wrap errors here.
-						func(toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-							// This deprecated variant doesn't handle a namespace argument
-							return runVerify(fromClusterInfo, toClusterInfo, constants.OperatorNamespace, testType)
-						}, status)
-				}, cli.NewReporter()))
-
-			return
-		}
-
-		// - kubecontext(s)
-		selectedContextsPresent, err := verifyRestConfigProducer.RunOnSelectedContexts(
-			func(clusterInfos []*cluster.Info, namespaces []string, status reporter.Interface) error {
-				if len(clusterInfos) < 2 {
-					return status.Error(errors.New("two kubecontexts must be specified"), "")
-				}
-
-				return runVerify(clusterInfos[0], clusterInfos[1], namespaces[0], testType)
-			}, cli.NewReporter())
-
-		if selectedContextsPresent {
-			exit.OnError(err)
-			return
-		}
-
-		// Explicit kubeconfigs and/or contexts
 		exit.OnError(verifyRestConfigProducer.RunOnSelectedContext(
 			func(fromClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 				// Try to run using the "to" context
@@ -211,7 +176,7 @@ func checkVerifyArguments(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return nil
+	return checkNoArguments(cmd, args)
 }
 
 var verifyE2EPatterns = map[string]string{

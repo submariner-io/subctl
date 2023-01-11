@@ -59,35 +59,23 @@ type loadingRulesAndOverrides struct {
 }
 
 type Producer struct {
-	kubeConfig                    string
-	contexts                      []string
-	contextPrefixes               []string
-	defaultClientConfig           *loadingRulesAndOverrides
-	prefixedClientConfigs         map[string]*loadingRulesAndOverrides
-	prefixedKubeConfigs           map[string]*string
-	inClusterFlag                 bool
-	inCluster                     bool
-	namespaceFlag                 bool
-	contextsFlag                  bool
-	deprecatedKubeContextsMessage *string
-	defaultNamespace              *string
-	deprecatedNamespaceFlag       *string
-	prefixedDefaultNamespaces     map[string]*string
+	kubeConfig                string
+	contexts                  []string
+	contextPrefixes           []string
+	defaultClientConfig       *loadingRulesAndOverrides
+	prefixedClientConfigs     map[string]*loadingRulesAndOverrides
+	prefixedKubeConfigs       map[string]*string
+	inClusterFlag             bool
+	inCluster                 bool
+	namespaceFlag             bool
+	contextsFlag              bool
+	defaultNamespace          *string
+	prefixedDefaultNamespaces map[string]*string
 }
 
 // NewProducer initialises a blank producer which needs to be set up with flags (see SetupFlags).
 func NewProducer() *Producer {
 	return &Producer{}
-}
-
-// NewProducerFrom initialises a producer using the given kubeconfig file and context.
-// The context may be empty, in which case the default context will be used.
-func NewProducerFrom(kubeConfig, kubeContext string) *Producer {
-	producer := &Producer{}
-
-	producer.setupFromConfig(kubeConfig, kubeContext)
-
-	return producer
 }
 
 // WithNamespace configures the producer to set up a namespace flag.
@@ -132,26 +120,10 @@ func (rcp *Producer) WithContextsFlag() *Producer {
 	return rcp
 }
 
-// WithDeprecatedKubeContexts configures the producer to provide a deprecated --kubecontexts flag as an
-// alias for --contexts.
-func (rcp *Producer) WithDeprecatedKubeContexts(message string) *Producer {
-	rcp.deprecatedKubeContextsMessage = &message
-
-	return rcp
-}
-
 // WithInClusterFlag configures the producer to handle an --in-cluster flag, requesting the use
 // of a Kubernetes-provided context.
 func (rcp *Producer) WithInClusterFlag() *Producer {
 	rcp.inClusterFlag = true
-
-	return rcp
-}
-
-// WithDeprecatedNamespaceFlag flag sets up a deprecated alias for --namespace.
-func (rcp *Producer) WithDeprecatedNamespaceFlag(namespaceFlag string) *Producer {
-	rcp.namespaceFlag = true
-	rcp.deprecatedNamespaceFlag = &namespaceFlag
 
 	return rcp
 }
@@ -172,25 +144,12 @@ func (rcp *Producer) SetupFlags(flags *pflag.FlagSet) {
 
 	flags.StringVar(&loadingRules.ExplicitPath, "kubeconfig", "", "absolute path(s) to the kubeconfig file(s)")
 
-	// TODO Alternate kubeconfigs are tracked separately
-
 	// Default prefix
 	rcp.defaultClientConfig = rcp.setupContextFlags(loadingRules, flags, "")
-
-	// Support deprecated --kubecontext; TODO remove in 0.15
-	legacyFlags := clientcmd.RecommendedConfigOverrideFlags("kube")
-	legacyFlags.CurrentContext.BindStringFlag(flags, &rcp.defaultClientConfig.overrides.CurrentContext)
-	_ = flags.MarkDeprecated("kubecontext", "use --context instead")
 
 	// Multiple contexts (only on the default prefix)
 	if rcp.contextsFlag {
 		flags.StringSliceVar(&rcp.contexts, "contexts", nil, "comma-separated list of contexts to use")
-	}
-
-	if rcp.deprecatedKubeContextsMessage != nil {
-		// Support deprecated --kubecontexts; TODO remove in 0.15
-		flags.StringSliceVar(&rcp.contexts, "kubecontexts", nil, "comma-separated list of contexts to use")
-		_ = flags.MarkDeprecated("kubecontexts", *rcp.deprecatedKubeContextsMessage)
 	}
 
 	// Other prefixes
@@ -220,34 +179,7 @@ func (rcp *Producer) setupContextFlags(
 
 	clientcmd.BindOverrideFlags(&overrides, flags, kflags)
 
-	// TODO Remove in 0.15 or 0.16 (depending on when this is merged)
-	if rcp.deprecatedNamespaceFlag != nil {
-		deprecatedNamespaceFlag := clientcmd.FlagInfo{
-			LongName:    *rcp.deprecatedNamespaceFlag,
-			Default:     kflags.ContextOverrideFlags.Namespace.Default,
-			Description: kflags.ContextOverrideFlags.Namespace.Description,
-		}
-		deprecatedNamespaceFlag.BindTransformingStringFlag(flags, &overrides.Context.Namespace, clientcmd.RemoveNamespacesPrefix)
-		_ = flags.MarkDeprecated(*rcp.deprecatedNamespaceFlag, "use --namespace instead")
-	}
-
 	return &loadingRulesAndOverrides{
-		loadingRules: loadingRules,
-		overrides:    &overrides,
-	}
-}
-
-func (rcp *Producer) setupFromConfig(kubeConfig, kubeContext string) {
-	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
-	loadingRules.ExplicitPath = kubeConfig
-
-	overrides := clientcmd.ConfigOverrides{ClusterDefaults: clientcmd.ClusterDefaults}
-	if kubeContext != "" {
-		overrides.CurrentContext = kubeContext
-	}
-
-	rcp.defaultClientConfig = &loadingRulesAndOverrides{
 		loadingRules: loadingRules,
 		overrides:    &overrides,
 	}
