@@ -24,7 +24,7 @@ function deploy_env_once() {
 function _subctl() {
     # Print GHA groups to make looking at CI output easier
     echo "::group::Running 'subctl $*'"
-    "${DAPPER_SOURCE}"/cmd/bin/subctl "$@" || exit "$?"
+    "${DAPPER_SOURCE}"/cmd/bin/subctl "$@" || return "$?"
     echo "::endgroup::"
 }
 
