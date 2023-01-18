@@ -29,7 +29,7 @@ import (
 	"testing"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/onsi/ginkgo/config"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	_ "github.com/submariner-io/lighthouse/test/e2e/discovery"
@@ -103,8 +103,6 @@ prompt for confirmation therefore you must specify --enable-disruptive to run th
 			return
 		}
 
-		config.GinkgoConfig.FocusStrings = patterns
-
 		fmt.Printf("Performing the following verifications: %s\n", strings.Join(verifications, ", "))
 
 		exit.OnError(verifyRestConfigProducer.RunOnSelectedContext(
@@ -113,7 +111,7 @@ prompt for confirmation therefore you must specify --enable-disruptive to run th
 				toContextPresent, err := verifyRestConfigProducer.RunOnSelectedPrefixedContext(
 					"to",
 					func(toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-						return runVerify(fromClusterInfo, toClusterInfo, namespace, testType)
+						return runVerify(fromClusterInfo, toClusterInfo, namespace, testType, patterns)
 					}, status)
 
 				if toContextPresent {
@@ -276,7 +274,7 @@ func getVerifyPatterns(csv string, includeDisruptive bool) ([]string, []string, 
 }
 
 func runVerify(
-	fromClusterInfo, toClusterInfo *cluster.Info, namespace, testType string,
+	fromClusterInfo, toClusterInfo *cluster.Info, namespace, testType string, patterns []string,
 ) error {
 	framework.RestConfigs = []*rest.Config{fromClusterInfo.RestConfig, toClusterInfo.RestConfig}
 	framework.TestContext.ClusterIDs = []string{fromClusterInfo.Name, toClusterInfo.Name}
@@ -285,11 +283,14 @@ func runVerify(
 	framework.TestContext.OperationTimeout = operationTimeout
 	framework.TestContext.ConnectionTimeout = connectionTimeout
 	framework.TestContext.ConnectionAttempts = connectionAttempts
-	framework.TestContext.JunitReport = junitReport
 	framework.TestContext.SubmarinerNamespace = namespace
 
-	config.DefaultReporterConfig.Verbose = verboseConnectivityVerification
-	config.DefaultReporterConfig.SlowSpecThreshold = 60
+	suiteConfig, reporterConfig := ginkgo.GinkgoConfiguration()
+	suiteConfig.FocusStrings = patterns
+	reporterConfig.Verbose = verboseConnectivityVerification
+	reporterConfig.JUnitReport = junitReport
+	framework.TestContext.SuiteConfig = &suiteConfig
+	framework.TestContext.ReporterConfig = &reporterConfig
 
 	if !e2e.RunE2ETests(&testing.T{}) {
 		return fmt.Errorf("[%s] E2E failed", testType)
