@@ -425,8 +425,8 @@ github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+W
 github.com/onsi/ginkgo v1.11.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
 github.com/onsi/ginkgo v1.12.1/go.mod h1:zj2OWP4+oCPe1qIXoGWkgMRwljMUYCdkwsT2108oapk=
 github.com/onsi/ginkgo v1.14.0/go.mod h1:iSB4RoI2tjJc9BBv4NKIKWKya62Rps+oPG/Lv9klQyY=
-github.com/onsi/ginkgo/v2 v2.6.1 h1:1xQPCjcqYw/J5LchOcp4/2q/jzJFjiAOc25chhnDw+Q=
-github.com/onsi/ginkgo/v2 v2.6.1/go.mod h1:yjiuMwPokqY1XauOgju45q3sJt6VzQ/Fict1LFVcsAo=
+github.com/onsi/ginkgo/v2 v2.7.0 h1:/XxtEV3I3Eif/HobnVx9YmJgk8ENdRsuUmM+fLCFNow=
+github.com/onsi/ginkgo/v2 v2.7.0/go.mod h1:yjiuMwPokqY1XauOgju45q3sJt6VzQ/Fict1LFVcsAo=
 github.com/onsi/gomega v0.0.0-20170829124025-dcabb60a477c/go.mod h1:C1qb7wdrVGGVU+Z6iS04AVkA3Q65CEZX59MT0QO5uiA=
 github.com/onsi/gomega v1.7.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/onsi/gomega v1.7.1/go.mod h1:XdKZgCCFLUoM/7CFJVPcG8C1xQ1AJ0vpAezJrB7JYyY=
@@ -524,8 +524,8 @@ github.com/submariner-io/cloud-prepare v0.15.0-m1.0.20230110161526-8f549fa74f40 
 github.com/submariner-io/cloud-prepare v0.15.0-m1.0.20230110161526-8f549fa74f40/go.mod h1:b4ZzVkcWLrJb+Dhd29ye75EvFoRWPUP5P5ABxKu3v8E=
 github.com/submariner-io/lighthouse v0.15.0-m1.0.20230110164155-d5bf49cf2bed h1:DwpYlf8vWxmjliS7MDRH7inN0YCeBndmvU+aXOcCIeE=
 github.com/submariner-io/lighthouse v0.15.0-m1.0.20230110164155-d5bf49cf2bed/go.mod h1:G4T0Mq/ak6nbaOPMQeZF8Fpa3CaVjyuxYL8eMFeCLRs=
-github.com/submariner-io/shipyard v0.15.0-m1.0.20230116145454-f9e9d9efdcb1 h1:PBmX+peGKRgRECw0/L+2OurYhNGq88jLxRg4hHs4490=
-github.com/submariner-io/shipyard v0.15.0-m1.0.20230116145454-f9e9d9efdcb1/go.mod h1:tAiMbF9sBGHqvWAQyGfJjLzWTmBANJA+e9p+6qVfqO4=
+github.com/submariner-io/shipyard v0.15.0-m2 h1:hua4aZq9bVKXSQ1M94wHlj8fWe0gFp7VI1xE8F1hCYE=
+github.com/submariner-io/shipyard v0.15.0-m2/go.mod h1:T5VGOaZPGE4/vtCScEcnRDB1RaglrOGGt/5d4MlWFJ8=
 github.com/submariner-io/submariner v0.15.0-m1.0.20230110143615-4ce887a6c8a9 h1:97i9GYdmCqNJiga67FiBY4ohoSeaQ2rqTJldwneNABk=
 github.com/submariner-io/submariner v0.15.0-m1.0.20230110143615-4ce887a6c8a9/go.mod h1:xziD0qCho8q/efXB11w5Gc9HBoelnok7cL5JSPd3AEg=
 github.com/submariner-io/submariner-operator v0.15.0-m1.0.20230110175926-f460f5456168 h1:CwtmHv+bRl+9GhTpam6V7spKV0TuaWbcyH++ARBFSP4=
