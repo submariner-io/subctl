@@ -5,21 +5,21 @@ go 1.19
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.0
-	github.com/coreos/go-semver v0.3.0
+	github.com/coreos/go-semver v0.3.1
 	github.com/gophercloud/utils v0.0.0-20210909165623-d7085207ff6d
 	github.com/mattn/go-isatty v0.0.17
 	github.com/onsi/ginkgo/v2 v2.7.0
-	github.com/onsi/gomega v1.24.2
+	github.com/onsi/gomega v1.25.0
 	github.com/openshift/api v0.0.0-20220414050251-a83e6f8f1d50
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/submariner-io/admiral v0.15.0-m2
-	github.com/submariner-io/cloud-prepare v0.15.0-m1.0.20230110161526-8f549fa74f40
-	github.com/submariner-io/lighthouse v0.15.0-m1.0.20230110164155-d5bf49cf2bed
+	github.com/submariner-io/cloud-prepare v0.15.0-m2
+	github.com/submariner-io/lighthouse v0.15.0-m2
 	github.com/submariner-io/shipyard v0.15.0-m2
-	github.com/submariner-io/submariner v0.15.0-m1.0.20230110143615-4ce887a6c8a9
-	github.com/submariner-io/submariner-operator v0.15.0-m1.0.20230110175926-f460f5456168
+	github.com/submariner-io/submariner v0.15.0-m2
+	github.com/submariner-io/submariner-operator v0.15.0-m2
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.5.0
 	golang.org/x/oauth2 v0.4.0
@@ -49,7 +49,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.27 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.21 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.28 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.77.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.80.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.21 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.12.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.0 // indirect
