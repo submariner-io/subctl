@@ -25,6 +25,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/subctl/internal/constants"
+	"github.com/submariner-io/subctl/pkg/brokercr"
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/image"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
@@ -187,6 +188,28 @@ func (c *Info) OperatorNamespace() string {
 	}
 
 	return constants.OperatorNamespace
+}
+
+func (c *Info) GetBroker(namespace string) (*v1alpha1.Broker, error) {
+	broker := &v1alpha1.Broker{}
+	err := c.ClientProducer.ForGeneral().Get(
+		context.TODO(), controllerClient.ObjectKey{
+			Namespace: namespace,
+			Name:      brokercr.Name,
+		}, broker)
+
+	return broker, errors.Wrap(err, "error retrieving Broker")
+}
+
+func (c *Info) GetClusters(namespace string) ([]submarinerv1.Cluster, error) {
+	clusters := &submarinerv1.ClusterList{}
+
+	err := c.ClientProducer.ForGeneral().List(context.TODO(), clusters, controllerClient.InNamespace(namespace))
+	if err != nil {
+		return nil, errors.Wrap(err, "error retrieving Clusters")
+	}
+
+	return clusters.Items, nil
 }
 
 var validOverrides = []string{
