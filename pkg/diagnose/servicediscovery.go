@@ -85,7 +85,7 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 		epsList, err := ep.List(context.TODO(), metav1.ListOptions{
 			LabelSelector: labels.SelectorFromSet(map[string]string{
 				discovery.LabelManagedBy:          lhconstants.LabelValueManagedBy,
-				lhconstants.MCSLabelServiceName:   se.Name,
+				mcsv1a1.LabelServiceName:          se.Name,
 				lhconstants.MCSLabelSourceCluster: clusterInfo.Submariner.Spec.ClusterID,
 			}).String(),
 		})
