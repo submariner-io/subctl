@@ -53,7 +53,11 @@ func AWS(restConfigProducer *restconfig.Producer, ports *cloud.Ports, config *aw
 				}
 			}
 
-			return cloud.PrepareForSubmariner(input, status)
+			if len(input.InternalPorts) > 0 {
+				return cloud.PrepareForSubmariner(input, status)
+			}
+
+			return nil
 		})
 
 	return status.Error(err, "Failed to prepare AWS cloud")
