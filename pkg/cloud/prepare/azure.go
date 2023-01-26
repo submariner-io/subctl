@@ -28,6 +28,7 @@ import (
 )
 
 func Azure(restConfigProducer *restconfig.Producer, ports *cloud.Ports, config *azure.Config, status reporter.Interface) error {
+	defer status.End()
 	status.Start("Preparing Azure cloud for Submariner deployment")
 
 	gwPorts, input, err := getPortConfig(restConfigProducer, ports, false)

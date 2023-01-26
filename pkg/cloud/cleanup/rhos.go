@@ -26,6 +26,7 @@ import (
 )
 
 func RHOS(restConfigProducer *restconfig.Producer, config *rhos.Config, status reporter.Interface) error {
+	defer status.End()
 	err := rhos.RunOn(restConfigProducer, config, status,
 		// nolint:wrapcheck // No need to wrap errors here
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
