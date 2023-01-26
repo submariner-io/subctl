@@ -28,6 +28,7 @@ import (
 )
 
 func Azure(clusterInfo *cluster.Info, ports *cloud.Ports, config *azure.Config, useLoadBalancer bool, status reporter.Interface) error {
+	defer status.End()
 	status.Start("Preparing Azure cloud for Submariner deployment")
 
 	gwPorts, input, err := getPortConfig(clusterInfo.ClientProducer, ports, false)
