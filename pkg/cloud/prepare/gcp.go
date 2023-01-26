@@ -47,7 +47,11 @@ func GCP(clusterInfo *cluster.Info, ports *cloud.Ports, config *gcp.Config, stat
 				}
 			}
 
-			return cloud.PrepareForSubmariner(input, status)
+			if len(input.InternalPorts) > 0 {
+				return cloud.PrepareForSubmariner(input, status)
+			}
+
+			return nil
 		})
 
 	return status.Error(err, "Failed to prepare GCP cloud")
