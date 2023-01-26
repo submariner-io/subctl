@@ -47,7 +47,11 @@ func GCP(restConfigProducer *restconfig.Producer, ports *cloud.Ports, config *gc
 				}
 			}
 
-			return cloud.PrepareForSubmariner(input, status)
+			if len(input.InternalPorts) > 0 {
+				return cloud.PrepareForSubmariner(input, status)
+			}
+
+			return nil
 		})
 
 	return status.Error(err, "Failed to prepare GCP cloud")

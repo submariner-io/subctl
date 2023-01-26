@@ -48,7 +48,11 @@ func RHOS(restConfigProducer *restconfig.Producer, ports *cloud.Ports, config *r
 				}
 			}
 
-			return cloud.PrepareForSubmariner(input, status)
+			if len(input.InternalPorts) > 0 {
+				return cloud.PrepareForSubmariner(input, status)
+			}
+
+			return nil
 		})
 
 	return status.Error(err, "Failed to prepare RHOS cloud")
