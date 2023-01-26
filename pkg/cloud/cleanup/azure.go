@@ -26,6 +26,7 @@ import (
 )
 
 func Azure(restConfigProducer *restconfig.Producer, config *azure.Config, status reporter.Interface) error {
+	defer status.End()
 	err := azure.RunOn(restConfigProducer, config, status,
 		// nolint:wrapcheck // No need to wrap errors here
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {

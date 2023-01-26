@@ -28,6 +28,8 @@ import (
 )
 
 func GCP(restConfigProducer *restconfig.Producer, ports *cloud.Ports, config *gcp.Config, status reporter.Interface) error {
+	defer status.End()
+
 	gwPorts, input, err := getPortConfig(restConfigProducer, ports, false)
 	if err != nil {
 		return status.Error(err, "Failed to prepare the cloud")

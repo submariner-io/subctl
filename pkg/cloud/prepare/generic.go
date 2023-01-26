@@ -26,6 +26,8 @@ import (
 )
 
 func GenericCluster(restConfigProducer *restconfig.Producer, gateways int, status reporter.Interface) error {
+	defer status.End()
+
 	// nolint:wrapcheck // No need to wrap errors here.
 	err := generic.RunOnCluster(restConfigProducer, status,
 		func(gwDeployer api.GatewayDeployer, status reporter.Interface) error {
