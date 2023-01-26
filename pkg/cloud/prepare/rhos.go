@@ -28,6 +28,8 @@ import (
 )
 
 func RHOS(clusterInfo *cluster.Info, ports *cloud.Ports, config *rhos.Config, useLoadBalancer bool, status reporter.Interface) error {
+	defer status.End()
+
 	gwPorts, input, err := getPortConfig(clusterInfo.ClientProducer, ports, false)
 	if err != nil {
 		return status.Error(err, "Failed to prepare the cloud")

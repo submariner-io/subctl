@@ -26,6 +26,7 @@ import (
 )
 
 func AWS(clusterInfo *cluster.Info, config *aws.Config, status reporter.Interface) error {
+	defer status.End()
 	err := aws.RunOn(clusterInfo, config, status,
 		//nolint:wrapcheck // No need to wrap errors here
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {

@@ -27,6 +27,7 @@ import (
 )
 
 func AWS(clusterInfo *cluster.Info, ports *cloud.Ports, config *aws.Config, useLoadBalancer bool, status reporter.Interface) error {
+	defer status.End()
 	status.Start("Preparing AWS cloud for Submariner deployment")
 
 	gwPorts, input, err := getPortConfig(clusterInfo.ClientProducer, ports, true)
