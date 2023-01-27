@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/pods"
@@ -58,6 +59,12 @@ const (
 type FirewallOptions struct {
 	ValidationTimeout uint
 	VerboseOutput     bool
+}
+
+var firewallImageOverrides = []string{}
+
+func AddFirewallImageOverrideFlag(flags *pflag.FlagSet) {
+	flags.StringSliceVar(&firewallImageOverrides, "image-override", nil, "override component image")
 }
 
 func spawnClientPodOnNonGatewayNode(client kubernetes.Interface, namespace, podCommand string,
@@ -206,8 +213,13 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 		return status.Error(err, "Unable to obtain the local endpoint")
 	}
 
+	repositoryInfo, err := localClusterInfo.GetImageRepositoryInfo(firewallImageOverrides...)
+	if err != nil {
+		return status.Error(err, "Error determining repository information")
+	}
+
 	gwNodeName, err := getActiveGatewayNodeName(localClusterInfo, localEndpoint.Spec.Hostname,
-		localClusterInfo.GetImageRepositoryInfo(), status)
+		repositoryInfo, status)
 	if err != nil {
 		return err
 	}
@@ -217,16 +229,9 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 		return status.Error(err, "Could not determine the target port")
 	}
 
-	portFilter := fmt.Sprintf("dst port %d", destPort)
-
-	lbNodePort, err := getLbNodePort(localClusterInfo, localEndpoint, targetPort)
+	portFilter, err := getPortFilter(destPort, localClusterInfo, localEndpoint, targetPort, status)
 	if err != nil {
-		return status.Error(err, "Could not determine LB node port")
-	}
-
-	// When SM deployed using LB the encapsulated and nat discovery traffic received in some platforms on LB nodeport
-	if lbNodePort != 0 {
-		portFilter += fmt.Sprintf(" or dst port %d ", lbNodePort)
+		return err
 	}
 
 	clientMessage := string(uuid.NewUUID())[0:8]
@@ -236,8 +241,7 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 		"(tcpdump --immediate-mode -ln -Q in -A -s 100 -i any udp and %s & pid=\"$!\"; (sleep %d; kill \"$pid\") &) | grep -m1 '%s'",
 		portFilter, options.ValidationTimeout, clientMessage)
 
-	sPod, err := spawnSnifferPodOnNode(localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, namespace, podCommand,
-		localClusterInfo.GetImageRepositoryInfo())
+	sPod, err := spawnSnifferPodOnNode(localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, namespace, podCommand, repositoryInfo)
 	if err != nil {
 		return status.Error(err, "Error spawning the sniffer pod on the Gateway node %q", gwNodeName)
 	}
@@ -255,7 +259,7 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 	// Spawn the pod on the nonGateway node. If we spawn the pod on Gateway node, the tunnel process can
 	// sometimes drop the udp traffic from client pod until the tunnels are properly setup.
 	cPod, err := spawnClientPodOnNonGatewayNodeWithHostNet(remoteClusterInfo.ClientProducer.ForKubernetes(), namespace,
-		podCommand, localClusterInfo.GetImageRepositoryInfo())
+		podCommand, repositoryInfo)
 	if err != nil {
 		return status.Error(err, "Error spawning the client pod on non-Gateway node of cluster %q", remoteClusterInfo.Name)
 	}
@@ -282,6 +286,23 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 	}
 
 	return nil
+}
+
+func getPortFilter(destPort int32, clusterInfo *cluster.Info, endpoint *subv1.Endpoint, targetPort TargetPort, status reporter.Interface,
+) (string, error) {
+	portFilter := fmt.Sprintf("dst port %d", destPort)
+
+	lbNodePort, err := getLbNodePort(clusterInfo, endpoint, targetPort)
+	if err != nil {
+		return "", status.Error(err, "Could not determine LB node port")
+	}
+
+	// When SM deployed using LB the encapsulated and nat discovery traffic received in some platforms on LB nodeport
+	if lbNodePort != 0 {
+		portFilter += fmt.Sprintf(" or dst port %d ", lbNodePort)
+	}
+
+	return portFilter, nil
 }
 
 func getTargetPort(submariner *v1alpha1.Submariner, endpoint *subv1.Endpoint, tgtport TargetPort) (int32, error) {

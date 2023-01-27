@@ -78,7 +78,13 @@ func checkFWConfig(clusterInfo *cluster.Info, namespace string, options Firewall
 		return
 	}
 
-	gwNodeName, err := getActiveGatewayNodeName(clusterInfo, localEndpoint.Spec.Hostname, clusterInfo.GetImageRepositoryInfo(), status)
+	repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(firewallImageOverrides...)
+	if err != nil {
+		status.Failure("Error determining repository information: %v", err)
+		return
+	}
+
+	gwNodeName, err := getActiveGatewayNodeName(clusterInfo, localEndpoint.Spec.Hostname, repositoryInfo, status)
 	if err != nil {
 		status.Failure("Unable to obtain a gateway node: %v", err)
 		return
@@ -86,8 +92,7 @@ func checkFWConfig(clusterInfo *cluster.Info, namespace string, options Firewall
 
 	podCommand := fmt.Sprintf("timeout %d %s", options.ValidationTimeout, tcpSniffVxLANCommand)
 
-	sPod, err := spawnSnifferPodOnNode(clusterInfo.ClientProducer.ForKubernetes(), gwNodeName, namespace, podCommand,
-		clusterInfo.GetImageRepositoryInfo())
+	sPod, err := spawnSnifferPodOnNode(clusterInfo.ClientProducer.ForKubernetes(), gwNodeName, namespace, podCommand, repositoryInfo)
 	if err != nil {
 		status.Failure("Error spawning the sniffer pod on the Gateway node: %v", err)
 		return
@@ -98,8 +103,7 @@ func checkFWConfig(clusterInfo *cluster.Info, namespace string, options Firewall
 	remoteClusterIP := strings.Split(remoteEndpoint.Spec.Subnets[0], "/")[0]
 	podCommand = fmt.Sprintf("nc -w %d %s 8080", options.ValidationTimeout/2, remoteClusterIP)
 
-	cPod, err := spawnClientPodOnNonGatewayNode(clusterInfo.ClientProducer.ForKubernetes(), namespace, podCommand,
-		clusterInfo.GetImageRepositoryInfo())
+	cPod, err := spawnClientPodOnNonGatewayNode(clusterInfo.ClientProducer.ForKubernetes(), namespace, podCommand, repositoryInfo)
 	if err != nil {
 		status.Failure("Error spawning the client pod on non-Gateway node: %v", err)
 		return

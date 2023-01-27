@@ -21,6 +21,7 @@ package diagnose
 import (
 	"strings"
 
+	"github.com/spf13/pflag"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/pods"
 	"github.com/submariner-io/subctl/pkg/cluster"
@@ -32,11 +33,22 @@ const (
 	notEnabled                = "Device \"kube-ipvs0\" does not exist"
 )
 
+var kubeProxyImageOverrides = []string{}
+
+func AddKubeProxyImageOverrideFlag(flags *pflag.FlagSet) {
+	flags.StringSliceVar(&firewallImageOverrides, "image-override", nil, "override component image")
+}
+
 func KubeProxyMode(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 	status.Start("Checking Submariner support for the kube-proxy mode")
 	defer status.End()
 
 	scheduling := pods.Scheduling{ScheduleOn: pods.GatewayNode, Networking: pods.HostNetworking}
+
+	repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(kubeProxyImageOverrides...)
+	if err != nil {
+		return status.Error(err, "Error determining repository information")
+	}
 
 	podOutput, err := pods.ScheduleAndAwaitCompletion(&pods.Config{
 		Name:                "query-iface-list",
@@ -44,7 +56,7 @@ func KubeProxyMode(clusterInfo *cluster.Info, namespace string, status reporter.
 		Scheduling:          scheduling,
 		Namespace:           namespace,
 		Command:             kubeProxyIPVSIfaceCommand,
-		ImageRepositoryInfo: *clusterInfo.GetImageRepositoryInfo(),
+		ImageRepositoryInfo: *repositoryInfo,
 	})
 	if err != nil {
 		return status.Error(err, "Error spawning the network pod")

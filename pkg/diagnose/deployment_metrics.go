@@ -62,8 +62,13 @@ func checkComponentMetrics(clusterInfo *cluster.Info, status reporter.Interface,
 		return nil
 	}
 
+	repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(deploymentImageOverrides...)
+	if err != nil {
+		return status.Error(err, "Error determining repository information")
+	}
+
 	cPod, err := spawnClientPodOnNonGatewayNode(clusterInfo.ClientProducer.ForKubernetes(),
-		clusterInfo.Submariner.Namespace, command, clusterInfo.GetImageRepositoryInfo())
+		clusterInfo.Submariner.Namespace, command, repositoryInfo)
 	if err != nil {
 		return status.Error(err, "Error spawning the client pod on non-Gateway node")
 	}
