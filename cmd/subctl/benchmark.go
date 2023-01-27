@@ -66,6 +66,7 @@ func init() {
 	benchmarkCmd.AddCommand(benchmarkLatencyCmd)
 	rootCmd.AddCommand(benchmarkCmd)
 
+	addTestImageOverrideFlag(benchmarkCmd.PersistentFlags())
 	framework.AddBeforeSuite(setupTestFrameworkBeforeSuite)
 }
 

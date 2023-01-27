@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/cluster"
@@ -34,6 +35,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+var deploymentImageOverrides = []string{}
+
+func AddDeploymentImageOverrideFlag(flags *pflag.FlagSet) {
+	flags.StringSliceVar(&deploymentImageOverrides, "image-override", nil, "override component image")
+}
 
 func Deployments(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	mustHaveSubmariner(clusterInfo)
