@@ -25,6 +25,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/pkg/cluster"
@@ -67,6 +68,12 @@ func Execute() {
 	}
 }
 
+var testImageOverrides = []string{}
+
+func addTestImageOverrideFlag(flags *pflag.FlagSet) {
+	flags.StringSliceVar(&testImageOverrides, "image-override", nil, "override component image")
+}
+
 func setupTestFrameworkBeforeSuite() {
 	clusterInfo, err := cluster.NewInfo(framework.TestContext.ClusterIDs[framework.ClusterA],
 		framework.RestConfigs[framework.ClusterA])
@@ -78,7 +85,10 @@ func setupTestFrameworkBeforeSuite() {
 
 	framework.TestContext.GlobalnetEnabled = clusterInfo.Submariner.Spec.GlobalCIDR != ""
 
-	framework.TestContext.NettestImageURL = clusterInfo.GetImageRepositoryInfo().GetNettestImage()
+	repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(testImageOverrides...)
+	exit.OnErrorWithMessage(err, "Error determining repository information")
+
+	framework.TestContext.NettestImageURL = repositoryInfo.GetNettestImage()
 }
 
 // expectFlag exits with an error if the flag value is empty.

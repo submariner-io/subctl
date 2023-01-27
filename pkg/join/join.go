@@ -29,32 +29,20 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/client"
+	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/deploy"
 	"github.com/submariner-io/subctl/pkg/image"
 	"github.com/submariner-io/subctl/pkg/operator"
 	"github.com/submariner-io/subctl/pkg/secret"
 	"github.com/submariner-io/subctl/pkg/version"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
-	"github.com/submariner-io/submariner-operator/pkg/names"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/utils/strings/slices"
 )
 
-var validOverrides = []string{
-	names.OperatorComponent,
-	names.GatewayComponent,
-	names.RouteAgentComponent,
-	names.GlobalnetComponent,
-	names.NetworkPluginSyncerComponent,
-	names.ServiceDiscoveryComponent,
-	names.LighthouseCoreDNSComponent,
-	names.NettestComponent,
-}
-
-func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Options, clientProducer client.Producer,
-	status reporter.Interface,
+func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, clusterInfo *cluster.Info, options *Options,
+	clientProducer client.Producer, status reporter.Interface,
 ) error {
 	err := checkRequirements(clientProducer.ForKubernetes(), options.IgnoreRequirements, status)
 	if err != nil {
@@ -66,7 +54,7 @@ func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Opti
 		return status.Error(err, "error validating custom CoreDNS config")
 	}
 
-	imageOverrides, err := overridesArrToMap(options.ImageOverrideArr)
+	imageOverrides, err := cluster.MergeImageOverrides(nil, options.ImageOverrideArr)
 	if err != nil {
 		return status.Error(err, "Error calculating image overrides")
 	}
@@ -146,25 +134,6 @@ func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Opti
 	}
 
 	return nil
-}
-
-func overridesArrToMap(imageOverrideArr []string) (map[string]string, error) {
-	imageOverrides := make(map[string]string)
-
-	for _, s := range imageOverrideArr {
-		component, imageURL, found := strings.Cut(s, "=")
-		if !found {
-			return nil, fmt.Errorf("invalid override %s provided. Please use `a=b` syntax", s)
-		}
-
-		if !slices.Contains(validOverrides, component) {
-			return nil, fmt.Errorf("invalid override component %s provided. Please choose from %q", component, validOverrides)
-		}
-
-		imageOverrides[component] = imageURL
-	}
-
-	return imageOverrides, nil
 }
 
 func submarinerOptionsFrom(joinOptions *Options) *deploy.SubmarinerOptions {
