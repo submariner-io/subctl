@@ -20,6 +20,8 @@ package cluster
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/subctl/internal/constants"
@@ -33,6 +35,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
+	"k8s.io/utils/strings/slices"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -154,13 +157,24 @@ func (c *Info) GetAnyRemoteEndpoint() (*submarinerv1.Endpoint, error) {
 	}, "remote Endpoint")
 }
 
-func (c *Info) GetImageRepositoryInfo() *image.RepositoryInfo {
+func (c *Info) GetImageRepositoryInfo(localImageOverrides ...string) (*image.RepositoryInfo, error) {
 	if c.Submariner != nil {
 		spec := c.Submariner.Spec
-		return image.NewRepositoryInfo(spec.Repository, spec.Version, spec.ImageOverrides)
+
+		imageOverrides, err := MergeImageOverrides(spec.ImageOverrides, localImageOverrides)
+		if err != nil {
+			return nil, err
+		}
+
+		return image.NewRepositoryInfo(spec.Repository, spec.Version, imageOverrides), nil
 	}
 
-	return image.NewRepositoryInfo("", "", nil)
+	imageOverrides, err := MergeImageOverrides(make(map[string]string), localImageOverrides)
+	if err != nil {
+		return nil, err
+	}
+
+	return image.NewRepositoryInfo("", "", imageOverrides), nil
 }
 
 func (c *Info) OperatorNamespace() string {
@@ -173,4 +187,36 @@ func (c *Info) OperatorNamespace() string {
 	}
 
 	return constants.OperatorNamespace
+}
+
+var validOverrides = []string{
+	names.OperatorComponent,
+	names.GatewayComponent,
+	names.RouteAgentComponent,
+	names.GlobalnetComponent,
+	names.NetworkPluginSyncerComponent,
+	names.ServiceDiscoveryComponent,
+	names.LighthouseCoreDNSComponent,
+	names.NettestComponent,
+}
+
+func MergeImageOverrides(imageOverrides map[string]string, localImageOverrides []string) (map[string]string, error) {
+	if imageOverrides == nil {
+		imageOverrides = make(map[string]string, len(localImageOverrides))
+	}
+
+	for _, s := range localImageOverrides {
+		component, imageURL, found := strings.Cut(s, "=")
+		if !found {
+			return nil, fmt.Errorf("invalid override %s provided. Please use `a=b` syntax", s)
+		}
+
+		if !slices.Contains(validOverrides, component) {
+			return nil, fmt.Errorf("invalid override component %s provided. Please choose from %q", component, validOverrides)
+		}
+
+		imageOverrides[component] = imageURL
+	}
+
+	return imageOverrides, nil
 }

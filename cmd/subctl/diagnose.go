@@ -171,10 +171,13 @@ func addDiagnoseSubCommands() {
 
 	diagnoseCmd.AddCommand(diagnoseCNICmd)
 	diagnoseCmd.AddCommand(diagnoseConnectionsCmd)
+	diagnose.AddDeploymentImageOverrideFlag(diagnoseDeploymentCmd.Flags())
 	diagnoseCmd.AddCommand(diagnoseDeploymentCmd)
 	diagnoseCmd.AddCommand(diagnoseVersionCmd)
+	diagnose.AddKubeProxyImageOverrideFlag(diagnoseKubeProxyModeCmd.Flags())
 	diagnoseCmd.AddCommand(diagnoseKubeProxyModeCmd)
 	diagnoseCmd.AddCommand(diagnoseAllCmd)
+	diagnose.AddFirewallImageOverrideFlag(diagnoseFirewallCmd.Flags())
 	diagnoseCmd.AddCommand(diagnoseFirewallCmd)
 	diagnoseCmd.AddCommand(diagnoseServiceDiscoveryCmd)
 }

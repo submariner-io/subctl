@@ -165,6 +165,7 @@ func init() {
 	addVerifyFlags(verifyCmd)
 	rootCmd.AddCommand(verifyCmd)
 
+	addTestImageOverrideFlag(verifyCmd.PersistentFlags())
 	framework.AddBeforeSuite(setupTestFrameworkBeforeSuite)
 }
 
