@@ -82,7 +82,7 @@ build-cross: $(CROSS_TARBALLS)
 licensecheck: build | bin/lichen
 	bin/lichen -c .lichen.yaml $(BINARIES)
 
-bin/lichen: $(VENDOR_MODULES)
+bin/lichen:
 	mkdir -p $(@D)
 	$(GO) build -o $@ github.com/uw-labs/lichen
 
@@ -104,7 +104,7 @@ cmd/bin/linux/%/subctl: cmd/bin/subctl-$(VERSION)-linux-%
 	ln -sf ../../$(<F) $@
 
 .PRECIOUS: cmd/bin/subctl-%
-cmd/bin/subctl-%: $(shell find . -name "*.go") $(VENDOR_MODULES)
+cmd/bin/subctl-%: $(shell find . -name "*.go")
 	mkdir -p cmd/bin
 	target=$@; \
 	target=$${target%.exe}; \
