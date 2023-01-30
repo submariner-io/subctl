@@ -16,7 +16,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/submariner-io/admiral v0.15.0-m2
 	github.com/submariner-io/cloud-prepare v0.15.0-m2
-	github.com/submariner-io/lighthouse v0.15.0-m2
+	github.com/submariner-io/lighthouse v0.15.0-m2.0.20230130153953-7107bd35c649
 	github.com/submariner-io/shipyard v0.15.0-m2
 	github.com/submariner-io/submariner v0.15.0-m2
 	github.com/submariner-io/submariner-operator v0.15.0-m2
@@ -115,7 +115,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog v1.0.0 // indirect
-	k8s.io/klog/v2 v2.80.1 // indirect
+	k8s.io/klog/v2 v2.90.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20221110221610-a28e98eb7c70 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
