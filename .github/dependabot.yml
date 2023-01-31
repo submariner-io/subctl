@@ -27,3 +27,7 @@ updates:
     ignore:
       # Our internal dependencies
       - dependency-name: github.com/submariner-io/*
+      # These are included by k8s.io/apiextensions-apiserver
+      - dependency-name: k8s.io/api
+      - dependency-name: k8s.io/apimachinery
+      - dependency-name: k8s.io/client-go
