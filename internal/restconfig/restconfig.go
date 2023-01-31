@@ -519,10 +519,10 @@ func (rcp *Producer) CheckVersionMismatch(cmd *cobra.Command, args []string) err
 	}, cli.NewReporter())
 }
 
-func IfSubmarinerInstalled(functions ...PerContextFn) PerContextFn {
+func IfConnectivityInstalled(functions ...PerContextFn) PerContextFn {
 	return func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 		if clusterInfo.Submariner == nil {
-			status.Warning(constants.SubmarinerNotInstalled)
+			status.Warning(constants.ConnectivityNotInstalled)
 
 			return nil
 		}
