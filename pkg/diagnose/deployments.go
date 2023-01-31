@@ -43,10 +43,10 @@ func AddDeploymentImageOverrideFlag(flags *pflag.FlagSet) {
 }
 
 func Deployments(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-	mustHaveSubmariner(clusterInfo)
-
-	if err := checkOverlappingCIDRs(clusterInfo, status); err != nil {
-		return err
+	if clusterInfo.Submariner != nil {
+		if err := checkOverlappingCIDRs(clusterInfo, status); err != nil {
+			return err
+		}
 	}
 
 	if err := checkPods(clusterInfo, status); err != nil {
@@ -120,44 +120,47 @@ func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface)
 }
 
 func checkPods(clusterInfo *cluster.Info, status reporter.Interface) error {
-	status.Start("Checking Submariner pods")
-	defer status.End()
-
 	tracker := reporter.NewTracker(status)
 
-	checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-gateway", tracker)
-	checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-routeagent", tracker)
+	if clusterInfo.Submariner != nil {
+		checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-gateway", tracker)
+		checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-routeagent", tracker)
+
+		// Check if globalnet components are deployed and running if enabled
+		if clusterInfo.Submariner.Spec.GlobalCIDR != "" {
+			checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-globalnet", tracker)
+		}
+
+		// check if networkplugin syncer components are deployed and running if enabled
+		if clusterInfo.Submariner.Status.NetworkPlugin == cni.OVNKubernetes {
+			checkDeployment(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace,
+				"submariner-networkplugin-syncer", tracker)
+		}
+
+		checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), clusterInfo.Submariner.Namespace, "submariner-metrics-proxy", tracker)
+	}
 
 	// Check if service-discovery components are deployed and running if enabled
-	if clusterInfo.Submariner.Spec.ServiceDiscoveryEnabled {
+	if clusterInfo.ServiceDiscovery != nil {
 		checkDeployment(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-lighthouse-agent", tracker)
 		checkDeployment(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-lighthouse-coredns", tracker)
 	}
 
-	// Check if globalnet components are deployed and running if enabled
-	if clusterInfo.Submariner.Spec.GlobalCIDR != "" {
-		checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-globalnet", tracker)
+	if clusterInfo.Submariner != nil || clusterInfo.ServiceDiscovery != nil {
+		checkPodsStatus(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, tracker)
 	}
-
-	// check if networkplugin syncer components are deployed and running if enabled
-	if clusterInfo.Submariner.Status.NetworkPlugin == cni.OVNKubernetes {
-		checkDeployment(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-networkplugin-syncer", tracker)
-	}
-
-	checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), clusterInfo.Submariner.Namespace, "submariner-metrics-proxy", tracker)
-
-	checkPodsStatus(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, tracker)
 
 	if tracker.HasFailures() {
 		return errors.New("failures while diagnosing pods")
 	}
 
-	status.Success("All Submariner pods are up and running")
-
 	return nil
 }
 
 func checkDeployment(k8sClient kubernetes.Interface, namespace, deploymentName string, status reporter.Interface) {
+	status.Start("Checking Deployment %q", deploymentName)
+	defer status.End()
+
 	deployment, err := k8sClient.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 	if err != nil {
 		status.Failure("Error obtaining Deployment %q: %v", deploymentName, err)
@@ -177,6 +180,9 @@ func checkDeployment(k8sClient kubernetes.Interface, namespace, deploymentName s
 }
 
 func checkDaemonset(k8sClient kubernetes.Interface, namespace, daemonSetName string, status reporter.Interface) {
+	status.Start("Checking DaemonSet %q", daemonSetName)
+	defer status.End()
+
 	daemonSet, err := k8sClient.AppsV1().DaemonSets(namespace).Get(context.TODO(), daemonSetName, metav1.GetOptions{})
 	if err != nil {
 		status.Failure("Error obtaining Daemonset %q: %v", daemonSetName, err)
@@ -191,6 +197,9 @@ func checkDaemonset(k8sClient kubernetes.Interface, namespace, daemonSetName str
 }
 
 func checkPodsStatus(k8sClient kubernetes.Interface, namespace string, status reporter.Interface) {
+	status.Start("Checking the status of all Submariner pods")
+	defer status.End()
+
 	pods, err := k8sClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s!=%s", constants.TransientLabel, constants.TrueLabel),
 	})

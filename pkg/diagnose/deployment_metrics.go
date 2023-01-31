@@ -34,6 +34,10 @@ const (
 )
 
 func checkMetricsConfig(clusterInfo *cluster.Info, status reporter.Interface) error {
+	if clusterInfo.Submariner == nil {
+		return nil
+	}
+
 	metricsErrors := []error{}
 	if err := checkComponentMetrics(clusterInfo, status, "gateway", gwCurlMetricsCommand); err != nil {
 		metricsErrors = append(metricsErrors, err)

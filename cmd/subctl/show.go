@@ -42,7 +42,7 @@ var (
 		PreRunE: showRestConfigProducer.CheckVersionMismatch,
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
-				showRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(show.Connections), cli.NewReporter()))
+				showRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(show.Connections), cli.NewReporter()))
 		},
 	}
 	endpointsCmd = &cobra.Command{
@@ -52,7 +52,7 @@ var (
 		PreRunE: showRestConfigProducer.CheckVersionMismatch,
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
-				showRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(show.Endpoints), cli.NewReporter()))
+				showRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(show.Endpoints), cli.NewReporter()))
 		},
 	}
 	gatewaysCmd = &cobra.Command{
@@ -62,7 +62,7 @@ var (
 		PreRunE: showRestConfigProducer.CheckVersionMismatch,
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
-				showRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(show.Gateways), cli.NewReporter()))
+				showRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(show.Gateways), cli.NewReporter()))
 		},
 	}
 	networksCmd = &cobra.Command{
