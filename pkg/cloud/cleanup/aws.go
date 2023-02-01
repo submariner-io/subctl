@@ -35,7 +35,7 @@ func AWS(clusterInfo *cluster.Info, config *aws.Config, status reporter.Interfac
 				return err
 			}
 
-			return cloud.CleanupAfterSubmariner(status)
+			return cloud.ClosePorts(status)
 		})
 
 	return status.Error(err, "Failed to cleanup AWS cloud")

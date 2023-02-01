@@ -30,14 +30,14 @@ func AWS(clusterInfo *cluster.Info, ports *cloud.Ports, config *aws.Config, useL
 	defer status.End()
 	status.Start("Preparing AWS cloud for Submariner deployment")
 
-	gwPorts, input, err := getPortConfig(clusterInfo.ClientProducer, ports, true)
+	gwPorts, internalPorts, err := getPortConfig(clusterInfo.ClientProducer, ports, true)
 	if err != nil {
 		return status.Error(err, "Failed to prepare the cloud")
 	}
 
 	// For load-balanced gateways we want these ports open internally to facilitate private-ip to pivate-ip gateways communications.
 	if useLoadBalancer {
-		input.InternalPorts = append(input.InternalPorts, gwPorts...)
+		internalPorts = append(internalPorts, gwPorts...)
 	}
 
 	//nolint:wrapcheck // No need to wrap errors here.
@@ -55,8 +55,8 @@ func AWS(clusterInfo *cluster.Info, ports *cloud.Ports, config *aws.Config, useL
 				}
 			}
 
-			if len(input.InternalPorts) > 0 {
-				return cloud.PrepareForSubmariner(input, status)
+			if len(internalPorts) > 0 {
+				return cloud.OpenPorts(internalPorts, status)
 			}
 
 			return nil
