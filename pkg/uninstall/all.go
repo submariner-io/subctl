@@ -20,20 +20,25 @@ package uninstall
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+	"github.com/submariner-io/admiral/pkg/finalizer"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/util"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/client"
+	"github.com/submariner-io/subctl/pkg/operator/deployment"
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -46,13 +51,13 @@ const componentReadyTimeout = time.Minute * 2
 func All(clients client.Producer, clusterName, submarinerNamespace string,
 	status reporter.Interface,
 ) error {
-	found, err := ensureSubmarinerDeleted(clients.ForGeneral(), clusterName, submarinerNamespace, status)
+	found, err := ensureSubmarinerDeleted(clients, clusterName, submarinerNamespace, status)
 	if err != nil {
 		return err
 	}
 
 	if !found {
-		err = ensureServiceDiscoveryDeleted(clients.ForGeneral(), clusterName, submarinerNamespace, status)
+		err = ensureServiceDiscoveryDeleted(clients, clusterName, submarinerNamespace, status)
 		if err != nil {
 			return err
 		}
@@ -184,18 +189,18 @@ func deleteClusterRolesAndBindings(clients client.Producer, clusterName string, 
 	return nil
 }
 
-func ensureSubmarinerDeleted(controllerClient controller.Client, clusterName, namespace string, status reporter.Interface) (bool, error) {
+func ensureSubmarinerDeleted(clients client.Producer, clusterName, namespace string, status reporter.Interface) (bool, error) {
 	defer status.End()
 
 	status.Start("Checking if the connectivity component is installed on cluster %q", clusterName)
 
 	submariner := &operatorv1alpha1.Submariner{}
-	err := controllerClient.Get(context.TODO(), controller.ObjectKey{
+	err := clients.ForGeneral().Get(context.TODO(), controller.ObjectKey{
 		Namespace: namespace,
 		Name:      names.SubmarinerCrName,
 	}, submariner)
 
-	if apierrors.IsNotFound(err) {
+	if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
 		status.Success("The connectivity component is not installed on cluster %q - skipping", clusterName)
 		return false, nil
 	}
@@ -208,23 +213,23 @@ func ensureSubmarinerDeleted(controllerClient controller.Client, clusterName, na
 
 	status.Start("Deleting the Submariner resource - this may take some time")
 
-	err = ensureDeleted(controllerClient, submariner)
+	err = ensureDeleted(clients, submariner, status)
 
 	return true, status.Error(err, "Error deleting Submariner resource %q", submariner.Name)
 }
 
-func ensureServiceDiscoveryDeleted(controllerClient controller.Client, clusterName, namespace string, status reporter.Interface) error {
+func ensureServiceDiscoveryDeleted(clients client.Producer, clusterName, namespace string, status reporter.Interface) error {
 	defer status.End()
 
 	status.Start("Checking if the service discovery component is installed on cluster %q", clusterName)
 
 	serviceDiscovery := &operatorv1alpha1.ServiceDiscovery{}
-	err := controllerClient.Get(context.TODO(), controller.ObjectKey{
+	err := clients.ForGeneral().Get(context.TODO(), controller.ObjectKey{
 		Namespace: namespace,
 		Name:      names.ServiceDiscoveryCrName,
 	}, serviceDiscovery)
 
-	if apierrors.IsNotFound(err) {
+	if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
 		status.Success("The service discovery component is not installed on cluster %q - skipping", clusterName)
 		return nil
 	}
@@ -237,24 +242,72 @@ func ensureServiceDiscoveryDeleted(controllerClient controller.Client, clusterNa
 
 	status.Start("Deleting the ServiceDiscovery resource - this may take some time")
 
-	err = ensureDeleted(controllerClient, serviceDiscovery)
+	err = ensureDeleted(clients, serviceDiscovery, status)
 
 	return status.Error(err, "Error deleting ServiceDiscovery resource %q", serviceDiscovery.Name)
 }
 
-func ensureDeleted(controllerClient controller.Client, obj controller.Object) error {
+func ensureDeleted(clients client.Producer, obj controller.Object, status reporter.Interface) error {
 	const maxWait = componentReadyTimeout + time.Second*30
 	const checkInterval = 2 * time.Second
 
-	//nolint:wrapcheck // Let the caller wrap errors
-	return wait.PollImmediate(checkInterval, maxWait, func() (bool, error) {
-		err := controllerClient.Delete(context.TODO(), obj)
-		if apierrors.IsNotFound(err) {
-			return true, nil
+	awaitDeleted := func() error {
+		//nolint:wrapcheck // No need to wrap
+		return wait.PollImmediate(checkInterval, maxWait, func() (bool, error) {
+			err := clients.ForGeneral().Delete(context.TODO(), obj)
+			if apierrors.IsNotFound(err) {
+				return true, nil
+			}
+
+			return false, err
+		})
+	}
+
+	err := awaitDeleted()
+
+	if errors.Is(err, wait.ErrWaitTimeout) {
+		labelSelector, err := deployment.GetPodLabelSelector(clients.ForKubernetes(), obj.GetNamespace())
+		if err != nil {
+			return errors.Wrap(err, "error obtaining the operator deployment label")
 		}
 
-		return false, err
-	})
+		if labelSelector == "" {
+			status.Warning("The Submariner operator deployment does not exist so deletion of the resource was not completed - " +
+				"the resource will be force-deleted")
+		} else {
+			pods, err := clients.ForKubernetes().CoreV1().Pods(obj.GetNamespace()).List(context.TODO(), metav1.ListOptions{
+				LabelSelector: labelSelector,
+			})
+			if err != nil {
+				return errors.Wrap(err, "error listing pods")
+			}
+
+			podStatusStr := ""
+			if len(pods.Items) == 0 {
+				podStatusStr = "does not exist"
+			} else {
+				if pods.Items[0].Status.Phase == corev1.PodRunning {
+					return status.Error(fmt.Errorf("the Submariner operator pod appears to be running but did not "+
+						"complete deletion of the resource. Please check the pod logs"), "")
+				}
+
+				podStatusStr = fmt.Sprintf("is not running (status is %q)", pods.Items[0].Status.Phase)
+			}
+
+			status.Warning("The Submariner operator pod %s so deletion of the resource was not completed - "+
+				"the resource will be force-deleted", podStatusStr)
+		}
+
+		err = finalizer.Remove(context.TODO(), resource.ForControllerClient(clients.ForGeneral(), obj.GetNamespace(), obj),
+			obj, names.CleanupFinalizer)
+		if err != nil {
+			return err //nolint:wrapcheck // No need to wrap
+		}
+
+		return awaitDeleted()
+	}
+
+	return err
 }
 
 func deleteBrokerIfUnused(clients client.Producer, namespace, clusterName string, status reporter.Interface) (bool, error) {
@@ -328,7 +381,7 @@ func findBrokerNamespace(controllerClient controller.Client, clusterName string,
 	brokers := &operatorv1alpha1.BrokerList{}
 
 	err := controllerClient.List(context.TODO(), brokers, controller.InNamespace(metav1.NamespaceAll))
-	if err != nil {
+	if err != nil && !meta.IsNoMatchError(err) {
 		return "", status.Error(err, "Error listing broker resources")
 	}
 
