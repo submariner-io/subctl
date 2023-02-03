@@ -91,35 +91,13 @@ func CNIConfig(clusterInfo *cluster.Info, _ string, status reporter.Interface) e
 	return checkCalicoIPPoolsIfCalicoCNI(clusterInfo, status)
 }
 
-func detectCalicoConfigMap(clientSet kubernetes.Interface) (bool, error) {
-	cmList, err := clientSet.CoreV1().ConfigMaps(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		return false, errors.Wrap(err, "error listing ConfigMaps")
-	}
-
-	for i := range cmList.Items {
-		if cmList.Items[i].Name == "calico-config" {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
 func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface) error {
-	status.Start("Trying to detect the Calico ConfigMap")
-	defer status.End()
-
-	found, err := detectCalicoConfigMap(info.ClientProducer.ForKubernetes())
-	if err != nil {
-		return status.Error(err, "Error trying to detect the Calico ConfigMap")
-	}
-
-	if !found {
+	if info.Submariner.Status.NetworkPlugin != cni.Calico {
 		return nil
 	}
 
 	status.Start("Calico CNI detected, checking if the Submariner IPPool pre-requisites are configured")
+	defer status.End()
 
 	gateways, err := info.GetGateways()
 	if err != nil {
