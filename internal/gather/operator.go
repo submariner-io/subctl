@@ -19,6 +19,7 @@ limitations under the License.
 package gather
 
 import (
+	"github.com/submariner-io/subctl/pkg/operator/deployment"
 	submarinerOp "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -64,5 +65,13 @@ func gatherLighthouseCoreDNSDeployment(info *Info, namespace string) {
 }
 
 func gatherSubmarinerOperatorPodLogs(info *Info) {
-	gatherPodLogs("name=submariner-operator", info)
+	labelSelector, err := deployment.GetPodLabelSelector(info.ClientProducer.ForKubernetes(), info.OperatorNamespace())
+	if err != nil {
+		info.Status.Failure("Failed to obtain the operator deployment label: %s", err)
+		return
+	}
+
+	if labelSelector != "" {
+		gatherPodLogs(labelSelector, info)
+	}
 }
