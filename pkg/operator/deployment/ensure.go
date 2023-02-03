@@ -27,7 +27,9 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/utils/pointer"
 )
@@ -106,4 +108,17 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace, ima
 	err = deployment.AwaitReady(ctx, kubeClient, namespace, opDeployment.Name)
 
 	return created, errors.Wrap(err, "error awaiting Deployment ready")
+}
+
+func GetPodLabelSelector(kubeClient kubernetes.Interface, namespace string) (string, error) {
+	dep, err := kubeClient.AppsV1().Deployments(namespace).Get(context.TODO(), names.OperatorComponent, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		return "", nil
+	}
+
+	if err != nil {
+		return "", errors.Wrap(err, "error retrieving operator deployment")
+	}
+
+	return labels.SelectorFromSet(dep.Spec.Template.ObjectMeta.Labels).String(), nil
 }
