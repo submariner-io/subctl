@@ -288,6 +288,7 @@ func runVerify(
 
 	suiteConfig, reporterConfig := ginkgo.GinkgoConfiguration()
 	suiteConfig.FocusStrings = patterns
+	suiteConfig.RandomSeed = 1
 	reporterConfig.Verbose = verboseConnectivityVerification
 	reporterConfig.JUnitReport = junitReport
 	framework.TestContext.SuiteConfig = &suiteConfig
