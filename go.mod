@@ -23,13 +23,13 @@ require (
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.5.0
 	golang.org/x/oauth2 v0.4.0
-	google.golang.org/api v0.108.0
+	google.golang.org/api v0.109.0
 	k8s.io/api v0.26.1
 	k8s.io/apiextensions-apiserver v0.26.1
 	k8s.io/apimachinery v0.26.1
 	k8s.io/client-go v0.26.1
 	k8s.io/utils v0.0.0-20221128185143-99ec85e7a448
-	sigs.k8s.io/controller-runtime v0.14.2
+	sigs.k8s.io/controller-runtime v0.14.4
 	sigs.k8s.io/mcs-api v0.1.0
 	sigs.k8s.io/yaml v1.3.0
 )
