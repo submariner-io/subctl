@@ -56,6 +56,7 @@ var (
 	submarinerNamespace             string
 	verifyOnly                      string
 	disruptiveTests                 bool
+	packetSize                      uint
 )
 
 var verifyRestConfigProducer = restconfig.NewProducer().
@@ -142,6 +143,7 @@ func addVerifyFlags(cmd *cobra.Command) {
 		"namespace in which submariner is deployed")
 	cmd.Flags().StringVar(&verifyOnly, "only", strings.Join(getAllVerifyKeys(), ","), "comma separated verifications to be performed")
 	cmd.Flags().BoolVar(&disruptiveTests, "disruptive-tests", false, "enable disruptive verifications like gateway-failover")
+	cmd.Flags().UintVar(&packetSize, "packet-size", 3000, "set packet size used in TCP connectivity tests")
 }
 
 func isNonInteractive(err error) bool {
@@ -285,6 +287,7 @@ func runVerify(
 	framework.TestContext.ConnectionTimeout = connectionTimeout
 	framework.TestContext.ConnectionAttempts = connectionAttempts
 	framework.TestContext.SubmarinerNamespace = namespace
+	framework.TestContext.PacketSize = packetSize
 
 	suiteConfig, reporterConfig := ginkgo.GinkgoConfiguration()
 	suiteConfig.FocusStrings = patterns
