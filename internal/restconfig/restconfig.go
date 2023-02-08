@@ -213,6 +213,14 @@ func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter
 		return status.Error(err, "error building the cluster.Info for the default configuration")
 	}
 
+	if clusterInfo.Submariner != nil {
+		clusterInfo.Name = clusterInfo.Submariner.Spec.ClusterID
+	} else if clusterInfo.ServiceDiscovery != nil {
+		clusterInfo.Name = clusterInfo.ServiceDiscovery.Spec.ClusterID
+	}
+
+	fmt.Printf("Cluster %q\n", clusterInfo.Name)
+
 	namespace, overridden, err := clientConfig.Namespace()
 	if err != nil {
 		return status.Error(err, "error retrieving the namespace for the default configuration")
@@ -404,8 +412,6 @@ func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Int
 }
 
 func (rcp *Producer) overrideContextAndRun(clusterName, contextName string, function PerContextFn, status reporter.Interface) error {
-	fmt.Printf("Cluster %q\n", clusterName)
-
 	rcp.defaultClientConfig.overrides.CurrentContext = contextName
 	if err := rcp.RunOnSelectedContext(function, status); err != nil {
 		return err
