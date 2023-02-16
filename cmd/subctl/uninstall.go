@@ -39,10 +39,9 @@ var uninstallOptions struct {
 var uninstallRestConfigProducer = restconfig.NewProducer().WithDefaultNamespace(constants.OperatorNamespace)
 
 var uninstallCmd = &cobra.Command{
-	Use:     "uninstall",
-	Short:   "Uninstall Submariner and its components",
-	Long:    "This command uninstalls Submariner and its components",
-	PreRunE: uninstallRestConfigProducer.CheckVersionMismatch,
+	Use:   "uninstall",
+	Short: "Uninstall Submariner and its components",
+	Long:  "This command uninstalls Submariner and its components",
 	Run: func(cmd *cobra.Command, args []string) {
 		exit.OnError(uninstallRestConfigProducer.RunOnSelectedContext(uninstallInContext, cli.NewReporter()))
 	},

@@ -19,32 +19,24 @@ limitations under the License.
 package restconfig
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
-	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
-	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/gvr"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/version"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
-	"github.com/submariner-io/submariner-operator/pkg/names"
 	subv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	k8serrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
-	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
@@ -211,6 +203,19 @@ func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter
 	clusterInfo, err := cluster.NewInfo(restConfig.ClusterName, restConfig.Config)
 	if err != nil {
 		return status.Error(err, "error building the cluster.Info for the default configuration")
+	}
+
+	var submVersion string
+	if clusterInfo.Submariner != nil {
+		submVersion = clusterInfo.Submariner.Spec.Version
+	} else if clusterInfo.ServiceDiscovery != nil {
+		submVersion = clusterInfo.ServiceDiscovery.Spec.Version
+	}
+
+	if submVersion != "" {
+		if err = checkVersionMismatch(submVersion); err != nil {
+			return status.Error(err, "")
+		}
 	}
 
 	namespace, overridden, err := clientConfig.Namespace()
@@ -488,41 +493,23 @@ func clusterNameFromContext(rawConfig *api.Config, overridesContext string) *str
 	return &configContext.Cluster
 }
 
-func (rcp *Producer) CheckVersionMismatch(cmd *cobra.Command, args []string) error {
-	return rcp.RunOnSelectedContext(func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-		crClient := clusterInfo.ClientProducer.ForGeneral()
+func checkVersionMismatch(submVersion string) error {
+	subctlVer, _ := semver.NewVersion(version.Version)
+	submarinerVer, _ := semver.NewVersion(submVersion)
 
-		submariner := &v1alpha1.Submariner{}
-		err := crClient.Get(context.TODO(), controllerClient.ObjectKey{
-			Namespace: constants.OperatorNamespace,
-			Name:      names.SubmarinerCrName,
-		}, submariner)
+	if subctlVer != nil && submarinerVer != nil && subctlVer.LessThan(*submarinerVer) {
+		return fmt.Errorf(
+			"the subctl version %q is older than the deployed Submariner version %q. Please upgrade your subctl version",
+			version.Version, submVersion)
+	}
 
-		if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
-			return nil
-		}
-
-		exit.OnErrorWithMessage(err, fmt.Sprintf("Error retrieving Submariner object %s", names.SubmarinerCrName))
-
-		if submariner != nil && submariner.Spec.Version != "" {
-			subctlVer, _ := semver.NewVersion(version.Version)
-			submarinerVer, _ := semver.NewVersion(submariner.Spec.Version)
-
-			if subctlVer != nil && submarinerVer != nil && subctlVer.LessThan(*submarinerVer) {
-				return fmt.Errorf(
-					"the subctl version %q is older than the deployed Submariner version %q. Please upgrade your subctl version",
-					version.Version, submariner.Spec.Version)
-			}
-		}
-
-		return nil
-	}, cli.NewReporter())
+	return nil
 }
 
-func IfSubmarinerInstalled(functions ...PerContextFn) PerContextFn {
+func IfConnectivityInstalled(functions ...PerContextFn) PerContextFn {
 	return func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 		if clusterInfo.Submariner == nil {
-			status.Warning(constants.SubmarinerNotInstalled)
+			status.Warning(constants.ConnectivityNotInstalled)
 
 			return nil
 		}

@@ -184,6 +184,7 @@ func (np *Scheduled) schedule() error {
 
 	err = np.awaitUntilScheduled()
 	if err != nil {
+		np.Delete()
 		return err
 	}
 

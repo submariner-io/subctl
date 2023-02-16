@@ -48,7 +48,7 @@ func All(clusterInfo *cluster.Info, namespace string, status reporter.Interface)
 
 		fmt.Println()
 
-		status.Warning(constants.SubmarinerNotInstalled)
+		status.Warning(constants.ConnectivityNotInstalled)
 
 		return errors.NewAggregate(allErrors)
 	}

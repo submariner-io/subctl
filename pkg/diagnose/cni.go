@@ -91,35 +91,13 @@ func CNIConfig(clusterInfo *cluster.Info, _ string, status reporter.Interface) e
 	return checkCalicoIPPoolsIfCalicoCNI(clusterInfo, status)
 }
 
-func detectCalicoConfigMap(clientSet kubernetes.Interface) (bool, error) {
-	cmList, err := clientSet.CoreV1().ConfigMaps(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		return false, errors.Wrap(err, "error listing ConfigMaps")
-	}
-
-	for i := range cmList.Items {
-		if cmList.Items[i].Name == "calico-config" {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
 func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface) error {
-	status.Start("Trying to detect the Calico ConfigMap")
-	defer status.End()
-
-	found, err := detectCalicoConfigMap(info.ClientProducer.ForKubernetes())
-	if err != nil {
-		return status.Error(err, "Error trying to detect the Calico ConfigMap")
-	}
-
-	if !found {
+	if info.Submariner.Status.NetworkPlugin != cni.Calico {
 		return nil
 	}
 
 	status.Start("Calico CNI detected, checking if the Submariner IPPool pre-requisites are configured")
+	defer status.End()
 
 	gateways, err := info.GetGateways()
 	if err != nil {
@@ -159,7 +137,7 @@ func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface
 		ippools[cidr] = pool
 	}
 
-	checkGatewaySubnets(gateways, ippools, tracker)
+	checkCalicoIPPools(gateways, ippools, tracker)
 
 	if tracker.HasFailures() {
 		return errors.New("failures while diagnosing CNI")
@@ -168,36 +146,76 @@ func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface
 	return nil
 }
 
-func checkGatewaySubnets(gateways []submv1.Gateway, ippools map[string]unstructured.Unstructured, status reporter.Interface) {
+func checkCalicoIPPools(gateways []submv1.Gateway, ippools map[string]unstructured.Unstructured, status reporter.Interface) {
 	for i := range gateways {
 		gateway := &gateways[i]
 		if gateway.Status.HAStatus != submv1.HAStatusActive {
 			continue
 		}
 
-		for j := range gateway.Status.Connections {
-			connection := &gateway.Status.Connections[j]
-			for _, subnet := range connection.Endpoint.Subnets {
-				ipPool, found := ippools[subnet]
-				if found {
-					isDisabled, err := getSpecBool(ipPool, "disabled")
-					if err != nil {
-						status.Failure(err.Error())
-						continue
-					}
+		checkCalicoSubmConfig(gateway, ippools, status)
+		checkCalicoEncapsulation(gateway, ippools, status)
+	}
+}
 
-					// When disabled is set to true, Calico IPAM will not assign addresses from this Pool.
-					// The IPPools configured for Submariner remote CIDRs should have disabled as true.
-					if !isDisabled {
-						status.Failure("The IPPool %q with CIDR %q for remote endpoint"+
-							" %q has disabled set to false", ipPool.GetName(), subnet, connection.Endpoint.CableName)
-						continue
-					}
-				} else {
-					status.Failure("Could not find any IPPool with CIDR %q for remote"+
-						" endpoint %q", subnet, connection.Endpoint.CableName)
+func checkCalicoSubmConfig(gateway *submv1.Gateway, ippools map[string]unstructured.Unstructured, status reporter.Interface) {
+	for j := range gateway.Status.Connections {
+		connection := &gateway.Status.Connections[j]
+		for _, subnet := range connection.Endpoint.Subnets {
+			ipPool, found := ippools[subnet]
+			if found {
+				isDisabled, err := getSpecBool(ipPool, "disabled")
+				if err != nil {
+					status.Failure(err.Error())
 					continue
 				}
+
+				// When spec.disabled is set to true, Calico IPAM will not assign addresses from this Pool.
+				// The IPPools configured for Submariner remote CIDRs should have disabled as true.
+				if !isDisabled {
+					status.Failure("The IPPool %q with CIDR %q for remote endpoint"+
+						" %q has disabled set to false", ipPool.GetName(), subnet, connection.Endpoint.CableName)
+					continue
+				}
+
+				natOutgoing, err := getSpecBool(ipPool, "natOutgoing")
+				if err != nil {
+					status.Failure(err.Error())
+					continue
+				}
+
+				// When spec.natOutgoing is set to true, packets from K8s pods to destinations outside of
+				// any Calico IP pools will be masqueraded.
+				// The IPPools configured for Submariner remote CIDRs should have natOutgoing as false.
+				if natOutgoing {
+					status.Failure("The IPPool %q with CIDR %q for remote endpoint"+
+						" %q has natOutgoing set to true", ipPool.GetName(), subnet, connection.Endpoint.CableName)
+					continue
+				}
+			} else {
+				status.Failure("Could not find any IPPool with CIDR %q for remote"+
+					" endpoint %q", subnet, connection.Endpoint.CableName)
+				continue
+			}
+		}
+	}
+}
+
+func checkCalicoEncapsulation(gateway *submv1.Gateway, ippools map[string]unstructured.Unstructured, status reporter.Interface) {
+	for _, subnet := range gateway.Status.LocalEndpoint.Subnets {
+		ipPool, found := ippools[subnet]
+		if found {
+			vxlanMode, err := getSpecString(ipPool, "vxlanMode")
+			if err != nil {
+				status.Failure(err.Error())
+				continue
+			}
+
+			// Calico supports different types of overlay networking. Currently, Submariner is validated only
+			// when Calico is deployed with VXLAN encapsulation.
+			if vxlanMode != "Always" {
+				status.Failure("Calico IPPool %q does not seem to be configured with VXLAN overlay encapsulation.", ipPool.GetName())
+				continue
 			}
 		}
 	}
@@ -214,6 +232,19 @@ func getSpecBool(pool unstructured.Unstructured, key string) (bool, error) {
 	}
 
 	return isDisabled, nil
+}
+
+func getSpecString(pool unstructured.Unstructured, key string) (string, error) {
+	value, found, err := unstructured.NestedString(pool.Object, "spec", key)
+	if err != nil {
+		return "", errors.Wrap(err, "error getting spec field")
+	}
+
+	if !found {
+		return "", fmt.Errorf("%s status not found for IPPool %q", key, pool.GetName())
+	}
+
+	return value, nil
 }
 
 func mustHaveSubmariner(clusterInfo *cluster.Info) {

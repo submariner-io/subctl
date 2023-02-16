@@ -36,60 +36,54 @@ var (
 		Long:  `This command shows information about some aspect of the Submariner deployment in a cluster.`,
 	}
 	connectionsCmd = &cobra.Command{
-		Use:     "connections",
-		Short:   "Show cluster connectivity information",
-		Long:    `This command shows information about Submariner endpoint connections with other clusters.`,
-		PreRunE: showRestConfigProducer.CheckVersionMismatch,
+		Use:   "connections",
+		Short: "Show cluster connectivity information",
+		Long:  `This command shows information about Submariner endpoint connections with other clusters.`,
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
-				showRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(show.Connections), cli.NewReporter()))
+				showRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(show.Connections), cli.NewReporter()))
 		},
 	}
 	endpointsCmd = &cobra.Command{
-		Use:     "endpoints",
-		Short:   "Show Submariner endpoint information",
-		Long:    `This command shows information about Submariner endpoints in a cluster.`,
-		PreRunE: showRestConfigProducer.CheckVersionMismatch,
+		Use:   "endpoints",
+		Short: "Show Submariner endpoint information",
+		Long:  `This command shows information about Submariner endpoints in a cluster.`,
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
-				showRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(show.Endpoints), cli.NewReporter()))
+				showRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(show.Endpoints), cli.NewReporter()))
 		},
 	}
 	gatewaysCmd = &cobra.Command{
-		Use:     "gateways",
-		Short:   "Show Submariner gateway summary information",
-		Long:    `This command shows summary information about the Submariner gateways in a cluster.`,
-		PreRunE: showRestConfigProducer.CheckVersionMismatch,
+		Use:   "gateways",
+		Short: "Show Submariner gateway summary information",
+		Long:  `This command shows summary information about the Submariner gateways in a cluster.`,
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
-				showRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(show.Gateways), cli.NewReporter()))
+				showRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(show.Gateways), cli.NewReporter()))
 		},
 	}
 	networksCmd = &cobra.Command{
-		Use:     "networks",
-		Short:   "Get information on your cluster related to Submariner",
-		Long:    `This command shows the status of Submariner in your cluster, and the relevant network details from your cluster.`,
-		PreRunE: showRestConfigProducer.CheckVersionMismatch,
+		Use:   "networks",
+		Short: "Get information on your cluster related to Submariner",
+		Long:  `This command shows the status of Submariner in your cluster, and the relevant network details from your cluster.`,
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
 				showRestConfigProducer.RunOnAllContexts(show.Network, cli.NewReporter()))
 		},
 	}
 	versionCmd = &cobra.Command{
-		Use:     "versions",
-		Short:   "Shows Submariner component versions",
-		Long:    `This command shows the versions of the Submariner components in the cluster.`,
-		PreRunE: showRestConfigProducer.CheckVersionMismatch,
+		Use:   "versions",
+		Short: "Shows Submariner component versions",
+		Long:  `This command shows the versions of the Submariner components in the cluster.`,
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
 				showRestConfigProducer.RunOnAllContexts(show.Versions, cli.NewReporter()))
 		},
 	}
 	brokersCmd = &cobra.Command{
-		Use:     "brokers",
-		Short:   "Shows Broker information",
-		Long:    "This command shows information about the Broker in the cluster",
-		PreRunE: showRestConfigProducer.CheckVersionMismatch,
+		Use:   "brokers",
+		Short: "Shows Broker information",
+		Long:  "This command shows information about the Broker in the cluster",
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
 				showRestConfigProducer.RunOnAllContexts(show.Brokers, cli.NewReporter()))
@@ -100,7 +94,6 @@ var (
 		Short: "Show information related to a Submariner cluster",
 		Long: `This command shows information related to a Submariner cluster:
 		      networks, endpoints, gateways, connections, broker and component versions.`,
-		PreRunE: showRestConfigProducer.CheckVersionMismatch,
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
 				showRestConfigProducer.RunOnAllContexts(show.All, cli.NewReporter()))

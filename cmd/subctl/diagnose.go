@@ -55,7 +55,7 @@ var (
 		Long:  "This command checks if the detected CNI network plugin is supported by Submariner.",
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
-				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(diagnose.CNIConfig), cli.NewReporter()))
+				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(diagnose.CNIConfig), cli.NewReporter()))
 		},
 	}
 
@@ -65,7 +65,7 @@ var (
 		Long:  "This command checks that the Gateway connections to other clusters are all established",
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
-				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(diagnose.Connections), cli.NewReporter()))
+				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(diagnose.Connections), cli.NewReporter()))
 		},
 	}
 
@@ -75,7 +75,15 @@ var (
 		Long:  "This command checks that the Submariner components are properly deployed and running with no overlapping CIDRs.",
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
-				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(diagnose.Deployments), cli.NewReporter()))
+				diagnoseRestConfigProducer.RunOnAllContexts(func(clusterInfo *cluster.Info, ns string, status reporter.Interface) error {
+					if clusterInfo.Submariner == nil && clusterInfo.ServiceDiscovery == nil {
+						status.Warning(constants.SubmarinerNotInstalled)
+
+						return nil
+					}
+
+					return diagnose.Deployments(clusterInfo, ns, status) //nolint:wrapcheck // No need to wrap error here.
+				}, cli.NewReporter()))
 		},
 	}
 
@@ -94,7 +102,7 @@ var (
 		Long:  "This command checks if the kube-proxy mode is supported by Submariner.",
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
-				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(diagnose.KubeProxyMode), cli.NewReporter()))
+				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(diagnose.KubeProxyMode), cli.NewReporter()))
 		},
 	}
 
@@ -111,7 +119,7 @@ var (
 		Args:  checkNoArguments,
 		Run: func(command *cobra.Command, args []string) {
 			exit.OnError(
-				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfSubmarinerInstalled(firewallIntraVxLANConfig), cli.NewReporter()))
+				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(firewallIntraVxLANConfig), cli.NewReporter()))
 		},
 	}
 
@@ -206,10 +214,10 @@ func firewallIntraVxLANConfig(clusterInfo *cluster.Info, namespace string, statu
 
 var allDiagnoseCommands = []restconfig.PerContextFn{
 	diagnose.K8sVersion,
-	restconfig.IfSubmarinerInstalled(
+	diagnose.Deployments,
+	restconfig.IfConnectivityInstalled(
 		diagnose.CNIConfig,
 		diagnose.Connections,
-		diagnose.Deployments,
 		diagnose.KubeProxyMode,
 		firewallIntraVxLANConfig,
 		diagnose.GlobalnetConfig),
