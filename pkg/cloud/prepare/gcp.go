@@ -30,7 +30,7 @@ import (
 func GCP(clusterInfo *cluster.Info, ports *cloud.Ports, config *gcp.Config, useLoadBalancer bool, status reporter.Interface) error {
 	defer status.End()
 
-	gwPorts, input, err := getPortConfig(clusterInfo.ClientProducer, ports, false)
+	gwPorts, internalPorts, err := getPortConfig(clusterInfo.ClientProducer, ports, false)
 	if err != nil {
 		return status.Error(err, "Failed to prepare the cloud")
 	}
@@ -50,8 +50,8 @@ func GCP(clusterInfo *cluster.Info, ports *cloud.Ports, config *gcp.Config, useL
 				}
 			}
 
-			if len(input.InternalPorts) > 0 {
-				return cloud.PrepareForSubmariner(input, status)
+			if len(internalPorts) > 0 {
+				return cloud.OpenPorts(internalPorts, status)
 			}
 
 			return nil

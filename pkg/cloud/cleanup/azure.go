@@ -34,7 +34,7 @@ func Azure(clusterInfo *cluster.Info, config *azure.Config, status reporter.Inte
 			if err != nil {
 				return err
 			}
-			return cloud.CleanupAfterSubmariner(status)
+			return cloud.ClosePorts(status)
 		})
 
 	return status.Error(err, "Failed to cleanup Azure cloud")

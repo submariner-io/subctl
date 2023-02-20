@@ -35,7 +35,7 @@ func GCP(clusterInfo *cluster.Info, config *gcp.Config, status reporter.Interfac
 				return err
 			}
 
-			return cloud.CleanupAfterSubmariner(status)
+			return cloud.ClosePorts(status)
 		})
 
 	return status.Error(err, "Failed to cleanup GCP cloud")

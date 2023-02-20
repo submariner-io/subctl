@@ -43,7 +43,7 @@ func getNetworkDetails(clientProducer client.Producer) (*network.ClusterNetwork,
 }
 
 func getPortConfig(clientProducer client.Producer, ports *cloud.Ports, useNumericESP bool,
-) ([]api.PortSpec, api.PrepareForSubmarinerInput, error) {
+) ([]api.PortSpec, []api.PortSpec, error) {
 	gwPorts := []api.PortSpec{
 		{Port: ports.Natt, Protocol: "udp"},
 		{Port: ports.NatDiscovery, Protocol: "udp"},
@@ -64,19 +64,19 @@ func getPortConfig(clientProducer client.Producer, ports *cloud.Ports, useNumeri
 		}
 	}
 
-	input := api.PrepareForSubmarinerInput{}
+	internalPorts := []api.PortSpec{}
 
 	nwDetails, err := getNetworkDetails(clientProducer)
 	if err != nil {
-		return gwPorts, input, errors.Wrapf(err, "failed to discover the network details in the cluster")
+		return gwPorts, internalPorts, errors.Wrapf(err, "failed to discover the network details in the cluster")
 	}
 
 	if nwDetails.NetworkPlugin != cni.OVNKubernetes {
 		port := api.PortSpec{
 			Port: ports.Vxlan, Protocol: "udp",
 		}
-		input.InternalPorts = append(input.InternalPorts, port)
+		internalPorts = append(internalPorts, port)
 	}
 
-	return gwPorts, input, nil
+	return gwPorts, internalPorts, nil
 }

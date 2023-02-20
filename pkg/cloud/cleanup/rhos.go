@@ -35,7 +35,7 @@ func RHOS(clusterInfo *cluster.Info, config *rhos.Config, status reporter.Interf
 				return err
 			}
 
-			return cloud.CleanupAfterSubmariner(status)
+			return cloud.ClosePorts(status)
 		})
 
 	return status.Error(err, "Failed to cleanup RHOS cloud")
