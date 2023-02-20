@@ -536,6 +536,8 @@ github.com/submariner-io/lighthouse v0.15.0-m2.0.20230130153953-7107bd35c649 h1:
 github.com/submariner-io/lighthouse v0.15.0-m2.0.20230130153953-7107bd35c649/go.mod h1:32HxfshOG8kW/h05DASYgweOKEAezpsOcijWYfw3fys=
 github.com/submariner-io/shipyard v0.15.0-m2 h1:hua4aZq9bVKXSQ1M94wHlj8fWe0gFp7VI1xE8F1hCYE=
 github.com/submariner-io/shipyard v0.15.0-m2/go.mod h1:T5VGOaZPGE4/vtCScEcnRDB1RaglrOGGt/5d4MlWFJ8=
+github.com/submariner-io/shipyard v0.15.0-m2.0.20230214105228-314770437490 h1:hIN+m0QKXgGQHY9rc0HEB0a01wSv5bXvsNmJUOlkBrg=
+github.com/submariner-io/shipyard v0.15.0-m2.0.20230214105228-314770437490/go.mod h1:+uOS2nmXo2AYCWbyI9mZIs4t8bE8sGqWoMm3750piAc=
 github.com/submariner-io/submariner v0.15.0-m2 h1:W03Fehr1Nk73HbtLyRP+fqTi71TcQpIxEq7bD8qjGD4=
 github.com/submariner-io/submariner v0.15.0-m2/go.mod h1:IWzAIPhrfVcB7Dq8x/kYHj7lCSSSiKE2lj+hZBrkpcI=
 github.com/submariner-io/submariner-operator v0.15.0-m2.0.20230209140646-09546f42d725 h1:LR5AHlVAN9Vk/DNMRoaI32BCoCoWjtwqfxZt8mqZu00=
