@@ -16,11 +16,11 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/submariner-io/admiral v0.14.2
-	github.com/submariner-io/cloud-prepare v0.14.1
-	github.com/submariner-io/lighthouse v0.14.1
+	github.com/submariner-io/cloud-prepare v0.14.2
+	github.com/submariner-io/lighthouse v0.14.2
 	github.com/submariner-io/shipyard v0.14.2
-	github.com/submariner-io/submariner v0.14.1
-	github.com/submariner-io/submariner-operator v0.14.1
+	github.com/submariner-io/submariner v0.14.2
+	github.com/submariner-io/submariner-operator v0.14.2
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
 	google.golang.org/api v0.100.0
@@ -40,8 +40,6 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.0.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute v1.0.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork v1.1.0 // indirect
-	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
-	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.5.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.17.0 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.17.9 // indirect
@@ -106,10 +104,10 @@ require (
 	github.com/urfave/cli/v2 v2.4.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220511200225-c6db032c6c88 // indirect
-	golang.org/x/net v0.0.0-20221014081412-f15817d10f9b // indirect
-	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261 // indirect
-	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
-	golang.org/x/text v0.3.9-0.20221012202458-252bee03417d // indirect
+	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/term v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20221014213838-99cd37c6964a // indirect
