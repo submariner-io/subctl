@@ -17,7 +17,7 @@ require (
 	github.com/onsi/gomega v1.19.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.4.0
-	github.com/submariner-io/admiral v0.13.3
+	github.com/submariner-io/admiral v0.13.4
 	github.com/submariner-io/cloud-prepare v0.13.3
 	github.com/submariner-io/lighthouse v0.13.3
 	github.com/submariner-io/shipyard v0.13.4
