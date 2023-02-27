@@ -34,9 +34,10 @@ var (
 	}
 
 	genericPrepareCmd = &cobra.Command{
-		Use:   "generic",
-		Short: "Prepares a generic cluster for Submariner",
-		Long:  "This command labels the required number of gateway nodes for Submariner installation.",
+		Use:        "generic",
+		Deprecated: "Deprecated in 0.15, to be removed in 0.16. Use `subctl join` instead.",
+		Short:      "Prepares a generic cluster for Submariner",
+		Long:       "This command labels the required number of gateway nodes for Submariner installation.",
 		Run: func(cmd *cobra.Command, args []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
