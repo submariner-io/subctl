@@ -28,17 +28,17 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/admiral/pkg/stringset"
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/rbac"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
 const InfoFileName = "broker-info.subm"
 
-func WriteInfoToFile(restConfig *rest.Config, brokerNamespace, ipsecFile string, components stringset.Interface,
+func WriteInfoToFile(restConfig *rest.Config, brokerNamespace, ipsecFile string, components sets.Set[string],
 	customDomains []string, status reporter.Interface,
 ) error {
 	status.Start("Saving broker info to file %q", InfoFileName)
@@ -66,8 +66,8 @@ func WriteInfoToFile(restConfig *rest.Config, brokerNamespace, ipsecFile string,
 		status.Success("Backed up previous file %q to %q", InfoFileName, newFilename)
 	}
 
-	data.ServiceDiscovery = components.Contains(component.ServiceDiscovery)
-	data.Components = components.Elements()
+	data.ServiceDiscovery = components.Has(component.ServiceDiscovery)
+	data.Components = components.UnsortedList()
 
 	if len(customDomains) > 0 {
 		data.CustomDomains = &customDomains

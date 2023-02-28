@@ -26,12 +26,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
-	"github.com/submariner-io/admiral/pkg/stringset"
 	"github.com/submariner-io/subctl/internal/component"
 	submarinerClientset "github.com/submariner-io/submariner/pkg/client/clientset/versioned"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/rest"
 )
 
@@ -119,13 +119,13 @@ func (d *Info) getBrokerAdministratorConfig(private, insecure bool) *rest.Config
 }
 
 func (d *Info) IsConnectivityEnabled() bool {
-	return d.GetComponents().Contains(component.Connectivity)
+	return d.GetComponents().Has(component.Connectivity)
 }
 
-func (d *Info) GetComponents() stringset.Interface {
-	return stringset.New(d.Components...)
+func (d *Info) GetComponents() sets.Set[string] {
+	return sets.New(d.Components...)
 }
 
 func (d *Info) IsServiceDiscoveryEnabled() bool {
-	return d.GetComponents().Contains(component.ServiceDiscovery) || d.ServiceDiscovery
+	return d.GetComponents().Has(component.ServiceDiscovery) || d.ServiceDiscovery
 }

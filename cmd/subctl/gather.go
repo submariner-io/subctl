@@ -41,7 +41,7 @@ var gatherCmd = &cobra.Command{
 	Short: "Gather troubleshooting information from a cluster",
 	Long: fmt.Sprintf("This command gathers information from a submariner cluster for troubleshooting. The information gathered "+
 		"can be selected by component (%v) and type (%v). Default is to capture all data.",
-		strings.Join(gather.AllModules.Elements(), ","), strings.Join(gather.AllTypes.Elements(), ",")),
+		strings.Join(gather.AllModules.UnsortedList(), ","), strings.Join(gather.AllTypes.UnsortedList(), ",")),
 	Run: func(command *cobra.Command, args []string) {
 		if options.Directory == "" {
 			options.Directory = "submariner-" + time.Now().UTC().Format("20060102150405") // submariner-YYYYMMDDHHMMSS
@@ -65,9 +65,9 @@ func init() {
 }
 
 func addGatherFlags(gatherCmd *cobra.Command) {
-	gatherCmd.Flags().StringSliceVar(&options.Types, "type", gather.AllTypes.Elements(),
+	gatherCmd.Flags().StringSliceVar(&options.Types, "type", gather.AllTypes.UnsortedList(),
 		"comma-separated list of data types to gather")
-	gatherCmd.Flags().StringSliceVar(&options.Modules, "module", gather.AllModules.Elements(),
+	gatherCmd.Flags().StringSliceVar(&options.Modules, "module", gather.AllModules.UnsortedList(),
 		"comma-separated list of components for which to gather data")
 	gatherCmd.Flags().StringVar(&options.Directory, "dir", "",
 		"the directory in which to store files. If not specified, a directory of the form \"submariner-<timestamp>\" "+
@@ -79,13 +79,13 @@ func addGatherFlags(gatherCmd *cobra.Command) {
 
 func checkGatherArguments() error {
 	for _, t := range options.Types {
-		if !gather.AllTypes.Contains(t) {
+		if !gather.AllTypes.Has(t) {
 			return fmt.Errorf("%q is not a supported type", t)
 		}
 	}
 
 	for _, m := range options.Modules {
-		if !gather.AllModules.Contains(m) {
+		if !gather.AllModules.Has(m) {
 			return fmt.Errorf("%q is not a supported module", m)
 		}
 	}
