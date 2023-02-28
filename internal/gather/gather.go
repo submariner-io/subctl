@@ -26,7 +26,6 @@ import (
 	"path/filepath"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/admiral/pkg/stringset"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/internal/constants"
@@ -39,6 +38,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/rest"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -55,9 +55,9 @@ const (
 	Resources = "resources"
 )
 
-var AllModules = stringset.New(component.Connectivity, component.ServiceDiscovery, component.Broker, component.Operator)
+var AllModules = sets.New(component.Connectivity, component.ServiceDiscovery, component.Broker, component.Operator)
 
-var AllTypes = stringset.New(Logs, Resources)
+var AllTypes = sets.New(Logs, Resources)
 
 var gatherFuncs = map[string]func(string, Info) bool{
 	component.Connectivity:     gatherConnectivity,

@@ -23,7 +23,6 @@ import (
 	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/admiral/pkg/stringset"
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/broker"
@@ -34,6 +33,7 @@ import (
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 type BrokerOptions struct {
@@ -48,7 +48,7 @@ var ValidComponents = []string{component.ServiceDiscovery, component.Connectivit
 
 func Broker(options *BrokerOptions, clientProducer client.Producer, status reporter.Interface,
 ) error {
-	componentSet := stringset.New(options.BrokerSpec.Components...)
+	componentSet := sets.New(options.BrokerSpec.Components...)
 	ctx := context.TODO()
 
 	if err := isValidComponents(componentSet); err != nil {
@@ -56,7 +56,7 @@ func Broker(options *BrokerOptions, clientProducer client.Producer, status repor
 	}
 
 	if options.BrokerSpec.GlobalnetEnabled {
-		componentSet.Add(component.Globalnet)
+		componentSet.Insert(component.Globalnet)
 	}
 
 	if err := checkGlobalnetConfig(options); err != nil {
@@ -108,15 +108,15 @@ func deploy(ctx context.Context, options *BrokerOptions, status reporter.Interfa
 	return status.Error(err, "Broker deployment failed")
 }
 
-func isValidComponents(componentSet stringset.Interface) error {
-	validComponentSet := stringset.New(ValidComponents...)
+func isValidComponents(componentSet sets.Set[string]) error {
+	validComponentSet := sets.New(ValidComponents...)
 
-	if componentSet.Size() < 1 {
+	if componentSet.Len() < 1 {
 		return fmt.Errorf("at least one component must be provided for deployment")
 	}
 
-	for _, component := range componentSet.Elements() {
-		if !validComponentSet.Contains(component) {
+	for _, component := range componentSet.UnsortedList() {
+		if !validComponentSet.Has(component) {
 			return fmt.Errorf("unknown component: %s", component)
 		}
 	}

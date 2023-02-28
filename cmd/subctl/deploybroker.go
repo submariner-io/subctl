@@ -24,7 +24,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/admiral/pkg/stringset"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/internal/constants"
@@ -34,6 +33,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/deploy"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 var (
@@ -92,5 +92,5 @@ func deployBrokerInContext(clusterInfo *cluster.Info, namespace string, status r
 
 	return broker.WriteInfoToFile( //nolint:wrapcheck // No need to wrap errors here.
 		clusterInfo.RestConfig, namespace, ipsecSubmFile,
-		stringset.New(deployflags.BrokerSpec.Components...), deployflags.BrokerSpec.DefaultCustomDomains, status)
+		sets.New(deployflags.BrokerSpec.Components...), deployflags.BrokerSpec.DefaultCustomDomains, status)
 }
