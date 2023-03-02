@@ -19,16 +19,12 @@ limitations under the License.
 package broker
 
 import (
-	"context"
 	"encoding/base64"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/subctl/internal/constants"
-	"github.com/submariner-io/subctl/internal/rbac"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 func RecoverData(
@@ -37,23 +33,6 @@ func RecoverData(
 	status.Start("Retrieving data to reconstruct broker-info.subm")
 	defer status.End()
 
-	data := &Info{}
-	var err error
-
-	data.BrokerURL = brokerCluster.RestConfig.Host + brokerCluster.RestConfig.APIPath
-
-	data.ClientToken, err = rbac.GetClientTokenSecret(
-		context.TODO(), brokerCluster.ClientProducer.ForKubernetes(), namespace,
-		constants.SubmarinerBrokerAdminSA,
-	)
-	if err != nil {
-		return status.Error(err, "error getting broker client secret")
-	}
-
-	data.Components = broker.Spec.Components
-	data.ServiceDiscovery = data.IsServiceDiscoveryEnabled()
-	data.CustomDomains = &broker.Spec.DefaultCustomDomains
-
 	status.Success("Retrieving IPSec PSK secret from Submariner found on cluster %s", submCluster.Name)
 
 	decodedPSKSecret, err := base64.StdEncoding.DecodeString(submCluster.Submariner.Spec.CeIPSecPSK)
@@ -61,16 +40,10 @@ func RecoverData(
 		return status.Error(err, "error decoding the secret")
 	}
 
-	data.IPSecPSK = &v1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: ipsecPSKSecretName,
-		},
-		Data: map[string][]byte{"psk": decodedPSKSecret},
-	}
-
 	status.Success("Successfully retrieved the data. Writing it to broker-info.subm")
 
-	err = data.writeToFile("broker-info.subm")
+	err = WriteInfoToFile(brokerCluster.RestConfig, namespace, decodedPSKSecret,
+		sets.New(broker.Spec.Components...), broker.Spec.DefaultCustomDomains, status)
 
 	return status.Error(err, "error reconstructing broker-info.subm")
 }

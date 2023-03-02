@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
@@ -90,7 +91,26 @@ func deployBrokerInContext(clusterInfo *cluster.Info, namespace string, status r
 		return err //nolint:wrapcheck // No need to wrap errors here.
 	}
 
+	ipsecPSK := []byte{}
+	var err error
+
+	if ipsecSubmFile != "" {
+		ipsecData, err := broker.ReadInfoFromFile(ipsecSubmFile)
+		if err != nil {
+			return errors.Wrapf(err, "error importing IPsec PSK from file %q", ipsecSubmFile)
+		}
+
+		ipsecPSK = ipsecData.IPSecPSK.Data["psk"]
+	}
+
+	if len(ipsecPSK) == 0 {
+		ipsecPSK, err = broker.GenerateRandomPSK()
+		if err != nil {
+			return err //nolint:wrapcheck // No need to wrap errors here.
+		}
+	}
+
 	return broker.WriteInfoToFile( //nolint:wrapcheck // No need to wrap errors here.
-		clusterInfo.RestConfig, namespace, ipsecSubmFile,
+		clusterInfo.RestConfig, namespace, ipsecPSK,
 		sets.New(deployflags.BrokerSpec.Components...), deployflags.BrokerSpec.DefaultCustomDomains, status)
 }

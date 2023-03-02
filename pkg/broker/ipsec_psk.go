@@ -30,20 +30,15 @@ const (
 	ipsecSecretLength  = 48
 )
 
-// generateRandomPSK returns securely generated n-byte array.
-func generateRandomPSK(n int) ([]byte, error) {
-	psk := make([]byte, n)
+// GenerateRandomPSK returns a securely generated array suitable for use as a PSK.
+func GenerateRandomPSK() ([]byte, error) {
+	psk := make([]byte, ipsecSecretLength)
 	_, err := rand.Read(psk)
 
 	return psk, err //nolint:wrapcheck // No need to wrap here
 }
 
-func newIPSECPSKSecret() (*v1.Secret, error) {
-	psk, err := generateRandomPSK(ipsecSecretLength)
-	if err != nil {
-		return nil, err
-	}
-
+func wrapIPSecPSKSecret(psk []byte) *v1.Secret {
 	pskSecretData := make(map[string][]byte)
 	pskSecretData["psk"] = psk
 
@@ -54,5 +49,5 @@ func newIPSECPSKSecret() (*v1.Secret, error) {
 		Data: pskSecretData,
 	}
 
-	return pskSecret, nil
+	return pskSecret
 }
