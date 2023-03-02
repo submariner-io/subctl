@@ -38,24 +38,11 @@ import (
 
 const InfoFileName = "broker-info.subm"
 
-func WriteInfoToFile(restConfig *rest.Config, brokerNamespace, ipsecFile string, components sets.Set[string],
+func WriteInfoToFile(restConfig *rest.Config, brokerNamespace string, ipsecPSK []byte, components sets.Set[string],
 	customDomains []string, status reporter.Interface,
 ) error {
 	status.Start("Saving broker info to file %q", InfoFileName)
 	defer status.End()
-
-	kubeClient, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		return status.Error(err, "error creating Kubernetes client")
-	}
-
-	data, err := newDataFrom(kubeClient, brokerNamespace, ipsecFile)
-	if err != nil {
-		// TODO return reporter.Error(err, "error initializing broker info")
-		return err
-	}
-
-	data.BrokerURL = restConfig.Host + restConfig.APIPath
 
 	newFilename, err := backupIfExists(InfoFileName)
 	if err != nil {
@@ -65,6 +52,22 @@ func WriteInfoToFile(restConfig *rest.Config, brokerNamespace, ipsecFile string,
 	if newFilename != "" {
 		status.Success("Backed up previous file %q to %q", InfoFileName, newFilename)
 	}
+
+	kubeClient, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return status.Error(err, "error creating Kubernetes client")
+	}
+
+	data := &Info{}
+
+	data.ClientToken, err = rbac.GetClientTokenSecret(context.TODO(), kubeClient, brokerNamespace, constants.SubmarinerBrokerAdminSA)
+	if err != nil {
+		return errors.Wrap(err, "error getting broker client secret")
+	}
+
+	data.IPSecPSK = wrapIPSecPSKSecret(ipsecPSK)
+
+	data.BrokerURL = restConfig.Host + restConfig.APIPath
 
 	data.ServiceDiscovery = components.Has(component.ServiceDiscovery)
 	data.Components = components.UnsortedList()
@@ -90,31 +93,6 @@ func ReadInfoFromFile(filename string) (*Info, error) {
 	}
 
 	return data, errors.Wrap(json.Unmarshal(bytes, data), "error unmarshalling data")
-}
-
-func newDataFrom(kubeClient kubernetes.Interface, brokerNamespace, ipsecFile string) (*Info, error) {
-	var err error
-	data := &Info{}
-
-	data.ClientToken, err = rbac.GetClientTokenSecret(context.TODO(), kubeClient, brokerNamespace, constants.SubmarinerBrokerAdminSA)
-	if err != nil {
-		return nil, errors.Wrap(err, "error getting broker client secret")
-	}
-
-	if ipsecFile != "" {
-		ipsecData, err := ReadInfoFromFile(ipsecFile)
-		if err != nil {
-			return nil, errors.Wrapf(err, "error importing IPsec PSK from file %q", ipsecFile)
-		}
-
-		data.IPSecPSK = ipsecData.IPSecPSK
-
-		return data, err
-	}
-
-	data.IPSecPSK, err = newIPSECPSKSecret()
-
-	return data, err
 }
 
 func backupIfExists(fileName string) (string, error) {
