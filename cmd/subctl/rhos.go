@@ -81,6 +81,9 @@ func init() {
 	rhosPrepareCmd.Flags().BoolVar(&rhosConfig.DedicatedGateway, "dedicated-gateway", true,
 		"Whether a dedicated gateway node has to be deployed")
 
+	_ = rhosPrepareCmd.Flags().MarkDeprecated("dedicated-gateway", "to be removed in 0.16. "+
+		"To deploy without dedicated gateways, use the Load Balancer mode instead.")
+
 	cloudPrepareCmd.AddCommand(rhosPrepareCmd)
 
 	addGeneralRHOSFlags(rhosCleanupCmd)
