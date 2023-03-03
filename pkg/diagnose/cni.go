@@ -228,7 +228,8 @@ func getSpecBool(pool unstructured.Unstructured, key string) (bool, error) {
 	}
 
 	if !found {
-		return false, fmt.Errorf("%s status not found for IPPool %q", key, pool.GetName())
+		// for bool type, not found is considered false
+		return false, nil
 	}
 
 	return isDisabled, nil
