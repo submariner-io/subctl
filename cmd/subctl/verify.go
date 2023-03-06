@@ -42,6 +42,7 @@ import (
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	_ "github.com/submariner-io/submariner/test/e2e/compliance"
 	_ "github.com/submariner-io/submariner/test/e2e/dataplane"
 	_ "github.com/submariner-io/submariner/test/e2e/redundancy"
 	"k8s.io/client-go/rest"
@@ -183,6 +184,7 @@ func checkVerifyArguments(cmd *cobra.Command, args []string) error {
 var verifyE2EPatterns = map[string]string{
 	component.Connectivity:     "\\[dataplane",
 	component.ServiceDiscovery: "\\[discovery",
+	"compliance":               "\\[compliance]",
 }
 
 var verifyE2EDisruptivePatterns = map[string]string{
