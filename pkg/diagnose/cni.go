@@ -222,16 +222,9 @@ func checkCalicoEncapsulation(gateway *submv1.Gateway, ippools map[string]unstru
 }
 
 func getSpecBool(pool unstructured.Unstructured, key string) (bool, error) {
-	isDisabled, found, err := unstructured.NestedBool(pool.Object, "spec", key)
-	if err != nil {
-		return false, errors.Wrap(err, "error getting spec field")
-	}
-
-	if !found {
-		return false, fmt.Errorf("%s status not found for IPPool %q", key, pool.GetName())
-	}
-
-	return isDisabled, nil
+	// value defaults to false when not found; not finding a bool isn't an error
+	value, _, err := unstructured.NestedBool(pool.Object, "spec", key)
+	return value, errors.Wrap(err, "error getting spec field")
 }
 
 func getSpecString(pool unstructured.Unstructured, key string) (string, error) {
@@ -241,7 +234,7 @@ func getSpecString(pool unstructured.Unstructured, key string) (string, error) {
 	}
 
 	if !found {
-		return "", fmt.Errorf("%s status not found for IPPool %q", key, pool.GetName())
+		return "", fmt.Errorf("%s value not found for IPPool %q", key, pool.GetName())
 	}
 
 	return value, nil
