@@ -36,7 +36,7 @@ const (
 var kubeProxyImageOverrides = []string{}
 
 func AddKubeProxyImageOverrideFlag(flags *pflag.FlagSet) {
-	flags.StringSliceVar(&firewallImageOverrides, "image-override", nil, "override component image")
+	flags.StringSliceVar(&kubeProxyImageOverrides, "image-override", nil, "override component image")
 }
 
 func KubeProxyMode(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
