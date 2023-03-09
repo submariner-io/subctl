@@ -198,6 +198,7 @@ var validOverrides = []string{
 	names.ServiceDiscoveryComponent,
 	names.LighthouseCoreDNSComponent,
 	names.NettestComponent,
+	names.MetricsProxyComponent,
 }
 
 func MergeImageOverrides(imageOverrides map[string]string, localImageOverrides []string) (map[string]string, error) {
