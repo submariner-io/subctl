@@ -39,6 +39,10 @@ func AddKubeProxyImageOverrideFlag(flags *pflag.FlagSet) {
 	flags.StringSliceVar(&kubeProxyImageOverrides, "image-override", nil, "override component image")
 }
 
+func SetKubeProxyImageOverride(imageOverrides []string) {
+	kubeProxyImageOverrides = imageOverrides
+}
+
 func KubeProxyMode(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 	status.Start("Checking Submariner support for the kube-proxy mode")
 	defer status.End()

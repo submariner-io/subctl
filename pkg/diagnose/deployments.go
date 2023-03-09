@@ -42,6 +42,10 @@ func AddDeploymentImageOverrideFlag(flags *pflag.FlagSet) {
 	flags.StringSliceVar(&deploymentImageOverrides, "image-override", nil, "override component image")
 }
 
+func SetDeploymentImageOverride(imageOverrides []string) {
+	deploymentImageOverrides = imageOverrides
+}
+
 func Deployments(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	if clusterInfo.Submariner != nil {
 		if err := checkOverlappingCIDRs(clusterInfo, status); err != nil {
