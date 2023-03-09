@@ -67,6 +67,10 @@ func AddFirewallImageOverrideFlag(flags *pflag.FlagSet) {
 	flags.StringSliceVar(&firewallImageOverrides, "image-override", nil, "override component image")
 }
 
+func SetFirewallImageOverride(imageOverrides []string) {
+	firewallImageOverrides = imageOverrides
+}
+
 func spawnClientPodOnNonGatewayNode(client kubernetes.Interface, namespace, podCommand string,
 	imageRepInfo *image.RepositoryInfo,
 ) (*pods.Scheduled, error) {
