@@ -23,6 +23,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
@@ -35,6 +36,8 @@ import (
 
 var (
 	diagnoseFirewallOptions diagnose.FirewallOptions
+
+	imageOverrides = []string{}
 
 	diagnoseRestConfigProducer = restconfig.NewProducer().WithDefaultNamespace(constants.OperatorNamespace).WithInClusterFlag()
 
@@ -174,6 +177,7 @@ func init() {
 
 func addDiagnoseSubCommands() {
 	addDiagnoseFWConfigFlags(diagnoseAllCmd)
+	AddImageImageOverrideFlag(diagnoseAllCmd.Flags())
 
 	diagnoseCmd.AddCommand(diagnoseCNICmd)
 	diagnoseCmd.AddCommand(diagnoseConnectionsCmd)
@@ -202,6 +206,10 @@ func addDiagnoseFirewallSubCommands() {
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallNatDiscovery)
 }
 
+func AddImageImageOverrideFlag(flags *pflag.FlagSet) {
+	flags.StringSliceVar(&imageOverrides, "image-override", nil, "override component image")
+}
+
 func addDiagnoseFWConfigFlags(command *cobra.Command) {
 	command.Flags().UintVar(&diagnoseFirewallOptions.ValidationTimeout, "validation-timeout", 90,
 		"time to run in seconds while validating the firewall")
@@ -227,6 +235,13 @@ var allDiagnoseCommands = []restconfig.PerContextFn{
 }
 
 func diagnoseAll(status reporter.Interface) error {
+	// When imageOverrides is supplied to the diagnose all command, percolate it to the individual commands.
+	if len(imageOverrides) != 0 {
+		diagnose.SetDeploymentImageOverride(imageOverrides)
+		diagnose.SetKubeProxyImageOverride(imageOverrides)
+		diagnose.SetFirewallImageOverride(imageOverrides)
+	}
+
 	err := diagnoseRestConfigProducer.RunOnAllContexts(
 		func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 			diagnoseErrors := []error{}
