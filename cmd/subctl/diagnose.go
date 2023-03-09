@@ -177,7 +177,6 @@ func addDiagnoseSubCommands() {
 	diagnose.AddKubeProxyImageOverrideFlag(diagnoseKubeProxyModeCmd.Flags())
 	diagnoseCmd.AddCommand(diagnoseKubeProxyModeCmd)
 	diagnoseCmd.AddCommand(diagnoseAllCmd)
-	diagnose.AddFirewallImageOverrideFlag(diagnoseFirewallCmd.Flags())
 	diagnoseCmd.AddCommand(diagnoseFirewallCmd)
 	diagnoseCmd.AddCommand(diagnoseServiceDiscoveryCmd)
 }
@@ -190,6 +189,9 @@ func addDiagnoseFirewallSubCommands() {
 	diagnoseFirewallNatDiscoveryRestConfigProducer.SetupFlags(diagnoseFirewallNatDiscovery.Flags())
 	addDiagnoseFWConfigFlags(diagnoseFirewallNatDiscovery)
 
+	diagnose.AddFirewallImageOverrideFlag(diagnoseFirewallVxLANCmd.Flags())
+	diagnose.AddFirewallImageOverrideFlag(diagnoseFirewallTunnelCmd.Flags())
+	diagnose.AddFirewallImageOverrideFlag(diagnoseFirewallNatDiscovery.Flags())
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallMetricsCmd)
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallVxLANCmd)
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallTunnelCmd)
