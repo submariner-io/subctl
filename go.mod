@@ -9,12 +9,12 @@ require (
 	github.com/gophercloud/utils v0.0.0-20210909165623-d7085207ff6d
 	github.com/mattn/go-isatty v0.0.17
 	github.com/onsi/ginkgo/v2 v2.9.1
-	github.com/onsi/gomega v1.27.3
+	github.com/onsi/gomega v1.27.4
 	github.com/openshift/api v0.0.0-20220414050251-a83e6f8f1d50
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
-	github.com/submariner-io/admiral v0.15.0-m3
+	github.com/submariner-io/admiral v0.15.0-m4
 	github.com/submariner-io/cloud-prepare v0.15.0-m3.0.20230307081041-12b4b5ae1576
 	github.com/submariner-io/lighthouse v0.15.0-m3
 	github.com/submariner-io/shipyard v0.15.0-m4
