@@ -25,10 +25,11 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/client-go/rest"
 )
 
-func RecoverData(
-	brokerCluster, submCluster *cluster.Info, broker *v1alpha1.Broker, namespace string, status reporter.Interface,
+func RecoverData(submCluster *cluster.Info, broker *v1alpha1.Broker, brokerNamespace string,
+	brokerRestConfig *rest.Config, status reporter.Interface,
 ) error {
 	status.Start("Retrieving data to reconstruct broker-info.subm")
 	defer status.End()
@@ -42,7 +43,7 @@ func RecoverData(
 
 	status.Success("Successfully retrieved the data. Writing it to broker-info.subm")
 
-	err = WriteInfoToFile(brokerCluster.RestConfig, namespace, decodedPSKSecret,
+	err = WriteInfoToFile(brokerRestConfig, brokerNamespace, decodedPSKSecret,
 		sets.New(broker.Spec.Components...), broker.Spec.DefaultCustomDomains, status)
 
 	return status.Error(err, "error reconstructing broker-info.subm")
