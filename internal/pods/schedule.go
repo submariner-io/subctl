@@ -300,6 +300,13 @@ func addNodeSelectorTerm(nodeSelTerms []v1.NodeSelectorTerm, label string,
 }
 
 func checkNSLabels(config *Config) error {
+	if config.Namespace == constants.OperatorNamespace {
+		// The default operator namespace has the proper pod security set up via OCP SCC so no need to check for a
+		// pod-security label. Also this avoids a warning with OCP 4.10.x which doesn't automatically set the pod-security
+		// label as later versions do.
+		return nil
+	}
+
 	ns, err := config.ClientSet.CoreV1().Namespaces().Get(context.TODO(), config.Namespace, metav1.GetOptions{})
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("error fetching %s namespace", config.Namespace))
