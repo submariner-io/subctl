@@ -55,6 +55,11 @@ func NewBrokerAdminRole() *rbacv1.Role {
 				Resources: []string{"clusters", "endpoints"},
 			},
 			{
+				Verbs:     []string{"get", "list"},
+				APIGroups: []string{"submariner.io"},
+				Resources: []string{"brokers"},
+			},
+			{
 				Verbs:     []string{"create", "get", "list", "update", "delete", "watch"},
 				APIGroups: []string{""},
 				Resources: []string{"serviceaccounts", "secrets", "configmaps"},
@@ -91,6 +96,11 @@ func NewBrokerClusterRole() *rbacv1.Role {
 				Resources: []string{"clusters", "endpoints"},
 			},
 			{
+				Verbs:     []string{"get", "list"},
+				APIGroups: []string{"submariner.io"},
+				Resources: []string{"brokers"},
+			},
+			{
 				Verbs:     []string{"create", "get", "list", "watch", "patch", "update", "delete"},
 				APIGroups: []string{"multicluster.x-k8s.io"},
 				Resources: []string{"*"},
@@ -104,6 +114,11 @@ func NewBrokerClusterRole() *rbacv1.Role {
 				Verbs:     []string{"get", "list", "watch"},
 				APIGroups: []string{""},
 				Resources: []string{"secrets"},
+			},
+			{
+				Verbs:     []string{"get", "list"},
+				APIGroups: []string{""},
+				Resources: []string{"serviceaccounts"},
 			},
 		},
 	}

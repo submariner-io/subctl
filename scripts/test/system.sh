@@ -180,42 +180,18 @@ _subctl cloud prepare generic --kubecontext cluster1 && exit 1
 echo "Renaming broker-info.subm to broker-info.subm.orig"
 mv "${DAPPER_SOURCE}"/output/broker-info.subm "${DAPPER_SOURCE}"/output/broker-info.subm.orig
 
-# Test subctl recover-broker-info invocations with both Broker and Submariner installed on the cluster
-_subctl recover-broker-info --brokercontext cluster1 --context cluster1
-cmp "${DAPPER_SOURCE}"/output/broker-info.subm.orig broker-info.subm
-rm -f broker-info.subm
-
+# Test subctl recover-broker-info invocations
 _subctl recover-broker-info --context cluster1
 cmp "${DAPPER_SOURCE}"/output/broker-info.subm.orig broker-info.subm
 rm -f broker-info.subm
 
-# Failure tests
-# Invalid Broker namespace
-_subctl recover-broker-info --namespace non-existent --context cluster1 && exit 1
-_subctl recover-broker-info --brokernamespace non-existent --brokercontext cluster1 && exit 1
-
-# No Broker installed
-_subctl recover-broker-info --brokercontext cluster2 && exit 1
-_subctl recover-broker-info --context cluster2 && exit 1
-
-# Test subctl uninstall invocations
-_subctl uninstall -y --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1
-
-# Test subctl recover-broker-info invocations with Submariner not installed on Broker cluster
-_subctl recover-broker-info --brokercontext cluster1 --context cluster2
+_subctl recover-broker-info --context cluster2
 cmp "${DAPPER_SOURCE}"/output/broker-info.subm.orig broker-info.subm
 rm -f broker-info.subm
 
-_subctl recover-broker-info --brokercontext cluster1 --context cluster1 && exit 1
-_subctl recover-broker-info --context cluster1 && exit 1
-
 # Test subctl uninstall invocations
 _subctl uninstall -y --context cluster2
+_subctl uninstall -y --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1
 
 # Test subctl recover-broker-info invocations with Submariner not installed on any cluster
-_subctl recover-broker-info --brokercontext cluster1 --context cluster1 && exit 1
-_subctl recover-broker-info --brokercontext cluster1 --context cluster2 && exit 1
-_subctl recover-broker-info --context cluster1 && exit 1
-
-# Uninstall Broker
-_subctl uninstall -y --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1
+_subctl recover-broker-info --context cluster1
