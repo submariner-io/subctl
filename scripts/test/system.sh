@@ -47,17 +47,6 @@ function test_subctl_gather() {
     echo "::endgroup::"
 }
 
-function check_service_exported() {
-    local cond
-    cond=$(kubectl get serviceexport nginx-demo -o=jsonpath='{.status.conditions[?(@.type=="Valid")]}')
-
-    [[ $(jq -r .status <<< "$cond") = "True" ]] && return 0
-
-    echo "Service not exported: $cond"
-
-    return 1
-}
-
 function export_service() {
     echo "::group::Running & validating 'subctl export service'"
 
@@ -82,7 +71,7 @@ EOF
 
     subctl export service --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-"$cluster" --namespace default nginx-demo
 
-    with_retries 30 sleep_on_fail 1s check_service_exported
+    with_retries 30 sleep_on_fail 1s kubectl get serviceimport nginx-demo
 
     echo "::endgroup::"
 }
