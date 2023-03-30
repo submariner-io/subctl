@@ -20,11 +20,11 @@ package diagnose
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/admiral/pkg/resource"
 	lhconstants "github.com/submariner-io/lighthouse/pkg/constants"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/gvr"
@@ -77,8 +77,9 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 			continue
 		}
 
-		verifyStatusCondition(se, mcsv1a1.ServiceExportValid, status)
-		verifyStatusCondition(se, lhconstants.ServiceExportSynced, status)
+		verifyStatusCondition(se, mcsv1a1.ServiceExportValid, corev1.ConditionTrue, status)
+		verifyStatusCondition(se, lhconstants.ServiceExportSynced, corev1.ConditionTrue, status)
+		verifyStatusCondition(se, mcsv1a1.ServiceExportConflict, corev1.ConditionFalse, status)
 
 		ep := clusterInfo.ClientProducer.ForKubernetes().DiscoveryV1().EndpointSlices(se.Namespace)
 
@@ -98,32 +99,51 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 			status.Failure("No EndpointSlice found for exported service %s/%s", se.Namespace, se.Name)
 		}
 
-		_, err = clusterInfo.ClientProducer.ForDynamic().Resource(serviceImportsGVR).
-			Namespace(constants.OperatorNamespace).Get(context.TODO(),
+		checkForAggregateSI := false
+
+		serviceImportClient := clusterInfo.ClientProducer.ForDynamic().Resource(serviceImportsGVR)
+
+		localSI, err := serviceImportClient.Namespace(constants.OperatorNamespace).Get(context.TODO(),
 			fmt.Sprintf("%s-%s-%s", se.Name, se.Namespace, clusterInfo.Submariner.Spec.ClusterID), metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				status.Failure("No ServiceImport found for exported service %s/%s", se.Namespace, se.Name)
-			} else {
-				status.Failure("Error retrieving ServiceImport for exported service %s/%s: %v", se.Namespace, se.Name, err)
+		if err == nil {
+			_, checkForAggregateSI = localSI.GetLabels()[mcsv1a1.LabelServiceName]
+		} else if apierrors.IsNotFound(err) {
+			status.Failure("No local ServiceImport in %q found for exported service %s/%s", constants.OperatorNamespace,
+				se.Namespace, se.Name)
+		} else {
+			status.Failure("Error retrieving ServiceImport for exported service %s/%s: %v", se.Namespace, se.Name, err)
+		}
+
+		if checkForAggregateSI {
+			_, err = serviceImportClient.Namespace(se.Namespace).Get(context.TODO(), se.Name, metav1.GetOptions{})
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					status.Failure("No ServiceImport found for exported service %s/%s", se.Namespace, se.Name)
+				} else {
+					status.Failure("Error retrieving ServiceImport for exported service %s/%s: %v", se.Namespace, se.Name, err)
+				}
 			}
 		}
 	}
 }
 
-func verifyStatusCondition(se *mcsv1a1.ServiceExport, condType mcsv1a1.ServiceExportConditionType, status reporter.Interface) {
+func verifyStatusCondition(se *mcsv1a1.ServiceExport, condType mcsv1a1.ServiceExportConditionType, condStatus corev1.ConditionStatus,
+	status reporter.Interface,
+) {
 	for i := range se.Status.Conditions {
 		condition := &se.Status.Conditions[i]
 		if condition.Type == condType {
-			if condition.Status != corev1.ConditionTrue {
-				out, _ := json.MarshalIndent(condition, "", "  ")
-				status.Failure("The ServiceExport %q status condition type for %s/%s is not satisfied:\n%s",
-					condType, se.Namespace, se.Name, out)
+			if condition.Status != condStatus {
+				status.Failure(
+					"The ServiceExport %q status condition type for %s/%s is not satisfied. Expected condition status %q. Actual:\n%s",
+					condType, se.Namespace, se.Name, condStatus, resource.ToJSON(condition))
 			}
 
 			return
 		}
 	}
 
-	status.Failure("The ServiceExport for %s/%s is missing the %q status condition type", se.Namespace, se.Name, condType)
+	if condStatus == corev1.ConditionTrue {
+		status.Failure("The ServiceExport for %s/%s is missing the %q status condition type", se.Namespace, se.Name, condType)
+	}
 }
