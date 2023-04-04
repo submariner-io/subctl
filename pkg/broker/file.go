@@ -23,6 +23,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -71,6 +72,7 @@ func WriteInfoToFile(restConfig *rest.Config, brokerNamespace string, ipsecPSK [
 
 	data.ServiceDiscovery = components.Has(component.ServiceDiscovery)
 	data.Components = components.UnsortedList()
+	sort.Strings(data.Components)
 
 	if len(customDomains) > 0 {
 		data.CustomDomains = &customDomains
