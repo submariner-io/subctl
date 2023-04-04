@@ -41,7 +41,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, clusterInfo *cluster.Info, options *Options,
+func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Options,
 	clientProducer client.Producer, status reporter.Interface,
 ) error {
 	err := checkRequirements(clientProducer.ForKubernetes(), options.IgnoreRequirements, status)

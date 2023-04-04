@@ -98,7 +98,7 @@ func init() {
 	cloudCleanupCmd.AddCommand(gcpCleanupCmd)
 }
 
-func checkGCPFlags(cmd *cobra.Command, args []string) error {
+func checkGCPFlags(_ *cobra.Command, _ []string) error {
 	if gcpConfig.OcpMetadataFile == "" {
 		expectFlag(infraIDFlag, gcpConfig.InfraID)
 		expectFlag(regionFlag, gcpConfig.Region)

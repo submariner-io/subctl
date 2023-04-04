@@ -90,7 +90,7 @@ func init() {
 	cloudCleanupCmd.AddCommand(rhosCleanupCmd)
 }
 
-func checkRHOSFlags(cmd *cobra.Command, args []string) error {
+func checkRHOSFlags(_ *cobra.Command, _ []string) error {
 	if rhosConfig.OcpMetadataFile == "" {
 		expectFlag(infraIDFlag, rhosConfig.InfraID)
 		expectFlag(regionFlag, rhosConfig.Region)

@@ -56,7 +56,7 @@ func init() {
 	rootCmd.AddCommand(recoverBrokerInfo)
 }
 
-func recoverBrokerInfoFromSubm(submCluster *cluster.Info, namespace string, status reporter.Interface) error {
+func recoverBrokerInfoFromSubm(submCluster *cluster.Info, _ string, status reporter.Interface) error {
 	brokerNamespace := submCluster.Submariner.Spec.BrokerK8sRemoteNamespace
 	brokerRestConfig := submCluster.RestConfig
 

@@ -25,7 +25,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/internal/constants"
@@ -66,7 +65,7 @@ var gatherFuncs = map[string]func(string, Info) bool{
 	component.Operator:         gatherOperator,
 }
 
-func Data(clusterInfo *cluster.Info, status reporter.Interface, options Options) error {
+func Data(clusterInfo *cluster.Info, options Options) error {
 	var warningsBuf bytes.Buffer
 
 	rest.SetDefaultWarningHandler(rest.NewWarningWriter(&warningsBuf, rest.WarningWriterOptions{
