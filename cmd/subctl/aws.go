@@ -84,7 +84,7 @@ func init() {
 	cloudCleanupCmd.AddCommand(awsCleanupCmd)
 }
 
-func checkAWSFlags(cmd *cobra.Command, args []string) error {
+func checkAWSFlags(_ *cobra.Command, _ []string) error {
 	if awsConfig.OcpMetadataFile == "" {
 		expectFlag(infraIDFlag, awsConfig.InfraID)
 		expectFlag(regionFlag, awsConfig.Region)

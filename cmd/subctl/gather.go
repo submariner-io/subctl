@@ -53,8 +53,8 @@ var gatherCmd = &cobra.Command{
 		status := cli.NewReporter()
 
 		exit.OnError(gatherRestConfigProducer.RunOnAllContexts(
-			func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-				return gather.Data(clusterInfo, status, options) //nolint:wrapcheck // No need to wrap errors here.
+			func(clusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
+				return gather.Data(clusterInfo, options) //nolint:wrapcheck // No need to wrap errors here.
 			}, status))
 	},
 }

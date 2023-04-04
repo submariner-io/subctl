@@ -86,7 +86,7 @@ func init() {
 	cloudCleanupCmd.AddCommand(azureCleanupCmd)
 }
 
-func checkAzureFlags(cmd *cobra.Command, args []string) error {
+func checkAzureFlags(_ *cobra.Command, _ []string) error {
 	if azureConfig.OcpMetadataFile == "" {
 		expectFlag(infraIDFlag, azureConfig.InfraID)
 		expectFlag(regionFlag, azureConfig.Region)

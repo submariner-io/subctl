@@ -141,7 +141,7 @@ func joinInContext(brokerInfo *broker.Info, clusterInfo *cluster.Info, status re
 	}
 
 	return join.ClusterToBroker( //nolint:wrapcheck // No need to wrap errors here.
-		ctx, brokerInfo, clusterInfo, &joinFlags, clusterInfo.ClientProducer, status)
+		ctx, brokerInfo, &joinFlags, clusterInfo.ClientProducer, status)
 }
 
 func possiblyLabelGateway(kubeClient kubernetes.Interface, status reporter.Interface) {

@@ -33,7 +33,7 @@ subctl binary.`,
 	Run: subctlVersion,
 }
 
-func subctlVersion(cmd *cobra.Command, args []string) {
+func subctlVersion(_ *cobra.Command, _ []string) {
 	version.PrintSubctlVersion(os.Stdout)
 }
 

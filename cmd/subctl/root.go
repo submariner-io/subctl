@@ -99,7 +99,7 @@ func expectFlag(flag, value string) {
 }
 
 // checkNoArguments checks that there are no arguments.
-func checkNoArguments(cmd *cobra.Command, args []string) error {
+func checkNoArguments(_ *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		return errors.New("this command doesn't support any arguments")
 	}

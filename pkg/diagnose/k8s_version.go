@@ -25,7 +25,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/version"
 )
 
-func K8sVersion(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+func K8sVersion(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Checking Submariner support for the Kubernetes version")
 	defer status.End()
 
