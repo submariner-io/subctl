@@ -112,6 +112,30 @@ EOF
     echo "::endgroup::"
 }
 
+function test_subctl_recover_broker_info() {
+    # Rename old broker-info.subm to be able to compare it with the recovered broker-info.sum
+    echo "Renaming broker-info.subm to broker-info.subm.orig"
+    mv "${DAPPER_SOURCE}"/output/broker-info.subm "${DAPPER_SOURCE}"/output/broker-info.subm.orig
+    base64 -d "$DAPPER_SOURCE"/output/broker-info.subm.orig > "$DAPPER_SOURCE"/output/decoded_broker_info.subm.orig
+
+    _subctl recover-broker-info --context cluster1
+    validate_and_clean_broker_info
+
+    _subctl recover-broker-info --context cluster2
+    validate_and_clean_broker_info
+}
+
+function validate_and_clean_broker_info() {
+  base64 -d broker-info.subm > decoded_broker_info.subm
+  if ! diff <(yq -P eval decoded_broker_info.subm) <(yq -P eval "$DAPPER_SOURCE"/output/decoded_broker_info.subm.orig); then
+    echo "Printing the original broker_info.subm file"
+    cat decoded_broker_info.subm.orig
+    echo "Printing the recovered broker_info.subm file"
+    cat decoded_broker_info.subm
+  fi
+  rm -f broker-info.subm decoded_broker_info.subm
+}
+
 ### Main ###
 
 subm_ns=submariner-operator
@@ -178,18 +202,8 @@ _subctl cloud prepare generic --context cluster1
 # Deprecated variant
 _subctl cloud prepare generic --kubecontext cluster1 && exit 1
 
-# Rename old broker-info.subm to be able to compare it with the recovered broker-info.sum
-echo "Renaming broker-info.subm to broker-info.subm.orig"
-mv "${DAPPER_SOURCE}"/output/broker-info.subm "${DAPPER_SOURCE}"/output/broker-info.subm.orig
-
 # Test subctl recover-broker-info invocations
-_subctl recover-broker-info --context cluster1
-cmp "${DAPPER_SOURCE}"/output/broker-info.subm.orig broker-info.subm
-rm -f broker-info.subm
-
-_subctl recover-broker-info --context cluster2
-cmp "${DAPPER_SOURCE}"/output/broker-info.subm.orig broker-info.subm
-rm -f broker-info.subm
+test_subctl_recover_broker_info
 
 # Test subctl uninstall invocations
 _subctl uninstall -y --context cluster2
