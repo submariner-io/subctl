@@ -282,7 +282,7 @@ func ensureDeleted(clients client.Producer, obj controller.Object, status report
 				return errors.Wrap(err, "error listing pods")
 			}
 
-			podStatusStr := ""
+			var podStatusStr string
 			if len(pods.Items) == 0 {
 				podStatusStr = "does not exist"
 			} else {
