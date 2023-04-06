@@ -41,6 +41,7 @@ var systemCmds = map[string]string{
 	"ip-rules":          "ip rule list",
 	"ip-rules-table150": "ip rule show table 150",
 	"sysctl-a":          "sysctl -a",
+	"ipset-list":        "ipset list",
 }
 
 var ipGatewayCmds = map[string]string{
@@ -57,10 +58,6 @@ var libreswanCmds = map[string]string{
 	"ip-xfrm-state":       "ip xfrm state",
 	"ipsec-status":        "ipsec status",
 	"ipsec-trafficstatus": "ipsec --trafficstatus",
-}
-
-var globalnetCmds = map[string]string{
-	"ipset-list": "ipset list",
 }
 
 var vxlanCmds = map[string]string{
@@ -111,7 +108,6 @@ func gatherCNIResources(info *Info, networkPlugin string) {
 	})
 
 	logCNIGatewayNodeResources(info)
-	logGlobalnetCmds(info)
 }
 
 func logCNIGatewayNodeResources(info *Info) {
@@ -134,14 +130,6 @@ func logIPTablesCmds(info *Info, pod *v1.Pod) {
 	for name, cmd := range ipTablesCmds {
 		logCmdOutput(info, pod, cmd, name, false)
 	}
-}
-
-func logGlobalnetCmds(info *Info) {
-	logPodInfo(info, "globalnet data", globalnetPodLabel, func(info *Info, pod *v1.Pod) {
-		for name, cmd := range globalnetCmds {
-			logCmdOutput(info, pod, cmd, name, false)
-		}
-	})
 }
 
 func gatherOVNResources(info *Info, networkPlugin string) {
