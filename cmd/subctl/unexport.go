@@ -61,7 +61,7 @@ var (
 )
 
 func init() {
-	unexportRestConfigProducer.SetupFlags(unexportServiceCmd.Flags())
+	unexportRestConfigProducer.SetupFlags(unexportCmd.PersistentFlags())
 	unexportCmd.AddCommand(unexportServiceCmd)
 	rootCmd.AddCommand(unexportCmd)
 }
