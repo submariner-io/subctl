@@ -50,18 +50,20 @@ function test_subctl_gather() {
 function export_service() {
     echo "::group::Running & validating 'subctl export service'"
 
+    service_name="system-test-nginx"
+
     kubectl apply -f - <<EOF
       apiVersion: v1
       kind: Service
       metadata:
-        name: nginx-demo
+        name: ${service_name}
         namespace: default
         labels:
-          app: nginx-demo
+          app: ${service_name}
       spec:
         type: ClusterIP
         selector:
-          app: nginx-demo
+          app: ${service_name}
         ports:
         - protocol: TCP
           name: http
@@ -69,9 +71,9 @@ function export_service() {
           targetPort: 8080
 EOF
 
-    subctl export service --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-"$cluster" --namespace default nginx-demo
+    subctl export service --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-"$cluster" --namespace default ${service_name}
 
-    with_retries 30 sleep_on_fail 1s kubectl get serviceimport nginx-demo
+    with_retries 30 sleep_on_fail 1s kubectl get serviceimport ${service_name}
 
     echo "::endgroup::"
 }
