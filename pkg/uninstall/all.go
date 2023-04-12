@@ -253,8 +253,8 @@ func ensureDeleted(clients client.Producer, obj controller.Object, status report
 
 	awaitDeleted := func() error {
 		//nolint:wrapcheck // No need to wrap
-		return wait.PollImmediate(checkInterval, maxWait, func() (bool, error) {
-			err := clients.ForGeneral().Delete(context.TODO(), obj)
+		return wait.PollUntilContextTimeout(context.Background(), checkInterval, maxWait, true, func(ctx context.Context) (bool, error) {
+			err := clients.ForGeneral().Delete(ctx, obj)
 			if apierrors.IsNotFound(err) {
 				return true, nil
 			}
@@ -265,7 +265,7 @@ func ensureDeleted(clients client.Producer, obj controller.Object, status report
 
 	err := awaitDeleted()
 
-	if errors.Is(err, wait.ErrWaitTimeout) {
+	if wait.Interrupted(err) {
 		labelSelector, err := deployment.GetPodLabelSelector(clients.ForKubernetes(), obj.GetNamespace())
 		if err != nil {
 			return errors.Wrap(err, "error obtaining the operator deployment label")

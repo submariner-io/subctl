@@ -20,7 +20,6 @@ package broker
 
 import (
 	"context"
-	goerrors "errors"
 	"time"
 
 	"github.com/pkg/errors"
@@ -181,7 +180,7 @@ func WaitForClientToken(ctx context.Context, kubeClient kubernetes.Interface, su
 		return true, nil
 	})
 
-	if goerrors.Is(err, wait.ErrWaitTimeout) {
+	if wait.Interrupted(err) {
 		return nil, lastErr //nolint:wrapcheck // No need to wrap here
 	}
 

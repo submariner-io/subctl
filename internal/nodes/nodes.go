@@ -20,7 +20,6 @@ package nodes
 
 import (
 	"context"
-	goerrors "errors"
 	"fmt"
 	"strings"
 	"time"
@@ -124,7 +123,7 @@ func addLabels(clientset kubernetes.Interface, nodeName string, labelsToAdd map[
 		return true, nil
 	})
 
-	if goerrors.Is(err, wait.ErrWaitTimeout) {
+	if wait.Interrupted(err) {
 		return lastErr //nolint:wrapcheck // No need to wrap here
 	}
 
