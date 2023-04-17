@@ -27,9 +27,8 @@ import (
 )
 
 const (
-	submarinerBrokerClusterRole      = "submariner-k8s-broker-cluster"
-	submarinerBrokerAdminRole        = "submariner-k8s-broker-admin"
-	submarinerBrokerClusterDefaultSA = "submariner-k8s-broker-client" // for backwards compatibility with documentation
+	submarinerBrokerClusterRole = "submariner-k8s-broker-cluster"
+	submarinerBrokerAdminRole   = "submariner-k8s-broker-admin"
 )
 
 func NewBrokerSA(submarinerBrokerSA string) *v1.ServiceAccount {
