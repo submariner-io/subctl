@@ -21,7 +21,6 @@ package pods
 import (
 	"context"
 	"encoding/json"
-	goerrors "errors"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -217,7 +216,7 @@ func (np *Scheduled) awaitUntilScheduled() error {
 
 			return true, "", nil // pod is either running or has completed its execution
 		})
-	if goerrors.Is(err, wait.ErrWaitTimeout) {
+	if wait.Interrupted(err) {
 		return errors.New(errmsg)
 	}
 

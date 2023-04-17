@@ -40,7 +40,7 @@ func AwaitReady(ctx context.Context, kubeClient kubernetes.Interface, namespace,
 	deployments := kubeClient.AppsV1().Deployments(namespace)
 
 	//nolint:wrapcheck // No need to wrap here
-	return wait.PollImmediate(checkInterval, waitTime, func() (bool, error) {
+	return wait.PollUntilContextTimeout(ctx, checkInterval, waitTime, true, func(_ context.Context) (bool, error) {
 		dp, err := deployments.Get(ctx, deployment, metav1.GetOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			return false, errors.Wrap(err, "error waiting for controller deployment to come up")
