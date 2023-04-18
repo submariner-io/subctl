@@ -57,10 +57,6 @@ var libreswanCmds = map[string]string{
 	"ipsec-trafficstatus": "ipsec --trafficstatus",
 }
 
-var vxlanCmds = map[string]string{
-	"ip-routes-table100": "ip route show table 100",
-}
-
 const ovnNbctlShowCmd = "ovn-nbctl show"
 
 var ovnCmds = map[string]string{
