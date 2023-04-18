@@ -80,15 +80,36 @@ func Ensure(ctx context.Context, crdUpdater crd.Updater, kubeClient kubernetes.I
 		return err
 	}
 
-	// Create the broker cluster role, which will also be used by any new enrolled cluster
-	_, err = CreateOrUpdateClusterBrokerRole(ctx, kubeClient, brokerNS)
-	if err != nil && !apierrors.IsAlreadyExists(err) {
-		return errors.Wrap(err, "error creating broker role")
+	// Create cluster Role, and a default account for backwards compatibility, also bind it
+	if err := createBrokerClusterRoleAndDefaultSA(ctx, kubeClient, brokerNS); err != nil {
+		return err
 	}
 
 	_, err = WaitForClientToken(ctx, kubeClient, constants.SubmarinerBrokerAdminSA, brokerNS)
 
 	return err
+}
+
+func createBrokerClusterRoleAndDefaultSA(ctx context.Context, kubeClient kubernetes.Interface, inNamespace string) error {
+	// Create the a default SA for cluster access (backwards compatibility with documentation)
+	err := CreateNewBrokerSA(ctx, kubeClient, submarinerBrokerClusterDefaultSA, inNamespace)
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return errors.Wrap(err, "error creating the default broker service account")
+	}
+
+	// Create the broker cluster role, which will also be used by any new enrolled cluster
+	_, err = CreateOrUpdateClusterBrokerRole(ctx, kubeClient, inNamespace)
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return errors.Wrap(err, "error creating broker role")
+	}
+
+	// Create the role binding
+	_, err = CreateNewBrokerRoleBinding(ctx, kubeClient, submarinerBrokerClusterDefaultSA, submarinerBrokerClusterRole, inNamespace)
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return errors.Wrap(err, "error creating the broker rolebinding")
+	}
+
+	return nil
 }
 
 // CreateSAForCluster creates a new SA, and binds it to the submariner cluster role.
