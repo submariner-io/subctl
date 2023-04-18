@@ -38,6 +38,13 @@ func RHOS(clusterInfo *cluster.Info, ports *cloud.Ports, config *rhos.Config, us
 	//nolint:wrapcheck // No need to wrap errors here.
 	err = rhos.RunOn(clusterInfo, config, status,
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
+			if len(internalPorts) > 0 {
+				err := cloud.OpenPorts(internalPorts, status)
+				if err != nil {
+					return err
+				}
+			}
+
 			if config.Gateways > 0 {
 				gwInput := api.GatewayDeployInput{
 					PublicPorts:     gwPorts,
@@ -45,14 +52,7 @@ func RHOS(clusterInfo *cluster.Info, ports *cloud.Ports, config *rhos.Config, us
 					UseLoadBalancer: useLoadBalancer,
 				}
 
-				err := gwDeployer.Deploy(gwInput, status)
-				if err != nil {
-					return errors.Wrap(err, "Deployment failed")
-				}
-			}
-
-			if len(internalPorts) > 0 {
-				return cloud.OpenPorts(internalPorts, status)
+				return errors.Wrap(gwDeployer.Deploy(gwInput, status), "Deployment failed")
 			}
 
 			return nil
