@@ -66,7 +66,7 @@ func init() {
 }
 
 func validateArguments(args []string) error {
-	if len(args) == 0 || args[0] == "" {
+	if len(args) == 0 {
 		return errors.New("name of the Service to be exported must be specified")
 	}
 
