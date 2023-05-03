@@ -15,12 +15,11 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
-	github.com/submariner-io/admiral v0.14.3
-	github.com/submariner-io/cloud-prepare v0.14.3
-	github.com/submariner-io/lighthouse v0.14.3
-	github.com/submariner-io/shipyard v0.14.3
-	github.com/submariner-io/submariner v0.14.3
-	github.com/submariner-io/submariner-operator v0.14.4-0.20230317175327-1161aa7281d7
+	github.com/submariner-io/admiral v0.13.3
+	github.com/submariner-io/cloud-prepare v0.13.3
+	github.com/submariner-io/lighthouse v0.13.3
+	github.com/submariner-io/shipyard v0.14.4
+	github.com/submariner-io/submariner v0.9.1
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
 	google.golang.org/api v0.100.0
@@ -29,7 +28,7 @@ require (
 	k8s.io/apimachinery v0.25.0
 	k8s.io/client-go v0.25.0
 	k8s.io/utils v0.0.0-20220823124924-e9cbc92d1a73
-	sigs.k8s.io/controller-runtime v0.12.3
+	sigs.k8s.io/controller-runtime v0.7.2
 	sigs.k8s.io/mcs-api v0.1.0
 	sigs.k8s.io/yaml v1.3.0
 )
