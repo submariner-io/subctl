@@ -37,7 +37,7 @@ include $(SHIPYARD_DIR)/Makefile.inc
 gotodockerarch = $(patsubst arm,arm/v7,$(1))
 dockertogoarch = $(patsubst arm/v7,arm,$(1))
 
-CROSS_TARGETS := linux-amd64 linux-arm64 linux-arm linux-s390x linux-ppc64le windows-amd64.exe darwin-amd64
+CROSS_TARGETS := linux-amd64 linux-arm64 linux-arm linux-s390x linux-ppc64le windows-amd64.exe darwin-amd64 darwin-arm64
 BINARIES := cmd/bin/subctl
 CROSS_BINARIES := $(foreach cross,$(CROSS_TARGETS),$(patsubst %,cmd/bin/subctl-$(VERSION)-%,$(cross)))
 CROSS_TARBALLS := $(foreach cross,$(CROSS_TARGETS),$(patsubst %,dist/subctl-$(VERSION)-%.tar.xz,$(cross)))
