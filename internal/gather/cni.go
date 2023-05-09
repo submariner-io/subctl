@@ -62,22 +62,22 @@ var vxlanCmds = map[string]string{
 	"ip-routes-table100": "ip route show table 100",
 }
 
-const ovnNbctlShowCmd = "ovn-nbctl show"
+const ovnNbctlShowCmd = "ovn-nbctl --no-leader-only show"
 
 var ovnCmds = map[string]string{
 	"ovn_nbctl_show":                     ovnNbctlShowCmd,
-	"ovn_sbctl_show":                     "ovn-sbctl show",
-	"ovn_lr_ovn_cluster_router_policies": "ovn-nbctl lr-policy-list ovn_cluster_router",
-	"ovn_lr_ovn_cluster_router_routes":   "ovn-nbctl lr-route-list ovn_cluster_router",
-	"ovn_lr_submariner_router_routes":    "ovn-nbctl lr-route-list submariner_router",
-	"ovn_logical_routers":                "ovn-nbctl list Logical_Router",
-	"ovn_lrps":                           "ovn-nbctl list Logical_Router_Port",
-	"ovn_logical_switches":               "ovn-nbctl list Logical_Switch",
-	"ovn_lsps":                           "ovn-nbctl list Logical_Switch_Port",
-	"ovn_routes":                         "ovn-nbctl list Logical_Router_Static_Route",
-	"ovn_policies":                       "ovn-nbctl list Logical_Router_Policy",
-	"ovn_acls":                           "ovn-nbctl list ACL",
-	"ovn_lbgroups":                       "ovn-nbctl list Load_Balancer_Group",
+	"ovn_sbctl_show":                     "ovn-sbctl --no-leader-only show",
+	"ovn_lr_ovn_cluster_router_policies": "ovn-nbctl --no-leader-only lr-policy-list ovn_cluster_router",
+	"ovn_lr_ovn_cluster_router_routes":   "ovn-nbctl --no-leader-only lr-route-list ovn_cluster_router",
+	"ovn_lr_submariner_router_routes":    "ovn-nbctl --no-leader-only lr-route-list submariner_router",
+	"ovn_logical_routers":                "ovn-nbctl --no-leader-only list Logical_Router",
+	"ovn_lrps":                           "ovn-nbctl --no-leader-only list Logical_Router_Port",
+	"ovn_logical_switches":               "ovn-nbctl --no-leader-only list Logical_Switch",
+	"ovn_lsps":                           "ovn-nbctl --no-leader-only list Logical_Switch_Port",
+	"ovn_routes":                         "ovn-nbctl --no-leader-only list Logical_Router_Static_Route",
+	"ovn_policies":                       "ovn-nbctl --no-leader-only list Logical_Router_Policy",
+	"ovn_acls":                           "ovn-nbctl --no-leader-only list ACL",
+	"ovn_lbgroups":                       "ovn-nbctl --no-leader-only list Load_Balancer_Group",
 }
 
 var networkPluginCNIType = map[string]string{
@@ -96,10 +96,8 @@ func gatherCNIResources(info *Info, networkPlugin string) {
 	logPodInfo(info, "CNI data", routeagentPodLabel, func(info *Info, pod *v1.Pod) {
 		logSystemCmds(info, pod)
 		switch networkPluginCNIType[networkPlugin] {
-		case typeIPTables:
+		case typeIPTables, typeOvn:
 			logIPTablesCmds(info, pod)
-		case typeOvn:
-			// no-op. Handled in OVNResources()
 		case typeUnknown:
 			info.Status.Failure("Unsupported CNI Type")
 		}
@@ -147,25 +145,10 @@ func gatherOVNResources(info *Info, networkPlugin string) {
 		}
 	}
 
-	var ovnMasterPod *v1.Pod
-	// ovn-nbctl commands only work on one of the masters, figure out which one
-	for i := range ovnMasterpods.Items {
-		err = tryCmd(info, &ovnMasterpods.Items[i], ovnNbctlShowCmd)
-		if err == nil {
-			ovnMasterPod = &ovnMasterpods.Items[i]
-			break
-		}
-	}
-
-	if ovnMasterPod == nil {
-		info.Status.Failure("Failed to exec OVN command in all masters: %s", err)
-		return
-	}
-
-	info.Status.Success("Gathering OVN data from master pod %q", ovnMasterPod.Name)
+	info.Status.Success("Gathering OVN data from master pod %q", ovnMasterpods.Items[0].Name)
 
 	for name, command := range ovnCmds {
-		logCmdOutput(info, ovnMasterPod, command, name, false)
+		logCmdOutput(info, &ovnMasterpods.Items[0], command, name, false)
 	}
 }
 
@@ -229,9 +212,4 @@ func logCmdOutput(info *Info, pod *v1.Pod, cmd, cmdName string, ignoreError bool
 			Type:      cmdName,
 		})
 	}
-}
-
-func tryCmd(info *Info, pod *v1.Pod, cmd string) error {
-	_, _, err := execCmdInBash(info, pod, cmd)
-	return err
 }
