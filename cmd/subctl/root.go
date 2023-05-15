@@ -56,7 +56,7 @@ func init() {
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "subctl",
-	Short: "An installer for Submariner",
+	Short: "Deploy, manage, verify and diagnose Submariner deployments",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
