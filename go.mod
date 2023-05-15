@@ -21,7 +21,7 @@ require (
 	github.com/submariner-io/submariner v0.15.0-m4.0.20230403090909-23af29dd07da
 	github.com/submariner-io/submariner-operator v0.15.0-m4.0.20230331195937-0b252dc397e7
 	github.com/uw-labs/lichen v0.1.7
-	golang.org/x/net v0.9.0
+	golang.org/x/net v0.10.0
 	golang.org/x/oauth2 v0.7.0
 	google.golang.org/api v0.121.0
 	k8s.io/api v0.27.1
@@ -109,8 +109,8 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
-	golang.org/x/term v0.7.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/term v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.8.0 // indirect
