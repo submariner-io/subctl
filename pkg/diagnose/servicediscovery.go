@@ -57,10 +57,12 @@ func ServiceDiscovery(clusterInfo *cluster.Info, _ string, status reporter.Inter
 
 // This function checks if all ServiceExports have a matching ServiceImport and if an EndpointSlice has been created for the service.
 func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
+	ctx := context.TODO()
+
 	serviceExportGVR := gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports")
 
 	serviceExports, err := clusterInfo.ClientProducer.ForDynamic().Resource(serviceExportGVR).Namespace(corev1.NamespaceAll).
-		List(context.TODO(), metav1.ListOptions{})
+		List(ctx, metav1.ListOptions{})
 	if err != nil {
 		status.Failure("Error listing ServiceExport resources: %v", err)
 		return
@@ -77,13 +79,26 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 			continue
 		}
 
+		_, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Services(se.Namespace).Get(ctx, se.Name, metav1.GetOptions{})
+		if apierrors.IsNotFound(err) {
+			status.Warning("Exported Service %s/%s not found", se.Namespace, se.Name)
+			verifyStatusCondition(se, mcsv1a1.ServiceExportValid, corev1.ConditionFalse, status)
+
+			continue
+		}
+
+		if err != nil {
+			status.Failure("Error retrieving Service %s/%s: %v", se.Namespace, se.Name, err)
+			continue
+		}
+
 		verifyStatusCondition(se, mcsv1a1.ServiceExportValid, corev1.ConditionTrue, status)
 		verifyStatusCondition(se, lhconstants.ServiceExportSynced, corev1.ConditionTrue, status)
 		verifyStatusCondition(se, mcsv1a1.ServiceExportConflict, corev1.ConditionFalse, status)
 
 		ep := clusterInfo.ClientProducer.ForKubernetes().DiscoveryV1().EndpointSlices(se.Namespace)
 
-		epsList, err := ep.List(context.TODO(), metav1.ListOptions{
+		epsList, err := ep.List(ctx, metav1.ListOptions{
 			LabelSelector: labels.SelectorFromSet(map[string]string{
 				discovery.LabelManagedBy:          lhconstants.LabelValueManagedBy,
 				mcsv1a1.LabelServiceName:          se.Name,
@@ -103,7 +118,7 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 
 		serviceImportClient := clusterInfo.ClientProducer.ForDynamic().Resource(serviceImportsGVR)
 
-		localSI, err := serviceImportClient.Namespace(constants.OperatorNamespace).Get(context.TODO(),
+		localSI, err := serviceImportClient.Namespace(constants.OperatorNamespace).Get(ctx,
 			fmt.Sprintf("%s-%s-%s", se.Name, se.Namespace, clusterInfo.Submariner.Spec.ClusterID), metav1.GetOptions{})
 		if err == nil {
 			_, checkForAggregateSI = localSI.GetLabels()[mcsv1a1.LabelServiceName]
@@ -115,7 +130,7 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 		}
 
 		if checkForAggregateSI {
-			_, err = serviceImportClient.Namespace(se.Namespace).Get(context.TODO(), se.Name, metav1.GetOptions{})
+			_, err = serviceImportClient.Namespace(se.Namespace).Get(ctx, se.Name, metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					status.Failure("No ServiceImport found for exported service %s/%s", se.Namespace, se.Name)
