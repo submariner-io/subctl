@@ -65,7 +65,7 @@ func CNIConfig(clusterInfo *cluster.Info, _ string, status reporter.Interface) e
 	isSupportedPlugin := false
 
 	for _, np := range supportedNetworkPlugins {
-		if clusterInfo.Submariner.Status.NetworkPlugin == np {
+		if strings.EqualFold(clusterInfo.Submariner.Status.NetworkPlugin, np) {
 			isSupportedPlugin = true
 			break
 		}
@@ -77,14 +77,14 @@ func CNIConfig(clusterInfo *cluster.Info, _ string, status reporter.Interface) e
 		return errors.New("unsupported CNI plugin")
 	}
 
-	if clusterInfo.Submariner.Status.NetworkPlugin == cni.Generic {
+	if strings.EqualFold(clusterInfo.Submariner.Status.NetworkPlugin, cni.Generic) {
 		status.Warning("Submariner could not detect the CNI network plugin and is using (%q) plugin."+
 			" It may or may not work.", clusterInfo.Submariner.Status.NetworkPlugin)
 	} else {
 		status.Success("The detected CNI network plugin (%q) is supported", clusterInfo.Submariner.Status.NetworkPlugin)
 	}
 
-	if clusterInfo.Submariner.Status.NetworkPlugin == cni.OVNKubernetes {
+	if strings.EqualFold(clusterInfo.Submariner.Status.NetworkPlugin, cni.OVNKubernetes) {
 		return checkOVNVersion(context.TODO(), clusterInfo, status)
 	}
 
@@ -92,7 +92,7 @@ func CNIConfig(clusterInfo *cluster.Info, _ string, status reporter.Interface) e
 }
 
 func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface) error {
-	if info.Submariner.Status.NetworkPlugin != cni.Calico {
+	if !strings.EqualFold(info.Submariner.Status.NetworkPlugin, cni.Calico) {
 		return nil
 	}
 
