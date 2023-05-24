@@ -200,7 +200,7 @@ func ensureSubmarinerDeleted(clients client.Producer, clusterName, namespace str
 		Name:      names.SubmarinerCrName,
 	}, submariner)
 
-	if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
+	if resource.IsNotFoundErr(err) {
 		status.Success("The connectivity component is not installed on cluster %q - skipping", clusterName)
 		return false, nil
 	}
@@ -229,7 +229,7 @@ func ensureServiceDiscoveryDeleted(clients client.Producer, clusterName, namespa
 		Name:      names.ServiceDiscoveryCrName,
 	}, serviceDiscovery)
 
-	if apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
+	if resource.IsNotFoundErr(err) {
 		status.Success("The service discovery component is not installed on cluster %q - skipping", clusterName)
 		return nil
 	}

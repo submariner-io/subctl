@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
@@ -33,7 +34,6 @@ import (
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/rest"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -105,7 +105,7 @@ func getBroker(config *rest.Config, namespace string) (*v1alpha1.Broker, bool, e
 			Name:      brokercr.Name,
 		}, brokerObj)
 
-	if apierrors.IsNotFound(err) {
+	if resource.IsNotFoundErr(err) {
 		return nil, false, nil
 	}
 

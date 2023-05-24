@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/image"
@@ -31,7 +32,6 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
@@ -70,7 +70,7 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 
 	if err == nil {
 		info.Submariner = submariner
-	} else if !apierrors.IsNotFound(err) && !meta.IsNoMatchError(err) {
+	} else if !resource.IsNotFoundErr(err) {
 		return nil, errors.Wrap(err, "error retrieving Submariner")
 	}
 
@@ -82,8 +82,13 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 
 	if err == nil {
 		info.ServiceDiscovery = serviceDiscovery
-	} else if !apierrors.IsNotFound(err) && !meta.IsNoMatchError(err) {
+	} else if !resource.IsNotFoundErr(err) {
 		return nil, errors.Wrap(err, "error retrieving ServiceDiscovery")
+	}
+
+	_, err = info.GetGateways()
+	if err != nil {
+		return nil, errors.Wrap(err, "error retrieving Gateways")
 	}
 
 	return info, nil
@@ -94,7 +99,7 @@ func (c *Info) GetGateways() ([]submarinerv1.Gateway, error) {
 
 	err := c.ClientProducer.ForGeneral().List(context.TODO(), gateways, controllerClient.InNamespace(constants.OperatorNamespace))
 	if err != nil {
-		if apierrors.IsNotFound(err) {
+		if resource.IsNotFoundErr(err) {
 			return []submarinerv1.Gateway{}, nil
 		}
 
