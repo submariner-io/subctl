@@ -29,7 +29,6 @@ import (
 	"github.com/submariner-io/subctl/internal/component"
 	submarinerClientset "github.com/submariner-io/submariner/pkg/client/clientset/versioned"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/rest"
@@ -93,7 +92,7 @@ func (d *Info) getAndCheckBrokerAdministratorConfig(ctx context.Context, private
 	// likely means we couldn’t connect
 	_, err = submClientset.SubmarinerV1().Clusters(string(d.ClientToken.Data["namespace"])).List(
 		ctx, metav1.ListOptions{})
-	if apierrors.IsNotFound(err) {
+	if resource.IsNotFoundErr(err) {
 		err = nil
 	}
 

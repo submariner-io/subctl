@@ -22,10 +22,10 @@ import (
 	"context"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/internal/show/table"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -36,7 +36,7 @@ func Brokers(clusterInfo *cluster.Info, _ string, status reporter.Interface) err
 	brokerList := &v1alpha1.BrokerList{}
 	err := clusterInfo.ClientProducer.ForGeneral().List(context.TODO(), brokerList, client.InNamespace(metav1.NamespaceAll))
 
-	if err != nil && !apierrors.IsNotFound(err) {
+	if err != nil && !resource.IsNotFoundErr(err) {
 		return status.Error(err, "Error retrieving brokers")
 	}
 
