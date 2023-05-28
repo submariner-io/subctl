@@ -123,7 +123,7 @@ func getVersions(info *Info) version {
 
 	Versions.Subm = "Not installed"
 	if info.Submariner != nil {
-		Versions.Subm = info.Submariner.Spec.Version
+		Versions.Subm = (*(info.Submariner.Status.Gateways))[0].Version
 	}
 
 	return Versions
