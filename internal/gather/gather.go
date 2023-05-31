@@ -130,6 +130,7 @@ func gatherConnectivity(dataType string, info Info) bool {
 	case Logs:
 		gatherGatewayPodLogs(&info)
 		gatherRouteAgentPodLogs(&info)
+		gatherMetricsProxyPodLogs(&info)
 		gatherGlobalnetPodLogs(&info)
 		gatherNetworkPluginSyncerPodLogs(&info)
 		gatherAddonPodLogs(&info)
@@ -235,6 +236,7 @@ func gatherOperator(dataType string, info Info) bool {
 		gatherServiceDiscoveries(&info, info.OperatorNamespace())
 		gatherSubmarinerOperatorDeployment(&info, info.OperatorNamespace())
 		gatherGatewayDaemonSet(&info, info.OperatorNamespace())
+		gatherMetricsPodDaemonSet(&info, info.OperatorNamespace())
 		gatherRouteAgentDaemonSet(&info, info.OperatorNamespace())
 		gatherGlobalnetDaemonSet(&info, info.OperatorNamespace())
 		gatherNetworkPluginSyncerDeployment(&info, info.OperatorNamespace())
