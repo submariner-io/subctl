@@ -17,7 +17,7 @@ require (
 	github.com/submariner-io/admiral v0.15.0-m4.0.20230525142849-5e629042dd5e
 	github.com/submariner-io/cloud-prepare v0.15.0-m4
 	github.com/submariner-io/lighthouse v0.15.0-m4.0.20230327162337-e5988504cdca
-	github.com/submariner-io/shipyard v0.15.0-m4
+	github.com/submariner-io/shipyard v0.16.0-m0
 	github.com/submariner-io/submariner v0.15.0-m4.0.20230403090909-23af29dd07da
 	github.com/submariner-io/submariner-operator v0.15.0-m4.0.20230525153950-809274cc82b4
 	github.com/uw-labs/lichen v0.1.7
@@ -123,7 +123,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog v1.0.0 // indirect
-	k8s.io/klog/v2 v2.90.1 // indirect
+	k8s.io/klog/v2 v2.100.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
