@@ -28,6 +28,7 @@ const (
 	gatewayPodLabel             = "app=submariner-gateway"
 	routeagentPodLabel          = "app=submariner-routeagent"
 	globalnetPodLabel           = "app=submariner-globalnet"
+	metricsProxyPodLabel        = "app=submariner-metrics-proxy"
 	networkpluginSyncerPodLabel = "app=submariner-networkplugin-syncer"
 	addonPodLabel               = "app=submariner-addon"
 	ovnMasterPodLabelOCP        = "app=ovnkube-master"
@@ -36,6 +37,10 @@ const (
 
 func gatherGatewayPodLogs(info *Info) {
 	gatherPodLogs(gatewayPodLabel, info)
+}
+
+func gatherMetricsProxyPodLogs(info *Info) {
+	gatherPodLogs(metricsProxyPodLabel, info)
 }
 
 func gatherRouteAgentPodLogs(info *Info) {
