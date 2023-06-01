@@ -40,7 +40,8 @@ dockertogoarch = $(patsubst arm/v7,arm,$(1))
 CROSS_TARGETS := linux-amd64 linux-arm64 linux-arm linux-s390x linux-ppc64le windows-amd64.exe darwin-amd64 darwin-arm64
 BINARIES := cmd/bin/subctl
 CROSS_BINARIES := $(foreach cross,$(CROSS_TARGETS),$(patsubst %,cmd/bin/subctl-$(VERSION)-%,$(cross)))
-CROSS_TARBALLS := $(foreach cross,$(CROSS_TARGETS),$(patsubst %,dist/subctl-$(VERSION)-%.tar.xz,$(cross)))
+CROSS_TARBALLS := $(foreach cross,$(CROSS_TARGETS),$(patsubst %,dist/subctl-$(VERSION)-%.tar.xz,$(cross))) \
+ 				  $(foreach cross,$(CROSS_TARGETS),$(patsubst %,dist/subctl-$(VERSION)-%.tar.gz,$(cross)))
 
 override E2E_ARGS += cluster1 cluster2
 export DEPLOY_ARGS
@@ -92,6 +93,10 @@ cmd/bin/subctl: cmd/bin/subctl-$(VERSION)-$(GOOS)-$(GOARCH)$(GOEXE)
 dist/subctl-%.tar.xz: cmd/bin/subctl-%
 	mkdir -p dist
 	tar -cJf $@ --transform "s/^cmd.bin/subctl-$(VERSION)/" $<
+
+dist/subctl-%.tar.gz: cmd/bin/subctl-%
+	mkdir -p dist
+	tar -czf $@ --transform "s/^cmd.bin/subctl-$(VERSION)/" $<
 
 # Versions may include hyphens so it's easier to use $(VERSION) than to extract them from the target
 
