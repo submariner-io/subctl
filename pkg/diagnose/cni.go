@@ -316,6 +316,11 @@ func getOVNNBVersion(ctx context.Context, clientSet kubernetes.Interface, config
 		TTY:       false,
 	}, scheme.ParameterCodec)
 
+	err := req.Error()
+	if err != nil {
+		return nil, err
+	}
+
 	var stdout, stderr bytes.Buffer
 
 	exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
