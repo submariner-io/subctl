@@ -87,8 +87,13 @@ func ExecWithOptions(ctx context.Context, config ExecConfig, options *ExecOption
 		TTY:       tty,
 	}, scheme.ParameterCodec)
 
+	err := req.Error()
+	if err != nil {
+		return "", "", err
+	}
+
 	var stdout, stderr bytes.Buffer
-	err := execute(ctx, "POST", req.URL(), config.RestConfig, options.Stdin, &stdout, &stderr, tty)
+	err = execute(ctx, "POST", req.URL(), config.RestConfig, options.Stdin, &stdout, &stderr, tty)
 
 	if options.PreserveWhitespace {
 		return stdout.String(), stderr.String(), err
