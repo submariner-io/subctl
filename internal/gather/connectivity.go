@@ -40,7 +40,11 @@ func gatherGatewayPodLogs(info *Info) {
 }
 
 func gatherMetricsProxyPodLogs(info *Info) {
-	gatherPodLogs(metricsProxyPodLabel, info)
+	gatherPodLogsByContainer(metricsProxyPodLabel, "gateway-metrics-proxy", info)
+
+	if info.Submariner.Spec.GlobalCIDR != "" {
+		gatherPodLogsByContainer(metricsProxyPodLabel, "globalnet-metrics-proxy", info)
+	}
 }
 
 func gatherRouteAgentPodLogs(info *Info) {
