@@ -21,9 +21,7 @@ package serviceaccount
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
@@ -130,8 +128,8 @@ func EnsureSecretFromSA(ctx context.Context, client kubernetes.Interface, saName
 	if err != nil {
 		newSecret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-token-%s", sa.Name, generateRandomString(5)),
-				Namespace: namespace,
+				GenerateName: fmt.Sprintf("%s-token-", sa.Name),
+				Namespace:    namespace,
 				Annotations: map[string]string{
 					corev1.ServiceAccountNameKey: saName,
 					createdByAnnotation:          creatorName,
@@ -192,14 +190,4 @@ func getSecretForSA(ctx context.Context, client kubernetes.Interface, sa *corev1
 		Group:    corev1.SchemeGroupVersion.Group,
 		Resource: "secrets",
 	}, sa.Name)
-}
-
-//nolint:gosec // we need a pseudo random string for name.
-func generateRandomString(length int) string {
-	rand.Seed(time.Now().UnixNano())
-
-	s := make([]byte, length)
-	rand.Read(s)
-
-	return fmt.Sprintf("%x", s)[:length]
 }
