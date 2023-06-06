@@ -78,7 +78,7 @@ clean:
 
 build: $(BINARIES)
 
-build-cross: $(CROSS_TARBALLS)
+build-cross: $(CROSS_TARBALLS) dist/subctl-checksums.txt
 
 licensecheck: build | bin/lichen
 	bin/lichen -c .lichen.yaml $(BINARIES)
@@ -97,6 +97,9 @@ dist/subctl-%.tar.xz: cmd/bin/subctl-%
 dist/subctl-%.tar.gz: cmd/bin/subctl-%
 	mkdir -p dist
 	tar -czf $@ --transform "s/^cmd.bin/subctl-$(VERSION)/" $<
+
+dist/subctl-checksums.txt: $(CROSS_TARBALLS)
+	cd $(@D) && sha256sum $(^F) >> $(@F)
 
 # Versions may include hyphens so it's easier to use $(VERSION) than to extract them from the target
 
