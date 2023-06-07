@@ -18,8 +18,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.4.0
 	github.com/submariner-io/admiral v0.13.6
-	github.com/submariner-io/cloud-prepare v0.13.5
-	github.com/submariner-io/lighthouse v0.13.5
+	github.com/submariner-io/cloud-prepare v0.13.6
+	github.com/submariner-io/lighthouse v0.13.6
 	github.com/submariner-io/shipyard v0.13.6
 	github.com/submariner-io/submariner v0.13.4-0.20230113101652-407d8d7488b1
 	github.com/submariner-io/submariner-operator v0.13.3
