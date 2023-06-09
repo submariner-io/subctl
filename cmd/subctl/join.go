@@ -69,6 +69,10 @@ func addLoadBalancerFlag(cmd *cobra.Command, p *bool) {
 	cmd.Flags().BoolVar(p, "load-balancer", false, "enable automatic LoadBalancer in front of the gateways")
 }
 
+func addAirGappedFlag(cmd *cobra.Command, p *bool) {
+	cmd.Flags().BoolVar(p, "air-gapped", false, "specifies that the cluster is in an air-gapped environment")
+}
+
 func init() {
 	addJoinFlags(joinCmd)
 	joinRestConfigProducer.SetupFlags(joinCmd.Flags())
@@ -87,8 +91,7 @@ func addJoinFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&joinFlags.PreferredServer, "preferred-server", false,
 		"enable this cluster as a preferred server for dataplane connections")
 
-	cmd.Flags().BoolVar(&joinFlags.AirGappedDeployment, "air-gapped", false,
-		"specifies that the cluster is in an air-gapped environment")
+	addAirGappedFlag(cmd, &joinFlags.AirGappedDeployment)
 	addLoadBalancerFlag(cmd, &joinFlags.LoadBalancerEnabled)
 
 	cmd.Flags().BoolVar(&joinFlags.ForceUDPEncaps, "force-udp-encaps", false, "force UDP encapsulation for IPSec")
