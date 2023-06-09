@@ -44,6 +44,7 @@ func Azure(clusterInfo *cluster.Info, ports *cloud.Ports, config *azure.Config, 
 					PublicPorts:     gwPorts,
 					Gateways:        config.Gateways,
 					UseLoadBalancer: useLoadBalancer,
+					AirGapped:       config.AirGappedDeployment,
 				}
 
 				err := gwDeployer.Deploy(gwInput, status)

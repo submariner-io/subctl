@@ -72,6 +72,7 @@ func init() {
 	}
 
 	addGeneralAzureFlags(azurePrepareCmd)
+	addAirGappedFlag(azurePrepareCmd, &azureConfig.AirGappedDeployment)
 	azurePrepareCmd.Flags().IntVar(&azureConfig.Gateways, "gateways", defaultNumGateways, "Number of gateways to deploy")
 	// `Standard_F4s_v2` matches the most to `cd5.large` of AWS.
 	azurePrepareCmd.Flags().StringVar(&azureConfig.GWInstanceType, "gateway-instance", "Standard_F4s_v2", "Type of gateways instance machine")
