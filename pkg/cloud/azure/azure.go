@@ -35,13 +35,14 @@ import (
 )
 
 type Config struct {
-	DedicatedGateway bool
-	Gateways         int
-	InfraID          string
-	Region           string
-	OcpMetadataFile  string
-	AuthFile         string
-	GWInstanceType   string
+	AirGappedDeployment bool
+	DedicatedGateway    bool
+	Gateways            int
+	InfraID             string
+	Region              string
+	OcpMetadataFile     string
+	AuthFile            string
+	GWInstanceType      string
 }
 
 func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
