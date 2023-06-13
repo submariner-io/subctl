@@ -21,6 +21,7 @@ package subctl
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -55,7 +56,7 @@ func init() {
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
-	Use:   "subctl",
+	Use:   filepath.Base(os.Args[0]),
 	Short: "Deploy, manage, verify and diagnose Submariner deployments",
 }
 
