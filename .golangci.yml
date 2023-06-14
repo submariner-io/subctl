@@ -1,8 +1,11 @@
 ---
 linters-settings:
   depguard:
-    packages:
-      - github.com/mcuadros/go-version
+    rules:
+      main:
+        deny:
+          - pkg: github.com/mcuadros/go-version
+            desc: Use coreos/go-semver instead
   gocritic:
     enabled-tags:
       - diagnostic
@@ -61,7 +64,7 @@ linters:
     - bodyclose
     - contextcheck
     # - cyclop # This is equivalent to gocyclo
-    # - depguard # Disabled temporarily during the v1-v2 migration
+    - depguard
     - dogsled
     - dupl
     - durationcheck
