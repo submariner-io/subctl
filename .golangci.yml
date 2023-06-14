@@ -61,7 +61,7 @@ linters:
     - bodyclose
     - contextcheck
     # - cyclop # This is equivalent to gocyclo
-    - depguard
+    # - depguard # Disabled temporarily during the v1-v2 migration
     - dogsled
     - dupl
     - durationcheck
