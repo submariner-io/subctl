@@ -113,7 +113,7 @@ cmd/bin/linux/%/subctl: cmd/bin/subctl-$(VERSION)-linux-%
 
 .PRECIOUS: cmd/bin/subctl-%
 cmd/bin/subctl-%: $(shell find . -name "*.go")
-	mkdir -p cmd/bin
+	mkdir -p $(@D)
 	target=$@; \
 	target=$${target%.exe}; \
 	components=($$(echo $${target//-/ })); \
@@ -124,6 +124,14 @@ cmd/bin/subctl-%: $(shell find . -name "*.go")
 		-X 'github.com/submariner-io/submariner-operator/api/v1alpha1.DefaultSubmarinerOperatorVersion=$${DEFAULT_IMAGE_VERSION#v}' \
 		-X 'github.com/submariner-io/submariner-operator/api/v1alpha1.DefaultRepo=$(DEFAULT_REPO)'" \
 	$(SCRIPTS_DIR)/compile.sh $@ ./cmd
+
+cmd/bin/non_deploy_subctl:
+	mkdir -p $(@D)
+	$(GO) build -o $@ --tags non_deploy \
+	-ldflags="-X 'github.com/submariner-io/subctl/pkg/version.Version=$(VERSION)' \
+			-X 'github.com/submariner-io/submariner-operator/api/v1alpha1.DefaultSubmarinerOperatorVersion=$${DEFAULT_IMAGE_VERSION#v}' \
+			-X 'github.com/submariner-io/submariner-operator/api/v1alpha1.DefaultRepo=$(DEFAULT_REPO)'" \
+	./cmd
 
 ci: golangci-lint markdownlint unit build images
 

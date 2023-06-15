@@ -28,6 +28,14 @@ function _subctl() {
     echo "::endgroup::"
 }
 
+
+function _non_deploy_subctl() {
+    # Print GHA groups to make looking at CI output easier
+    echo "::group::Running 'non_deploy_subctl $*'"
+    "${DAPPER_SOURCE}"/cmd/bin/non_deploy_subctl "$@" || return "$?"
+    echo "::endgroup::"
+}
+
 function test_subctl_gather() {
     # Print GHA groups to make looking at CI output easier
     rm -rf "$gather_out_dir"
@@ -197,6 +205,16 @@ _subctl benchmark latency "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFI
 _subctl benchmark throughput "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 && exit 1
 
 # Test subctl cloud prepare invocations
+
+# test non deploy subctl for deploy commands
+_non_deploy_subctl deploy-broker --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1 && exit 1
+_non_deploy_subctl join --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1 broker-info.subm --clusterid cluster1 && exit 1
+_non_deploy_subctl cloud prepare help && exit 1
+_non_deploy_subctl uninstall --context cluster2 && exit 1
+_non_deploy_subctl recover-broker-info --context cluster1 && exit 1
+
+# test non deploy subctl show all
+_non_deploy_subctl show all | tee /dev/stderr | (sponge ||:) | grep -q 'Cluster "cluster2"'
 
 _subctl cloud prepare generic --context cluster1
 # Deprecated variant
