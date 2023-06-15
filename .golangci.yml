@@ -78,17 +78,17 @@ linters:
     # - forcetypeassert # There are many unchecked type assertions that would be the result of a programming error so the
     #                     reasonable recourse would be to panic anyway if checked so this doesn't seem useful
     # - funlen # gocyclo is enabled which is generally a better metric than simply LOC.
-    - ginkgolinter
     - gci
+    - ginkgolinter
     # - gochecknoglobals # We don't want to forbid global variable constants
     # - gochecknoinits # We use init functions for valid reasons
     - gocognit
     - goconst
     - gocritic
     - gocyclo
-    - goerr113
     - godot
     # - godox #  Let's not forbid inline TODOs, FIXMEs et al
+    - goerr113
     - gofmt
     - gofumpt
     - goheader
@@ -100,6 +100,7 @@ linters:
     # - goprintffuncname # This doesn't seem useful at all
     - gosec
     - gosimple
+    - gosmopolitan
     - govet
     # - ifshort # This is a style preference and doesn't seem compelling
     - importas
@@ -128,6 +129,7 @@ linters:
     # - sqlclosecheck # We don't use SQL
     - staticcheck
     - stylecheck
+    - tagalign
     # - tagliatelle # Inconsistent with stylecheck and not as good
     # - tenv # Not relevant for our Ginkgo UTs
     - testpackage
@@ -142,6 +144,7 @@ linters:
     - whitespace
     - wrapcheck
     - wsl
+    - zerologlint
 issues:
   exclude-rules:
     # Allow dot-imports for Gomega BDD directives per idiomatic Gomega
