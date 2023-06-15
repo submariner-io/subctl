@@ -82,13 +82,15 @@ func Versions(clusterInfo *cluster.Info, _ string, status reporter.Interface) er
 		{Name: "VERSION"},
 	}}
 
-	err := printDaemonSetVersions(clusterInfo, &printer, names.GatewayComponent, names.RouteAgentComponent, names.GlobalnetComponent)
+	err := printDaemonSetVersions(clusterInfo, &printer, names.GatewayComponent, names.RouteAgentComponent, names.GlobalnetComponent,
+		names.MetricsProxyComponent)
 	if err != nil {
 		return status.Error(err, "Error retrieving DaemonSet versions")
 	}
 
 	err = printDeploymentVersions(
-		clusterInfo, &printer, names.OperatorComponent, names.ServiceDiscoveryComponent, names.LighthouseCoreDNSComponent)
+		clusterInfo, &printer, names.OperatorComponent, names.ServiceDiscoveryComponent, names.LighthouseCoreDNSComponent,
+		names.NetworkPluginSyncerComponent)
 	if err != nil {
 		return status.Error(err, "Error retrieving Deployment versions")
 	}
