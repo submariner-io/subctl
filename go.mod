@@ -8,22 +8,22 @@ require (
 	github.com/coreos/go-semver v0.3.1
 	github.com/gophercloud/utils v0.0.0-20210909165623-d7085207ff6d
 	github.com/mattn/go-isatty v0.0.19
-	github.com/onsi/ginkgo/v2 v2.9.7
-	github.com/onsi/gomega v1.27.7
+	github.com/onsi/ginkgo/v2 v2.10.0
+	github.com/onsi/gomega v1.27.8
 	github.com/openshift/api v0.0.0-20220414050251-a83e6f8f1d50
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	github.com/submariner-io/admiral v0.16.0-m0
-	github.com/submariner-io/cloud-prepare v0.16.0-m0
-	github.com/submariner-io/lighthouse v0.16.0-m0
+	github.com/submariner-io/admiral v0.16.0-m0.0.20230602131053-613bd96ec5a2
+	github.com/submariner-io/cloud-prepare v0.16.0-m0.0.20230613072954-3282befea5b4
+	github.com/submariner-io/lighthouse v0.16.0-m0.0.20230612173931-d78db7d80764
 	github.com/submariner-io/shipyard v0.16.0-m0
 	github.com/submariner-io/submariner v0.16.0-m0
 	github.com/submariner-io/submariner-operator v0.16.0-m0.0.20230605132422-309809477468
 	github.com/uw-labs/lichen v0.1.7
-	golang.org/x/net v0.10.0
-	golang.org/x/oauth2 v0.8.0
-	google.golang.org/api v0.125.0
+	golang.org/x/net v0.11.0
+	golang.org/x/oauth2 v0.9.0
+	google.golang.org/api v0.127.0
 	k8s.io/api v0.27.2
 	k8s.io/apiextensions-apiserver v0.27.2
 	k8s.io/apimachinery v0.27.2
@@ -77,7 +77,7 @@ require (
 	github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.2.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.10.0 // indirect
 	github.com/gophercloud/gophercloud v1.4.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -109,12 +109,12 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/crypto v0.9.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/term v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/crypto v0.10.0 // indirect
+	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/term v0.9.0 // indirect
+	golang.org/x/text v0.10.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.9.1 // indirect
+	golang.org/x/tools v0.9.3 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/grpc v1.55.0 // indirect
