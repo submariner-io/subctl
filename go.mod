@@ -14,10 +14,10 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	github.com/submariner-io/admiral v0.16.0-m0.0.20230602131053-613bd96ec5a2
+	github.com/submariner-io/admiral v0.16.0-m1
 	github.com/submariner-io/cloud-prepare v0.16.0-m0.0.20230613072954-3282befea5b4
 	github.com/submariner-io/lighthouse v0.16.0-m0.0.20230612173931-d78db7d80764
-	github.com/submariner-io/shipyard v0.16.0-m0
+	github.com/submariner-io/shipyard v0.16.0-m1
 	github.com/submariner-io/submariner v0.16.0-m0
 	github.com/submariner-io/submariner-operator v0.16.0-m0.0.20230605132422-309809477468
 	github.com/uw-labs/lichen v0.1.7
