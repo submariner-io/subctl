@@ -15,11 +15,11 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/submariner-io/admiral v0.16.0-m1
-	github.com/submariner-io/cloud-prepare v0.16.0-m0.0.20230613072954-3282befea5b4
-	github.com/submariner-io/lighthouse v0.16.0-m0.0.20230612173931-d78db7d80764
+	github.com/submariner-io/cloud-prepare v0.16.0-m1
+	github.com/submariner-io/lighthouse v0.16.0-m1
 	github.com/submariner-io/shipyard v0.16.0-m1
-	github.com/submariner-io/submariner v0.16.0-m0
-	github.com/submariner-io/submariner-operator v0.16.0-m0.0.20230605132422-309809477468
+	github.com/submariner-io/submariner v0.16.0-m1
+	github.com/submariner-io/submariner-operator v0.16.0-m1
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.11.0
 	golang.org/x/oauth2 v0.9.0
@@ -28,7 +28,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.27.3
 	k8s.io/apimachinery v0.27.3
 	k8s.io/client-go v0.27.3
-	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2
+	k8s.io/utils v0.0.0-20230505201702-9f6742963106
 	sigs.k8s.io/controller-runtime v0.15.0
 	sigs.k8s.io/mcs-api v0.1.0
 	sigs.k8s.io/yaml v1.3.0
@@ -64,7 +64,7 @@ require (
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
-	github.com/go-openapi/swag v0.22.3 // indirect
+	github.com/go-openapi/swag v0.22.4 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
