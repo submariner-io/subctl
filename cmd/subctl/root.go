@@ -30,6 +30,7 @@ import (
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	submarineropv1a1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -50,6 +51,7 @@ func (suppressWarnings) HandleWarningHeader(code int, agent, message string) {
 func init() {
 	runtime.Must(apiextensionsv1.AddToScheme(scheme.Scheme))
 	runtime.Must(submarinerv1.AddToScheme(scheme.Scheme))
+	runtime.Must(submarineropv1a1.AddToScheme(scheme.Scheme))
 
 	rest.SetDefaultWarningHandler(suppressWarnings{})
 }
