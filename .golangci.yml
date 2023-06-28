@@ -111,6 +111,7 @@ linters:
     - lll
     - makezero
     # - maligned # Deprecated since v1.38.0
+    - mirror
     - misspell
     - nakedret
     # - nestif # This calculates cognitive complexity but we're doing that elsewhere
