@@ -23,6 +23,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -35,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type suppressWarnings struct{}
@@ -53,6 +55,8 @@ func init() {
 	runtime.Must(submarineropv1a1.AddToScheme(scheme.Scheme))
 
 	rest.SetDefaultWarningHandler(suppressWarnings{})
+
+	log.SetLogger(logr.New(log.NullLogSink{}))
 }
 
 // rootCmd represents the base command when called without any subcommands.
