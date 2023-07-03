@@ -37,8 +37,8 @@ import (
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/rest"
+	"k8s.io/utils/set"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -54,9 +54,9 @@ const (
 	Resources = "resources"
 )
 
-var AllModules = sets.New(component.Connectivity, component.ServiceDiscovery, component.Broker, component.Operator)
+var AllModules = set.New(component.Connectivity, component.ServiceDiscovery, component.Broker, component.Operator)
 
-var AllTypes = sets.New(Logs, Resources)
+var AllTypes = set.New(Logs, Resources)
 
 var gatherFuncs = map[string]func(string, Info) bool{
 	component.Connectivity:     gatherConnectivity,

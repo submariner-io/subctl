@@ -30,8 +30,8 @@ import (
 	submarinerClientset "github.com/submariner-io/submariner/pkg/client/clientset/versioned"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/rest"
+	"k8s.io/utils/set"
 )
 
 type Info struct {
@@ -121,8 +121,8 @@ func (d *Info) IsConnectivityEnabled() bool {
 	return d.GetComponents().Has(component.Connectivity)
 }
 
-func (d *Info) GetComponents() sets.Set[string] {
-	return sets.New(d.Components...)
+func (d *Info) GetComponents() set.Set[string] {
+	return set.New(d.Components...)
 }
 
 func (d *Info) IsServiceDiscoveryEnabled() bool {
