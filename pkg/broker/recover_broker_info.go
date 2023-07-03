@@ -24,8 +24,8 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/rest"
+	"k8s.io/utils/set"
 )
 
 func RecoverData(submCluster *cluster.Info, broker *v1alpha1.Broker, brokerNamespace string,
@@ -44,7 +44,7 @@ func RecoverData(submCluster *cluster.Info, broker *v1alpha1.Broker, brokerNames
 	status.Success("Successfully retrieved the data. Writing it to broker-info.subm")
 
 	err = WriteInfoToFile(brokerRestConfig, brokerNamespace, decodedPSKSecret,
-		sets.New(broker.Spec.Components...), broker.Spec.DefaultCustomDomains, status)
+		set.New(broker.Spec.Components...), broker.Spec.DefaultCustomDomains, status)
 
 	return status.Error(err, "error reconstructing broker-info.subm")
 }
