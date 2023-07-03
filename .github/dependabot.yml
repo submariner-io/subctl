@@ -2,37 +2,52 @@
 version: 2
 updates:
   - package-ecosystem: github-actions
-    directory: '/'
+    directory: /
     schedule:
       interval: monthly
   - package-ecosystem: github-actions
-    directory: '/'
-    target-branch: "release-0.12"
+    directory: /
+    target-branch: release-0.12
     schedule:
       interval: monthly
   - package-ecosystem: github-actions
-    directory: '/'
-    target-branch: "release-0.13"
+    directory: /
+    target-branch: release-0.13
     schedule:
       interval: monthly
   - package-ecosystem: github-actions
-    directory: '/'
-    target-branch: "release-0.14"
+    directory: /
+    target-branch: release-0.14
     schedule:
       interval: monthly
   - package-ecosystem: github-actions
-    directory: '/'
-    target-branch: "release-0.15"
+    directory: /
+    target-branch: release-0.15
     schedule:
       interval: monthly
   - package-ecosystem: gomod
-    directory: "/"
+    directory: /
     schedule:
       interval: weekly
     ignore:
-      # Our internal dependencies
+      # Our own dependencies are handled during releases
       - dependency-name: github.com/submariner-io/*
-      # These are included by k8s.io/apiextensions-apiserver
+      # Managed in admiral
+      - dependency-name: github.com/onsi/ginkgo/v2
+      - dependency-name: github.com/onsi/gomega
+      - dependency-name: github.com/pkg/errors
       - dependency-name: k8s.io/api
       - dependency-name: k8s.io/apimachinery
       - dependency-name: k8s.io/client-go
+      - dependency-name: sigs.k8s.io/controller-runtime
+      - dependency-name: sigs.k8s.io/yaml
+      # Managed in cloud-prepare
+      - dependency-name: google.golang.org/api
+      - dependency-name: k8s.io/utils
+      # Managed in lighthouse
+      - dependency-name: github.com/uw-labs/lichen
+      - dependency-name: sigs.k8s.io/mcs-api
+      # Managed in submariner-operator
+      - dependency-name: github.com/coreos/go-semver
+      - dependency-name: github.com/openshift/api
+      - dependency-name: k8s.io/apiextensions-apiserver

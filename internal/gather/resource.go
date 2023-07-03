@@ -74,7 +74,7 @@ func ResourcesToYAMLFile(info *Info, ofType schema.GroupVersionResource, namespa
 
 			scrubbedData := scrubSensitiveData(info, string(data))
 
-			_, err = file.Write([]byte(scrubbedData))
+			_, err = file.WriteString(scrubbedData)
 			if err != nil {
 				return errors.WithMessagef(err, "error writing to file %s", path)
 			}

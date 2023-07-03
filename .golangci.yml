@@ -1,8 +1,11 @@
 ---
 linters-settings:
   depguard:
-    packages:
-      - github.com/mcuadros/go-version
+    rules:
+      main:
+        deny:
+          - pkg: github.com/mcuadros/go-version
+            desc: Use coreos/go-semver instead
   gocritic:
     enabled-tags:
       - diagnostic
@@ -61,7 +64,7 @@ linters:
     - bodyclose
     - contextcheck
     # - cyclop # This is equivalent to gocyclo
-    # - depguard # Disabled temporarily during the v1-v2 migration
+    - depguard
     - dogsled
     - dupl
     - durationcheck
@@ -75,17 +78,17 @@ linters:
     # - forcetypeassert # There are many unchecked type assertions that would be the result of a programming error so the
     #                     reasonable recourse would be to panic anyway if checked so this doesn't seem useful
     # - funlen # gocyclo is enabled which is generally a better metric than simply LOC.
-    - ginkgolinter
     - gci
+    - ginkgolinter
     # - gochecknoglobals # We don't want to forbid global variable constants
     # - gochecknoinits # We use init functions for valid reasons
     - gocognit
     - goconst
     - gocritic
     - gocyclo
-    - goerr113
     - godot
     # - godox #  Let's not forbid inline TODOs, FIXMEs et al
+    - goerr113
     - gofmt
     - gofumpt
     - goheader
@@ -97,6 +100,7 @@ linters:
     # - goprintffuncname # This doesn't seem useful at all
     - gosec
     - gosimple
+    - gosmopolitan
     - govet
     # - ifshort # This is a style preference and doesn't seem compelling
     - importas
@@ -107,6 +111,7 @@ linters:
     - lll
     - makezero
     # - maligned # Deprecated since v1.38.0
+    - mirror
     - misspell
     - nakedret
     # - nestif # This calculates cognitive complexity but we're doing that elsewhere
@@ -125,6 +130,7 @@ linters:
     # - sqlclosecheck # We don't use SQL
     - staticcheck
     - stylecheck
+    - tagalign
     # - tagliatelle # Inconsistent with stylecheck and not as good
     # - tenv # Not relevant for our Ginkgo UTs
     - testpackage
@@ -139,6 +145,7 @@ linters:
     - whitespace
     - wrapcheck
     - wsl
+    - zerologlint
 issues:
   exclude-rules:
     # Allow dot-imports for Gomega BDD directives per idiomatic Gomega
