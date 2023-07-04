@@ -8,7 +8,9 @@ on:
 jobs:
   cross:
     name: Cross-Build
-    if: github.event.pull_request.draft == false || contains(github.event.pull_request.labels.*.name, 'test-draft')
+    if: |
+      (github.event.pull_request.draft == false || contains(github.event.pull_request.labels.*.name, 'test-draft'))
+      && github.event.pull_request.state == 'open'
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
