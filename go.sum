@@ -525,8 +525,8 @@ github.com/submariner-io/cloud-prepare v0.14.6-0.20230614155757-52a039ba62e6 h1:
 github.com/submariner-io/cloud-prepare v0.14.6-0.20230614155757-52a039ba62e6/go.mod h1:A+26HLrf4YSDQcoj6ULR++C47r3aWxAKCQKDIFzwnqA=
 github.com/submariner-io/lighthouse v0.14.5 h1:pwYDifzyjVmeoY2sgDLVx6rSvXLZGILBogb1nS2EWCo=
 github.com/submariner-io/lighthouse v0.14.5/go.mod h1:dKy1G+ChwK+jCJlx8FMMKGcJV++dKse6FkGhOefKKkg=
-github.com/submariner-io/shipyard v0.14.5 h1:ojSNM6xOlGgyaZ7YQL/6Jrzs08mn3dXKEuFgJw7/hY0=
-github.com/submariner-io/shipyard v0.14.5/go.mod h1:v71szzcgslSBHx9V6kVggxNUljtqNPHq+z/NT2rejYA=
+github.com/submariner-io/shipyard v0.14.6 h1:px9FggiMyjFRLDyf8ieihvvk75QnG3G4fXKQSwp99P0=
+github.com/submariner-io/shipyard v0.14.6/go.mod h1:v71szzcgslSBHx9V6kVggxNUljtqNPHq+z/NT2rejYA=
 github.com/submariner-io/submariner v0.14.5 h1:3Vse2PcRKdn69CxgUuSpOQcr3IpeoP+pBermJcX14uk=
 github.com/submariner-io/submariner v0.14.5/go.mod h1:Mqybp6G7ObbosX/1rsuYxu3ZijKHLaaJyszNKGBdf9c=
 github.com/submariner-io/submariner-operator v0.14.5 h1:wZ5T+ax+HOoyxxHonmKZ2Nts4qhcHblZEFeNM+R99x0=
