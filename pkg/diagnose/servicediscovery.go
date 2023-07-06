@@ -93,7 +93,7 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 		}
 
 		verifyStatusCondition(se, mcsv1a1.ServiceExportValid, corev1.ConditionTrue, status)
-		verifyStatusCondition(se, lhconstants.ServiceExportSynced, corev1.ConditionTrue, status)
+		verifyStatusCondition(se, lhconstants.ServiceExportReady, corev1.ConditionTrue, status)
 		verifyStatusCondition(se, mcsv1a1.ServiceExportConflict, corev1.ConditionFalse, status)
 
 		ep := clusterInfo.ClientProducer.ForKubernetes().DiscoveryV1().EndpointSlices(se.Namespace)
@@ -147,11 +147,11 @@ func verifyStatusCondition(se *mcsv1a1.ServiceExport, condType mcsv1a1.ServiceEx
 ) {
 	for i := range se.Status.Conditions {
 		condition := &se.Status.Conditions[i]
-		if condition.Type == condType {
+		if condition.Type == condType || (condType == lhconstants.ServiceExportReady && condition.Type == "Synced") {
 			if condition.Status != condStatus {
 				status.Failure(
 					"The ServiceExport %q status condition type for %s/%s is not satisfied. Expected condition status %q. Actual:\n%s",
-					condType, se.Namespace, se.Name, condStatus, resource.ToJSON(condition))
+					condition.Type, se.Namespace, se.Name, condStatus, resource.ToJSON(condition))
 			}
 
 			return
