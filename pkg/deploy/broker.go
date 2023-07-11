@@ -33,7 +33,7 @@ import (
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
-	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/set"
 )
 
 type BrokerOptions struct {
@@ -48,7 +48,7 @@ var ValidComponents = []string{component.ServiceDiscovery, component.Connectivit
 
 func Broker(options *BrokerOptions, clientProducer client.Producer, status reporter.Interface,
 ) error {
-	componentSet := sets.New(options.BrokerSpec.Components...)
+	componentSet := set.New(options.BrokerSpec.Components...)
 	ctx := context.TODO()
 
 	if err := isValidComponents(componentSet); err != nil {
@@ -108,8 +108,8 @@ func deploy(ctx context.Context, options *BrokerOptions, status reporter.Interfa
 	return status.Error(err, "Broker deployment failed")
 }
 
-func isValidComponents(componentSet sets.Set[string]) error {
-	validComponentSet := sets.New(ValidComponents...)
+func isValidComponents(componentSet set.Set[string]) error {
+	validComponentSet := set.New(ValidComponents...)
 
 	if componentSet.Len() < 1 {
 		return fmt.Errorf("at least one component must be provided for deployment")

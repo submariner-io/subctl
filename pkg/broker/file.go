@@ -32,14 +32,14 @@ import (
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/rbac"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/utils/set"
 )
 
 const InfoFileName = "broker-info.subm"
 
-func WriteInfoToFile(restConfig *rest.Config, brokerNamespace string, ipsecPSK []byte, components sets.Set[string],
+func WriteInfoToFile(restConfig *rest.Config, brokerNamespace string, ipsecPSK []byte, components set.Set[string],
 	customDomains []string, status reporter.Interface,
 ) error {
 	status.Start("Saving broker info to file %q", InfoFileName)
