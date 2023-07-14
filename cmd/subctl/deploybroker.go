@@ -34,7 +34,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/deploy"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
-	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/set"
 )
 
 var (
@@ -112,5 +112,5 @@ func deployBrokerInContext(clusterInfo *cluster.Info, namespace string, status r
 
 	return broker.WriteInfoToFile( //nolint:wrapcheck // No need to wrap errors here.
 		clusterInfo.RestConfig, namespace, ipsecPSK,
-		sets.New(deployflags.BrokerSpec.Components...), deployflags.BrokerSpec.DefaultCustomDomains, status)
+		set.New(deployflags.BrokerSpec.Components...), deployflags.BrokerSpec.DefaultCustomDomains, status)
 }
