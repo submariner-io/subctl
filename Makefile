@@ -92,11 +92,11 @@ cmd/bin/subctl: cmd/bin/subctl-$(VERSION)-$(GOOS)-$(GOARCH)$(GOEXE)
 
 dist/subctl-%.tar.xz: cmd/bin/subctl-%
 	mkdir -p dist
-	tar -cJf $@ --transform "s/^cmd.bin/subctl-$(VERSION)/" $<
+	tar -cJf $@ --transform "s|^cmd/bin/subctl-[^/]*|subctl-$(VERSION)/subctl|" $<
 
 dist/subctl-%.tar.gz: cmd/bin/subctl-%
 	mkdir -p dist
-	tar -czf $@ --transform "s/^cmd.bin/subctl-$(VERSION)/" $<
+	tar -czf $@ --transform "s|^cmd/bin/subctl-[^/]*|subctl-$(VERSION)/subctl|" $<
 
 dist/subctl-checksums.txt: $(CROSS_TARBALLS)
 	cd $(@D) && sha256sum $(^F) >> $(@F)
