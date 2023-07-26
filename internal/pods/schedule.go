@@ -32,7 +32,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 type schedulingType int
@@ -161,8 +161,8 @@ func (np *Scheduled) schedule() error {
 			// as specific user id "72". So it needs pods to be privileged
 			// Also setting the runAsUser prevent the pods from starting with
 			// random user id
-			Privileged: pointer.Bool(true),
-			RunAsUser:  pointer.Int64(0),
+			Privileged: ptr.To(true),
+			RunAsUser:  ptr.To(int64(0)),
 		}
 	}
 
