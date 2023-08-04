@@ -80,47 +80,22 @@ The following verifications are deemed disruptive:
     ` + strings.Join(disruptiveVerificationNames(), "\n    "),
 	Args: checkVerifyArguments,
 	Run: func(cmd *cobra.Command, args []string) {
-		testType := ""
-
-		disruptive := extractDisruptiveVerifications(verifyOnly)
-		if !disruptiveTests && len(disruptive) > 0 {
-			err := survey.AskOne(&survey.Confirm{
-				Message: fmt.Sprintf("You have specified disruptive verifications (%s). Are you sure you want to run them?",
-					strings.Join(disruptive, ",")),
-			}, &disruptiveTests)
-			if err != nil {
-				if isNonInteractive(err) {
-					fmt.Printf(`
-You have specified disruptive verifications (%s) but subctl is running non-interactively and thus cannot
-prompt for confirmation therefore you must specify --enable-disruptive to run them.`, strings.Join(disruptive, ","))
-				} else {
-					exit.OnErrorWithMessage(err, "Prompt failure:")
-				}
-			}
-		}
-
-		patterns, verifications, err := getVerifyPatterns(verifyOnly, disruptiveTests)
-		if err != nil {
-			fmt.Println(err.Error())
-			return
-		}
-
-		fmt.Printf("Performing the following verifications: %s\n", strings.Join(verifications, ", "))
-
 		exit.OnError(verifyRestConfigProducer.RunOnSelectedContext(
 			func(fromClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 				// Try to run using the "to" context
 				toContextPresent, err := verifyRestConfigProducer.RunOnSelectedPrefixedContext(
 					"to",
 					func(toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-						return runVerify(fromClusterInfo, toClusterInfo, namespace, testType, patterns)
+						return runVerify(fromClusterInfo, toClusterInfo, namespace, determinePatternsToVerify())
 					}, status)
 
 				if toContextPresent {
 					return err //nolint:wrapcheck // No need to wrap errors here.
 				}
 
-				return status.Error(errors.New("two kubecontexts must be specified"), "")
+				exit.WithMessage(fmt.Sprintf(
+					"This command requires two kube contexts corresponding to the two clusters to verify.\n%s", cmd.UsageString()))
+				return nil
 			}, cli.NewReporter()))
 	},
 }
@@ -278,9 +253,35 @@ func getVerifyPatterns(csv string, includeDisruptive bool) ([]string, []string, 
 	return outputPatterns, outputVerifications, nil
 }
 
-func runVerify(
-	fromClusterInfo, toClusterInfo *cluster.Info, namespace, testType string, patterns []string,
-) error {
+func determinePatternsToVerify() []string {
+	disruptive := extractDisruptiveVerifications(verifyOnly)
+	if !disruptiveTests && len(disruptive) > 0 {
+		err := survey.AskOne(&survey.Confirm{
+			Message: fmt.Sprintf("You have specified disruptive verifications (%s). Are you sure you want to run them?",
+				strings.Join(disruptive, ",")),
+		}, &disruptiveTests)
+		if err != nil {
+			if isNonInteractive(err) {
+				fmt.Printf(`
+You have specified disruptive verifications (%s) but subctl is running non-interactively and thus cannot
+prompt for confirmation therefore you must specify --enable-disruptive to run them.`, strings.Join(disruptive, ","))
+			} else {
+				exit.OnErrorWithMessage(err, "Prompt failure:")
+			}
+		}
+	}
+
+	patterns, verifications, err := getVerifyPatterns(verifyOnly, disruptiveTests)
+	if err != nil {
+		exit.WithMessage(err.Error())
+	}
+
+	fmt.Printf("Performing the following verifications: %s\n", strings.Join(verifications, ", "))
+
+	return patterns
+}
+
+func runVerify(fromClusterInfo, toClusterInfo *cluster.Info, namespace string, patterns []string) error {
 	framework.RestConfigs = []*rest.Config{fromClusterInfo.RestConfig, toClusterInfo.RestConfig}
 	framework.TestContext.ClusterIDs = []string{fromClusterInfo.Name, toClusterInfo.Name}
 	framework.TestContext.KubeContexts = []string{fromClusterInfo.Name, toClusterInfo.Name}
@@ -300,7 +301,7 @@ func runVerify(
 	framework.TestContext.ReporterConfig = &reporterConfig
 
 	if !e2e.RunE2ETests(&testing.T{}) {
-		return fmt.Errorf("[%s] E2E failed", testType)
+		return fmt.Errorf("E2E failed")
 	}
 
 	return nil
