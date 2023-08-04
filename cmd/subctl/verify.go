@@ -291,6 +291,9 @@ func runVerify(
 	framework.TestContext.SubmarinerNamespace = namespace
 	framework.TestContext.PacketSize = packetSize
 
+	// This field isn't used for verify so set it to some non-empty string to bypass shipyard's validation checking.
+	framework.TestContext.KubeConfig = "not-used"
+
 	suiteConfig, reporterConfig := ginkgo.GinkgoConfiguration()
 	suiteConfig.FocusStrings = patterns
 	suiteConfig.RandomSeed = 1
