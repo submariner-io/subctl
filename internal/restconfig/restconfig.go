@@ -26,7 +26,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/resource"
-	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/gvr"
 	"github.com/submariner-io/subctl/pkg/cluster"
@@ -51,7 +50,6 @@ type loadingRulesAndOverrides struct {
 }
 
 type Producer struct {
-	kubeConfig                string
 	contexts                  []string
 	contextPrefixes           []string
 	defaultClientConfig       *loadingRulesAndOverrides
@@ -419,13 +417,6 @@ func (rcp *Producer) overrideContextAndRun(clusterName, contextName string, func
 	fmt.Println()
 
 	return nil
-}
-
-func (rcp *Producer) PopulateTestFramework() {
-	framework.TestContext.KubeContexts = rcp.contexts
-	if rcp.kubeConfig != "" {
-		framework.TestContext.KubeConfig = rcp.kubeConfig
-	}
 }
 
 func ForBroker(submariner *v1alpha1.Submariner, serviceDisc *v1alpha1.ServiceDiscovery) (*rest.Config, string, error) {
