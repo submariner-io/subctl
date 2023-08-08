@@ -24,12 +24,13 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/image"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
-	"github.com/submariner-io/submariner-operator/pkg/names"
+	opnames "github.com/submariner-io/submariner-operator/pkg/names"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,7 +66,7 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 	submariner := &v1alpha1.Submariner{}
 	err = info.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
 		Namespace: constants.OperatorNamespace,
-		Name:      names.SubmarinerCrName,
+		Name:      opnames.SubmarinerCrName,
 	}, submariner)
 
 	if err == nil {
@@ -77,7 +78,7 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 	serviceDiscovery := &v1alpha1.ServiceDiscovery{}
 	err = info.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
 		Namespace: constants.OperatorNamespace,
-		Name:      names.ServiceDiscoveryCrName,
+		Name:      opnames.ServiceDiscoveryCrName,
 	}, serviceDiscovery)
 
 	if err == nil {
