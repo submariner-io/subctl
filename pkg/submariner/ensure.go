@@ -19,11 +19,11 @@ limitations under the License.
 package submariner
 
 import (
+	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/operator/ocp"
 	"github.com/submariner-io/subctl/pkg/submariner/serviceaccount"
 	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
-	"github.com/submariner-io/submariner-operator/pkg/names"
 	"golang.org/x/net/context"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"

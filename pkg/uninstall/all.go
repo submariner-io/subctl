@@ -26,6 +26,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/finalizer"
+	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/util"
@@ -33,7 +34,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/operator/deployment"
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
-	"github.com/submariner-io/submariner-operator/pkg/names"
+	opnames "github.com/submariner-io/submariner-operator/pkg/names"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -197,7 +198,7 @@ func ensureSubmarinerDeleted(clients client.Producer, clusterName, namespace str
 	submariner := &operatorv1alpha1.Submariner{}
 	err := clients.ForGeneral().Get(context.TODO(), controller.ObjectKey{
 		Namespace: namespace,
-		Name:      names.SubmarinerCrName,
+		Name:      opnames.SubmarinerCrName,
 	}, submariner)
 
 	if resource.IsNotFoundErr(err) {
@@ -226,7 +227,7 @@ func ensureServiceDiscoveryDeleted(clients client.Producer, clusterName, namespa
 	serviceDiscovery := &operatorv1alpha1.ServiceDiscovery{}
 	err := clients.ForGeneral().Get(context.TODO(), controller.ObjectKey{
 		Namespace: namespace,
-		Name:      names.ServiceDiscoveryCrName,
+		Name:      opnames.ServiceDiscoveryCrName,
 	}, serviceDiscovery)
 
 	if resource.IsNotFoundErr(err) {
@@ -299,7 +300,7 @@ func ensureDeleted(clients client.Producer, obj controller.Object, status report
 		}
 
 		err = finalizer.Remove(context.TODO(), resource.ForControllerClient(clients.ForGeneral(), obj.GetNamespace(), obj),
-			obj, names.CleanupFinalizer)
+			obj, opnames.CleanupFinalizer)
 		if err != nil {
 			return err //nolint:wrapcheck // No need to wrap
 		}
