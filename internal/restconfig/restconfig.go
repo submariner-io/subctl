@@ -20,6 +20,7 @@ package restconfig
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/pkg/errors"
@@ -391,11 +392,38 @@ func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Int
 			contextErrors = append(contextErrors, rcp.overrideContextAndRun(chosenContext.Cluster, contextName, function, status))
 		}
 	} else {
-		// Loop over all accessible contexts
+		// Loop over all accessible contexts and de-duplicate by cluster name. If there's multiple contexts for a cluster, bias towards the
+		// one whose associated user is associated with the most contexts across all the clusters, with the intent of hopefully picking one
+		// that has admin privileges.
+		contextsByCluster := map[string][]string{}
+		usageByUser := map[string]int{}
+
 		for contextName, context := range rawConfig.Contexts {
 			processedContexts++
+			contextsByCluster[context.Cluster] = append(contextsByCluster[context.Cluster], contextName)
+			usageByUser[context.AuthInfo]++
+		}
 
-			contextErrors = append(contextErrors, rcp.overrideContextAndRun(context.Cluster, contextName, function, status))
+		for cluster, contextNames := range contextsByCluster {
+			if len(contextNames) == 1 {
+				contextErrors = append(contextErrors, rcp.overrideContextAndRun(cluster, contextNames[0], function, status))
+				continue
+			}
+
+			selectedContextName := ""
+			maxUsage := 0
+
+			for _, name := range contextNames {
+				if usageByUser[rawConfig.Contexts[name].AuthInfo] > maxUsage {
+					maxUsage = usageByUser[rawConfig.Contexts[name].AuthInfo]
+					selectedContextName = name
+				}
+			}
+
+			status.Warning("Found multiple kube contexts for cluster %q:\n    %s\n  Context %q was automatically selected however if the"+
+				" associated user account does not have sufficient privileges, please re-run the command with the suitable context.\n",
+				cluster, strings.Join(contextNames, "\n    "), selectedContextName)
+			contextErrors = append(contextErrors, rcp.overrideContextAndRun(cluster, selectedContextName, function, status))
 		}
 	}
 
