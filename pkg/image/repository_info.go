@@ -19,9 +19,10 @@ limitations under the License.
 package image
 
 import (
+	"github.com/submariner-io/admiral/pkg/names"
 	submariner "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/images"
-	"github.com/submariner-io/submariner-operator/pkg/names"
+	imagenames "github.com/submariner-io/submariner-operator/pkg/names"
 )
 
 type RepositoryInfo struct {
@@ -49,9 +50,9 @@ func NewRepositoryInfo(name, verion string, overrides map[string]string) *Reposi
 }
 
 func (i *RepositoryInfo) GetNettestImage() string {
-	return images.GetImagePath(i.Name, i.Version, names.NettestImage, names.NettestComponent, i.Overrides)
+	return images.GetImagePath(i.Name, i.Version, imagenames.NettestImage, names.NettestComponent, i.Overrides)
 }
 
 func (i *RepositoryInfo) GetOperatorImage() string {
-	return images.GetImagePath(i.Name, i.Version, names.OperatorImage, names.OperatorComponent, i.Overrides)
+	return images.GetImagePath(i.Name, i.Version, imagenames.OperatorImage, names.OperatorComponent, i.Overrides)
 }
