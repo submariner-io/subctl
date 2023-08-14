@@ -56,10 +56,6 @@ func gatherGlobalnetDaemonSet(info *Info, namespace string) {
 	gatherDaemonSet(info, namespace, metav1.ListOptions{LabelSelector: globalnetPodLabel})
 }
 
-func gatherNetworkPluginSyncerDeployment(info *Info, namespace string) {
-	gatherDeployment(info, namespace, metav1.ListOptions{LabelSelector: networkpluginSyncerPodLabel})
-}
-
 func gatherLighthouseAgentDeployment(info *Info, namespace string) {
 	gatherDeployment(info, namespace, metav1.ListOptions{LabelSelector: "app=submariner-lighthouse-agent"})
 }
