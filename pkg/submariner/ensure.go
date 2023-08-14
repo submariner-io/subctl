@@ -59,11 +59,6 @@ func Ensure(ctx context.Context, status reporter.Interface, kubeClient kubernete
 			ClusterRoleFile:        embeddedyamls.Config_rbac_submariner_diagnose_ocp_cluster_role_yaml,
 			ClusterRoleBindingFile: embeddedyamls.Config_rbac_submariner_diagnose_ocp_cluster_role_binding_yaml,
 		},
-		{
-			ComponentName:          names.NetworkPluginSyncerComponent,
-			ClusterRoleFile:        embeddedyamls.Config_rbac_networkplugin_syncer_ocp_cluster_role_yaml,
-			ClusterRoleBindingFile: embeddedyamls.Config_rbac_networkplugin_syncer_ocp_cluster_role_binding_yaml,
-		},
 	}
 
 	if created, err := ocp.EnsureRBAC(ctx, dynClient, kubeClient, operatorNamespace, componentsRbac); err != nil {
