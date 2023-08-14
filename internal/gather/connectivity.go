@@ -25,14 +25,13 @@ import (
 )
 
 const (
-	gatewayPodLabel             = "app=submariner-gateway"
-	routeagentPodLabel          = "app=submariner-routeagent"
-	globalnetPodLabel           = "app=submariner-globalnet"
-	metricsProxyPodLabel        = "app=submariner-metrics-proxy"
-	networkpluginSyncerPodLabel = "app=submariner-networkplugin-syncer"
-	addonPodLabel               = "app=submariner-addon"
-	ovnMasterPodLabelOCP        = "app=ovnkube-master"
-	ovnMasterPodLabelGeneric    = "name=ovnkube-master"
+	gatewayPodLabel          = "app=submariner-gateway"
+	routeagentPodLabel       = "app=submariner-routeagent"
+	globalnetPodLabel        = "app=submariner-globalnet"
+	metricsProxyPodLabel     = "app=submariner-metrics-proxy"
+	addonPodLabel            = "app=submariner-addon"
+	ovnMasterPodLabelOCP     = "app=ovnkube-master"
+	ovnMasterPodLabelGeneric = "name=ovnkube-master"
 )
 
 func gatherGatewayPodLogs(info *Info) {
@@ -53,10 +52,6 @@ func gatherRouteAgentPodLogs(info *Info) {
 
 func gatherGlobalnetPodLogs(info *Info) {
 	gatherPodLogs(globalnetPodLabel, info)
-}
-
-func gatherNetworkPluginSyncerPodLogs(info *Info) {
-	gatherPodLogs(networkpluginSyncerPodLabel, info)
 }
 
 func gatherAddonPodLogs(info *Info) {
