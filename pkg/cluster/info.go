@@ -211,6 +211,7 @@ var validOverrides = []string{
 	names.GatewayComponent,
 	names.RouteAgentComponent,
 	names.GlobalnetComponent,
+	names.NetworkPluginSyncerComponent,
 	names.ServiceDiscoveryComponent,
 	names.LighthouseCoreDNSComponent,
 	names.NettestComponent,
