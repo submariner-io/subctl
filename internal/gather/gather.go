@@ -132,6 +132,7 @@ func gatherConnectivity(dataType string, info Info) bool {
 		gatherRouteAgentPodLogs(&info)
 		gatherMetricsProxyPodLogs(&info)
 		gatherGlobalnetPodLogs(&info)
+		gatherNetworkPluginSyncerPodLogs(&info)
 		gatherAddonPodLogs(&info)
 	case Resources:
 		gatherCNIResources(&info, info.Submariner.Status.NetworkPlugin)
@@ -238,6 +239,7 @@ func gatherOperator(dataType string, info Info) bool {
 		gatherMetricsPodDaemonSet(&info, info.OperatorNamespace())
 		gatherRouteAgentDaemonSet(&info, info.OperatorNamespace())
 		gatherGlobalnetDaemonSet(&info, info.OperatorNamespace())
+		gatherNetworkPluginSyncerDeployment(&info, info.OperatorNamespace())
 		gatherLighthouseAgentDeployment(&info, info.OperatorNamespace())
 		gatherLighthouseCoreDNSDeployment(&info, info.OperatorNamespace())
 	default:

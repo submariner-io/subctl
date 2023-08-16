@@ -89,7 +89,8 @@ func Versions(clusterInfo *cluster.Info, _ string, status reporter.Interface) er
 	}
 
 	err = printDeploymentVersions(
-		clusterInfo, &printer, names.OperatorComponent, names.ServiceDiscoveryComponent, names.LighthouseCoreDNSComponent)
+		clusterInfo, &printer, names.OperatorComponent, names.ServiceDiscoveryComponent, names.LighthouseCoreDNSComponent,
+		names.NetworkPluginSyncerComponent)
 	if err != nil {
 		return status.Error(err, "Error retrieving Deployment versions")
 	}
