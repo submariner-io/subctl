@@ -201,3 +201,9 @@ issues:
     - path: internal/(cli|env|log)/.*\.go
       linters:
         - goheader
+
+    # Ignore header linting for build constraint
+    # See https://github.com/denis-tingaikin/go-header/issues/18
+    - path: cmd/subctl/.*\.go
+      linters:
+        - goheader
