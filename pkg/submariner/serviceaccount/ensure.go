@@ -60,7 +60,6 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace stri
 	return createdSA || createdRole || createdRB || createdCR || createdCRB, nil
 }
 
-//nolint:dupl // Similar code in ensureClusterRoleBindings, ensureRoles, ensureRoleBindings but not duplicated
 func ensureServiceAccounts(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
 	createdSubmarinerSA, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_gateway_service_account_yaml)
@@ -82,15 +81,9 @@ func ensureServiceAccounts(ctx context.Context, kubeClient kubernetes.Interface,
 
 	createdDiagnoseSA, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_diagnose_service_account_yaml)
-	if err != nil {
-		return false, errors.Wrap(err, "error provisioning diagnose ServiceAccount resource")
-	}
 
-	createdNPSyncerSA, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, namespace,
-		embeddedyamls.Config_rbac_networkplugin_syncer_service_account_yaml)
-
-	return createdSubmarinerSA || createdRouteAgentSA || createdGlobalnetSA || createdNPSyncerSA || createdDiagnoseSA,
-		errors.Wrap(err, "error provisioning operator networkplugin syncer resource")
+	return createdSubmarinerSA || createdRouteAgentSA || createdGlobalnetSA || createdDiagnoseSA,
+		errors.Wrap(err, "error provisioning diagnose ServiceAccount resource")
 }
 
 func ensureClusterRoles(ctx context.Context, kubeClient kubernetes.Interface) (bool, error) {
@@ -110,17 +103,11 @@ func ensureClusterRoles(ctx context.Context, kubeClient kubernetes.Interface) (b
 	}
 
 	createdDiagnoseCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, embeddedyamls.Config_rbac_submariner_diagnose_cluster_role_yaml)
-	if err != nil {
-		return false, errors.Wrap(err, "error provisioning diagnose ClusterRole resource")
-	}
 
-	createdNPSyncerCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, embeddedyamls.Config_rbac_networkplugin_syncer_cluster_role_yaml)
-
-	return createdSubmarinerCR || createdRouteAgentCR || createdGlobalnetCR || createdNPSyncerCR || createdDiagnoseCR,
-		errors.Wrap(err, "error provisioning networkplugin syncer ClusterRole resource")
+	return createdSubmarinerCR || createdRouteAgentCR || createdGlobalnetCR || createdDiagnoseCR,
+		errors.Wrap(err, "error provisioning diagnose ClusterRole resource")
 }
 
-//nolint:dupl // Similar code in ensureServiceAccounts, ensureRoles, ensureRoleBindings but not duplicated
 func ensureClusterRoleBindings(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
 	createdSubmarinerCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_gateway_cluster_role_binding_yaml)
@@ -142,15 +129,9 @@ func ensureClusterRoleBindings(ctx context.Context, kubeClient kubernetes.Interf
 
 	createdDiagnoseCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_diagnose_cluster_role_binding_yaml)
-	if err != nil {
-		return false, errors.Wrap(err, "error provisioning diagnose ClusterRoleBinding resource")
-	}
 
-	createdNPSyncerCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
-		embeddedyamls.Config_rbac_networkplugin_syncer_cluster_role_binding_yaml)
-
-	return createdSubmarinerCRB || createdRouteAgentCRB || createdGlobalnetCRB || createdNPSyncerCRB || createdDiagnoseCRB,
-		errors.Wrap(err, "error provisioning networkplugin syncer ClusterRoleBinding resource")
+	return createdSubmarinerCRB || createdRouteAgentCRB || createdGlobalnetCRB || createdDiagnoseCRB,
+		errors.Wrap(err, "error provisioning diagnose ClusterRoleBinding resource")
 }
 
 //nolint:dupl // Similar code in ensureServiceAccounts, ensureClusterRoleBindings, ensureRoleBindings but not duplicated

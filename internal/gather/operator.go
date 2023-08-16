@@ -19,9 +19,9 @@ limitations under the License.
 package gather
 
 import (
+	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/subctl/pkg/operator/deployment"
 	submarinerOp "github.com/submariner-io/submariner-operator/api/v1alpha1"
-	"github.com/submariner-io/submariner-operator/pkg/names"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 )
@@ -54,10 +54,6 @@ func gatherRouteAgentDaemonSet(info *Info, namespace string) {
 
 func gatherGlobalnetDaemonSet(info *Info, namespace string) {
 	gatherDaemonSet(info, namespace, metav1.ListOptions{LabelSelector: globalnetPodLabel})
-}
-
-func gatherNetworkPluginSyncerDeployment(info *Info, namespace string) {
-	gatherDeployment(info, namespace, metav1.ListOptions{LabelSelector: networkpluginSyncerPodLabel})
 }
 
 func gatherLighthouseAgentDeployment(info *Info, namespace string) {
