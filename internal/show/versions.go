@@ -22,12 +22,12 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/show/table"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/pkg/images"
-	"github.com/submariner-io/submariner-operator/pkg/names"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -89,8 +89,7 @@ func Versions(clusterInfo *cluster.Info, _ string, status reporter.Interface) er
 	}
 
 	err = printDeploymentVersions(
-		clusterInfo, &printer, names.OperatorComponent, names.ServiceDiscoveryComponent, names.LighthouseCoreDNSComponent,
-		names.NetworkPluginSyncerComponent)
+		clusterInfo, &printer, names.OperatorComponent, names.ServiceDiscoveryComponent, names.LighthouseCoreDNSComponent)
 	if err != nil {
 		return status.Error(err, "Error retrieving Deployment versions")
 	}
