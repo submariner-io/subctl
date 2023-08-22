@@ -21,18 +21,19 @@ package serviceaccount
 import (
 	"context"
 	"fmt"
-	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
-	resourceutil "github.com/submariner-io/subctl/pkg/resource"
+	"github.com/submariner-io/admiral/pkg/util"
+	"github.com/submariner-io/subctl/internal/rbac"
 	"github.com/submariner-io/subctl/pkg/secret"
 	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -50,7 +51,7 @@ func ensureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namesp
 		return nil, err //nolint:wrapcheck // No need to wrap errors here.
 	}
 
-	err = ensure(ctx, kubeClient, namespace, sa, true)
+	err = ensure(ctx, kubeClient, namespace, sa)
 	if err != nil {
 		return nil, err
 	}
@@ -59,26 +60,20 @@ func ensureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namesp
 }
 
 //nolint:wrapcheck // No need to wrap errors here.
-func ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount, onlyCreate bool) error {
-	if onlyCreate {
-		_, err := kubeClient.CoreV1().ServiceAccounts(namespace).Get(ctx, sa.Name, metav1.GetOptions{})
-
-		if err == nil || !apierrors.IsNotFound(err) {
-			return err
-		}
-	}
-
-	_, err := resourceutil.CreateOrUpdate(ctx, resource.ForServiceAccount(kubeClient, namespace), sa)
+func ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount) error {
+	_, err := util.CreateOrUpdate(ctx, resource.ForServiceAccount(kubeClient, namespace), sa,
+		func(existing runtime.Object) (runtime.Object, error) {
+			existing.(*corev1.ServiceAccount).Secrets = nil
+			return existing, nil
+		})
 
 	return err
 }
 
 //nolint:wrapcheck // No need to wrap errors here.
-func Ensure(ctx context.Context,
-	kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount, onlyCreate bool) (
-	*corev1.ServiceAccount, error,
-) {
-	err := ensure(ctx, kubeClient, namespace, sa, onlyCreate)
+func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount,
+) (*corev1.ServiceAccount, error) {
+	err := ensure(ctx, kubeClient, namespace, sa)
 	if err != nil {
 		return nil, err
 	}
@@ -108,86 +103,56 @@ func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namesp
 }
 
 func EnsureSecretFromSA(ctx context.Context, client kubernetes.Interface, saName, namespace string) (*corev1.Secret, error) {
-	sa, err := client.CoreV1().ServiceAccounts(namespace).Get(ctx, saName, metav1.GetOptions{})
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get ServiceAccount %s/%s", namespace, saName)
-	}
-
-	saSecret := getSecretFromSA(ctx, client, sa)
-
-	if saSecret != nil {
+	saSecret, err := rbac.GetClientTokenSecret(ctx, client, namespace, saName)
+	if err == nil {
 		return saSecret, nil
 	}
 
-	// We couldn't find right secret from this SA, search all Secrets
-	saSecret, err = getSecretForSA(ctx, client, sa)
-	if err != nil && !apierrors.IsNotFound(err) {
-		return nil, err
+	if !apierrors.IsNotFound(err) {
+		return nil, err //nolint:wrapcheck // No need to wrap
 	}
 
-	if err != nil {
-		newSecret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: fmt.Sprintf("%s-token-", sa.Name),
-				Namespace:    namespace,
-				Annotations: map[string]string{
-					corev1.ServiceAccountNameKey: saName,
-					createdByAnnotation:          creatorName,
-				},
+	newSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: fmt.Sprintf("%s-token-", saName),
+			Namespace:    namespace,
+			Annotations: map[string]string{
+				corev1.ServiceAccountNameKey: saName,
+				createdByAnnotation:          creatorName,
 			},
-			Type: corev1.SecretTypeServiceAccountToken,
-		}
+		},
+		Type: corev1.SecretTypeServiceAccountToken,
+	}
 
-		saSecret, err = secret.Ensure(ctx, client, newSecret.Namespace, newSecret)
+	saSecret, err = secret.Ensure(ctx, client, newSecret.Namespace, newSecret)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create secret for service account %q", saName)
+	}
+
+	// Ensure the token has been generated for the secret.
+	backoff := wait.Backoff{
+		Steps:    15,
+		Duration: 30 * time.Millisecond,
+		Factor:   1.3,
+		Jitter:   1,
+	}
+
+	err = wait.ExponentialBackoff(backoff, func() (bool, error) {
+		saSecret, err = client.CoreV1().Secrets(namespace).Get(ctx, saSecret.Name, metav1.GetOptions{})
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to create secret for ServiceAccount %v", saName)
+			return false, errors.Wrapf(err, "error getting secret %q", saSecret.Name)
 		}
-	}
 
-	secretRef := corev1.ObjectReference{
-		Name: saSecret.Name,
-	}
-
-	sa.Secrets = append(sa.Secrets, secretRef)
-	err = ensure(ctx, client, namespace, sa, false)
-
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to update ServiceAccount %v with Secret reference %v", saName, secretRef.Name)
-	}
-
-	return saSecret, nil
-}
-
-func getSecretFromSA(ctx context.Context, client kubernetes.Interface, sa *corev1.ServiceAccount) *corev1.Secret {
-	secretNamePrefix := fmt.Sprintf("%s-token-", sa.Name)
-	for _, saSecretRef := range sa.Secrets {
-		if strings.HasPrefix(saSecretRef.Name, secretNamePrefix) {
-			saSecret, _ := client.CoreV1().Secrets(sa.Namespace).Get(ctx, saSecretRef.Name, metav1.GetOptions{})
-			if saSecret.Annotations[corev1.ServiceAccountNameKey] == sa.Name && saSecret.Type == corev1.SecretTypeServiceAccountToken {
-				return saSecret
-			}
+		if len(saSecret.Data["token"]) == 0 {
+			return false, nil
 		}
-	}
 
-	return nil
-}
-
-func getSecretForSA(ctx context.Context, client kubernetes.Interface, sa *corev1.ServiceAccount) (*corev1.Secret, error) {
-	saSecrets, err := client.CoreV1().Secrets(sa.Namespace).List(ctx, metav1.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector("type", "kubernetes.io/service-account-token").String(),
+		return true, nil
 	})
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get secrets of type service-account-token in %v", sa.Namespace)
+
+	if wait.Interrupted(err) {
+		return nil, fmt.Errorf("the token was not generated for secret %q", saSecret.Name)
 	}
 
-	for i := 0; i < len(saSecrets.Items); i++ {
-		if saSecrets.Items[i].Annotations[corev1.ServiceAccountNameKey] == sa.Name {
-			return &saSecrets.Items[i], nil
-		}
-	}
-
-	return nil, apierrors.NewNotFound(schema.GroupResource{
-		Group:    corev1.SchemeGroupVersion.Group,
-		Resource: "secrets",
-	}, sa.Name)
+	return saSecret, err //nolint:wrapcheck // No need to wrap here
 }

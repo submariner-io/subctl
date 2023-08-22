@@ -20,11 +20,9 @@ package broker
 
 import (
 	"context"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/subctl/internal/component"
-	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/rbac"
 	"github.com/submariner-io/subctl/pkg/gateway"
 	"github.com/submariner-io/subctl/pkg/namespace"
@@ -39,7 +37,6 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -88,9 +85,7 @@ func Ensure(ctx context.Context, crdUpdater crd.Updater, kubeClient kubernetes.I
 		return errors.Wrap(err, "error creating broker role")
 	}
 
-	_, err = WaitForClientToken(ctx, kubeClient, constants.SubmarinerBrokerAdminSA, brokerNS)
-
-	return err
+	return nil
 }
 
 // CreateSAForCluster creates a new SA for each new cluster joined and binds it to the submariner cluster role.
@@ -107,8 +102,8 @@ func CreateSAForCluster(ctx context.Context, kubeClient kubernetes.Interface, cl
 		return nil, errors.Wrap(err, "error binding sa to cluster role")
 	}
 
-	clientToken, err := WaitForClientToken(ctx, kubeClient, saName, inNamespace)
-	if err != nil && !apierrors.IsAlreadyExists(err) {
+	clientToken, err := rbac.GetClientTokenSecret(ctx, kubeClient, inNamespace, saName)
+	if err != nil {
 		return nil, errors.Wrap(err, "error getting cluster sa token")
 	}
 
@@ -135,37 +130,6 @@ func createBrokerAdministratorRoleAndSA(ctx context.Context, kubeClient kubernet
 	}
 
 	return nil
-}
-
-func WaitForClientToken(ctx context.Context, kubeClient kubernetes.Interface, submarinerBrokerSA, inNamespace string) (*v1.Secret, error) {
-	// wait for the client token to be ready, while implementing
-	// exponential backoff pattern, it will wait a total of:
-	// sum(n=0..9, 1.2^n * 5) seconds, = 130 seconds
-	backoff := wait.Backoff{
-		Steps:    10,
-		Duration: 5 * time.Second,
-		Factor:   1.2,
-		Jitter:   1,
-	}
-
-	var secret *v1.Secret
-	var lastErr error
-
-	err := wait.ExponentialBackoff(backoff, func() (bool, error) {
-		secret, lastErr = rbac.GetClientTokenSecret(ctx, kubeClient, inNamespace, submarinerBrokerSA)
-		if lastErr != nil {
-			//nolint:nilerr // Intentional - the error is propagated via the outer-scoped var 'lastErr'
-			return false, nil
-		}
-
-		return true, nil
-	})
-
-	if wait.Interrupted(err) {
-		return nil, lastErr //nolint:wrapcheck // No need to wrap here
-	}
-
-	return secret, err //nolint:wrapcheck // No need to wrap here
 }
 
 //nolint:wrapcheck // No need to wrap here
@@ -196,7 +160,7 @@ func CreateOrUpdateBrokerAdminRoleBinding(ctx context.Context, kubeClient kubern
 //nolint:wrapcheck // No need to wrap here
 func CreateNewBrokerSA(ctx context.Context, kubeClient kubernetes.Interface, submarinerBrokerSA, inNamespace string) (err error) {
 	sa := NewBrokerSA(submarinerBrokerSA)
-	_, err = serviceaccount.Ensure(ctx, kubeClient, inNamespace, sa, true)
+	_, err = serviceaccount.Ensure(ctx, kubeClient, inNamespace, sa)
 
 	return err
 }

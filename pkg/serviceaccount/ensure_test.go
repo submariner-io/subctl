@@ -26,7 +26,10 @@ import (
 	"github.com/submariner-io/subctl/pkg/serviceaccount"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	fakeclientset "k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/tools/cache"
 )
 
 const (
@@ -41,10 +44,34 @@ metadata:
 var _ = Describe("EnsureFromYAML", func() {
 	const namespace = "test-namespace"
 
-	var client *fakeclientset.Clientset
+	var (
+		client *fakeclientset.Clientset
+		stopCh chan struct{}
+	)
 
 	BeforeEach(func() {
 		client = fakeclientset.NewSimpleClientset()
+		stopCh = make(chan struct{})
+
+		_, informer := cache.NewInformer(&cache.ListWatch{
+			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				return client.CoreV1().Secrets(namespace).List(context.TODO(), options)
+			},
+			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				return client.CoreV1().Secrets(namespace).Watch(context.TODO(), options)
+			},
+		}, &corev1.Secret{}, 0, cache.ResourceEventHandlerFuncs{
+			AddFunc: func(obj interface{}) {
+				s := obj.(*corev1.Secret)
+				s.Data = map[string][]byte{"token": {1, 2, 3}}
+
+				_, err := client.CoreV1().Secrets(namespace).Update(context.TODO(), s, metav1.UpdateOptions{})
+				Expect(err).To(Succeed())
+			},
+		})
+
+		go informer.Run(stopCh)
+		Expect(cache.WaitForCacheSync(stopCh, informer.HasSynced)).To(BeTrue())
 	})
 
 	assertServiceAccount := func() {
@@ -55,8 +82,8 @@ var _ = Describe("EnsureFromYAML", func() {
 	When("the ServiceAccount doesn't exist", func() {
 		It("should create it", func() {
 			created, err := serviceaccount.EnsureFromYAML(context.TODO(), client, namespace, roleYAML)
-			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
+			Expect(created).To(BeTrue())
 			assertServiceAccount()
 		})
 	})
@@ -71,13 +98,13 @@ var _ = Describe("EnsureFromYAML", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-sa",
 				},
-			}, false)
+			})
 			Expect(err).To(Succeed())
 			assertServiceAccount()
 
 			created, err := serviceaccount.EnsureFromYAML(context.TODO(), client, namespace, roleYAML)
-			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
+			Expect(created).To(BeTrue())
 		})
 	})
 })

@@ -20,40 +20,34 @@ package rbac
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/pkg/errors"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 )
 
-// maxGeneratedNameLength is the maximum generated length for a token, excluding the random suffix
-// See k8s.io/apiserver/pkg/storage/names.
-const maxGeneratedNameLength = 63 - 5
-
-func GetClientTokenSecret(ctx context.Context, kubeClient kubernetes.Interface, namespace, serviceAccountName string) (*v1.Secret, error) {
-	sa, err := kubeClient.CoreV1().ServiceAccounts(namespace).Get(ctx, serviceAccountName, metav1.GetOptions{})
+func GetClientTokenSecret(ctx context.Context, kubeClient kubernetes.Interface, namespace, serviceAccountName string,
+) (*corev1.Secret, error) {
+	saSecrets, err := kubeClient.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector("type", string(corev1.SecretTypeServiceAccountToken)).String(),
+	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "ServiceAccount %s get failed", serviceAccountName)
+		return nil, errors.Wrapf(err, "failed to list secrets of type %q in namespace %q",
+			corev1.SecretTypeServiceAccountToken, namespace)
 	}
 
-	if len(sa.Secrets) < 1 {
-		return nil, fmt.Errorf("ServiceAccount %s does not have any secret", sa.Name)
-	}
-
-	tokenPrefix := fmt.Sprintf("%s-token-", serviceAccountName)
-	if len(tokenPrefix) > maxGeneratedNameLength {
-		tokenPrefix = tokenPrefix[:maxGeneratedNameLength]
-	}
-
-	for _, secret := range sa.Secrets {
-		if strings.HasPrefix(secret.Name, tokenPrefix) {
-			//nolint:wrapcheck // No need to wrap here
-			return kubeClient.CoreV1().Secrets(namespace).Get(ctx, secret.Name, metav1.GetOptions{})
+	for i := range saSecrets.Items {
+		if saSecrets.Items[i].Annotations[corev1.ServiceAccountNameKey] == serviceAccountName {
+			return &saSecrets.Items[i], nil
 		}
 	}
 
-	return nil, fmt.Errorf("ServiceAccount %s does not have a secret of type token", serviceAccountName)
+	return nil, apierrors.NewNotFound(schema.GroupResource{
+		Group:    corev1.SchemeGroupVersion.Group,
+		Resource: "secrets",
+	}, serviceAccountName)
 }
