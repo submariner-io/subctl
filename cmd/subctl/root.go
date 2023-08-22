@@ -43,7 +43,8 @@ import (
 type suppressWarnings struct{}
 
 func (suppressWarnings) HandleWarningHeader(code int, agent, message string) {
-	if code == 299 && strings.Contains(message, "would violate PodSecurity") {
+	if code == 299 && (strings.Contains(message, "would violate PodSecurity") ||
+		strings.Contains(message, "instead of auto-generated secret-based tokens")) {
 		return
 	}
 
