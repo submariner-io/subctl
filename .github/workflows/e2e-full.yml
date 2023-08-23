@@ -18,6 +18,7 @@ jobs:
       matrix:
         globalnet: ['', 'globalnet']
         lighthouse: ['', 'lighthouse']
+        ovn: ['', 'ovn']
     steps:
       - name: Check out the repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
@@ -25,7 +26,7 @@ jobs:
       - name: Run E2E deployment and tests
         uses: submariner-io/shipyard/gh-actions/e2e@devel
         with:
-          using: ${{ matrix.globalnet }} ${{ matrix.lighthouse }}
+          using: ${{ matrix.globalnet }} ${{ matrix.lighthouse }} ${{ matrix.ovn }}
 
       - name: Post mortem
         if: failure()
