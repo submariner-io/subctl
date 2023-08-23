@@ -11,13 +11,18 @@ jobs:
   e2e:
     name: E2E
     if: contains(github.event.pull_request.labels.*.name, 'ready-to-test') && github.event.pull_request.state == 'open'
-    timeout-minutes: 30
+    timeout-minutes: 120
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         globalnet: ['', 'globalnet']
         lighthouse: ['', 'lighthouse']
+        ovn: ['']
+        include:
+          - ovn: 'ovn'
+            lighthouse: 'lighthouse'
+            globalnet: 'globalnet'
     steps:
       - name: Check out the repository
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
@@ -25,7 +30,7 @@ jobs:
       - name: Run E2E deployment and tests
         uses: submariner-io/shipyard/gh-actions/e2e@devel
         with:
-          using: ${{ matrix.globalnet }} ${{ matrix.lighthouse }}
+          using: ${{ matrix.globalnet }} ${{ matrix.lighthouse }} ${{ matrix.ovn }}
 
       - name: Post mortem
         if: failure()
