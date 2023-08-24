@@ -24,6 +24,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/spf13/cobra"
@@ -66,35 +67,44 @@ func init() {
 }
 
 func upgradeSubctl(status reporter.Interface) error {
-	status.Start("Getting the current subctl version")
-	defer status.End()
-
-	// TODO Address cases where current version is devel-*
-	currentVersion, err := semver.NewVersion(version.Version)
-
-	if currentVersion == nil {
-		return status.Error(err, "Error getting current subctl version")
-	}
-
-	status.Success("Current subctl version is %s", currentVersion)
-
-	if to == "" {
-		to = currentVersion.String()
-	}
-
-	toVersion, _ := semver.NewVersion(to)
-	if toVersion.LessThan(*currentVersion) || toVersion.Equal(*currentVersion) {
-		status.Success("Installed version %s of subctl is either equal or greater than the intended one %s. Exiting",
-			currentVersion, toVersion)
+	if to == version.Version {
+		// Already running the right version
 		return nil
 	}
 
-	status.Success(fmt.Sprintf("Installed version of subctl %s is less than the intended one. Upgrading subctl to %s", currentVersion,
-		toVersion))
+	// Default to downloading the latest version
+	targetVersionString := "latest"
+
+	if to != "" {
+		to = strings.TrimPrefix(to, "v")
+
+		toVersion, err := semver.NewVersion(to)
+		if toVersion == nil {
+			return status.Error(err, "Invalid target version")
+		}
+
+		// semver needs a dotted triplet, which is at least five characters;
+		// on development or unknown versions, assume we need to upgrade
+		if len(version.Version) >= 5 && version.Version[0:5] != "devel" {
+			currentVersion, err := semver.NewVersion(version.Version)
+			if currentVersion == nil {
+				return status.Error(err, "Error parsing current subctl version")
+			}
+
+			if toVersion.LessThan(*currentVersion) || toVersion.Equal(*currentVersion) {
+				return nil
+			}
+		}
+
+		targetVersionString = "v" + toVersion.String()
+	}
+
+	status.Start(fmt.Sprintf("Upgrading subctl from %s to %s", version.Version, targetVersionString))
+	defer status.End()
 
 	url := "https://get.submariner.io"
 
-	_, err = exec.Command("sh", "-c", "curl "+url+" | VERSION=v"+to+" bash").CombinedOutput()
+	_, err := exec.Command("sh", "-c", "curl "+url+" | VERSION="+targetVersionString+" bash").CombinedOutput()
 	if err != nil {
 		return status.Error(err, "Error upgrading subctl")
 	}
