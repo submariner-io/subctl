@@ -29,6 +29,7 @@ import (
 	"strings"
 
 	"github.com/coreos/go-semver/semver"
+	"github.com/google/go-github/v54/github"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -93,13 +94,24 @@ func upgrade(_ *cobra.Command, _ []string) {
 // upgradeSubctl upgrades the local copy of subctl, if necessary.
 // Returns the path to the upgraded subctl if subctl was upgraded, nil if it wasn't.
 func upgradeSubctl(status reporter.Interface) (string, error) {
+	// Default to downloading the latest version
+	targetVersionString := "latest"
+
+	// If the user hasn't specified a version, try to find the latest release on GitHub
+	if to == "" {
+		client := github.NewClient(nil)
+		latestRelease, _, err := client.Repositories.GetLatestRelease(context.TODO(), "submariner-io", "releases")
+
+		// If we can't determine the latest release, we'll force a download and delegate to get.submariner.io
+		if err == nil {
+			to = *latestRelease.TagName
+		}
+	}
+
 	if to == version.Version {
 		// Already running the right version
 		return "", nil
 	}
-
-	// Default to downloading the latest version
-	targetVersionString := "latest"
 
 	if to != "" {
 		to = strings.TrimPrefix(to, "v")
