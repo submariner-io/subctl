@@ -26,13 +26,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/util"
-	"github.com/submariner-io/subctl/internal/rbac"
 	"github.com/submariner-io/subctl/pkg/secret"
 	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 )
@@ -76,13 +77,13 @@ func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namesp
 }
 
 func EnsureTokenSecret(ctx context.Context, client kubernetes.Interface, namespace, saName string) (*corev1.Secret, error) {
-	saSecret, err := rbac.GetClientTokenSecret(ctx, client, namespace, saName)
+	saSecret, err := GetTokenSecretFor(ctx, client, namespace, saName)
 	if err == nil {
 		return saSecret, nil
 	}
 
 	if !apierrors.IsNotFound(err) {
-		return nil, err //nolint:wrapcheck // No need to wrap
+		return nil, err
 	}
 
 	newSecret := &corev1.Secret{
@@ -128,4 +129,26 @@ func EnsureTokenSecret(ctx context.Context, client kubernetes.Interface, namespa
 	}
 
 	return saSecret, err //nolint:wrapcheck // No need to wrap here
+}
+
+func GetTokenSecretFor(ctx context.Context, kubeClient kubernetes.Interface, namespace, serviceAccountName string,
+) (*corev1.Secret, error) {
+	saSecrets, err := kubeClient.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector("type", string(corev1.SecretTypeServiceAccountToken)).String(),
+	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to list secrets of type %q in namespace %q",
+			corev1.SecretTypeServiceAccountToken, namespace)
+	}
+
+	for i := range saSecrets.Items {
+		if saSecrets.Items[i].Annotations[corev1.ServiceAccountNameKey] == serviceAccountName {
+			return &saSecrets.Items[i], nil
+		}
+	}
+
+	return nil, apierrors.NewNotFound(schema.GroupResource{
+		Group:    corev1.SchemeGroupVersion.Group,
+		Resource: "secrets",
+	}, serviceAccountName)
 }
