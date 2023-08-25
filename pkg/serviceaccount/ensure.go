@@ -42,67 +42,40 @@ const (
 	creatorName         = "subctl"
 )
 
-// ensureFromYAML creates the given service account.
-func ensureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namespace, yaml string) (*corev1.ServiceAccount, error) {
-	sa := &corev1.ServiceAccount{}
-
-	err := embeddedyamls.GetObject(yaml, sa)
-	if err != nil {
-		return nil, err //nolint:wrapcheck // No need to wrap errors here.
-	}
-
-	err = ensure(ctx, kubeClient, namespace, sa)
-	if err != nil {
-		return nil, err
-	}
-
-	return sa, err
-}
-
-//nolint:wrapcheck // No need to wrap errors here.
-func ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount) error {
-	_, err := util.CreateOrUpdate(ctx, resource.ForServiceAccount(kubeClient, namespace), sa,
+func ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount) (bool, error) {
+	result, err := util.CreateOrUpdate(ctx, resource.ForServiceAccount(kubeClient, namespace), sa,
 		func(existing runtime.Object) (runtime.Object, error) {
 			existing.(*corev1.ServiceAccount).Secrets = nil
 			return existing, nil
 		})
 
-	return err
+	return result == util.OperationResultCreated, errors.Wrapf(err, "error creating or updating ServiceAccount %q", sa.Name)
 }
 
 //nolint:wrapcheck // No need to wrap errors here.
 func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount,
 ) (*corev1.ServiceAccount, error) {
-	err := ensure(ctx, kubeClient, namespace, sa)
+	_, err := ensure(ctx, kubeClient, namespace, sa)
 	if err != nil {
 		return nil, err
-	}
-
-	_, err = EnsureSecretFromSA(ctx, kubeClient, sa.Name, namespace)
-
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get secret for broker SA")
 	}
 
 	return kubeClient.CoreV1().ServiceAccounts(namespace).Get(ctx, sa.Name, metav1.GetOptions{})
 }
 
-// EnsureFromYAML creates the given service account and secret for it.
+// EnsureFromYAML creates the given service account from the YAML representation.
 func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namespace, yaml string) (bool, error) {
-	sa, err := ensureFromYAML(ctx, kubeClient, namespace, yaml)
+	sa := &corev1.ServiceAccount{}
+
+	err := embeddedyamls.GetObject(yaml, sa)
 	if err != nil {
-		return false, errors.Wrap(err, "error provisioning the ServiceAccount resource")
+		return false, errors.Wrap(err, "error extracting ServiceAccount resource from YAML")
 	}
 
-	saSecret, err := EnsureSecretFromSA(ctx, kubeClient, sa.Name, namespace)
-	if err != nil {
-		return false, errors.Wrap(err, "error creating secret for ServiceAccount resource")
-	}
-
-	return sa != nil && saSecret != nil, nil
+	return ensure(ctx, kubeClient, namespace, sa)
 }
 
-func EnsureSecretFromSA(ctx context.Context, client kubernetes.Interface, saName, namespace string) (*corev1.Secret, error) {
+func EnsureTokenSecret(ctx context.Context, client kubernetes.Interface, namespace, saName string) (*corev1.Secret, error) {
 	saSecret, err := rbac.GetClientTokenSecret(ctx, client, namespace, saName)
 	if err == nil {
 		return saSecret, nil

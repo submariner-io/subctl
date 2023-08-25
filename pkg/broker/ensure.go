@@ -23,7 +23,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/subctl/internal/component"
-	"github.com/submariner-io/subctl/internal/rbac"
+	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/gateway"
 	"github.com/submariner-io/subctl/pkg/namespace"
 	"github.com/submariner-io/subctl/pkg/role"
@@ -102,7 +102,7 @@ func CreateSAForCluster(ctx context.Context, kubeClient kubernetes.Interface, cl
 		return nil, errors.Wrap(err, "error binding sa to cluster role")
 	}
 
-	clientToken, err := rbac.GetClientTokenSecret(ctx, kubeClient, inNamespace, saName)
+	clientToken, err := serviceaccount.EnsureTokenSecret(ctx, kubeClient, inNamespace, saName)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting cluster sa token")
 	}
@@ -168,6 +168,11 @@ func CreateNewBrokerSA(ctx context.Context, kubeClient kubernetes.Interface, sub
 //nolint:wrapcheck // No need to wrap here
 func CreateNewBrokerAdminSA(ctx context.Context, kubeClient kubernetes.Interface, inNamespace string) (err error) {
 	_, err = serviceaccount.EnsureFromYAML(ctx, kubeClient, inNamespace, embeddedyamls.Config_broker_broker_admin_service_account_yaml)
+	if err != nil {
+		return err
+	}
+
+	_, err = serviceaccount.EnsureTokenSecret(ctx, kubeClient, inNamespace, constants.SubmarinerBrokerAdminSA)
 
 	return err
 }
