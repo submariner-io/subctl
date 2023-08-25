@@ -31,7 +31,7 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/internal/constants"
-	"github.com/submariner-io/subctl/internal/rbac"
+	"github.com/submariner-io/subctl/pkg/serviceaccount"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/utils/set"
@@ -61,7 +61,7 @@ func WriteInfoToFile(restConfig *rest.Config, brokerNamespace string, ipsecPSK [
 
 	data := &Info{}
 
-	data.ClientToken, err = rbac.GetClientTokenSecret(context.TODO(), kubeClient, brokerNamespace, constants.SubmarinerBrokerAdminSA)
+	data.ClientToken, err = serviceaccount.GetTokenSecretFor(context.TODO(), kubeClient, brokerNamespace, constants.SubmarinerBrokerAdminSA)
 	if err != nil {
 		return errors.Wrap(err, "error getting broker client secret")
 	}
