@@ -47,6 +47,12 @@ const (
 )
 
 const (
+	Libreswan = "libreswan"
+	Wireguard = "wireguard"
+	VxLAN     = "vxlan"
+)
+
+const (
 	clientSourcePort = "9898"
 	loadBalancerName = "submariner-gateway"
 	encapsPortName   = "cable-encaps"
@@ -245,22 +251,48 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 
 	defer cPod.Delete()
 
-	if err = cPod.AwaitCompletion(); err != nil {
-		return status.Error(err, "Error waiting for the client pod to finish its execution")
-	}
-
-	if err = sPod.AwaitCompletion(); err != nil {
-		return status.Error(err, "Error waiting for the sniffer pod to finish its execution")
+	err = awaitPodCompletion(cPod, sPod, status)
+	if err != nil {
+		return err
 	}
 
 	if options.VerboseOutput {
 		status.Success("tcpdump output from sniffer pod on Gateway node:\n%s", sPod.PodOutput)
 	}
 
+	var espNeeded bool
+	if gatewayPodIP == localEndpoint.Spec.PrivateIP && localEndpoint.Spec.Backend == Libreswan {
+		espNeeded = true
+	}
+
+	return validateOutput(sPod, clientMessage, localEndpoint.Spec.Hostname, destPort, espNeeded, status)
+}
+
+func awaitPodCompletion(cPod, sPod *pods.Scheduled, status reporter.Interface) error {
+	if err := cPod.AwaitCompletion(); err != nil {
+		return status.Error(err, "Error waiting for the client pod to finish its execution")
+	}
+
+	if err := sPod.AwaitCompletion(); err != nil {
+		return status.Error(err, "Error waiting for the sniffer pod to finish its execution")
+	}
+
+	return nil
+}
+
+func validateOutput(sPod *pods.Scheduled, clientMessage, hostname string, destPort int32,
+	espNeeded bool, status reporter.Interface,
+) error {
 	if !strings.Contains(sPod.PodOutput, clientMessage) {
+		espMsg := ""
+
+		if espNeeded {
+			espMsg = " and ESP traffic"
+		}
+
 		return status.Error(fmt.Errorf("the tcpdump output from the sniffer pod does not include the message"+
 			" sent from client pod. Please check that your firewall configuration allows UDP/%d traffic"+
-			" on the %q node. Actual pod output: \n%s", destPort, localEndpoint.Spec.Hostname, truncate(sPod.PodOutput)), "")
+			"%s on the %q node. Actual pod output: \n%s", destPort, espMsg, hostname, truncate(sPod.PodOutput)), "")
 	}
 
 	return nil
@@ -301,7 +333,7 @@ func getTargetPort(submariner *v1alpha1.Submariner, endpoint *subv1.Endpoint, tg
 	var err error
 
 	switch endpoint.Spec.Backend {
-	case "libreswan", "wireguard", "vxlan":
+	case Libreswan, Wireguard, VxLAN:
 		if tgtport == TunnelPort {
 			targetPort, err = endpoint.Spec.GetBackendPort(subv1.UDPPortConfig, int32(submariner.Spec.CeIPSecNATTPort))
 			if err != nil {
