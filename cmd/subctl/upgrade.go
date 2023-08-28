@@ -164,12 +164,12 @@ func upgradeSubmariner(clusterInfo *cluster.Info, _ string, status reporter.Inte
 	status.Start("Starting upgrade process")
 	defer status.End()
 
-	brokerObj, found, err := getBroker(clusterInfo.RestConfig, constants.DefaultBrokerNamespace)
+	brokerObj, brokerFound, err := getBroker(clusterInfo.RestConfig, constants.DefaultBrokerNamespace)
 	if err != nil {
 		return err
 	}
 
-	if found {
+	if brokerFound {
 		// Role updates are part of Broker redeploy
 		err = upgradeBroker(ctx, clusterInfo, status, brokerObj.Namespace, brokerObj.Spec)
 		if err != nil {
@@ -181,49 +181,47 @@ func upgradeSubmariner(clusterInfo *cluster.Info, _ string, status reporter.Inte
 	var debug bool
 	var imageOverride map[string]string
 
-	if !found {
-		if clusterInfo.Submariner != nil {
-			repository = clusterInfo.Submariner.Spec.Repository
-			imageOverride = clusterInfo.Submariner.Spec.ImageOverrides
-			debug = clusterInfo.Submariner.Spec.Debug
-		} else if clusterInfo.ServiceDiscovery != nil {
-			repository = clusterInfo.ServiceDiscovery.Spec.Repository
-			imageOverride = clusterInfo.ServiceDiscovery.Spec.ImageOverrides
-			debug = clusterInfo.ServiceDiscovery.Spec.Debug
+	if clusterInfo.Submariner != nil {
+		repository = clusterInfo.Submariner.Spec.Repository
+		imageOverride = clusterInfo.Submariner.Spec.ImageOverrides
+		debug = clusterInfo.Submariner.Spec.Debug
+	} else if clusterInfo.ServiceDiscovery != nil {
+		repository = clusterInfo.ServiceDiscovery.Spec.Repository
+		imageOverride = clusterInfo.ServiceDiscovery.Spec.ImageOverrides
+		debug = clusterInfo.ServiceDiscovery.Spec.Debug
+	}
+
+	// Upgrade Operator if deployed
+	if err := upgradeOperator(ctx, clusterInfo, repository, debug, imageOverride, status); err != nil {
+		return status.Error(err, "Error upgrading Operator")
+	}
+
+	// Upgrade Submariner
+	if clusterInfo.Submariner != nil {
+		status.Start("Found Submariner components. Upgrading it to %s", to)
+
+		clusterInfo.Submariner.Spec.Version = to
+
+		err := deploy.SubmarinerFromSpec(ctx, clusterInfo.ClientProducer.ForGeneral(), &clusterInfo.Submariner.Spec)
+		if err != nil {
+			return status.Error(err, "Error upgrading Submariner")
 		}
 
-		// Upgrade Operator if deployed
-		if err := upgradeOperator(ctx, clusterInfo, repository, debug, imageOverride, status); err != nil {
-			return status.Error(err, "Error upgrading Operator")
+		status.Success("Submariner successfully upgraded")
+	}
+
+	// Upgrade Service discovery
+	if clusterInfo.ServiceDiscovery != nil {
+		status.Start("Found Service Discovery components. Upgrading it to %s", to)
+
+		clusterInfo.ServiceDiscovery.Spec.Version = to
+
+		err := deploy.ServiceDiscoveryFromSpec(ctx, clusterInfo.ClientProducer.ForGeneral(), &clusterInfo.ServiceDiscovery.Spec)
+		if err != nil {
+			return status.Error(err, "Error upgrading Service Discovery")
 		}
 
-		// Upgrade Submariner
-		if clusterInfo.Submariner != nil {
-			status.Start("Found Submariner components. Upgrading it to %s", to)
-
-			clusterInfo.Submariner.Spec.Version = to
-
-			err := deploy.SubmarinerFromSpec(ctx, clusterInfo.ClientProducer.ForGeneral(), &clusterInfo.Submariner.Spec)
-			if err != nil {
-				return status.Error(err, "Error upgrading Submariner")
-			}
-
-			status.Success("Submariner successfully upgraded")
-		}
-
-		// Upgrade Service discovery
-		if clusterInfo.ServiceDiscovery != nil {
-			status.Start("Found Service Discovery components. Upgrading it to %s", to)
-
-			clusterInfo.ServiceDiscovery.Spec.Version = to
-
-			err := deploy.ServiceDiscoveryFromSpec(ctx, clusterInfo.ClientProducer.ForGeneral(), &clusterInfo.ServiceDiscovery.Spec)
-			if err != nil {
-				return status.Error(err, "Error upgrading Service Discovery")
-			}
-
-			status.Success("Service discovery successfully upgraded.")
-		}
+		status.Success("Service discovery successfully upgraded.")
 	}
 
 	return nil
