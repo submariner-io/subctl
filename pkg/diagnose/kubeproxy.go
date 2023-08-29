@@ -25,6 +25,7 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/pods"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	"github.com/submariner-io/submariner/pkg/cni"
 )
 
 const (
@@ -46,6 +47,11 @@ func SetKubeProxyImageOverride(imageOverrides []string) {
 func KubeProxyMode(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 	status.Start("Checking Submariner support for the kube-proxy mode")
 	defer status.End()
+
+	if strings.EqualFold(clusterInfo.Submariner.Status.NetworkPlugin, cni.OVNKubernetes) {
+		status.Success("Cluster is running with %q CNI which internally implements kube-proxy functionality", cni.OVNKubernetes)
+		return nil
+	}
 
 	scheduling := pods.Scheduling{ScheduleOn: pods.GatewayNode, Networking: pods.HostNetworking}
 
