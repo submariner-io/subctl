@@ -21,6 +21,7 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -57,7 +58,7 @@ func recoverBrokerInfoFromSubm(submCluster *cluster.Info, _ string, status repor
 	status.Start("Checking if the Broker is installed on the Submariner cluster %q in namespace %q", submCluster.Name, brokerNamespace)
 	defer status.End()
 
-	brokerObj, found, err := getBroker(brokerRestConfig, brokerNamespace)
+	brokerObj, found, err := getBroker(context.TODO(), brokerRestConfig, brokerNamespace)
 	if err != nil {
 		return status.Error(err, "Error getting Broker")
 	}
@@ -70,7 +71,7 @@ func recoverBrokerInfoFromSubm(submCluster *cluster.Info, _ string, status repor
 			return status.Error(err, "Error getting the Broker's REST config")
 		}
 
-		brokerObj, found, err = getBroker(brokerRestConfig, brokerNamespace)
+		brokerObj, found, err = getBroker(context.TODO(), brokerRestConfig, brokerNamespace)
 		if err != nil {
 			return status.Error(err, "")
 		}

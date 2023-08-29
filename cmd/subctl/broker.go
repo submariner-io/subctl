@@ -30,7 +30,7 @@ import (
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func getBroker(config *rest.Config, namespace string) (*v1alpha1.Broker, bool, error) {
+func getBroker(ctx context.Context, config *rest.Config, namespace string) (*v1alpha1.Broker, bool, error) {
 	brokerClientProducer, err := client.NewProducerFromRestConfig(config)
 	if err != nil {
 		return nil, false, errors.Wrap(err, "error creating broker client Producer")
@@ -38,7 +38,7 @@ func getBroker(config *rest.Config, namespace string) (*v1alpha1.Broker, bool, e
 
 	brokerObj := &v1alpha1.Broker{}
 	err = brokerClientProducer.ForGeneral().Get(
-		context.TODO(), controllerClient.ObjectKey{
+		ctx, controllerClient.ObjectKey{
 			Namespace: namespace,
 			Name:      brokercr.Name,
 		}, brokerObj)
