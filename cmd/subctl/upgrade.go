@@ -22,7 +22,6 @@ package subctl
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -42,13 +41,14 @@ import (
 	"github.com/submariner-io/subctl/pkg/image"
 	"github.com/submariner-io/subctl/pkg/operator"
 	"github.com/submariner-io/subctl/pkg/version"
-	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
-	to                        string
+	upgradeSubctlVersion      string
+	upgradeOperatorVersion    string
+	upgradeSubmarinerVersion  string
 	upgradeRestConfigProducer = restconfig.NewProducer()
 )
 
@@ -60,7 +60,11 @@ var upgradeCmd = &cobra.Command{
 }
 
 func init() {
-	upgradeCmd.Flags().StringVar(&to, "to", "", "the version of Submariner to upgrade to")
+	upgradeCmd.Flags().StringVar(&upgradeSubctlVersion, "to-version", "", "the version of subctl and Submariner to which to upgrade")
+	upgradeCmd.Flags().StringVar(&upgradeOperatorVersion, "to-operator-version", "", "the version of the operator to which to upgrade")
+	_ = upgradeCmd.Flags().MarkHidden("to-operator-version")
+	upgradeCmd.Flags().StringVar(&upgradeSubmarinerVersion, "to-submariner-version", "", "the version of Submariner to which to upgrade")
+	_ = upgradeCmd.Flags().MarkHidden("to-submariner-version")
 	upgradeRestConfigProducer.SetupFlags(upgradeCmd.Flags())
 	rootCmd.AddCommand(upgradeCmd)
 }
@@ -98,25 +102,25 @@ func upgradeSubctl(status reporter.Interface) (string, error) {
 	targetVersionString := "latest"
 
 	// If the user hasn't specified a version, try to find the latest release on GitHub
-	if to == "" {
+	if upgradeSubctlVersion == "" {
 		client := github.NewClient(nil)
 		latestRelease, _, err := client.Repositories.GetLatestRelease(context.TODO(), "submariner-io", "releases")
 
 		// If we can't determine the latest release, we'll force a download and delegate to get.submariner.io
 		if err == nil {
-			to = *latestRelease.TagName
+			upgradeSubctlVersion = *latestRelease.TagName
 		}
 	}
 
-	if to == version.Version {
+	if upgradeSubctlVersion == version.Version {
 		// Already running the right version
 		return "", nil
 	}
 
-	if to != "" {
-		to = strings.TrimPrefix(to, "v")
+	if upgradeSubctlVersion != "" {
+		upgradeSubctlVersion = strings.TrimPrefix(upgradeSubctlVersion, "v")
 
-		toVersion, err := semver.NewVersion(to)
+		toVersion, err := semver.NewVersion(upgradeSubctlVersion)
 		if toVersion == nil {
 			return "", status.Error(err, "Invalid target version")
 		}
@@ -137,8 +141,7 @@ func upgradeSubctl(status reporter.Interface) (string, error) {
 		targetVersionString = "v" + toVersion.String()
 	}
 
-	status.Start(fmt.Sprintf("Upgrading subctl from %s to %s, replacing %s", version.Version, targetVersionString, os.Args[0]))
-	defer status.End()
+	status.Start("Upgrading subctl from %s to %s, replacing %s", version.Version, targetVersionString, os.Args[0])
 
 	url := "https://get.submariner.io"
 
@@ -153,7 +156,7 @@ func upgradeSubctl(status reporter.Interface) (string, error) {
 		return "", status.Error(err, "Error upgrading subctl")
 	}
 
-	status.Success("Upgraded and installed subctl version: %s", to)
+	status.End()
 
 	return absolutePath, nil
 }
@@ -161,20 +164,22 @@ func upgradeSubctl(status reporter.Interface) (string, error) {
 func upgradeSubmariner(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	ctx := context.TODO()
 
-	status.Start("Starting upgrade process")
-	defer status.End()
-
-	brokerObj, brokerFound, err := getBroker(clusterInfo.RestConfig, constants.DefaultBrokerNamespace)
-	if err != nil {
-		return err
+	// We only expect users to specify a subctl version, if any ("--to-version"). In such scenarios,
+	// the versions are expected to align, so subctl vX installs the operator image tagged with vX,
+	// and that operator defaults to the appropriate Submariner version.
+	// Other versions can be set for debugging purposes (to test installation with development versions,
+	// before tags are aligned).
+	// If the operator version isn't specified, it should match the version of subctl.
+	// If the Submariner version isn't specified, it should be left blank so that the operator uses
+	// its defaults.
+	if upgradeOperatorVersion == "" {
+		upgradeOperatorVersion = upgradeSubctlVersion
 	}
 
-	if brokerFound {
-		// Role updates are part of Broker redeploy
-		err = upgradeBroker(ctx, clusterInfo, status, brokerObj.Namespace, brokerObj.Spec)
-		if err != nil {
-			return status.Error(err, "Error upgrading Broker")
-		}
+	// Upgrade Broker if installed; role updates are part of Broker redeploy
+	brokerUpgraded, err := upgradeBroker(ctx, clusterInfo, status)
+	if err != nil {
+		return err
 	}
 
 	var repository string
@@ -189,87 +194,114 @@ func upgradeSubmariner(clusterInfo *cluster.Info, _ string, status reporter.Inte
 		repository = clusterInfo.ServiceDiscovery.Spec.Repository
 		imageOverride = clusterInfo.ServiceDiscovery.Spec.ImageOverrides
 		debug = clusterInfo.ServiceDiscovery.Spec.Debug
+	} else {
+		// Nothing further to do
+		return nil
 	}
 
-	// Upgrade Operator if deployed
-	if err := upgradeOperator(ctx, clusterInfo, repository, debug, imageOverride, status); err != nil {
-		return status.Error(err, "Error upgrading Operator")
+	// If a Broker was upgraded in this context, the Operator has already been upgraded
+	if !brokerUpgraded {
+		// Upgrade Operator if deployed
+		if err := upgradeOperator(ctx, clusterInfo, repository, debug, imageOverride, status); err != nil {
+			return err
+		}
+	}
+
+	// We want to show the user a version; use the most specific one
+	logVersion := upgradeSubctlVersion
+	if upgradeOperatorVersion != "" {
+		logVersion = upgradeOperatorVersion
+	}
+
+	if upgradeSubmarinerVersion != "" {
+		logVersion = upgradeSubmarinerVersion
 	}
 
 	// Upgrade Submariner
-	if clusterInfo.Submariner != nil {
-		status.Start("Found Submariner components. Upgrading it to %s", to)
-
-		clusterInfo.Submariner.Spec.Version = to
-
-		err := deploy.SubmarinerFromSpec(ctx, clusterInfo.ClientProducer.ForGeneral(), &clusterInfo.Submariner.Spec)
-		if err != nil {
-			return status.Error(err, "Error upgrading Submariner")
-		}
-
-		status.Success("Submariner successfully upgraded")
+	if err := upgradeConnectivity(ctx, clusterInfo, logVersion, status); err != nil {
+		return err
 	}
 
 	// Upgrade Service discovery
-	if clusterInfo.ServiceDiscovery != nil {
-		status.Start("Found Service Discovery components. Upgrading it to %s", to)
-
-		clusterInfo.ServiceDiscovery.Spec.Version = to
-
-		err := deploy.ServiceDiscoveryFromSpec(ctx, clusterInfo.ClientProducer.ForGeneral(), &clusterInfo.ServiceDiscovery.Spec)
-		if err != nil {
-			return status.Error(err, "Error upgrading Service Discovery")
-		}
-
-		status.Success("Service discovery successfully upgraded.")
-	}
-
-	return nil
+	return upgradeServiceDiscovery(ctx, clusterInfo, logVersion, status)
 }
 
-func upgradeBroker(ctx context.Context, clusterInfo *cluster.Info, status reporter.Interface, namespace string,
-	brokerSpec v1alpha1.BrokerSpec,
-) error {
-	status.Start("Found Broker installed. Upgrading it to %s", to)
+func upgradeBroker(ctx context.Context, clusterInfo *cluster.Info, status reporter.Interface) (bool, error) {
+	status.Start("Checking if the Broker is installed")
+	defer status.End()
+
+	brokerObj, brokerFound, err := getBroker(ctx, clusterInfo.RestConfig, constants.DefaultBrokerNamespace)
+	if err != nil {
+		return false, status.Error(err, "Error checking for the Broker")
+	}
+
+	if !brokerFound {
+		return false, nil
+	}
+
+	status.Start("Upgrading the Broker to %s", upgradeOperatorVersion)
 	options := &deploy.BrokerOptions{
-		ImageVersion:    to,
-		BrokerNamespace: namespace,
-		BrokerSpec:      brokerSpec,
+		ImageVersion:    upgradeOperatorVersion,
+		BrokerNamespace: brokerObj.Namespace,
+		BrokerSpec:      brokerObj.Spec,
 	}
 
-	if err := deploy.Deploy(ctx, options, status, clusterInfo.ClientProducer); err != nil {
-		return err //nolint:wrapcheck // No need to wrap here
-	}
+	err = deploy.Deploy(ctx, options, status, clusterInfo.ClientProducer)
 
-	status.Success("Broker successfully upgraded.")
-
-	return nil
+	return err == nil, status.Error(err, "Error upgrading the Broker")
 }
 
 func upgradeOperator(ctx context.Context, clusterInfo *cluster.Info, repository string, debug bool, imageOverride map[string]string,
 	status reporter.Interface,
 ) error {
-	status.Start("Checking if Operator is deployed")
+	status.Start("Checking if the Operator is installed")
 	defer status.End()
 
-	operatorDeployment, err := clusterInfo.ClientProducer.ForKubernetes().AppsV1().Deployments(constants.OperatorNamespace).
+	_, err := clusterInfo.ClientProducer.ForKubernetes().AppsV1().Deployments(constants.OperatorNamespace).
 		Get(ctx, names.OperatorComponent, metav1.GetOptions{})
-	if err != nil && !errors.IsNotFound(err) {
+	if errors.IsNotFound(err) {
+		return nil
+	}
+
+	if err != nil {
 		return status.Error(err, "Error retrieving Operator deployment")
 	}
 
-	if operatorDeployment != nil {
-		status.Success("Operator deployed. Upgrading it")
+	status.Start("Upgrading the Operator to %s", upgradeOperatorVersion)
 
-		repositoryInfo := image.NewRepositoryInfo(repository, to, imageOverride)
+	repositoryInfo := image.NewRepositoryInfo(repository, upgradeOperatorVersion, imageOverride)
 
-		err = operator.Ensure(
-			ctx, status, clusterInfo.ClientProducer, constants.OperatorNamespace, repositoryInfo.GetOperatorImage(), debug)
-		if err != nil {
-			return status.Error(err, "Error upgrading the Operator")
-		}
+	err = operator.Ensure(
+		ctx, status, clusterInfo.ClientProducer, constants.OperatorNamespace, repositoryInfo.GetOperatorImage(), debug)
 
-		status.Success("Operator successfully upgraded")
+	return status.Error(err, "Error upgrading the Operator")
+}
+
+func upgradeConnectivity(ctx context.Context, clusterInfo *cluster.Info, logVersion string, status reporter.Interface) error {
+	if clusterInfo.Submariner != nil {
+		status.Start("Upgrading the Connectivity component to %s", logVersion)
+		defer status.End()
+
+		clusterInfo.Submariner.Spec.Version = upgradeSubmarinerVersion
+
+		err := deploy.SubmarinerFromSpec(ctx, clusterInfo.ClientProducer.ForGeneral(), &clusterInfo.Submariner.Spec)
+
+		return status.Error(err, "Error upgrading the Connectivity component")
+	}
+
+	return nil
+}
+
+func upgradeServiceDiscovery(ctx context.Context, clusterInfo *cluster.Info, logVersion string, status reporter.Interface) error {
+	if clusterInfo.ServiceDiscovery != nil {
+		status.Start("Upgrading Service Discovery to %s", logVersion)
+		defer status.End()
+
+		clusterInfo.ServiceDiscovery.Spec.Version = upgradeSubmarinerVersion
+
+		err := deploy.ServiceDiscoveryFromSpec(ctx, clusterInfo.ClientProducer.ForGeneral(), &clusterInfo.ServiceDiscovery.Spec)
+
+		return status.Error(err, "Error upgrading Service Discovery")
 	}
 
 	return nil
