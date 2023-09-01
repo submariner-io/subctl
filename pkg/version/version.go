@@ -31,8 +31,9 @@ import (
 var Version = "devel"
 
 const (
-	minK8sMajor = 1  // We need K8s 1.17 for endpoint slices;
-	minK8sMinor = 19 // 1.19 is the oldest we test with
+	minK8sMajor                 = 1
+	minK8sMinorConnectivity     = 19 // 1.19 is the oldest we test with
+	minK8sMinorServiceDiscovery = 21 // 1.21 is the oldest with endpoint slices we support
 )
 
 // PrintSubctlVersion will print the version subctl was compiled under.
@@ -40,7 +41,7 @@ func PrintSubctlVersion(w io.Writer) {
 	fmt.Fprintf(w, "subctl version: %s\n", Version)
 }
 
-func CheckRequirements(k8sclient kubernetes.Interface) (string, []string, error) {
+func CheckRequirements(k8sclient kubernetes.Interface, serviceDiscovery bool) (string, []string, error) {
 	failedRequirements := []string{}
 
 	serverVersion, err := k8sclient.Discovery().ServerVersion()
@@ -66,10 +67,18 @@ func CheckRequirements(k8sclient kubernetes.Interface) (string, []string, error)
 			errors.WithMessagef(err, "error parsing API server minor version %v", serverVersion.Minor)
 	}
 
-	if major < minK8sMajor || major == minK8sMajor && minor < minK8sMinor {
+	if serviceDiscovery {
+		if major < minK8sMajor || major == minK8sMajor && minor < minK8sMinorServiceDiscovery {
+			failedRequirements = append(failedRequirements,
+				fmt.Sprintf("Submariner service discovery requires Kubernetes %d.%d; your cluster is running %s.%s",
+					minK8sMajor, minK8sMinorServiceDiscovery, serverVersion.Major, serverVersion.Minor))
+		}
+	}
+
+	if major < minK8sMajor || major == minK8sMajor && minor < minK8sMinorConnectivity {
 		failedRequirements = append(failedRequirements,
-			fmt.Sprintf("Submariner requires Kubernetes %d.%d; your cluster is running %s.%s",
-				minK8sMajor, minK8sMinor, serverVersion.Major, serverVersion.Minor))
+			fmt.Sprintf("Submariner connectivity requires Kubernetes %d.%d; your cluster is running %s.%s",
+				minK8sMajor, minK8sMinorConnectivity, serverVersion.Major, serverVersion.Minor))
 	}
 
 	return serverVersion.String(), failedRequirements, nil

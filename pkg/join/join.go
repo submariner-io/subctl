@@ -44,7 +44,7 @@ import (
 func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Options,
 	clientProducer client.Producer, status reporter.Interface,
 ) error {
-	err := checkRequirements(clientProducer.ForKubernetes(), options.IgnoreRequirements, status)
+	err := checkRequirements(clientProducer.ForKubernetes(), options.IgnoreRequirements, brokerInfo, status)
 	if err != nil {
 		return err
 	}
@@ -173,8 +173,8 @@ func serviceDiscoveryOptionsFrom(joinOptions *Options) *deploy.ServiceDiscoveryO
 	}
 }
 
-func checkRequirements(kubeClient kubernetes.Interface, ignoreRequirements bool, status reporter.Interface) error {
-	_, failedRequirements, err := version.CheckRequirements(kubeClient)
+func checkRequirements(kubeClient kubernetes.Interface, ignoreRequirements bool, brokerInfo *broker.Info, status reporter.Interface) error {
+	_, failedRequirements, err := version.CheckRequirements(kubeClient, brokerInfo.ServiceDiscovery)
 
 	if len(failedRequirements) > 0 {
 		msg := "The target cluster fails to meet Submariner's version requirements:\n"
