@@ -67,13 +67,13 @@ func printDaemonSetVersions(clusterInfo *cluster.Info, printer *table.Printer, c
 		// The name of the function is confusing, it just parses any image repo & version
 		version, repository := images.ParseOperatorImage(daemonSet.Spec.Template.Spec.Containers[0].Image)
 
-		runningVersion, err := getVersionForComponent(clusterInfo, component,
+		runningVersion, arch, err := getVersionAndArchForComponent(clusterInfo, component,
 			labels.SelectorFromSet(daemonSet.Spec.Selector.MatchLabels))
 		if err != nil {
 			return errors.Wrapf(err, "error retrieving running version for %s", component)
 		}
 
-		printer.Add(component, repository, version, runningVersion)
+		printer.Add(component, repository, version, runningVersion, arch)
 	}
 
 	return nil
@@ -94,43 +94,64 @@ func printDeploymentVersions(clusterInfo *cluster.Info, printer *table.Printer, 
 
 		version, repository := images.ParseOperatorImage(deployment.Spec.Template.Spec.Containers[0].Image)
 
-		runningVersion, err := getVersionForComponent(clusterInfo, component,
+		runningVersion, arch, err := getVersionAndArchForComponent(clusterInfo, component,
 			labels.SelectorFromSet(deployment.Spec.Selector.MatchLabels))
 		if err != nil {
 			return err
 		}
 
-		printer.Add(component, repository, version, runningVersion)
+		printer.Add(component, repository, version, runningVersion, arch)
 	}
 
 	return nil
 }
 
-func getVersionForComponent(clusterInfo *cluster.Info, component string, labelSelector labels.Selector) (string, error) {
+func getVersionAndArchForComponent(clusterInfo *cluster.Info, component string, labelSelector labels.Selector) (string, string, error) {
 	podsClient := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Pods(constants.OperatorNamespace)
 	podList, err := podsClient.List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector.String()})
 
 	if err != nil || len(podList.Items) < 1 {
-		return "", errors.Wrapf(err, "failed to find pods for component %s", component)
+		return "", "", errors.Wrapf(err, "failed to find pods for component %s", component)
 	}
 
 	// Try all pods
 	for i := range podList.Items {
 		pod := &podList.Items[i]
-		podVersion := getVersionFromPodBinary(pod, clusterInfo, component)
 
+		arch, err := getArchForPod(clusterInfo, pod)
+		if err != nil {
+			return "", "", err
+		}
+
+		podVersion := getVersionFromPodBinary(pod, clusterInfo, component)
 		if podVersion != "" {
-			return podVersion, nil
+			return podVersion, arch, nil
 		}
 
 		podVersion = getVersionFromPodLogs(pod, podsClient, component)
-
 		if podVersion != "" {
-			return podVersion, nil
+			return podVersion, arch, nil
 		}
 	}
 
-	return "Unavailable", nil
+	return "Unavailable", "Unavailable", nil
+}
+
+func getArchForPod(clusterInfo *cluster.Info, pod *corev1.Pod) (string, error) {
+	if pod.Spec.NodeName == "" {
+		return "", nil
+	}
+
+	nodesClient := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Nodes()
+
+	node, err := nodesClient.Get(context.TODO(), pod.Spec.NodeName, metav1.GetOptions{})
+	if err != nil {
+		return "", errors.Wrapf(err, "error retrieving node %s", pod.Spec.NodeName)
+	}
+
+	arch := node.GetLabels()[corev1.LabelArchStable]
+
+	return arch, nil
 }
 
 func getVersionFromPodBinary(pod *corev1.Pod, clusterInfo *cluster.Info, component string) string {
@@ -191,6 +212,7 @@ func Versions(clusterInfo *cluster.Info, _ string, status reporter.Interface) er
 		{Name: "REPOSITORY"},
 		{Name: "CONFIGURED"},
 		{Name: "RUNNING"},
+		{Name: "ARCH"},
 	}}
 
 	err := printDaemonSetVersions(clusterInfo, &printer, names.GatewayComponent, names.RouteAgentComponent, names.GlobalnetComponent,
