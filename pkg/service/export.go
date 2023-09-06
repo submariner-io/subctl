@@ -20,6 +20,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/resource"
@@ -62,6 +63,49 @@ func Export(clientProducer client.Producer, serviceNamespace, svcName string, st
 	}
 
 	status.Success("Service exported successfully")
+
+	return nil
+}
+
+func Exports(clientProducer client.Producer, serviceNamespace string, status reporter.Interface) error {
+	svcs, err := clientProducer.ForKubernetes().CoreV1().Services(serviceNamespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return status.Error(err, "Unable to list the Services in namespace %q", serviceNamespace)
+	}
+
+	if len(svcs.Items) == 0 {
+		status.Warning("No Services exist in target namespace")
+		return nil
+	}
+
+	for _, svc := range svcs.Items {
+		mcsServiceExport := &mcsv1a1.ServiceExport{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      svc.Name,
+				Namespace: serviceNamespace,
+			},
+		}
+
+		resourceServiceExport, err := resource.ToUnstructured(mcsServiceExport)
+		if err != nil {
+			return status.Error(err, "Failed to convert to Unstructured")
+		}
+
+		serviceExportGVR := gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports")
+
+		_, err = clientProducer.ForDynamic().Resource(serviceExportGVR).Namespace(serviceNamespace).
+			Create(context.TODO(), resourceServiceExport, metav1.CreateOptions{})
+		if err != nil {
+			if k8serrors.IsAlreadyExists(err) {
+				status.Success(fmt.Sprintf("Service %s already exported", svc.Name))
+				continue
+			}
+
+			return status.Error(err, "Failed to export Service")
+		}
+
+		status.Success(fmt.Sprintf("Service %s exported successfully", svc.Name))
+	}
 
 	return nil
 }

@@ -54,6 +54,21 @@ var (
 				}, cli.NewReporter()))
 		},
 	}
+	exportNamespaceCmd = &cobra.Command{
+		Use:   "namespace <namespaceName>",
+		Short: "Exports Services under a specific namespace to other clusters",
+		Long: "This command creates ServiceExport resources with the given namespace which causes the Services under the namespace of the same name to be accessible" +
+			" to other clusters",
+		Run: func(cmd *cobra.Command, args []string) {
+			err := validateArguments(args)
+			exit.OnErrorWithMessage(err, "Insufficient arguments")
+
+			exit.OnError(exportRestConfigProducer.RunOnSelectedContext(
+				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					return service.Exports(clusterInfo.ClientProducer, args[0], status) //nolint:wrapcheck // No need to wrap errors here.
+				}, cli.NewReporter()))
+		},
+	}
 )
 
 func init() {
@@ -62,6 +77,7 @@ func init() {
 
 	exportRestConfigProducer.SetupFlags(exportServiceCmd.Flags())
 	exportCmd.AddCommand(exportServiceCmd)
+	exportCmd.AddCommand(exportNamespaceCmd)
 	rootCmd.AddCommand(exportCmd)
 }
 
