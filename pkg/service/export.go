@@ -55,14 +55,14 @@ func Export(clientProducer client.Producer, serviceNamespace, svcName string, st
 		Create(context.TODO(), resourceServiceExport, metav1.CreateOptions{})
 	if err != nil {
 		if k8serrors.IsAlreadyExists(err) {
-			status.Success("Service already exported")
+			status.Success(fmt.Sprintf("Service %s/%s already exported", serviceNamespace, svcName))
 			return nil
 		}
 
-		return status.Error(err, "Failed to export Service")
+		return status.Error(err, fmt.Sprintf("Failed to export Service %s/%s", serviceNamespace, svcName))
 	}
 
-	status.Success("Service exported successfully")
+	status.Success(fmt.Sprintf("Service %s/%s exported successfully", serviceNamespace, svcName))
 
 	return nil
 }
@@ -79,32 +79,9 @@ func Exports(clientProducer client.Producer, serviceNamespace string, status rep
 	}
 
 	for _, svc := range svcs.Items {
-		mcsServiceExport := &mcsv1a1.ServiceExport{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      svc.Name,
-				Namespace: serviceNamespace,
-			},
+		if err := Export(clientProducer, svc.Namespace, svc.Name, status); err != nil {
+			return err
 		}
-
-		resourceServiceExport, err := resource.ToUnstructured(mcsServiceExport)
-		if err != nil {
-			return status.Error(err, "Failed to convert to Unstructured")
-		}
-
-		serviceExportGVR := gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports")
-
-		_, err = clientProducer.ForDynamic().Resource(serviceExportGVR).Namespace(serviceNamespace).
-			Create(context.TODO(), resourceServiceExport, metav1.CreateOptions{})
-		if err != nil {
-			if k8serrors.IsAlreadyExists(err) {
-				status.Success(fmt.Sprintf("Service %s already exported", svc.Name))
-				continue
-			}
-
-			return status.Error(err, "Failed to export Service")
-		}
-
-		status.Success(fmt.Sprintf("Service %s exported successfully", svc.Name))
 	}
 
 	return nil
