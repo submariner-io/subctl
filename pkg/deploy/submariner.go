@@ -33,6 +33,7 @@ import (
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 	v1 "k8s.io/api/core/v1"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type SubmarinerOptions struct {
@@ -68,12 +69,18 @@ func Submariner(ctx context.Context, clientProducer client.Producer, options *Su
 
 	submarinerSpec := populateSubmarinerSpec(options, brokerInfo, brokerSecret, pskSecret, netconfig, repositoryInfo)
 
-	err = submarinercr.Ensure(ctx, clientProducer.ForGeneral(), constants.OperatorNamespace, submarinerSpec)
+	err = SubmarinerFromSpec(ctx, clientProducer.ForGeneral(), submarinerSpec)
 	if err != nil {
 		return status.Error(err, "Submariner deployment failed")
 	}
 
 	return nil
+}
+
+func SubmarinerFromSpec(ctx context.Context, ctlClient controllerClient.Client, submarinerSpec *operatorv1alpha1.SubmarinerSpec) error {
+	err := submarinercr.Ensure(ctx, ctlClient, constants.OperatorNamespace, submarinerSpec)
+
+	return err //nolint:wrapcheck // No need to wrap here
 }
 
 func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info, brokerSecret *v1.Secret, pskSecret *v1.Secret,

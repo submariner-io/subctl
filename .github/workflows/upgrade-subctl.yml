@@ -1,0 +1,44 @@
+---
+name: Upgrade command
+
+on:
+  pull_request:
+    branches: [devel]
+
+permissions: {}
+
+jobs:
+  upgrade-command:
+    name: subctl upgrade command
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        using: ['', 'globalnet,lighthouse']
+    steps:
+      - name: Check out the subctl repository
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
+
+      - name: Check out the shipyard repository
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
+        with:
+          repository: submariner-io/shipyard
+          path: shipyard
+          ref: ${{ github.base_ref }}
+
+      - name: Deploy old environment
+        run: make deploy-latest using="${{ matrix.using }}"
+
+      - name: Build new subctl
+        run: make cmd/bin/subctl
+
+      - name: Run upgrade command
+        run: cmd/bin/subctl upgrade
+
+      - name: Run e2e tests
+        run: make e2e
+
+      - name: Post mortem
+        if: failure()
+        uses: submariner-io/shipyard/gh-actions/post-mortem@devel

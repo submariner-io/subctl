@@ -66,8 +66,10 @@ export PATH := $(CURDIR)/cmd/bin:$(PATH)
 # Targets to make
 
 # Build subctl before deploying to ensure we use that
-# (with the PATH set above)
+# (with the PATH set above), unless we're deploying "latest"
+ifneq (latest,$(SUBCTL_VERSION))
 deploy: cmd/bin/subctl
+endif
 
 # [system-test] runs system level tests for the various `subctl` commands
 system-test:

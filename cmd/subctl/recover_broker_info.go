@@ -24,20 +24,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/broker"
-	"github.com/submariner-io/subctl/pkg/brokercr"
-	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	"github.com/submariner-io/submariner-operator/api/v1alpha1"
-	"k8s.io/client-go/rest"
-	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var recoverRestConfigProducer = restconfig.NewProducer()
@@ -65,7 +58,7 @@ func recoverBrokerInfoFromSubm(submCluster *cluster.Info, _ string, status repor
 	status.Start("Checking if the Broker is installed on the Submariner cluster %q in namespace %q", submCluster.Name, brokerNamespace)
 	defer status.End()
 
-	brokerObj, found, err := getBroker(brokerRestConfig, brokerNamespace)
+	brokerObj, found, err := getBroker(context.TODO(), brokerRestConfig, brokerNamespace)
 	if err != nil {
 		return status.Error(err, "Error getting Broker")
 	}
@@ -78,7 +71,7 @@ func recoverBrokerInfoFromSubm(submCluster *cluster.Info, _ string, status repor
 			return status.Error(err, "Error getting the Broker's REST config")
 		}
 
-		brokerObj, found, err = getBroker(brokerRestConfig, brokerNamespace)
+		brokerObj, found, err = getBroker(context.TODO(), brokerRestConfig, brokerNamespace)
 		if err != nil {
 			return status.Error(err, "")
 		}
@@ -92,28 +85,4 @@ func recoverBrokerInfoFromSubm(submCluster *cluster.Info, _ string, status repor
 
 	//nolint:wrapcheck // No need to wrap errors here.
 	return broker.RecoverData(submCluster, brokerObj, brokerNamespace, brokerRestConfig, status)
-}
-
-func getBroker(config *rest.Config, namespace string) (*v1alpha1.Broker, bool, error) {
-	brokerClientProducer, err := client.NewProducerFromRestConfig(config)
-	if err != nil {
-		return nil, false, errors.Wrap(err, "Error creating broker client Producer")
-	}
-
-	brokerObj := &v1alpha1.Broker{}
-	err = brokerClientProducer.ForGeneral().Get(
-		context.TODO(), controllerClient.ObjectKey{
-			Namespace: namespace,
-			Name:      brokercr.Name,
-		}, brokerObj)
-
-	if resource.IsNotFoundErr(err) {
-		return nil, false, nil
-	}
-
-	if err != nil {
-		return nil, false, errors.Wrap(err, "error retrieving Broker")
-	}
-
-	return brokerObj, true, nil
 }

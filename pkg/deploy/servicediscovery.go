@@ -30,6 +30,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/servicediscoverycr"
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ServiceDiscoveryOptions struct {
@@ -47,12 +48,20 @@ func ServiceDiscovery(ctx context.Context, clientProducer client.Producer, optio
 ) error {
 	serviceDiscoverySpec := populateServiceDiscoverySpec(options, brokerInfo, brokerSecret, repositoryInfo)
 
-	err := servicediscoverycr.Ensure(ctx, clientProducer.ForGeneral(), constants.OperatorNamespace, serviceDiscoverySpec)
+	err := ServiceDiscoveryFromSpec(ctx, clientProducer.ForGeneral(), serviceDiscoverySpec)
 	if err != nil {
 		return status.Error(err, "Service discovery deployment failed")
 	}
 
 	return nil
+}
+
+func ServiceDiscoveryFromSpec(ctx context.Context, cc controllerClient.Client,
+	serviceDiscoverySpec *operatorv1alpha1.ServiceDiscoverySpec,
+) error {
+	err := servicediscoverycr.Ensure(ctx, cc, constants.OperatorNamespace, serviceDiscoverySpec)
+
+	return err //nolint:wrapcheck // No need to wrap here
 }
 
 func populateServiceDiscoverySpec(options *ServiceDiscoveryOptions, brokerInfo *broker.Info, brokerSecret *v1.Secret,
