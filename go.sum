@@ -549,10 +549,10 @@ github.com/submariner-io/lighthouse v0.16.0-m4 h1:DZht8vzBHMdjDsCLM1WAALJ4rctFNP
 github.com/submariner-io/lighthouse v0.16.0-m4/go.mod h1:/qhi1XCniT0rHuzko0F9GryigLCcghcMYjqO65Uz9bc=
 github.com/submariner-io/shipyard v0.16.0-m4 h1:UhxS3w3C+c2kVUrJVH4VMjbhkrgTjzo8oPlo/ANbjvI=
 github.com/submariner-io/shipyard v0.16.0-m4/go.mod h1:4brXpjvD+OL3/hd8+laET47FeoOsQzkQ74aprhEyfhE=
-github.com/submariner-io/submariner v0.16.0-m4 h1:22qGvsQQocV5NdgMQq12JAR+AADsLusQ2O5/4/Ew7iA=
-github.com/submariner-io/submariner v0.16.0-m4/go.mod h1:04gRMHLU5AwBM+Kd/UQvD1YL7B6RZ2GGg3dNFIL4suQ=
-github.com/submariner-io/submariner-operator v0.16.0-m4 h1:0gNRb9Va6zsgwybnXeYxMV5Xmwl5o+QMu0XYk7QV7+s=
-github.com/submariner-io/submariner-operator v0.16.0-m4/go.mod h1:f+yrisv/NLmVWMqT8VYerDTwEbfbgUCM874s6WBVXl8=
+github.com/submariner-io/submariner v0.16.0-m4.0.20230908080904-ea10edbd6d96 h1:iIU1hPsW46JqYOSNW0KAargdCWtYBBbMvo80qhqEUtI=
+github.com/submariner-io/submariner v0.16.0-m4.0.20230908080904-ea10edbd6d96/go.mod h1:04gRMHLU5AwBM+Kd/UQvD1YL7B6RZ2GGg3dNFIL4suQ=
+github.com/submariner-io/submariner-operator v0.16.0-m4.0.20230906154414-4f7b237fd916 h1:gcEXCiBy9Zr6WVOIz+8DGeljJZna4ur5IAozuL9Uwb4=
+github.com/submariner-io/submariner-operator v0.16.0-m4.0.20230906154414-4f7b237fd916/go.mod h1:f+yrisv/NLmVWMqT8VYerDTwEbfbgUCM874s6WBVXl8=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
