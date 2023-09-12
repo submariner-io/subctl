@@ -152,6 +152,9 @@ func gatherOVNResources(info *Info, networkPlugin string) {
 	for name, command := range ovnCmds {
 		logCmdOutput(info, &ovnMasterpods.Items[0], command, name, false)
 	}
+
+	gatherGatewayRoutes(info)
+	gatherNonGatewayRoutes(info)
 }
 
 func gatherCableDriverResources(info *Info, cableDriver string) {

@@ -81,3 +81,11 @@ func gatherGlobalEgressIPs(info *Info) {
 func gatherGlobalIngressIPs(info *Info) {
 	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("globalingressips"), corev1.NamespaceAll, v1.ListOptions{})
 }
+
+func gatherGatewayRoutes(info *Info) {
+	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("gatewayroutes"), corev1.NamespaceAll, v1.ListOptions{})
+}
+
+func gatherNonGatewayRoutes(info *Info) {
+	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("nongatewayroutes"), corev1.NamespaceAll, v1.ListOptions{})
+}
