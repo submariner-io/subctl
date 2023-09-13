@@ -23,6 +23,8 @@ import (
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
+	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner/pkg/cidr"
 	"github.com/submariner-io/submariner/pkg/cni"
@@ -45,11 +47,22 @@ func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface)
 
 	defer status.End()
 
-	endpointList, err := clusterInfo.ClientProducer.ForSubmariner().SubmarinerV1().Endpoints(clusterInfo.Submariner.Namespace).List(
-		context.TODO(), metav1.ListOptions{})
+	brokerRestConfig, brokerNamespace, err := restconfig.ForBroker(clusterInfo.Submariner, nil)
 	if err != nil {
-		status.Failure("Error listing the Submariner endpoints: %v", err)
-		return false
+		return status.Error(err, "Error getting the Broker's REST config")
+	}
+
+	clientProducer, err := client.NewProducerFromRestConfig(brokerRestConfig)
+	if err != nil {
+		return status.Error(err, "Error creating broker client Producer")
+	}
+
+	endpointList := &submarinerv1.EndpointList{}
+
+	err = clientProducer.ForGeneral().List(context.TODO(), endpointList,
+		controllerClient.InNamespace(brokerNamespace))
+	if err != nil {
+		return status.Error(err, "Error listing the Submariner endpoints from the Broker cluster")
 	}
 
 	tracker := reporter.NewTracker(status)
