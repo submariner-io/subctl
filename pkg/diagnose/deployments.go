@@ -20,10 +20,11 @@ package diagnose
 
 import (
 	"context"
-
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
+	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	"github.com/submariner-io/submariner-operator/pkg/client"
 	"github.com/submariner-io/submariner/pkg/cidr"
 	"github.com/submariner-io/submariner/pkg/cni"
 	v1 "k8s.io/api/core/v1"
@@ -45,7 +46,19 @@ func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface)
 
 	defer status.End()
 
-	endpointList, err := clusterInfo.ClientProducer.ForSubmariner().SubmarinerV1().Endpoints(clusterInfo.Submariner.Namespace).List(
+	brokerRestConfig, brokerNamespace, err := restconfig.ForBroker(clusterInfo.Submariner, nil)
+	if err != nil {
+		status.Failure("Error getting the Broker's REST config: %v", err)
+		return false
+	}
+
+	clientProducer, err := client.NewProducerFromRestConfig(brokerRestConfig)
+	if err != nil {
+		status.Failure("Error creating broker client Producer: %v", err)
+		return false
+	}
+
+	endpointList, err := clientProducer.ForSubmariner().SubmarinerV1().Endpoints(brokerNamespace).List(
 		context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		status.Failure("Error listing the Submariner endpoints: %v", err)
