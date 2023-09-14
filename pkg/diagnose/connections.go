@@ -79,7 +79,5 @@ func Connections(clusterInfo *cluster.Info, _ string, status reporter.Interface)
 		return errors.New("failures while diagnosing connections")
 	}
 
-	status.Success("All connections are established")
-
 	return nil
 }

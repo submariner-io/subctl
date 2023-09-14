@@ -39,7 +39,7 @@ import (
 )
 
 func ServiceDiscovery(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-	status.Start("Checking if services have been exported properly")
+	status.Start("Checking that services have been exported properly")
 	defer status.End()
 
 	tracker := reporter.NewTracker(status)
@@ -49,8 +49,6 @@ func ServiceDiscovery(clusterInfo *cluster.Info, _ string, status reporter.Inter
 	if tracker.HasFailures() {
 		return errors.New("failures while diagnosing service discovery")
 	}
-
-	status.Success("All services have been exported properly")
 
 	return nil
 }
