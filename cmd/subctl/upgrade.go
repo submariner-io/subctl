@@ -127,7 +127,7 @@ func upgradeSubctl(status reporter.Interface) (string, error) {
 
 		// semver needs a dotted triplet, which is at least five characters;
 		// on development or unknown versions, assume we need to upgrade
-		if len(version.Version) >= 5 && version.Version[0:5] != "devel" {
+		if len(version.Version) >= 5 && !strings.HasPrefix(version.Version, "devel") && !strings.HasPrefix(version.Version, "release") {
 			currentVersion, err := semver.NewVersion(strings.TrimPrefix(version.Version, "v"))
 			if currentVersion == nil {
 				return "", status.Error(err, "Error parsing current subctl version")
