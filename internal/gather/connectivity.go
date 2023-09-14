@@ -32,6 +32,7 @@ const (
 	addonPodLabel            = "app=submariner-addon"
 	ovnMasterPodLabelOCP     = "app=ovnkube-master"
 	ovnMasterPodLabelGeneric = "name=ovnkube-master"
+	ovnKubePodLabel          = "app=ovnkube-node"
 )
 
 func gatherGatewayPodLogs(info *Info) {
@@ -80,4 +81,12 @@ func gatherGlobalEgressIPs(info *Info) {
 
 func gatherGlobalIngressIPs(info *Info) {
 	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("globalingressips"), corev1.NamespaceAll, v1.ListOptions{})
+}
+
+func gatherGatewayRoutes(info *Info) {
+	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("gatewayroutes"), corev1.NamespaceAll, v1.ListOptions{})
+}
+
+func gatherNonGatewayRoutes(info *Info) {
+	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("nongatewayroutes"), corev1.NamespaceAll, v1.ListOptions{})
 }
