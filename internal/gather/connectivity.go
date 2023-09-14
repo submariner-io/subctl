@@ -32,6 +32,7 @@ const (
 	addonPodLabel            = "app=submariner-addon"
 	ovnMasterPodLabelOCP     = "app=ovnkube-master"
 	ovnMasterPodLabelGeneric = "name=ovnkube-master"
+	ovnKubePodLabel          = "app=ovnkube-node"
 )
 
 func gatherGatewayPodLogs(info *Info) {

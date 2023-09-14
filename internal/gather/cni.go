@@ -71,7 +71,6 @@ var ovnCmds = map[string]string{
 	"ovn_sbctl_show":                     "ovn-sbctl --no-leader-only show",
 	"ovn_lr_ovn_cluster_router_policies": "ovn-nbctl --no-leader-only lr-policy-list ovn_cluster_router",
 	"ovn_lr_ovn_cluster_router_routes":   "ovn-nbctl --no-leader-only lr-route-list ovn_cluster_router",
-	"ovn_lr_submariner_router_routes":    "ovn-nbctl --no-leader-only lr-route-list submariner_router",
 	"ovn_logical_routers":                "ovn-nbctl --no-leader-only list Logical_Router",
 	"ovn_lrps":                           "ovn-nbctl --no-leader-only list Logical_Router_Port",
 	"ovn_logical_switches":               "ovn-nbctl --no-leader-only list Logical_Switch",
@@ -135,26 +134,50 @@ func gatherOVNResources(info *Info, networkPlugin string) {
 		return
 	}
 
-	// we check two different labels because OpenShift deploys with a different
-	// label compared to ovn-kubernetes upstream
-	ovnMasterpods, err := findPods(info.ClientProducer.ForKubernetes(), ovnMasterPodLabelOCP)
-	if err != nil || ovnMasterpods == nil || len(ovnMasterpods.Items) == 0 {
-		ovnMasterpods, err = findPods(info.ClientProducer.ForKubernetes(), ovnMasterPodLabelGeneric)
-		if err != nil {
-			info.Status.Failure("Failed to gather any OVN master ovnMasterpods: " + err.Error())
-		} else if ovnMasterpods == nil || len(ovnMasterpods.Items) == 0 {
-			info.Status.Failure("Failed to find any OVN master ovnMasterpods")
+	ovnKubePods := getOVNCmdsPod(info)
+	for i := 0; i < len(ovnKubePods); i++ {
+		info.Status.Success("Gathering OVN data from OVN kube pod %q", ovnKubePods[i].Name)
+
+		for name, command := range ovnCmds {
+			logCmdOutput(info, &ovnKubePods[i], command, name, false)
 		}
-	}
-
-	info.Status.Success("Gathering OVN data from master pod %q", ovnMasterpods.Items[0].Name)
-
-	for name, command := range ovnCmds {
-		logCmdOutput(info, &ovnMasterpods.Items[0], command, name, false)
 	}
 
 	gatherGatewayRoutes(info)
 	gatherNonGatewayRoutes(info)
+}
+
+func getOVNCmdsPod(info *Info) []v1.Pod {
+	/*
+			We use three different labels for different OVNKubernetes deployments
+		      * ovnMasterPodLabelOCP     - Non IC OpenShift
+		      * ovnMasterPodLabelGeneric - Non IC upstreamovn-kubernetes
+		      * ovnKubePodLabel          - IC Deployments, same for upstream and OpenShift
+	*/
+	ovnCmdPods, _ := findPods(info.ClientProducer.ForKubernetes(), ovnMasterPodLabelOCP)
+
+	if len(ovnCmdPods.Items) > 0 {
+		return []v1.Pod{ovnCmdPods.Items[0]}
+	}
+
+	ovnCmdPods, _ = findPods(info.ClientProducer.ForKubernetes(), ovnMasterPodLabelGeneric)
+	if len(ovnCmdPods.Items) > 0 {
+		return []v1.Pod{ovnCmdPods.Items[0]}
+	}
+
+	ovnCmdPods, err := findPods(info.ClientProducer.ForKubernetes(), ovnKubePodLabel)
+	if len(ovnCmdPods.Items) > 0 {
+		// TODO: Optimize this code to run OVN commands one node per zone instead of all nodes
+		return ovnCmdPods.Items
+	}
+
+	if err != nil {
+		info.Status.Failure("Failed to gather any OVN Kube pods: %v", err)
+	} else {
+		info.Status.Warning("No OVN kube pods found")
+	}
+
+	return nil
 }
 
 func gatherCableDriverResources(info *Info, cableDriver string) {
