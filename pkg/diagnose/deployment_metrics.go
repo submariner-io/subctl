@@ -53,7 +53,7 @@ func checkMetricsConfig(clusterInfo *cluster.Info, status reporter.Interface) er
 }
 
 func checkComponentMetrics(clusterInfo *cluster.Info, status reporter.Interface, component, command string) error {
-	status.Start("Checking if %s metrics are accessible from non-gateway nodes", component)
+	status.Start("Checking that %s metrics are accessible from non-gateway nodes", component)
 	defer status.End()
 
 	singleNode, err := clusterInfo.HasSingleNode()
@@ -88,8 +88,6 @@ func checkComponentMetrics(clusterInfo *cluster.Info, status reporter.Interface,
 		return status.Error(errors.Errorf("Unexpected output %v", cPod.PodOutput),
 			"Unable to access %s metrics service in submariner-operator namespace", component)
 	}
-
-	status.Success("The %s metrics are accessible", component)
 
 	return nil
 }
