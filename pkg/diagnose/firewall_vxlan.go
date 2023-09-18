@@ -34,7 +34,7 @@ const (
 func FirewallIntraVxLANConfig(clusterInfo *cluster.Info, namespace string, options FirewallOptions, status reporter.Interface) error {
 	mustHaveSubmariner(clusterInfo)
 
-	status.Start("Checking the firewall configuration to determine if intra-cluster VXLAN traffic is allowed")
+	status.Start("Checking that firewall configuration allows intra-cluster VXLAN traffic")
 	defer status.End()
 
 	singleNode, err := clusterInfo.HasSingleNode()
@@ -55,14 +55,11 @@ func FirewallIntraVxLANConfig(clusterInfo *cluster.Info, namespace string, optio
 		return errors.New("failures while diagnosing the intra-VXLAN firewall configuration")
 	}
 
-	status.Success("The firewall configuration allows intra-cluster VXLAN traffic")
-
 	return nil
 }
 
 func checkFWConfig(clusterInfo *cluster.Info, namespace string, options FirewallOptions, status reporter.Interface) {
 	if clusterInfo.Submariner.Status.NetworkPlugin == "OVNKubernetes" {
-		status.Success("This check is not necessary for the OVNKubernetes CNI plugin")
 		return
 	}
 

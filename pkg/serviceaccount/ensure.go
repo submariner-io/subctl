@@ -78,29 +78,28 @@ func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namesp
 
 func EnsureTokenSecret(ctx context.Context, client kubernetes.Interface, namespace, saName string) (*corev1.Secret, error) {
 	saSecret, err := GetTokenSecretFor(ctx, client, namespace, saName)
-	if err == nil {
-		return saSecret, nil
-	}
-
-	if !apierrors.IsNotFound(err) {
-		return nil, err
-	}
-
-	newSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: fmt.Sprintf("%s-token-", saName),
-			Namespace:    namespace,
-			Annotations: map[string]string{
-				corev1.ServiceAccountNameKey: saName,
-				createdByAnnotation:          creatorName,
+	if apierrors.IsNotFound(err) {
+		newSecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				GenerateName: fmt.Sprintf("%s-token-", saName),
+				Namespace:    namespace,
+				Annotations: map[string]string{
+					corev1.ServiceAccountNameKey: saName,
+					createdByAnnotation:          creatorName,
+				},
 			},
-		},
-		Type: corev1.SecretTypeServiceAccountToken,
+			Type: corev1.SecretTypeServiceAccountToken,
+		}
+
+		saSecret, err = secret.Ensure(ctx, client, newSecret.Namespace, newSecret)
 	}
 
-	saSecret, err = secret.Ensure(ctx, client, newSecret.Namespace, newSecret)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create secret for service account %q", saName)
+		return nil, errors.Wrapf(err, "error ensuring token secret for service account %q", saName)
+	}
+
+	if len(saSecret.Data["token"]) > 0 {
+		return saSecret, nil
 	}
 
 	// Ensure the token has been generated for the secret.
@@ -117,11 +116,7 @@ func EnsureTokenSecret(ctx context.Context, client kubernetes.Interface, namespa
 			return false, errors.Wrapf(err, "error getting secret %q", saSecret.Name)
 		}
 
-		if len(saSecret.Data["token"]) == 0 {
-			return false, nil
-		}
-
-		return true, nil
+		return len(saSecret.Data["token"]) > 0, nil
 	})
 
 	if wait.Interrupted(err) {
