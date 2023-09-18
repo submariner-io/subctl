@@ -39,7 +39,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -382,7 +381,7 @@ func findBrokerNamespace(controllerClient controller.Client, clusterName string,
 	brokers := &operatorv1alpha1.BrokerList{}
 
 	err := controllerClient.List(context.TODO(), brokers, controller.InNamespace(metav1.NamespaceAll))
-	if err != nil && !meta.IsNoMatchError(err) {
+	if err != nil && !resource.IsNotFoundErr(err) {
 		return "", status.Error(err, "Error listing broker resources")
 	}
 
