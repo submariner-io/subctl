@@ -40,11 +40,10 @@ func GlobalnetConfig(clusterInfo *cluster.Info, _ string, status reporter.Interf
 	mustHaveSubmariner(clusterInfo)
 
 	if clusterInfo.Submariner.Spec.GlobalCIDR == "" {
-		status.Success("Globalnet is not installed - skipping")
 		return nil
 	}
 
-	status.Start("Checking Globalnet configuration")
+	status.Start("Checking that Globalnet is correctly configured and functioning")
 	defer status.End()
 
 	tracker := reporter.NewTracker(status)
@@ -56,8 +55,6 @@ func GlobalnetConfig(clusterInfo *cluster.Info, _ string, status reporter.Interf
 	if tracker.HasFailures() {
 		return errors.New("failures while diagnosing Globalnet")
 	}
-
-	status.Success("Globalnet is properly configured and functioning")
 
 	return nil
 }

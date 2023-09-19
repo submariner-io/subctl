@@ -63,9 +63,9 @@ func Deployments(clusterInfo *cluster.Info, _ string, status reporter.Interface)
 
 func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface) error {
 	if clusterInfo.Submariner.Spec.GlobalCIDR != "" {
-		status.Start("Globalnet deployment detected - checking if globalnet CIDRs overlap")
+		status.Start("Globalnet deployment detected - checking that globalnet CIDRs do not overlap")
 	} else {
-		status.Start("Non-Globalnet deployment detected - checking if cluster CIDRs overlap")
+		status.Start("Non-Globalnet deployment detected - checking that cluster CIDRs do not overlap")
 	}
 
 	defer status.End()
@@ -123,12 +123,6 @@ func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface)
 
 	if tracker.HasFailures() {
 		return errors.New("failures while diagnosing overlapping CIDRs")
-	}
-
-	if clusterInfo.Submariner.Spec.GlobalCIDR != "" {
-		status.Success("Clusters do not have overlapping globalnet CIDRs")
-	} else {
-		status.Success("Clusters do not have overlapping CIDRs")
 	}
 
 	return nil
