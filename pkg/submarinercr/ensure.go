@@ -41,7 +41,8 @@ func Ensure(ctx context.Context, client controllerClient.Client, namespace strin
 
 	propagationPolicy := metav1.DeletePropagationForeground
 
-	_, err := util.CreateAnew(ctx, resource.ForControllerClient(client, namespace, &operatorv1alpha1.Submariner{}),
+	_, err := util.CreateAnew[*operatorv1alpha1.Submariner](ctx,
+		resource.ForControllerClient(client, namespace, &operatorv1alpha1.Submariner{}),
 		submarinerCR, metav1.CreateOptions{}, metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
 
 	return errors.Wrap(err, "error creating Submariner resource")

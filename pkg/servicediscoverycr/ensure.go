@@ -49,7 +49,7 @@ func Ensure(ctx context.Context,
 		Spec: *serviceDiscoverySpec,
 	}
 
-	_, err := resourceutil.CreateOrUpdate(ctx, resource.ForControllerClient(client, namespace,
+	_, err := resourceutil.CreateOrUpdate[*operatorv1alpha1.ServiceDiscovery](ctx, resource.ForControllerClient(client, namespace,
 		&operatorv1alpha1.ServiceDiscovery{}), sd)
 
 	return errors.Wrap(err, "error creating/updating ServiceDiscovery resource")

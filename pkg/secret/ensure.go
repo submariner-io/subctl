@@ -26,23 +26,22 @@ import (
 	"github.com/submariner-io/admiral/pkg/util"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 )
 
 func Ensure(ctx context.Context, client kubernetes.Interface, namespace string, secret *v1.Secret) (*v1.Secret, error) {
 	//nolint:wrapcheck // No need to wrap errors here
-	object, err := util.CreateAnew(ctx, &resource.InterfaceFuncs{
-		GetFunc: func(ctx context.Context, name string, options metav1.GetOptions) (runtime.Object, error) {
+	object, err := util.CreateAnew[*v1.Secret](ctx, &resource.InterfaceFuncs[*v1.Secret]{
+		GetFunc: func(ctx context.Context, name string, options metav1.GetOptions) (*v1.Secret, error) {
 			return client.CoreV1().Secrets(namespace).Get(ctx, name, options)
 		},
-		CreateFunc: func(ctx context.Context, obj runtime.Object, options metav1.CreateOptions) (runtime.Object, error) {
-			return client.CoreV1().Secrets(namespace).Create(ctx, obj.(*v1.Secret), options)
+		CreateFunc: func(ctx context.Context, obj *v1.Secret, options metav1.CreateOptions) (*v1.Secret, error) {
+			return client.CoreV1().Secrets(namespace).Create(ctx, obj, options)
 		},
 		DeleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions) error {
 			return client.CoreV1().Secrets(namespace).Delete(ctx, name, options)
 		},
 	}, secret, metav1.CreateOptions{}, metav1.DeleteOptions{})
 
-	return object.(*v1.Secret), errors.Wrap(err, "error creating secret")
+	return object, errors.Wrap(err, "error creating secret")
 }

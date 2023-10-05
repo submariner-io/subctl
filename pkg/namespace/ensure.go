@@ -27,7 +27,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -35,11 +34,7 @@ import (
 func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string, namespaceLabels map[string]string) (bool, error) {
 	ns := &v1.Namespace{ObjectMeta: v1meta.ObjectMeta{Name: namespace, Labels: namespaceLabels}}
 
-	_, err := util.CreateOrUpdate(ctx, resource.ForNamespace(kubeClient), ns, func(existing runtime.Object) (runtime.Object,
-		error,
-	) {
-		ns := existing.(*v1.Namespace)
-
+	_, err := util.CreateOrUpdate(ctx, resource.ForNamespace(kubeClient), ns, func(ns *v1.Namespace) (*v1.Namespace, error) {
 		if ns.Labels == nil {
 			ns.Labels = map[string]string{}
 		}
@@ -47,7 +42,7 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace stri
 		for k, v := range namespaceLabels {
 			ns.Labels[k] = v
 		}
-		return existing, nil
+		return ns, nil
 	})
 
 	if err == nil {
