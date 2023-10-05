@@ -26,7 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func CreateOrUpdate(ctx context.Context, client resource.Interface, obj runtime.Object) (bool, error) {
+func CreateOrUpdate[T runtime.Object](ctx context.Context, client resource.Interface[T], obj T) (bool, error) {
 	result, err := util.CreateOrUpdate(ctx, client, obj, util.Replace(obj))
 	return result == util.OperationResultCreated, err //nolint:wrapcheck // No need to wrap.
 }

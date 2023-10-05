@@ -42,7 +42,7 @@ func Ensure(ctx context.Context, client controllerClient.Client, namespace strin
 		Spec: brokerSpec,
 	}
 
-	_, err := util.CreateAnew(ctx, resource.ForControllerClient(client, namespace, &submariner.Broker{}), brokerCR,
+	_, err := util.CreateAnew[*submariner.Broker](ctx, resource.ForControllerClient(client, namespace, &submariner.Broker{}), brokerCR,
 		metav1.CreateOptions{}, metav1.DeleteOptions{})
 
 	return errors.Wrap(err, "error creating Broker resource")

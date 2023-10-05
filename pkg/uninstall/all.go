@@ -41,7 +41,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	controller "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -108,18 +107,18 @@ func unlabelGatewayNodes(clients client.Producer, clusterName string, status rep
 	}
 
 	//nolint:wrapcheck // Let the caller wrap errors
-	nodeInterface := &resource.InterfaceFuncs{
-		GetFunc: func(ctx context.Context, name string, options metav1.GetOptions) (runtime.Object, error) {
+	nodeInterface := &resource.InterfaceFuncs[*corev1.Node]{
+		GetFunc: func(ctx context.Context, name string, options metav1.GetOptions) (*corev1.Node, error) {
 			return clients.ForKubernetes().CoreV1().Nodes().Get(ctx, name, options)
 		},
-		UpdateFunc: func(ctx context.Context, obj runtime.Object, options metav1.UpdateOptions) (runtime.Object, error) {
-			return clients.ForKubernetes().CoreV1().Nodes().Update(ctx, obj.(*corev1.Node), options)
+		UpdateFunc: func(ctx context.Context, obj *corev1.Node, options metav1.UpdateOptions) (*corev1.Node, error) {
+			return clients.ForKubernetes().CoreV1().Nodes().Update(ctx, obj, options)
 		},
 	}
 
 	for i := range list.Items {
-		err = util.Update(context.TODO(), nodeInterface, &list.Items[i], func(existing runtime.Object) (runtime.Object, error) {
-			delete(existing.(*corev1.Node).Labels, constants.SubmarinerGatewayLabel)
+		err = util.Update[*corev1.Node](context.TODO(), nodeInterface, &list.Items[i], func(existing *corev1.Node) (*corev1.Node, error) {
+			delete(existing.Labels, constants.SubmarinerGatewayLabel)
 			return existing, nil
 		})
 		if err != nil {
@@ -298,10 +297,10 @@ func ensureDeleted(clients client.Producer, obj controller.Object, status report
 				"the resource will be force-deleted", podStatusStr)
 		}
 
-		err = finalizer.Remove(context.TODO(), resource.ForControllerClient(clients.ForGeneral(), obj.GetNamespace(), obj),
+		err = finalizer.Remove[controller.Object](context.TODO(), resource.ForControllerClient(clients.ForGeneral(), obj.GetNamespace(), obj),
 			obj, opnames.CleanupFinalizer)
 		if err != nil {
-			return err //nolint:wrapcheck // No need to wrap
+			return err
 		}
 
 		return awaitDeleted()
