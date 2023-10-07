@@ -551,8 +551,8 @@ github.com/submariner-io/shipyard v0.16.0 h1:PTvp2aKNBoCkfC8nS38k+DW5ZaXNMq/wzzj
 github.com/submariner-io/shipyard v0.16.0/go.mod h1:aKCotVktXJO3azjBOmhu/0KbRcYLY3eUcSNSDDJNbxs=
 github.com/submariner-io/submariner v0.16.0 h1:ctJd+lWtXkSReEksorwoW1GVXmEUdYDlu8+iNu+fVg4=
 github.com/submariner-io/submariner v0.16.0/go.mod h1:u/51L2PU6VdUdJm2JnFKGF09ANr8MOETLIqZzgN4pP4=
-github.com/submariner-io/submariner-operator v0.16.0 h1:6FiNbAhryQP6R2JQp6/McsjpXTF/cBPVXxRaWuFBddg=
-github.com/submariner-io/submariner-operator v0.16.0/go.mod h1:5oIW7YLXZ2eUqyUiVP0GQlI5FM2FsV/grh6o+diNPSo=
+github.com/submariner-io/submariner-operator v0.16.1-0.20231006133414-6f60549ee378 h1:vf23jLPV3cb/Tk0x9PcwKSWIa7t80E3d37cxfZO53t0=
+github.com/submariner-io/submariner-operator v0.16.1-0.20231006133414-6f60549ee378/go.mod h1:5oIW7YLXZ2eUqyUiVP0GQlI5FM2FsV/grh6o+diNPSo=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
