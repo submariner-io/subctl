@@ -23,7 +23,7 @@ require (
 	github.com/submariner-io/submariner v0.16.0-m4.0.20230908080904-ea10edbd6d96
 	github.com/submariner-io/submariner-operator v0.16.0-m4.0.20231006081605-d5bc46c3f242
 	github.com/uw-labs/lichen v0.1.7
-	golang.org/x/net v0.15.0
+	golang.org/x/net v0.16.0
 	golang.org/x/oauth2 v0.12.0
 	google.golang.org/api v0.138.0
 	k8s.io/api v0.28.1
@@ -110,9 +110,9 @@ require (
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/urfave/cli/v2 v2.4.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/crypto v0.13.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
-	golang.org/x/term v0.12.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.12.0 // indirect
