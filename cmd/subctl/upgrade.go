@@ -80,7 +80,7 @@ func upgrade(_ *cobra.Command, _ []string) {
 		// Step 2a: subctl was upgraded, so run it instead of continuing
 		cmd := exec.Cmd{
 			Path:   command,
-			Args:   os.Args[1:],
+			Args:   os.Args,
 			Stdin:  os.Stdin,
 			Stdout: os.Stdout,
 			Stderr: os.Stderr,
