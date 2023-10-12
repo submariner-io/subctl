@@ -33,8 +33,11 @@ jobs:
       - name: Build new subctl
         run: make cmd/bin/subctl
 
-      - name: Run upgrade command
-        run: cmd/bin/subctl upgrade
+      - name: Run upgrade command and check versions after upgrade
+        run: |
+          export KUBECONFIG=$(find $(git rev-parse --show-toplevel)/output/kubeconfigs/ -type f -printf %p:)
+          cmd/bin/subctl upgrade
+          cmd/bin/subctl version && cmd/bin/subctl show versions
 
       - name: Run e2e tests
         run: make e2e
