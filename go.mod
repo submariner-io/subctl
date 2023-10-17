@@ -18,16 +18,16 @@ require (
 	github.com/submariner-io/admiral v0.14.6
 	github.com/submariner-io/cloud-prepare v0.14.6
 	github.com/submariner-io/lighthouse v0.14.6
-	github.com/submariner-io/shipyard v0.14.6
+	github.com/submariner-io/shipyard v0.14.7
 	github.com/submariner-io/submariner v0.14.6
 	github.com/submariner-io/submariner-operator v0.14.6
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
 	google.golang.org/api v0.100.0
-	k8s.io/api v0.25.0
+	k8s.io/api v0.25.14
 	k8s.io/apiextensions-apiserver v0.25.0
-	k8s.io/apimachinery v0.25.0
-	k8s.io/client-go v0.25.0
+	k8s.io/apimachinery v0.25.14
+	k8s.io/client-go v0.25.14
 	k8s.io/utils v0.0.0-20220823124924-e9cbc92d1a73
 	sigs.k8s.io/controller-runtime v0.12.3
 	sigs.k8s.io/mcs-api v0.1.0
@@ -104,10 +104,10 @@ require (
 	github.com/urfave/cli/v2 v2.4.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/crypto v0.0.0-20220511200225-c6db032c6c88 // indirect
-	golang.org/x/net v0.7.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/term v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/term v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20221014213838-99cd37c6964a // indirect
