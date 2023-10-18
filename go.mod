@@ -10,17 +10,17 @@ require (
 	github.com/google/go-github/v54 v54.0.0
 	github.com/gophercloud/utils v0.0.0-20210909165623-d7085207ff6d
 	github.com/mattn/go-isatty v0.0.19
-	github.com/onsi/ginkgo/v2 v2.12.0
-	github.com/onsi/gomega v1.27.10
+	github.com/onsi/ginkgo/v2 v2.13.0
+	github.com/onsi/gomega v1.28.0
 	github.com/openshift/api v0.0.0-20230714214528-de6ad7979b00
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/submariner-io/admiral v0.16.0-m4.0.20231011054946-6287acf98352
 	github.com/submariner-io/cloud-prepare v0.16.0-m4.0.20231010134947-f76b728243d7
-	github.com/submariner-io/lighthouse v0.16.0-m4.0.20231010200214-a72dce76d30f
-	github.com/submariner-io/shipyard v0.16.0-m4
-	github.com/submariner-io/submariner v0.16.0-m4.0.20231010141121-3d3cc9ce23cc
+	github.com/submariner-io/lighthouse v0.16.0-m4.0.20231017060950-d4193c3e8a5f
+	github.com/submariner-io/shipyard v0.16.0-m4.0.20231017114407-11b7ad52c6a4
+	github.com/submariner-io/submariner v0.16.0-m4.0.20231017181939-daf50e5352a6
 	github.com/submariner-io/submariner-operator v0.16.0-m4.0.20231010180358-7d33f167894c
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.17.0

@@ -204,6 +204,10 @@ _subctl benchmark latency "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFI
 
 _subctl benchmark throughput "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 && exit 1
 
+# Test subctl verify basic
+
+_subctl verify --context cluster1 --tocontext cluster2 --only basic-connectivity --verbose
+
 # Test subctl cloud prepare invocations
 
 # test non deploy subctl for deploy commands

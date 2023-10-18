@@ -32,7 +32,7 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
-	_ "github.com/submariner-io/lighthouse/test/e2e/discovery"
+	"github.com/submariner-io/lighthouse/test/e2e/discovery"
 	_ "github.com/submariner-io/lighthouse/test/e2e/framework"
 	"github.com/submariner-io/shipyard/test/e2e"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
@@ -42,9 +42,9 @@ import (
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	_ "github.com/submariner-io/submariner/test/e2e/compliance"
-	_ "github.com/submariner-io/submariner/test/e2e/dataplane"
-	_ "github.com/submariner-io/submariner/test/e2e/redundancy"
+	"github.com/submariner-io/submariner/test/e2e/compliance"
+	"github.com/submariner-io/submariner/test/e2e/dataplane"
+	"github.com/submariner-io/submariner/test/e2e/redundancy"
 	"k8s.io/client-go/rest"
 )
 
@@ -86,7 +86,7 @@ The following verifications are deemed disruptive:
 				toContextPresent, err := verifyRestConfigProducer.RunOnSelectedPrefixedContext(
 					"to",
 					func(toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-						return runVerify(fromClusterInfo, toClusterInfo, namespace, determinePatternsToVerify())
+						return runVerify(fromClusterInfo, toClusterInfo, namespace, determineSpecLabelsToVerify())
 					}, status)
 
 				if toContextPresent {
@@ -149,21 +149,23 @@ func checkVerifyArguments(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("--connection-timeout must be >=20")
 	}
 
-	if _, _, err := getVerifyPatterns(verifyOnly, true); err != nil {
+	if _, _, err := getVerifySpecLabels(verifyOnly, true); err != nil {
 		return err
 	}
 
 	return checkNoArguments(cmd, args)
 }
 
-var verifyE2EPatterns = map[string]string{
-	component.Connectivity:     "\\[dataplane",
-	component.ServiceDiscovery: "\\[discovery",
-	"compliance":               "\\[compliance]",
+var verifyE2ESpecLabels = map[string]string{
+	component.Connectivity: dataplane.TestLabel,
+	fmt.Sprintf("%s-%s", framework.BasicTestLabel, component.Connectivity): fmt.Sprintf("%s&&%s",
+		dataplane.TestLabel, framework.BasicTestLabel),
+	component.ServiceDiscovery: discovery.TestLabel,
+	"compliance":               compliance.TestLabel,
 }
 
-var verifyE2EDisruptivePatterns = map[string]string{
-	"gateway-failover": "\\[redundancy",
+var verifyE2EDisruptiveSpecLabels = map[string]string{
+	"gateway-failover": redundancy.TestLabel,
 }
 
 type verificationType int
@@ -175,8 +177,8 @@ const (
 )
 
 func disruptiveVerificationNames() []string {
-	names := make([]string, 0, len(verifyE2EDisruptivePatterns))
-	for n := range verifyE2EDisruptivePatterns {
+	names := make([]string, 0, len(verifyE2EDisruptiveSpecLabels))
+	for n := range verifyE2EDisruptiveSpecLabels {
 		names = append(names, n)
 	}
 
@@ -189,7 +191,7 @@ func extractDisruptiveVerifications(csv string) []string {
 	verifications := strings.Split(csv, ",")
 	for _, verification := range verifications {
 		verification = strings.Trim(strings.ToLower(verification), " ")
-		if _, ok := verifyE2EDisruptivePatterns[verification]; ok {
+		if _, ok := verifyE2EDisruptiveSpecLabels[verification]; ok {
 			disruptive = append(disruptive, verification)
 		}
 	}
@@ -200,60 +202,60 @@ func extractDisruptiveVerifications(csv string) []string {
 func getAllVerifyKeys() []string {
 	keys := []string{}
 
-	for k := range verifyE2EPatterns {
+	for k := range verifyE2ESpecLabels {
 		keys = append(keys, k)
 	}
 
-	for k := range verifyE2EDisruptivePatterns {
+	for k := range verifyE2EDisruptiveSpecLabels {
 		keys = append(keys, k)
 	}
 
 	return keys
 }
 
-func getVerifyPattern(key string) (verificationType, string) {
-	if pattern, ok := verifyE2EPatterns[key]; ok {
+func getVerifySpecLabel(key string) (verificationType, string) {
+	if pattern, ok := verifyE2ESpecLabels[key]; ok {
 		return normalVerification, pattern
 	}
 
-	if pattern, ok := verifyE2EDisruptivePatterns[key]; ok {
+	if pattern, ok := verifyE2EDisruptiveSpecLabels[key]; ok {
 		return disruptiveVerification, pattern
 	}
 
 	return unknownVerification, ""
 }
 
-func getVerifyPatterns(csv string, includeDisruptive bool) ([]string, []string, error) {
-	outputPatterns := []string{}
+func getVerifySpecLabels(csv string, includeDisruptive bool) ([]string, []string, error) {
+	outputLabels := []string{}
 	outputVerifications := []string{}
 
 	verifications := strings.Split(csv, ",")
 	for _, verification := range verifications {
 		verification = strings.Trim(strings.ToLower(verification), " ")
 
-		vtype, pattern := getVerifyPattern(verification)
+		vtype, label := getVerifySpecLabel(verification)
 		switch vtype {
 		case unknownVerification:
 			return nil, nil, fmt.Errorf("unknown verification %q", verification)
 		case normalVerification:
-			outputPatterns = append(outputPatterns, pattern)
+			outputLabels = append(outputLabels, label)
 			outputVerifications = append(outputVerifications, verification)
 		case disruptiveVerification:
 			if includeDisruptive {
-				outputPatterns = append(outputPatterns, pattern)
+				outputLabels = append(outputLabels, label)
 				outputVerifications = append(outputVerifications, verification)
 			}
 		}
 	}
 
-	if len(outputPatterns) == 0 {
+	if len(outputLabels) == 0 {
 		return nil, nil, fmt.Errorf("please specify at least one verification to be performed")
 	}
 
-	return outputPatterns, outputVerifications, nil
+	return outputLabels, outputVerifications, nil
 }
 
-func determinePatternsToVerify() []string {
+func determineSpecLabelsToVerify() []string {
 	disruptive := extractDisruptiveVerifications(verifyOnly)
 	if !disruptiveTests && len(disruptive) > 0 {
 		err := survey.AskOne(&survey.Confirm{
@@ -271,17 +273,17 @@ prompt for confirmation therefore you must specify --enable-disruptive to run th
 		}
 	}
 
-	patterns, verifications, err := getVerifyPatterns(verifyOnly, disruptiveTests)
+	labels, verifications, err := getVerifySpecLabels(verifyOnly, disruptiveTests)
 	if err != nil {
 		exit.WithMessage(err.Error())
 	}
 
 	fmt.Printf("Performing the following verifications: %s\n", strings.Join(verifications, ", "))
 
-	return patterns
+	return labels
 }
 
-func runVerify(fromClusterInfo, toClusterInfo *cluster.Info, namespace string, patterns []string) error {
+func runVerify(fromClusterInfo, toClusterInfo *cluster.Info, namespace string, specLabels []string) error {
 	framework.RestConfigs = []*rest.Config{fromClusterInfo.RestConfig, toClusterInfo.RestConfig}
 	framework.TestContext.ClusterIDs = []string{fromClusterInfo.Name, toClusterInfo.Name}
 	framework.TestContext.KubeContexts = []string{fromClusterInfo.Name, toClusterInfo.Name}
@@ -296,7 +298,7 @@ func runVerify(fromClusterInfo, toClusterInfo *cluster.Info, namespace string, p
 	framework.TestContext.KubeConfig = "not-used"
 
 	suiteConfig, reporterConfig := ginkgo.GinkgoConfiguration()
-	suiteConfig.FocusStrings = patterns
+	suiteConfig.LabelFilter = strings.Join(specLabels, ",")
 	suiteConfig.RandomSeed = 1
 	reporterConfig.Verbose = verboseConnectivityVerification
 	reporterConfig.JUnitReport = junitReport
