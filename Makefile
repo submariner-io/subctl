@@ -92,13 +92,13 @@ bin/lichen:
 cmd/bin/subctl: cmd/bin/subctl-$(VERSION)-$(GOOS)-$(GOARCH)$(GOEXE)
 	ln -sf $(<F) $@
 
-dist/subctl-%.tar.xz: cmd/bin/subctl-%
+dist/subctl-%.tar.xz: cmd/bin/subctl-% LICENSE
 	mkdir -p dist
-	tar -cJf $@ --transform "s|^cmd/bin/subctl-[^/]*|subctl-$(VERSION)/subctl|" $<
+	tar -cJf $@ --transform "s|^cmd/bin/subctl-[^/]*|subctl-$(VERSION)/subctl|" $^
 
-dist/subctl-%.tar.gz: cmd/bin/subctl-%
+dist/subctl-%.tar.gz: cmd/bin/subctl-% LICENSE
 	mkdir -p dist
-	tar -czf $@ --transform "s|^cmd/bin/subctl-[^/]*|subctl-$(VERSION)/subctl|" $<
+	tar -czf $@ --transform "s|^cmd/bin/subctl-[^/]*|subctl-$(VERSION)/subctl|" $^
 
 dist/subctl-checksums.txt: $(CROSS_TARBALLS)
 	cd $(@D) && sha256sum $(^F) >> $(@F)
