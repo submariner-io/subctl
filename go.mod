@@ -9,7 +9,7 @@ require (
 	github.com/go-logr/logr v1.2.4
 	github.com/google/go-github/v54 v54.0.0
 	github.com/gophercloud/utils v0.0.0-20210909165623-d7085207ff6d
-	github.com/mattn/go-isatty v0.0.19
+	github.com/mattn/go-isatty v0.0.20
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10
 	github.com/openshift/api v0.0.0-20230714214528-de6ad7979b00
