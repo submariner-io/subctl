@@ -34,14 +34,13 @@ import (
 )
 
 type Config struct {
-	DedicatedGateway bool
-	Gateways         int
-	InfraID          string
-	Region           string
-	ProjectID        string
-	OcpMetadataFile  string
-	CloudEntry       string
-	GWInstanceType   string
+	Gateways        int
+	InfraID         string
+	Region          string
+	ProjectID       string
+	OcpMetadataFile string
+	CloudEntry      string
+	GWInstanceType  string
 }
 
 // RunOn runs the given function on RHOS, supplying it with a cloud instance connected to RHOS and a reporter that writes to CLI.
@@ -101,8 +100,7 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 	}
 	rhosCloud := rhos.NewCloud(cloudInfo)
 	msDeployer := ocp.NewK8sMachinesetDeployer(restMapper, dynamicClient)
-	gwDeployer := rhos.NewOcpGatewayDeployer(cloudInfo, msDeployer, config.ProjectID, config.GWInstanceType,
-		"", config.CloudEntry, config.DedicatedGateway)
+	gwDeployer := rhos.NewOcpGatewayDeployer(cloudInfo, msDeployer, config.ProjectID, config.GWInstanceType, "", config.CloudEntry, true)
 
 	return function(rhosCloud, gwDeployer, status)
 }
