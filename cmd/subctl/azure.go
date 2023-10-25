@@ -52,8 +52,8 @@ var (
 	azureCleanupCmd = &cobra.Command{
 		Use:   "azure",
 		Short: "Clean up an Azure cloud",
-		Long: "This command cleans up an OpenShift installer-provisioned infrastructure (IPI) on Azure-based" +
-			" cloud after Submariner uninstallation.",
+		Long: "This command cleans up an OpenShift installer-provisioned infrastructure (IPI) on " +
+			"Azure-based cloud after Submariner uninstallation.",
 		PreRunE: checkAzureFlags,
 		Run: func(cmd *cobra.Command, args []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
