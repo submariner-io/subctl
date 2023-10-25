@@ -36,7 +36,6 @@ import (
 
 type Config struct {
 	AirGappedDeployment bool
-	DedicatedGateway    bool
 	Gateways            int
 	InfraID             string
 	Region              string
@@ -106,7 +105,7 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 
 	status.End()
 
-	gwDeployer, err := azure.NewOcpGatewayDeployer(cloudInfo, azureCloud, msDeployer, config.GWInstanceType, config.DedicatedGateway)
+	gwDeployer, err := azure.NewOcpGatewayDeployer(cloudInfo, azureCloud, msDeployer, config.GWInstanceType, true)
 	if err != nil {
 		return status.Error(err, "Failed to initialize a GatewayDeployer config")
 	}
