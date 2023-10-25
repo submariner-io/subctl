@@ -52,8 +52,8 @@ var (
 	azureCleanupCmd = &cobra.Command{
 		Use:   "azure",
 		Short: "Clean up an Azure cloud",
-		Long: "This command cleans up an OpenShift installer-provisioned infrastructure (IPI) on Azure-based" +
-			" cloud after Submariner uninstallation.",
+		Long: "This command cleans up an OpenShift installer-provisioned infrastructure (IPI) on " +
+			"Azure-based cloud after Submariner uninstallation.",
 		PreRunE: checkAzureFlags,
 		Run: func(cmd *cobra.Command, args []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
@@ -78,12 +78,7 @@ func init() {
 	azurePrepareCmd.Flags().IntVar(&azureConfig.Gateways, "gateways", defaultNumGateways, "Number of gateways to deploy")
 	// `Standard_F4s_v2` matches the most to `cd5.large` of AWS.
 	azurePrepareCmd.Flags().StringVar(&azureConfig.GWInstanceType, "gateway-instance", "Standard_F4s_v2", "Type of gateways instance machine")
-	azurePrepareCmd.Flags().BoolVar(&azureConfig.DedicatedGateway, "dedicated-gateway", true,
-		"Whether a dedicated gateway node has to be deployed")
 	cloudPrepareCmd.AddCommand(azurePrepareCmd)
-
-	_ = azurePrepareCmd.Flags().MarkDeprecated("dedicated-gateway", "to be removed in 0.16. "+
-		"To deploy without dedicated gateways, use the Load Balancer mode instead.")
 
 	addGeneralAzureFlags(azureCleanupCmd)
 	cloudCleanupCmd.AddCommand(azureCleanupCmd)

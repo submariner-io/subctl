@@ -53,8 +53,8 @@ var (
 	awsCleanupCmd = &cobra.Command{
 		Use:   "aws",
 		Short: "Clean up an AWS cloud",
-		Long: "This command cleans up an OpenShift installer-provisioned infrastructure (IPI) on AWS-based" +
-			" cloud after Submariner uninstallation.",
+		Long: "This command cleans up an OpenShift installer-provisioned infrastructure (IPI) on " +
+			"AWS-based cloud after Submariner uninstallation.",
 		PreRunE: checkAWSFlags,
 		Run: func(cmd *cobra.Command, args []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
