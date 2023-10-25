@@ -39,14 +39,13 @@ import (
 )
 
 type Config struct {
-	DedicatedGateway bool
-	Gateways         int
-	InfraID          string
-	Region           string
-	ProjectID        string
-	CredentialsFile  string
-	OcpMetadataFile  string
-	GWInstanceType   string
+	Gateways        int
+	InfraID         string
+	Region          string
+	ProjectID       string
+	CredentialsFile string
+	OcpMetadataFile string
+	GWInstanceType  string
 }
 
 // RunOn runs the given function on GCP, supplying it with a cloud instance connected to GCP and a reporter that writes to CLI.
@@ -109,7 +108,7 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 	msDeployer := ocp.NewK8sMachinesetDeployer(restMapper, dynamicClient)
 	// TODO: Ideally we should be able to specify the image for GWNode, but it was seen that
 	// with certain images, the instance is not coming up. Needs to be investigated further.
-	gwDeployer := gcp.NewOcpGatewayDeployer(gcpCloudInfo, msDeployer, config.GWInstanceType, "", config.DedicatedGateway, k8sClientSet)
+	gwDeployer := gcp.NewOcpGatewayDeployer(gcpCloudInfo, msDeployer, config.GWInstanceType, "", true, k8sClientSet)
 
 	return function(gcpCloud, gwDeployer, status)
 }

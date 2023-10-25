@@ -88,11 +88,6 @@ func init() {
 	gcpPrepareCmd.Flags().StringVar(&gcpConfig.GWInstanceType, "gateway-instance", "n1-standard-4", "Type of gateway instance machine")
 	gcpPrepareCmd.Flags().IntVar(&gcpConfig.Gateways, "gateways", defaultNumGateways,
 		"Number of gateways to deploy")
-	gcpPrepareCmd.Flags().BoolVar(&gcpConfig.DedicatedGateway, "dedicated-gateway", true,
-		"Whether a dedicated gateway node has to be deployed")
-
-	_ = gcpPrepareCmd.Flags().MarkDeprecated("dedicated-gateway", "to be removed in 0.16. "+
-		"To deploy without dedicated gateways, use the Load Balancer mode instead.")
 
 	cloudPrepareCmd.AddCommand(gcpPrepareCmd)
 

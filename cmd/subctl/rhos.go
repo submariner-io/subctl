@@ -80,11 +80,6 @@ func init() {
 		"Number of gateways to deploy")
 	rhosPrepareCmd.Flags().StringVar(&rhosConfig.GWInstanceType, "gateway-instance", "PnTAE.CPU_4_Memory_8192_Disk_50",
 		"Type of gateway instance machine")
-	rhosPrepareCmd.Flags().BoolVar(&rhosConfig.DedicatedGateway, "dedicated-gateway", true,
-		"Whether a dedicated gateway node has to be deployed")
-
-	_ = rhosPrepareCmd.Flags().MarkDeprecated("dedicated-gateway", "to be removed in 0.16. "+
-		"To deploy without dedicated gateways, use the Load Balancer mode instead.")
 
 	cloudPrepareCmd.AddCommand(rhosPrepareCmd)
 
