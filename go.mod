@@ -16,20 +16,20 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	github.com/submariner-io/admiral v0.16.0
-	github.com/submariner-io/cloud-prepare v0.16.0
-	github.com/submariner-io/lighthouse v0.16.0
-	github.com/submariner-io/shipyard v0.16.0
-	github.com/submariner-io/submariner v0.16.0
-	github.com/submariner-io/submariner-operator v0.16.1-0.20231006133414-6f60549ee378
+	github.com/submariner-io/admiral v0.16.1
+	github.com/submariner-io/cloud-prepare v0.16.1
+	github.com/submariner-io/lighthouse v0.16.1
+	github.com/submariner-io/shipyard v0.16.1
+	github.com/submariner-io/submariner v0.16.1
+	github.com/submariner-io/submariner-operator v0.16.1
 	github.com/uw-labs/lichen v0.1.7
-	golang.org/x/net v0.14.0
+	golang.org/x/net v0.17.0
 	golang.org/x/oauth2 v0.11.0
 	google.golang.org/api v0.138.0
-	k8s.io/api v0.27.6
+	k8s.io/api v0.27.7
 	k8s.io/apiextensions-apiserver v0.27.5
-	k8s.io/apimachinery v0.27.6
-	k8s.io/client-go v0.27.6
+	k8s.io/apimachinery v0.27.7
+	k8s.io/client-go v0.27.7
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 	sigs.k8s.io/controller-runtime v0.15.2
 	sigs.k8s.io/mcs-api v0.1.0
@@ -107,16 +107,17 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/rivo/uniseg v0.4.3 // indirect
+	github.com/rs/zerolog v1.30.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/urfave/cli/v2 v2.4.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
-	golang.org/x/term v0.11.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.12.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
