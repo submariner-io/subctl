@@ -1,4 +1,4 @@
-//go:build !deploy
+//go:build !non_deploy
 
 /*
 SPDX-License-Identifier: Apache-2.0
