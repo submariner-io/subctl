@@ -100,7 +100,7 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 	}
 	rhosCloud := rhos.NewCloud(cloudInfo)
 	msDeployer := ocp.NewK8sMachinesetDeployer(restMapper, dynamicClient)
-	gwDeployer := rhos.NewOcpGatewayDeployer(cloudInfo, msDeployer, config.ProjectID, config.GWInstanceType, "", config.CloudEntry, true)
+	gwDeployer := rhos.NewOcpGatewayDeployer(cloudInfo, msDeployer, config.ProjectID, config.GWInstanceType, "", config.CloudEntry)
 
 	return function(rhosCloud, gwDeployer, status)
 }

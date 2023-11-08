@@ -108,7 +108,7 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 	msDeployer := ocp.NewK8sMachinesetDeployer(restMapper, dynamicClient)
 	// TODO: Ideally we should be able to specify the image for GWNode, but it was seen that
 	// with certain images, the instance is not coming up. Needs to be investigated further.
-	gwDeployer := gcp.NewOcpGatewayDeployer(gcpCloudInfo, msDeployer, config.GWInstanceType, "", true, k8sClientSet)
+	gwDeployer := gcp.NewOcpGatewayDeployer(gcpCloudInfo, msDeployer, config.GWInstanceType, "", k8sClientSet)
 
 	return function(gcpCloud, gwDeployer, status)
 }
