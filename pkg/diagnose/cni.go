@@ -62,6 +62,11 @@ func CNIConfig(clusterInfo *cluster.Info, _ string, status reporter.Interface) e
 	status.Start("Checking Submariner support for the CNI network plugin")
 	defer status.End()
 
+	if clusterInfo.Submariner.Status.NetworkPlugin == "" {
+		status.Warning("The network plugin hasn't been determined yet.")
+		return nil
+	}
+
 	isSupportedPlugin := false
 
 	for _, np := range supportedNetworkPlugins {
