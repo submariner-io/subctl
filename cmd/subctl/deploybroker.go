@@ -26,6 +26,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/component"
@@ -58,32 +59,32 @@ var deployBroker = &cobra.Command{
 }
 
 func init() {
-	addDeployBrokerFlags()
+	addDeployBrokerFlags(deployBroker.Flags())
 	deployRestConfigProducer.SetupFlags(deployBroker.Flags())
 	rootCmd.AddCommand(deployBroker)
 }
 
-func addDeployBrokerFlags() {
-	deployBroker.PersistentFlags().BoolVar(&deployflags.BrokerSpec.GlobalnetEnabled, "globalnet", false,
+func addDeployBrokerFlags(flags *pflag.FlagSet) {
+	flags.BoolVar(&deployflags.BrokerSpec.GlobalnetEnabled, "globalnet", false,
 		"enable support for Overlapping CIDRs in connecting clusters (default disabled)")
-	deployBroker.PersistentFlags().StringVar(&deployflags.BrokerSpec.GlobalnetCIDRRange, "globalnet-cidr-range",
+	flags.StringVar(&deployflags.BrokerSpec.GlobalnetCIDRRange, "globalnet-cidr-range",
 		globalnet.DefaultGlobalnetCIDR, "GlobalCIDR supernet range for allocating GlobalCIDRs to each cluster")
-	deployBroker.PersistentFlags().UintVar(&deployflags.BrokerSpec.DefaultGlobalnetClusterSize, "globalnet-cluster-size",
+	flags.UintVar(&deployflags.BrokerSpec.DefaultGlobalnetClusterSize, "globalnet-cluster-size",
 		globalnet.DefaultGlobalnetClusterSize, "default cluster size for GlobalCIDR allocated to each cluster (amount of global IPs)")
 
-	deployBroker.PersistentFlags().StringVar(&ipsecSubmFile, "ipsec-psk-from", "",
+	flags.StringVar(&ipsecSubmFile, "ipsec-psk-from", "",
 		"import IPsec PSK from existing submariner broker file, like broker-info.subm")
 
-	deployBroker.PersistentFlags().StringSliceVar(&deployflags.BrokerSpec.DefaultCustomDomains, "custom-domains", nil,
+	flags.StringSliceVar(&deployflags.BrokerSpec.DefaultCustomDomains, "custom-domains", nil,
 		"list of domains to use for multicluster service discovery")
 
-	deployBroker.PersistentFlags().StringSliceVar(&deployflags.BrokerSpec.Components, "components", defaultComponents,
+	flags.StringSliceVar(&deployflags.BrokerSpec.Components, "components", defaultComponents,
 		fmt.Sprintf("The components to be installed - any of %s", strings.Join(deploy.ValidComponents, ",")))
 
-	deployBroker.PersistentFlags().StringVar(&deployflags.Repository, "repository", "", "image repository")
-	deployBroker.PersistentFlags().StringVar(&deployflags.ImageVersion, "version", "", "image version")
+	flags.StringVar(&deployflags.Repository, "repository", "", "image repository")
+	flags.StringVar(&deployflags.ImageVersion, "version", "", "image version")
 
-	deployBroker.PersistentFlags().BoolVar(&deployflags.OperatorDebug, "operator-debug", false, "enable operator debugging (verbose logging)")
+	flags.BoolVar(&deployflags.OperatorDebug, "operator-debug", false, "enable operator debugging (verbose logging)")
 }
 
 func deployBrokerInContext(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
