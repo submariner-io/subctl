@@ -33,7 +33,10 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-var recoverRestConfigProducer = restconfig.NewProducer()
+var (
+	recoverRestConfigProducer = restconfig.NewProducer()
+	recoverBrokerURL          string
+)
 
 // recoverBrokerInfo represents the reconstruct command.
 var recoverBrokerInfo = &cobra.Command{
@@ -48,6 +51,8 @@ var recoverBrokerInfo = &cobra.Command{
 
 func init() {
 	recoverRestConfigProducer.SetupFlags(recoverBrokerInfo.Flags())
+	recoverBrokerInfo.Flags().StringVar(&recoverBrokerURL, "broker-url", "",
+		"broker API endpoint URL (stored in the broker information file, defaults to the context URL)")
 	rootCmd.AddCommand(recoverBrokerInfo)
 }
 
@@ -84,5 +89,5 @@ func recoverBrokerInfoFromSubm(submCluster *cluster.Info, _ string, status repor
 	}
 
 	//nolint:wrapcheck // No need to wrap errors here.
-	return broker.RecoverData(submCluster, brokerObj, brokerNamespace, brokerRestConfig, status)
+	return broker.RecoverData(submCluster, brokerObj, brokerNamespace, recoverBrokerURL, brokerRestConfig, status)
 }

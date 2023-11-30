@@ -41,6 +41,7 @@ type BrokerOptions struct {
 	Repository      string
 	ImageVersion    string
 	BrokerNamespace string
+	BrokerURL       string
 	BrokerSpec      operatorv1alpha1.BrokerSpec
 }
 

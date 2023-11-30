@@ -43,6 +43,7 @@ type Options struct {
 	ImageVersion                  string
 	CableDriver                   string
 	CoreDNSCustomConfigMap        string
+	BrokerURL                     string
 	CustomDomains                 []string
 	ImageOverrideArr              []string
 }
