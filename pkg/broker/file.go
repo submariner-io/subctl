@@ -39,7 +39,7 @@ import (
 
 const InfoFileName = "broker-info.subm"
 
-func WriteInfoToFile(restConfig *rest.Config, brokerNamespace string, ipsecPSK []byte, components set.Set[string],
+func WriteInfoToFile(restConfig *rest.Config, brokerNamespace, brokerURL string, ipsecPSK []byte, components set.Set[string],
 	customDomains []string, status reporter.Interface,
 ) error {
 	status.Start("Saving broker info to file %q", InfoFileName)
@@ -69,6 +69,10 @@ func WriteInfoToFile(restConfig *rest.Config, brokerNamespace string, ipsecPSK [
 	data.IPSecPSK = wrapIPSecPSKSecret(ipsecPSK)
 
 	data.BrokerURL = restConfig.Host + restConfig.APIPath
+
+	if brokerURL != "" {
+		data.BrokerURL = brokerURL
+	}
 
 	data.ServiceDiscovery = components.Has(component.ServiceDiscovery)
 	data.Components = components.UnsortedList()

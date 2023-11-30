@@ -60,6 +60,11 @@ var joinCmd = &cobra.Command{
 		exit.OnError(status.Error(err, "Error loading the broker information from the given file"))
 		status.Success("%s indicates broker is at %s", args[0], brokerInfo.BrokerURL)
 
+		if joinFlags.BrokerURL != "" {
+			status.Success("Overriding broker URL using %s", joinFlags.BrokerURL)
+			brokerInfo.BrokerURL = joinFlags.BrokerURL
+		}
+
 		exit.OnError(joinRestConfigProducer.RunOnSelectedContext(
 			func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 				return joinInContext(brokerInfo, clusterInfo, status)
@@ -127,6 +132,8 @@ func addJoinFlags(cmd *cobra.Command) {
 
 	cmd.Flags().BoolVar(&joinFlags.BrokerK8sSecure, "check-broker-certificate", true,
 		"check the broker certificate (disable this to allow \"insecure\" connections)")
+	cmd.Flags().StringVar(&joinFlags.BrokerURL, "broker-url", "",
+		"URL of the broker API endpoint (overrides the URL stored in the broker information file)")
 }
 
 func joinInContext(brokerInfo *broker.Info, clusterInfo *cluster.Info, status reporter.Interface) error {

@@ -85,6 +85,9 @@ func addDeployBrokerFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&deployflags.ImageVersion, "version", "", "image version")
 
 	flags.BoolVar(&deployflags.OperatorDebug, "operator-debug", false, "enable operator debugging (verbose logging)")
+
+	flags.StringVar(&deployflags.BrokerURL, "broker-url", "",
+		"broker API endpoint URL (stored in the broker information file, defaults to the context URL)")
 }
 
 func deployBrokerInContext(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
@@ -114,6 +117,6 @@ func deployBrokerInContext(clusterInfo *cluster.Info, namespace string, status r
 	}
 
 	return broker.WriteInfoToFile( //nolint:wrapcheck // No need to wrap errors here.
-		clusterInfo.RestConfig, namespace, ipsecPSK,
+		clusterInfo.RestConfig, namespace, deployflags.BrokerURL, ipsecPSK,
 		set.New(deployflags.BrokerSpec.Components...), deployflags.BrokerSpec.DefaultCustomDomains, status)
 }
