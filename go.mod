@@ -16,20 +16,20 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	github.com/submariner-io/admiral v0.16.2
-	github.com/submariner-io/cloud-prepare v0.16.2
-	github.com/submariner-io/lighthouse v0.16.2
-	github.com/submariner-io/shipyard v0.16.2
-	github.com/submariner-io/submariner v0.16.2
-	github.com/submariner-io/submariner-operator v0.16.2
+	github.com/submariner-io/admiral v0.16.3
+	github.com/submariner-io/cloud-prepare v0.16.3
+	github.com/submariner-io/lighthouse v0.16.3
+	github.com/submariner-io/shipyard v0.16.3
+	github.com/submariner-io/submariner v0.16.3
+	github.com/submariner-io/submariner-operator v0.16.3
 	github.com/uw-labs/lichen v0.1.7
-	golang.org/x/net v0.17.0
+	golang.org/x/net v0.19.0
 	golang.org/x/oauth2 v0.12.0
 	google.golang.org/api v0.138.0
-	k8s.io/api v0.27.7
-	k8s.io/apiextensions-apiserver v0.27.5
-	k8s.io/apimachinery v0.27.7
-	k8s.io/client-go v0.27.7
+	k8s.io/api v0.27.9
+	k8s.io/apiextensions-apiserver v0.27.9
+	k8s.io/apimachinery v0.27.9
+	k8s.io/client-go v0.27.9
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 	sigs.k8s.io/controller-runtime v0.15.2
 	sigs.k8s.io/mcs-api v0.1.0
@@ -44,7 +44,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute v1.0.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork v1.1.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.1.1 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
+	github.com/ProtonMail/go-crypto v0.0.0-20230828082145-3c4c8a2d2371 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.21.0 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.18.38 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.36 // indirect
@@ -74,7 +74,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/licenseclassifier v0.0.0-20201113175434-78a70215ca36 // indirect
@@ -119,7 +119,7 @@ require (
 	golang.org/x/term v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.12.0 // indirect
+	golang.org/x/tools v0.13.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231106174013-bbf56f31fb17 // indirect
 	google.golang.org/grpc v1.59.0 // indirect
