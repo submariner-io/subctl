@@ -26,6 +26,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/client"
@@ -36,11 +37,14 @@ import (
 	"github.com/submariner-io/subctl/pkg/secret"
 	"github.com/submariner-io/subctl/pkg/version"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
+	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+//nolint:gocyclo // Cyclomatic complexity is mostly due to error checking so ignore.
 func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Options,
 	clientProducer client.Producer, status reporter.Interface,
 ) error {
@@ -79,6 +83,13 @@ func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Opti
 		ClusterSize: options.GlobalnetClusterSize,
 	}
 
+	operatorNamespace := constants.OperatorNamespace
+
+	err = ensureUniqueCluster(ctx, options.ClusterID, brokerClientProducer, brokerNamespace, clientProducer, operatorNamespace, status)
+	if err != nil {
+		return err
+	}
+
 	if options.GlobalnetEnabled {
 		err = globalnet.AllocateAndUpdateGlobalCIDRConfigMap(ctx, brokerClientProducer.ForGeneral(), brokerNamespace, &netconfig,
 			status)
@@ -91,7 +102,7 @@ func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Opti
 
 	repositoryInfo := image.NewRepositoryInfo(options.Repository, options.ImageVersion, imageOverrides)
 
-	err = operator.Ensure(ctx, status, clientProducer, constants.OperatorNamespace, repositoryInfo.GetOperatorImage(), options.OperatorDebug)
+	err = operator.Ensure(ctx, status, clientProducer, operatorNamespace, repositoryInfo.GetOperatorImage(), options.OperatorDebug)
 	if err != nil {
 		return status.Error(err, "Error deploying the operator")
 	}
@@ -211,4 +222,36 @@ func isValidCustomCoreDNSConfig(corednsCustomConfigMap string) error {
 	}
 
 	return nil
+}
+
+func ensureUniqueCluster(ctx context.Context, clusterID string, brokerProducer client.Producer, brokerNamespace string,
+	localProducer client.Producer, operatorNamespace string, status reporter.Interface,
+) error {
+	err := localProducer.ForGeneral().Get(ctx, controllerClient.ObjectKey{
+		Namespace: operatorNamespace,
+		Name:      clusterID,
+	}, &submarinerv1.Cluster{})
+
+	if !resource.IsNotFoundErr(err) {
+		return status.Error(err, "error retrieving local Cluster CR")
+	}
+
+	// This is a new installation - check if a Cluster CR exists on the broker. If so, it must be from another cluster.
+	err = brokerProducer.ForGeneral().Get(ctx, controllerClient.ObjectKey{
+		Namespace: brokerNamespace,
+		Name:      clusterID,
+	}, &submarinerv1.Cluster{})
+
+	if resource.IsNotFoundErr(err) {
+		return nil
+	}
+
+	if err != nil {
+		return status.Error(err, "error retrieving broker Cluster CR")
+	}
+
+	status.Failure("Detected an existing joined cluster with the same ID %q on the broker. Cluster IDs must be unique across all clusters",
+		clusterID)
+
+	return goerrors.New("cluster ID not unique")
 }
