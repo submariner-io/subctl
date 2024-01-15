@@ -148,6 +148,13 @@ function validate_and_clean_broker_info() {
 
 subm_ns=submariner-operator
 submariner_broker_ns=submariner-k8s-broker
+
+if [[ "${LIGHTHOUSE}" != true ]]; then
+  SETTINGS="$DAPPER_SOURCE"/.shipyard.system.yml
+else
+  SETTINGS="$DAPPER_SOURCE"/.shipyard.lighthouse.yml
+fi
+
 load_settings
 declare_kubeconfig
 deploy_env_once
@@ -156,7 +163,8 @@ deploy_env_once
 
 # Test subctl show invocations
 
-_subctl show all | tee /dev/stderr | (sponge ||:) | grep -q 'Cluster "cluster2"'
+# Some clusters may not be connected yet so retry
+with_retries 30 sleep_on_fail 1s _subctl show all | tee /dev/stderr | (sponge ||:) | grep -q 'Cluster "cluster2"'
 # Single-context variants don't say 'Cluster "foo"', check what cluster is considered local
 _subctl show all --context cluster1 | tee /dev/stderr | (sponge ||:) | grep -qv 'cluster2.*local'
 _subctl show all --context cluster2 | tee /dev/stderr | (sponge ||:) | grep -q 'cluster2.*local'
@@ -170,7 +178,8 @@ test_subctl_gather
 
 # Test subctl diagnose invocations
 
-_subctl diagnose all --validation-timeout 20
+# Some clusters may not be connected yet so retry
+with_retries 30 sleep_on_fail 1s _subctl diagnose all --validation-timeout 20
 _subctl diagnose firewall inter-cluster --validation-timeout 20 --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1 --remoteconfig "${KUBECONFIGS_DIR}"/kind-config-cluster2
 _subctl diagnose firewall inter-cluster --validation-timeout 20 --context cluster1 --remotecontext cluster2
 _subctl diagnose firewall nat-discovery --validation-timeout 20 --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1 --remoteconfig "${KUBECONFIGS_DIR}"/kind-config-cluster2
@@ -185,28 +194,32 @@ _subctl diagnose firewall nat-discovery --validation-timeout 20 "${KUBECONFIGS_D
 with_context "${clusters[0]}" test_subctl_diagnose_in_cluster
 
 # Test subctl benchmark invocations
+# Note that we skip these tests for lighthouse b/c clusters are deployed with only one node
+if [[ "${LIGHTHOUSE}" != true ]]; then
+  _subctl benchmark latency --context cluster1 | tee /dev/stderr | (sponge ||:) | grep -q 'Performing latency tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
+  _subctl benchmark latency --context cluster1 --tocontext cluster2 | tee /dev/stderr | (sponge ||:) | grep -qE '(Performing latency tests from Gateway pod on cluster "cluster1" to Gateway pod on cluster "cluster2"|Latency test is not supported with Globalnet enabled, skipping the test)'
 
-_subctl benchmark latency --context cluster1 | tee /dev/stderr | (sponge ||:) | grep -q 'Performing latency tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
-_subctl benchmark latency --context cluster1 --tocontext cluster2 | tee /dev/stderr | (sponge ||:) | grep -qE '(Performing latency tests from Gateway pod on cluster "cluster1" to Gateway pod on cluster "cluster2"|Latency test is not supported with Globalnet enabled, skipping the test)'
+  _subctl benchmark throughput --context cluster1 | tee /dev/stderr | (sponge ||:) | grep -q 'Performing throughput tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
+  _subctl benchmark throughput --context cluster1 --tocontext cluster2
 
-_subctl benchmark throughput --context cluster1 | tee /dev/stderr | (sponge ||:) | grep -q 'Performing throughput tests from Non-Gateway pod to Gateway pod on cluster "cluster1"'
-_subctl benchmark throughput --context cluster1 --tocontext cluster2
+  # Obsolete variant with contexts
+  _subctl benchmark latency --intra-cluster --kubecontexts cluster1 && exit 1
+  _subctl benchmark latency --kubecontexts cluster1,cluster2 && exit 1
 
-# Obsolete variant with contexts
-_subctl benchmark latency --intra-cluster --kubecontexts cluster1 && exit 1
-_subctl benchmark latency --kubecontexts cluster1,cluster2 && exit 1
+  _subctl benchmark throughput --intra-cluster --kubecontexts cluster1 && exit 1
+  _subctl benchmark throughput --kubecontexts cluster1,cluster2 && exit 1
 
-_subctl benchmark throughput --intra-cluster --kubecontexts cluster1 && exit 1
-_subctl benchmark throughput --kubecontexts cluster1,cluster2 && exit 1
+  # Obsolete variant with kubeconfigs
+  _subctl benchmark latency "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 && exit 1
 
-# Obsolete variant with kubeconfigs
-_subctl benchmark latency "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 && exit 1
+  _subctl benchmark throughput "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 && exit 1
 
-_subctl benchmark throughput "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 && exit 1
+  # Test subctl verify basic
 
-# Test subctl verify basic
-
-_subctl verify --context cluster1 --tocontext cluster2 --only basic-connectivity --verbose
+  _subctl verify --context cluster1 --tocontext cluster2 --only basic-connectivity --verbose
+else
+  _subctl verify --context cluster1 --tocontext cluster2 --extracontext cluster3 --only service-discovery --verbose
+fi
 
 # Test subctl cloud prepare invocations
 
