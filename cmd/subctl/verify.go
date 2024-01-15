@@ -62,18 +62,21 @@ var (
 
 var verifyRestConfigProducer = restconfig.NewProducer().
 	WithPrefixedContext("to").
+	WithPrefixedContext("extra").
 	WithDefaultNamespace(constants.OperatorNamespace)
 
 var verifyCmd = &cobra.Command{
-	Use:   "verify --context <kubeContext1> --tocontext <kubeContext2>",
+	Use:   "verify --context <kubeContext1> --tocontext <kubeContext2> [--extracontext <kubeContext3>]",
 	Short: "Run verifications between two clusters",
-	Long: `This command performs various tests to verify that a Submariner deployment between two clusters
-is functioning properly. The verifications performed are controlled by the --only and --enable-disruptive
-flags. All verifications listed in --only are performed with special handling for those deemed as disruptive.
-A disruptive verification is one that changes the state of the clusters as a side effect. If running the
-command interactively, you will be prompted for confirmation to perform disruptive verifications unless
-the --enable-disruptive flag is also specified. If running non-interactively (that is with no stdin),
---enable-disruptive must be specified otherwise disruptive verifications are skipped.
+	Long: `This command performs various tests to verify that a Submariner deployment between two clusters,
+specified via the --context and --tocontext args, is functioning properly. Some Service Discovery tests require a third cluster,
+specified via the --extracontext arg, to verify additional functionality. If the third cluster is not specified,
+those tests are skipped. The verifications performed are controlled by the --only and --enable-disruptive flags.
+All verifications listed in --only are performed with special handling for those deemed as disruptive. A disruptive
+verification is one that changes the state of the clusters as a side effect. If running the command interactively,
+you will be prompted for confirmation to perform disruptive verifications unless the --enable-disruptive flag is
+also specified. If running non-interactively (that is with no stdin), --enable-disruptive must be specified otherwise
+disruptive verifications are skipped.
 
 The following verifications are deemed disruptive:
 
@@ -86,7 +89,16 @@ The following verifications are deemed disruptive:
 				toContextPresent, err := verifyRestConfigProducer.RunOnSelectedPrefixedContext(
 					"to",
 					func(toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-						return runVerify(fromClusterInfo, toClusterInfo, namespace, determineSpecLabelsToVerify())
+						extraContextPresent, err := verifyRestConfigProducer.RunOnSelectedPrefixedContext(
+							"extra",
+							func(extraClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+								return runVerify(fromClusterInfo, toClusterInfo, extraClusterInfo, namespace, determineSpecLabelsToVerify())
+							}, status)
+						if extraContextPresent {
+							return err //nolint:wrapcheck // No need to wrap errors here.
+						}
+
+						return runVerify(fromClusterInfo, toClusterInfo, nil, namespace, determineSpecLabelsToVerify())
 					}, status)
 
 				if toContextPresent {
@@ -283,10 +295,16 @@ prompt for confirmation therefore you must specify --enable-disruptive to run th
 	return labels
 }
 
-func runVerify(fromClusterInfo, toClusterInfo *cluster.Info, namespace string, specLabels []string) error {
+func runVerify(fromClusterInfo, toClusterInfo, extraClusterInfo *cluster.Info, namespace string, specLabels []string) error {
 	framework.RestConfigs = []*rest.Config{fromClusterInfo.RestConfig, toClusterInfo.RestConfig}
 	framework.TestContext.ClusterIDs = []string{fromClusterInfo.Name, toClusterInfo.Name}
 	framework.TestContext.KubeContexts = []string{fromClusterInfo.Name, toClusterInfo.Name}
+
+	if extraClusterInfo != nil {
+		framework.RestConfigs = append(framework.RestConfigs, extraClusterInfo.RestConfig)
+		framework.TestContext.ClusterIDs = append(framework.TestContext.ClusterIDs, extraClusterInfo.Name)
+		framework.TestContext.KubeContexts = append(framework.TestContext.KubeContexts, extraClusterInfo.Name)
+	}
 
 	framework.TestContext.OperationTimeout = operationTimeout
 	framework.TestContext.ConnectionTimeout = connectionTimeout
