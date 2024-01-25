@@ -15,5 +15,6 @@ vendor/
 .shflags
 junit.xml
 Makefile.dapper
+Makefile.shipyard
 /Dockerfile.*
 
