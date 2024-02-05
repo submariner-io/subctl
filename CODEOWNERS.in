@@ -1,7 +1,8 @@
 @dfarrell07 *.md
+@Jaanki *
 @mkolesnik /.github/workflows/ /scripts/ Makefile* Dockerfile.dapper build/*
 @Oats87 *
 @skitt *
 @sridhargaddam *
 @tpantelis *
-@Jaanki *
+@vthapar *
