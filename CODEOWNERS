@@ -5,4 +5,6 @@
 /scripts/ @Jaanki @mkolesnik @Oats87 @skitt @sridhargaddam @tpantelis @vthapar
 build/* @Jaanki @mkolesnik @Oats87 @skitt @sridhargaddam @tpantelis @vthapar
 Dockerfile.dapper @Jaanki @mkolesnik @Oats87 @skitt @sridhargaddam @tpantelis @vthapar
+go.mod @aswinsuryan @dfarrell07 @Jaanki @maayanf24 @Oats87 @skitt @sridhargaddam @tpantelis @vthapar
+go.sum @aswinsuryan @dfarrell07 @Jaanki @maayanf24 @Oats87 @skitt @sridhargaddam @tpantelis @vthapar
 Makefile* @Jaanki @mkolesnik @Oats87 @skitt @sridhargaddam @tpantelis @vthapar
