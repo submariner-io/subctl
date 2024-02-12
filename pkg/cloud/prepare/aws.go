@@ -49,6 +49,7 @@ func AWS(clusterInfo *cluster.Info, ports *cloud.Ports, config *aws.Config, useL
 					Gateways:        config.Gateways,
 					UseLoadBalancer: useLoadBalancer,
 				}
+
 				err := gwDeployer.Deploy(gwInput, status)
 				if err != nil {
 					return err

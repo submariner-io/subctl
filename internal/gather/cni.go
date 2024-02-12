@@ -96,6 +96,7 @@ var networkPluginCNIType = map[string]string{
 func gatherCNIResources(info *Info, networkPlugin string) {
 	logPodInfo(info, "CNI data", routeagentPodLabel, func(info *Info, pod *v1.Pod) {
 		logSystemCmds(info, pod)
+
 		switch networkPluginCNIType[networkPlugin] {
 		case typeIPTables, typeOvn:
 			logIPTablesCmds(info, pod)
@@ -185,6 +186,7 @@ func gatherCableDriverResources(info *Info, cableDriver string) {
 		if cableDriver == libreswan || cableDriver == "" { // If none specified, use libreswan as default
 			logLibreswanCmds(info, pod)
 		}
+
 		if cableDriver == vxlan {
 			logVxlanCmds(info, pod)
 		}

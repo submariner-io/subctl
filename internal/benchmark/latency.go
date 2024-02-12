@@ -48,6 +48,7 @@ func StartLatencyTests(intraCluster, verbose bool) error {
 		} else {
 			framework.RunCleanupActions()
 		}
+
 		panic(message)
 	})
 
@@ -89,6 +90,7 @@ func StartLatencyTests(intraCluster, verbose bool) error {
 			ServerPodScheduling: framework.GatewayNode,
 			ClientPodScheduling: framework.NonGatewayNode,
 		}
+
 		fmt.Printf("Performing latency tests from Non-Gateway pod to Gateway pod on cluster %q\n", clusterAName)
 		runLatencyTest(f, latencyTestIntraClusterParams, verbose)
 	}

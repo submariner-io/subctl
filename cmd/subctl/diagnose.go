@@ -278,9 +278,11 @@ func runLocalRemoteCommand(localRemoteRestConfigProducer *restconfig.Producer,
 			if err != nil {
 				return err //nolint:wrapcheck // No need to wrap errors here.
 			}
+
 			if !found {
 				return errors.New("no remote context was specified")
 			}
+
 			return nil
 		}, status), "Error running command")
 }

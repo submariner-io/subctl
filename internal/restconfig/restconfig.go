@@ -400,6 +400,7 @@ func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Int
 
 		for contextName, context := range rawConfig.Contexts {
 			processedContexts++
+
 			contextsByCluster[context.Cluster] = append(contextsByCluster[context.Cluster], contextName)
 			usageByUser[context.AuthInfo]++
 		}
@@ -423,6 +424,7 @@ func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Int
 			status.Warning("Found multiple kube contexts for cluster %q:\n    %s\n  Context %q was automatically selected however if the"+
 				" associated user account does not have sufficient privileges, please re-run the command with the suitable context.\n",
 				cluster, strings.Join(contextNames, "\n    "), selectedContextName)
+
 			contextErrors = append(contextErrors, rcp.overrideContextAndRun(cluster, selectedContextName, function, status))
 		}
 	}

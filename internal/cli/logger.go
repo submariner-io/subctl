@@ -122,6 +122,7 @@ func addDebugHeader(buf *bytes.Buffer) {
 	} else if slash := strings.LastIndex(file, "/"); slash >= 0 {
 		path := file
 		file = path[slash+1:]
+
 		if dirsep := strings.LastIndex(path[:slash], "/"); dirsep >= 0 {
 			file = path[dirsep+1:]
 		}

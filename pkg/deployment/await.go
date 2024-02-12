@@ -51,6 +51,7 @@ func AwaitReady(ctx context.Context, kubeClient kubernetes.Interface, namespace,
 				return true, nil
 			}
 		}
+
 		return false, nil
 	})
 }
