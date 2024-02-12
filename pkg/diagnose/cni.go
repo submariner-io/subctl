@@ -339,7 +339,6 @@ func getOVNNBVersion(ctx context.Context, clientSet kubernetes.Interface, config
 		Stderr: &stderr,
 		Tty:    false,
 	})
-
 	if err != nil {
 		return nil, errors.WithMessagef(err, "failed to execute SPDY command")
 	}
