@@ -100,7 +100,7 @@ func getClusterConfig(info *Info) clusterConfig {
 		config.ClusterCIDR = info.Submariner.Status.ClusterCIDR
 		config.ServiceCIDR = info.Submariner.Status.ServiceCIDR
 
-		if len(info.Submariner.Status.GlobalCIDR) > 0 {
+		if info.Submariner.Status.GlobalCIDR != "" {
 			config.GlobalCIDR = info.Submariner.Status.GlobalCIDR
 		}
 	}
