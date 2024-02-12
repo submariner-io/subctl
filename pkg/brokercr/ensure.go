@@ -33,13 +33,13 @@ const (
 	Name = "submariner-broker"
 )
 
-func Ensure(ctx context.Context, client controllerClient.Client, namespace string, brokerSpec submariner.BrokerSpec) error {
+func Ensure(ctx context.Context, client controllerClient.Client, namespace string, brokerSpec *submariner.BrokerSpec) error {
 	brokerCR := &submariner.Broker{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      Name,
 			Namespace: namespace,
 		},
-		Spec: brokerSpec,
+		Spec: *brokerSpec,
 	}
 
 	_, err := util.CreateAnew[*submariner.Broker](ctx, resource.ForControllerClient(client, namespace, &submariner.Broker{}), brokerCR,

@@ -105,7 +105,7 @@ func Deploy(ctx context.Context, options *BrokerOptions, status reporter.Interfa
 
 	status.Start("Deploying the broker")
 
-	err = brokercr.Ensure(ctx, clientProducer.ForGeneral(), options.BrokerNamespace, options.BrokerSpec)
+	err = brokercr.Ensure(ctx, clientProducer.ForGeneral(), options.BrokerNamespace, &options.BrokerSpec)
 
 	return status.Error(err, "Broker deployment failed")
 }
