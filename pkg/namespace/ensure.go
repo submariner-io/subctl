@@ -42,6 +42,7 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace stri
 		for k, v := range namespaceLabels {
 			ns.Labels[k] = v
 		}
+
 		return ns, nil
 	})
 

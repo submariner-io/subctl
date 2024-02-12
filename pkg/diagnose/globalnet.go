@@ -207,6 +207,7 @@ func checkGlobalIngressIPs(clusterInfo *cluster.Info, status reporter.Interface)
 			status.Failure("The allocation of global IPs for GlobalIngressIP %q associated with exported"+
 				"service \"%s/%s\" failed with reason %q and message %q",
 				globalIngress.Name, ns, name, condition.Reason, condition.Message)
+
 			continue
 		}
 

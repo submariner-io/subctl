@@ -44,6 +44,7 @@ func GCP(clusterInfo *cluster.Info, ports *cloud.Ports, config *gcp.Config, useL
 					Gateways:        config.Gateways,
 					UseLoadBalancer: useLoadBalancer,
 				}
+
 				err := gwDeployer.Deploy(gwInput, status)
 				if err != nil {
 					return err

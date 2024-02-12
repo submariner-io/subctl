@@ -43,6 +43,7 @@ func StartThroughputTests(intraCluster, verbose bool) error {
 		} else {
 			framework.RunCleanupActions()
 		}
+
 		panic(message)
 	})
 

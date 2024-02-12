@@ -34,6 +34,7 @@ func Azure(clusterInfo *cluster.Info, config *azure.Config, status reporter.Inte
 			if err != nil {
 				return err
 			}
+
 			return cloud.ClosePorts(status)
 		})
 
