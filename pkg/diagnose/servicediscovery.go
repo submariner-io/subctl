@@ -70,8 +70,8 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 
 	for i := range serviceExports.Items {
 		se := &mcsv1a1.ServiceExport{}
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(serviceExports.Items[i].Object, se)
 
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(serviceExports.Items[i].Object, se)
 		if err != nil {
 			status.Failure("Error converting ServiceExport: %v", err)
 			continue
