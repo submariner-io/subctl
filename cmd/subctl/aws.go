@@ -41,9 +41,9 @@ var (
 		Short:   "Prepare an OpenShift AWS cloud",
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on AWS cloud for Submariner installation.",
 		PreRunE: checkAWSFlags,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 					return prepare.AWS( //nolint:wrapcheck // Not needed.
 						clusterInfo, &cloudOptions.ports, &awsConfig, cloudOptions.useLoadBalancer, status)
 				}, cli.NewReporter()))
@@ -56,9 +56,9 @@ var (
 		Long: "This command cleans up an OpenShift installer-provisioned infrastructure (IPI) on " +
 			"AWS-based cloud after Submariner uninstallation.",
 		PreRunE: checkAWSFlags,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 					return cleanup.AWS(clusterInfo, &awsConfig, status) //nolint:wrapcheck // No need to wrap errors here.
 				}, cli.NewReporter()))
 		},

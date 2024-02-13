@@ -39,7 +39,7 @@ var (
 		Use:   "connections",
 		Short: "Show cluster connectivity information",
 		Long:  `This command shows information about Submariner endpoint connections with other clusters.`,
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				showRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(show.Connections), cli.NewReporter()))
 		},
@@ -48,7 +48,7 @@ var (
 		Use:   "endpoints",
 		Short: "Show Submariner endpoint information",
 		Long:  `This command shows information about Submariner endpoints in a cluster.`,
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				showRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(show.Endpoints), cli.NewReporter()))
 		},
@@ -57,7 +57,7 @@ var (
 		Use:   "gateways",
 		Short: "Show Submariner gateway summary information",
 		Long:  `This command shows summary information about the Submariner gateways in a cluster.`,
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				showRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(show.Gateways), cli.NewReporter()))
 		},
@@ -66,7 +66,7 @@ var (
 		Use:   "networks",
 		Short: "Get information on your cluster related to Submariner",
 		Long:  `This command shows the status of Submariner in your cluster, and the relevant network details from your cluster.`,
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				showRestConfigProducer.RunOnAllContexts(show.Network, cli.NewReporter()))
 		},
@@ -75,7 +75,7 @@ var (
 		Use:   "versions",
 		Short: "Shows Submariner component versions",
 		Long:  `This command shows the versions of the Submariner components in the cluster.`,
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				showRestConfigProducer.RunOnAllContexts(show.Versions, cli.NewReporter()))
 		},
@@ -84,7 +84,7 @@ var (
 		Use:   "brokers",
 		Short: "Shows Broker information",
 		Long:  "This command shows information about the Broker in the cluster",
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				showRestConfigProducer.RunOnAllContexts(show.Brokers, cli.NewReporter()))
 		},
@@ -94,7 +94,7 @@ var (
 		Short: "Show information related to a Submariner cluster",
 		Long: `This command shows information related to a Submariner cluster:
 		      networks, endpoints, gateways, connections, broker and component versions.`,
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				showRestConfigProducer.RunOnAllContexts(show.All, cli.NewReporter()))
 		},

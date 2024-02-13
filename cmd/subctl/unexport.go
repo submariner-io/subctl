@@ -43,7 +43,7 @@ var (
 		Short: "Stop a Service from being exported to other clusters",
 		Long: "This command removes the ServiceExport resource with the given name which in turn stops the Service " +
 			"of the same name from being exported to other clusters",
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, args []string) {
 			err := validateUnexportArguments(args)
 			exit.OnErrorWithMessage(err, "Insufficient arguments")
 

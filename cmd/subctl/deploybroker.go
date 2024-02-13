@@ -53,7 +53,7 @@ var deployRestConfigProducer = restconfig.NewProducer().
 var deployBroker = &cobra.Command{
 	Use:   "deploy-broker",
 	Short: "Deploys the broker",
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		exit.OnError(deployRestConfigProducer.RunOnSelectedContext(deployBrokerInContext, cli.NewReporter()))
 	},
 }

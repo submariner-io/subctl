@@ -42,7 +42,7 @@ var gatherCmd = &cobra.Command{
 	Long: fmt.Sprintf("This command gathers information from a submariner cluster for troubleshooting. The information gathered "+
 		"can be selected by component (%v) and type (%v). Default is to capture all data.",
 		strings.Join(gather.AllModules.UnsortedList(), ","), strings.Join(gather.AllTypes.UnsortedList(), ",")),
-	Run: func(command *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		if options.Directory == "" {
 			options.Directory = "submariner-" + time.Now().UTC().Format("20060102150405") // submariner-YYYYMMDDHHMMSS
 		}

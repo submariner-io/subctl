@@ -43,9 +43,9 @@ var (
 		Short:   "Prepare an OpenShift GCP cloud",
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on GCP cloud for Submariner installation.",
 		PreRunE: checkGCPFlags,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 					return prepare.GCP( //nolint:wrapcheck // Not needed.
 						clusterInfo, &cloudOptions.ports, &gcpConfig, cloudOptions.useLoadBalancer, status)
 				}, cli.NewReporter()))
@@ -57,9 +57,9 @@ var (
 		Short:   "Clean up a GCP cloud",
 		Long:    "This command cleans up an installer-provisioned infrastructure (IPI) on GCP-based cloud after Submariner uninstallation.",
 		PreRunE: checkGCPFlags,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 					return cleanup.GCP(clusterInfo, &gcpConfig, status) //nolint:wrapcheck // No need to wrap errors here.
 				}, cli.NewReporter()))
 		},

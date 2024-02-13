@@ -77,13 +77,13 @@ func addBenchmarkFlags(cmd *cobra.Command) {
 }
 
 func buildBenchmarkRunner(run func(intraCluster, verbose bool) error) func(command *cobra.Command, args []string) {
-	return func(command *cobra.Command, args []string) {
+	return func(_ *cobra.Command, _ []string) {
 		exit.OnError(benchmarkRestConfigProducer.RunOnSelectedContext(
 			func(fromClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 				// Try to run using the "to" context
 				toContextPresent, err := benchmarkRestConfigProducer.RunOnSelectedPrefixedContext(
 					"to",
-					func(toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+					func(toClusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
 						return runBenchmark(run, fromClusterInfo, toClusterInfo, verbose)
 					}, status)
 
