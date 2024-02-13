@@ -52,7 +52,7 @@ var joinCmd = &cobra.Command{
 	Use:   "join",
 	Short: "Connect a cluster to an existing broker",
 	Args:  cobra.MaximumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, args []string) {
 		status := cli.NewReporter()
 		checkArgumentPassed(args)
 
@@ -66,7 +66,7 @@ var joinCmd = &cobra.Command{
 		}
 
 		exit.OnError(joinRestConfigProducer.RunOnSelectedContext(
-			func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+			func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 				return joinInContext(brokerInfo, clusterInfo, status)
 			}, status))
 	},

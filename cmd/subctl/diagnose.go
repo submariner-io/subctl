@@ -56,7 +56,7 @@ var (
 		Use:   "cni",
 		Short: "Check the CNI network plugin",
 		Long:  "This command checks if the detected CNI network plugin is supported by Submariner.",
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(diagnose.CNIConfig), cli.NewReporter()))
 		},
@@ -66,7 +66,7 @@ var (
 		Use:   "connections",
 		Short: "Check the Gateway connections",
 		Long:  "This command checks that the Gateway connections to other clusters are all established",
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(diagnose.Connections), cli.NewReporter()))
 		},
@@ -76,7 +76,7 @@ var (
 		Use:   "deployment",
 		Short: "Check the Submariner deployment",
 		Long:  "This command checks that the Submariner components are properly deployed and running with no overlapping CIDRs.",
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				diagnoseRestConfigProducer.RunOnAllContexts(func(clusterInfo *cluster.Info, ns string, status reporter.Interface) error {
 					if clusterInfo.Submariner == nil && clusterInfo.ServiceDiscovery == nil {
@@ -94,7 +94,7 @@ var (
 		Use:   "k8s-version",
 		Short: "Check the Kubernetes version",
 		Long:  "This command checks if Submariner can be deployed on the Kubernetes version.",
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(diagnoseRestConfigProducer.RunOnAllContexts(diagnose.K8sVersion, cli.NewReporter()))
 		},
 	}
@@ -103,7 +103,7 @@ var (
 		Use:   "kube-proxy-mode",
 		Short: "Check the kube-proxy mode",
 		Long:  "This command checks if the kube-proxy mode is supported by Submariner.",
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(diagnose.KubeProxyMode), cli.NewReporter()))
 		},
@@ -120,7 +120,7 @@ var (
 		Short: "Check firewall access for intra-cluster Submariner VxLAN traffic",
 		Long:  "This command checks if the firewall configuration allows traffic over vx-submariner interface.",
 		Args:  checkNoArguments,
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(firewallIntraVxLANConfig), cli.NewReporter()))
 		},
@@ -131,7 +131,7 @@ var (
 		Short: "Check firewall access to setup tunnels between the Gateway node",
 		Long:  "This command checks if the firewall configuration allows tunnels to be configured on the Gateway nodes.",
 		Args:  checkNoArguments,
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			runLocalRemoteCommand(diagnoseFirewallTunnelRestConfigProducer, diagnose.TunnelConfigAcrossClusters)
 		},
 	}
@@ -141,7 +141,7 @@ var (
 		Short: "Check firewall access for nat-discovery to function properly",
 		Long:  "This command checks if the firewall configuration allows nat-discovery between the configured Gateway nodes.",
 		Args:  checkNoArguments,
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			runLocalRemoteCommand(diagnoseFirewallNatDiscoveryRestConfigProducer, diagnose.NatDiscoveryConfigAcrossClusters)
 		},
 	}
@@ -150,7 +150,7 @@ var (
 		Use:   "all",
 		Short: "Run all diagnostic checks (except those requiring two kubecontexts)",
 		Long:  "This command runs all diagnostic checks (except those requiring two kubecontexts) and reports any issues",
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(diagnoseAll(cli.NewReporter()))
 		},
 	}
@@ -159,7 +159,7 @@ var (
 		Use:   "service-discovery",
 		Short: "Check service discovery functionality",
 		Long:  "This command checks if service discovery is functioning properly.",
-		Run: func(command *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				diagnoseRestConfigProducer.RunOnAllContexts(
 					restconfig.IfServiceDiscoveryInstalled(diagnose.ServiceDiscovery), cli.NewReporter()))
@@ -272,7 +272,7 @@ func runLocalRemoteCommand(localRemoteRestConfigProducer *restconfig.Producer,
 		func(localClusterInfo *cluster.Info, localNamespace string, status reporter.Interface) error {
 			found, err := localRemoteRestConfigProducer.RunOnSelectedPrefixedContext(
 				"remote",
-				func(remoteClusterInfo *cluster.Info, remoteNamespace string, status reporter.Interface) error {
+				func(remoteClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 					return function(localClusterInfo, remoteClusterInfo, localNamespace, diagnoseFirewallOptions, status)
 				}, status)
 			if err != nil {

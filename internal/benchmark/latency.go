@@ -42,7 +42,7 @@ func StartLatencyTests(intraCluster, verbose bool) error {
 		fmt.Printf("Performing latency tests\n")
 	}
 
-	gomega.RegisterFailHandler(func(message string, callerSkip ...int) {
+	gomega.RegisterFailHandler(func(message string, _ ...int) {
 		if f != nil {
 			cleanupFramework(f)
 		} else {

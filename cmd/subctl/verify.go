@@ -82,7 +82,7 @@ The following verifications are deemed disruptive:
 
     ` + strings.Join(disruptiveVerificationNames(), "\n    "),
 	Args: checkVerifyArguments,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		exit.OnError(verifyRestConfigProducer.RunOnSelectedContext(
 			func(fromClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 				// Try to run using the "to" context
@@ -91,7 +91,7 @@ The following verifications are deemed disruptive:
 					func(toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 						extraContextPresent, err := verifyRestConfigProducer.RunOnSelectedPrefixedContext(
 							"extra",
-							func(extraClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+							func(extraClusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
 								return runVerify(fromClusterInfo, toClusterInfo, extraClusterInfo, namespace, determineSpecLabelsToVerify())
 							}, status)
 						if extraContextPresent {

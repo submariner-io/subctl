@@ -40,9 +40,9 @@ var (
 		Short:   "Prepare an OpenShift RHOS cloud",
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on RHOS cloud for Submariner installation.",
 		PreRunE: checkRHOSFlags,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 					return prepare.RHOS( //nolint:wrapcheck // Not needed.
 						clusterInfo, &cloudOptions.ports, &rhosConfig, cloudOptions.useLoadBalancer, status)
 				}, cli.NewReporter()))
@@ -55,9 +55,9 @@ var (
 		Long: "This command cleans up an OpenShift installer-provisioned infrastructure (IPI) on RHOS-based" +
 			" cloud after Submariner uninstallation.",
 		PreRunE: checkRHOSFlags,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 					return cleanup.RHOS(clusterInfo, &rhosConfig, status) //nolint:wrapcheck // No need to wrap errors here.
 				}, cli.NewReporter()))
 		},

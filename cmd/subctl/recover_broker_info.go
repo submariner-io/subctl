@@ -42,7 +42,7 @@ var (
 var recoverBrokerInfo = &cobra.Command{
 	Use:   "recover-broker-info",
 	Short: "Recovers the broker-info.subm file from the installed Broker",
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		status := cli.NewReporter()
 
 		exit.OnError(recoverRestConfigProducer.RunOnSelectedContext(restconfig.IfConnectivityInstalled(recoverBrokerInfoFromSubm), status))
