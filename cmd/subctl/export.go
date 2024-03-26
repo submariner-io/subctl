@@ -50,7 +50,7 @@ var (
 
 			exit.OnError(exportRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-					return service.Export(clusterInfo.ClientProducer, namespace, args[0], status) //nolint:wrapcheck // No need to wrap errors here.
+					return service.Export(clusterInfo.ClientProducer, namespace, args[0], status)
 				}, cli.NewReporter()))
 		},
 	}

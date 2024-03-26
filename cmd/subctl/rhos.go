@@ -43,7 +43,7 @@ var (
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return prepare.RHOS( //nolint:wrapcheck // Not needed.
+					return prepare.RHOS(
 						clusterInfo, &cloudOptions.ports, &rhosConfig, cloudOptions.useLoadBalancer, status)
 				}, cli.NewReporter()))
 		},
@@ -58,7 +58,7 @@ var (
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return cleanup.RHOS(clusterInfo, &rhosConfig, status) //nolint:wrapcheck // No need to wrap errors here.
+					return cleanup.RHOS(clusterInfo, &rhosConfig, status)
 				}, cli.NewReporter()))
 		},
 	}
