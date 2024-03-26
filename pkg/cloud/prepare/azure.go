@@ -36,7 +36,6 @@ func Azure(clusterInfo *cluster.Info, ports *cloud.Ports, config *azure.Config, 
 		return status.Error(err, "Failed to prepare the cloud")
 	}
 
-	//nolint:wrapcheck // No need to wrap errors here.
 	err = azure.RunOn(clusterInfo, config, status,
 		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if config.Gateways > 0 {

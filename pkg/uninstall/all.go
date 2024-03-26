@@ -106,7 +106,6 @@ func unlabelGatewayNodes(clients client.Producer, clusterName string, status rep
 		return status.Error(err, "Error listing Nodes")
 	}
 
-	//nolint:wrapcheck // Let the caller wrap errors
 	nodeInterface := &resource.InterfaceFuncs[*corev1.Node]{
 		GetFunc: func(ctx context.Context, name string, options metav1.GetOptions) (*corev1.Node, error) {
 			return clients.ForKubernetes().CoreV1().Nodes().Get(ctx, name, options)

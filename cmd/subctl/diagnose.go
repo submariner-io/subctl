@@ -85,7 +85,7 @@ var (
 						return nil
 					}
 
-					return diagnose.Deployments(clusterInfo, ns, status) //nolint:wrapcheck // No need to wrap error here.
+					return diagnose.Deployments(clusterInfo, ns, status)
 				}, cli.NewReporter()))
 		},
 	}
