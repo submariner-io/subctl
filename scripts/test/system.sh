@@ -52,6 +52,10 @@ function test_subctl_gather() {
 
     # Broker (on the first cluster)
     with_context "${broker}" validate_broker_resources
+
+    # Should error with an arg passed
+    _subctl gather all && exit 1
+
     echo "::endgroup::"
 }
 
