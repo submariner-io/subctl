@@ -47,14 +47,14 @@ var (
 		Use:   "throughput --context <kubeContext1> [--tocontext <kubeContext2>]",
 		Short: "Benchmark throughput",
 		Long:  "This command runs throughput tests within a cluster or between two clusters",
-		Args:  checkNoArguments,
+		Args:  checkBenchmarkArguments,
 		Run:   buildBenchmarkRunner(benchmark.StartThroughputTests),
 	}
 	benchmarkLatencyCmd = &cobra.Command{
 		Use:   "latency --context <kubeContext1> [--tocontext <kubeContext2>]",
 		Short: "Benchmark latency",
 		Long:  "This command runs latency benchmark tests within a cluster or between two clusters",
-		Args:  checkNoArguments,
+		Args:  checkBenchmarkArguments,
 		Run:   buildBenchmarkRunner(benchmark.StartLatencyTests),
 	}
 )
@@ -66,7 +66,7 @@ func init() {
 	benchmarkCmd.AddCommand(benchmarkLatencyCmd)
 	rootCmd.AddCommand(benchmarkCmd)
 
-	addTestImageOverrideFlag(benchmarkCmd.PersistentFlags())
+	addImageOverrideFlag(benchmarkCmd.PersistentFlags())
 	framework.AddBeforeSuite(setupTestFrameworkBeforeSuite)
 }
 
@@ -74,6 +74,15 @@ func addBenchmarkFlags(cmd *cobra.Command) {
 	benchmarkRestConfigProducer.SetupFlags(cmd.PersistentFlags())
 
 	cmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "produce verbose logs during benchmark tests")
+}
+
+func checkBenchmarkArguments(cmd *cobra.Command, args []string) error {
+	err := checkImageOverrides(cmd, args)
+	if err != nil {
+		return err
+	}
+
+	return checkNoArguments(cmd, args)
 }
 
 func buildBenchmarkRunner(run func(intraCluster, verbose bool) error) func(command *cobra.Command, args []string) {
