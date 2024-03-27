@@ -44,7 +44,7 @@ var (
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return prepare.AWS( //nolint:wrapcheck // Not needed.
+					return prepare.AWS(
 						clusterInfo, &cloudOptions.ports, &awsConfig, cloudOptions.useLoadBalancer, status)
 				}, cli.NewReporter()))
 		},
@@ -59,7 +59,7 @@ var (
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return cleanup.AWS(clusterInfo, &awsConfig, status) //nolint:wrapcheck // No need to wrap errors here.
+					return cleanup.AWS(clusterInfo, &awsConfig, status)
 				}, cli.NewReporter()))
 		},
 	}

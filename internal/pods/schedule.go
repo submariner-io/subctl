@@ -229,7 +229,6 @@ func (np *Scheduled) awaitUntilScheduled() error {
 	return nil
 }
 
-//nolint:wrapcheck // No need to wrap errors here.
 func (np *Scheduled) AwaitCompletion() error {
 	pods := np.Config.ClientSet.CoreV1().Pods(np.Config.Namespace)
 

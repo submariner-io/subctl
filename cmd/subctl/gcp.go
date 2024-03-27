@@ -46,7 +46,7 @@ var (
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return prepare.GCP( //nolint:wrapcheck // Not needed.
+					return prepare.GCP(
 						clusterInfo, &cloudOptions.ports, &gcpConfig, cloudOptions.useLoadBalancer, status)
 				}, cli.NewReporter()))
 		},
@@ -60,7 +60,7 @@ var (
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return cleanup.GCP(clusterInfo, &gcpConfig, status) //nolint:wrapcheck // No need to wrap errors here.
+					return cleanup.GCP(clusterInfo, &gcpConfig, status)
 				}, cli.NewReporter()))
 		},
 	}

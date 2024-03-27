@@ -242,7 +242,7 @@ func askForClusterID() (string, error) {
 				return nil
 			}
 
-			return cluster.IsValidID(str) //nolint:wrapcheck // No need to wrap
+			return cluster.IsValidID(str)
 		},
 	})
 

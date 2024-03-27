@@ -30,7 +30,6 @@ import (
 )
 
 func Ensure(ctx context.Context, client kubernetes.Interface, namespace string, secret *v1.Secret) (*v1.Secret, error) {
-	//nolint:wrapcheck // No need to wrap errors here
 	object, err := util.CreateAnew[*v1.Secret](ctx, &resource.InterfaceFuncs[*v1.Secret]{
 		GetFunc: func(ctx context.Context, name string, options metav1.GetOptions) (*v1.Secret, error) {
 			return client.CoreV1().Secrets(namespace).Get(ctx, name, options)
