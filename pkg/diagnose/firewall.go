@@ -24,7 +24,6 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
@@ -64,18 +63,9 @@ const (
 )
 
 type FirewallOptions struct {
+	ImageOverrides    []string
 	ValidationTimeout uint
 	VerboseOutput     bool
-}
-
-var firewallImageOverrides = []string{}
-
-func AddFirewallImageOverrideFlag(flags *pflag.FlagSet) {
-	flags.StringSliceVar(&firewallImageOverrides, "image-override", nil, "override component image")
-}
-
-func SetFirewallImageOverride(imageOverrides []string) {
-	firewallImageOverrides = imageOverrides
 }
 
 func spawnClientPodOnNonGatewayNode(client kubernetes.Interface, namespace, podCommand string,
@@ -221,7 +211,7 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 		"(tcpdump --immediate-mode -ln -Q in -A -s 100 -i any udp and %s & pid=\"$!\"; (sleep %d; kill \"$pid\") &) | sed '/%s/q'",
 		portFilter, options.ValidationTimeout, clientMessage)
 
-	repositoryInfo, err := localClusterInfo.GetImageRepositoryInfo(firewallImageOverrides...)
+	repositoryInfo, err := localClusterInfo.GetImageRepositoryInfo(options.ImageOverrides...)
 	if err != nil {
 		return status.Error(err, "Error determining repository information")
 	}

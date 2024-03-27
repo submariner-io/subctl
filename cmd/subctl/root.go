@@ -76,10 +76,16 @@ func Execute() {
 	}
 }
 
-var testImageOverrides = []string{}
+var imageOverrides = []string{}
 
-func addTestImageOverrideFlag(flags *pflag.FlagSet) {
-	flags.StringSliceVar(&testImageOverrides, "image-override", nil, "override component image")
+func addImageOverrideFlag(flags *pflag.FlagSet) {
+	flags.StringSliceVar(&imageOverrides, "image-override", nil, "override component image")
+}
+
+//nolint:wrapcheck // No need to wrap error here
+func checkImageOverrides(_ *cobra.Command, _ []string) error {
+	_, err := cluster.MergeImageOverrides(make(map[string]string), imageOverrides)
+	return err
 }
 
 func setupTestFrameworkBeforeSuite() {
@@ -93,7 +99,7 @@ func setupTestFrameworkBeforeSuite() {
 
 	framework.TestContext.GlobalnetEnabled = clusterInfo.Submariner.Spec.GlobalCIDR != ""
 
-	repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(testImageOverrides...)
+	repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(imageOverrides...)
 	exit.OnErrorWithMessage(err, "Error determining repository information")
 
 	framework.TestContext.NettestImageURL = repositoryInfo.GetNettestImage()

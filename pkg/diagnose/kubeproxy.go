@@ -21,7 +21,6 @@ package diagnose
 import (
 	"strings"
 
-	"github.com/spf13/pflag"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/pods"
 	"github.com/submariner-io/subctl/pkg/cluster"
@@ -34,17 +33,7 @@ const (
 	notEnabled                = "Device \"kube-ipvs0\" does not exist"
 )
 
-var kubeProxyImageOverrides = []string{}
-
-func AddKubeProxyImageOverrideFlag(flags *pflag.FlagSet) {
-	flags.StringSliceVar(&kubeProxyImageOverrides, "image-override", nil, "override component image")
-}
-
-func SetKubeProxyImageOverride(imageOverrides []string) {
-	kubeProxyImageOverrides = imageOverrides
-}
-
-func KubeProxyMode(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+func KubeProxyMode(clusterInfo *cluster.Info, namespace string, imageOverrides []string, status reporter.Interface) error {
 	status.Start("Checking Submariner support for the kube-proxy mode")
 	defer status.End()
 
@@ -55,7 +44,7 @@ func KubeProxyMode(clusterInfo *cluster.Info, namespace string, status reporter.
 
 	scheduling := pods.Scheduling{ScheduleOn: pods.GatewayNode, Networking: pods.HostNetworking}
 
-	repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(kubeProxyImageOverrides...)
+	repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(imageOverrides...)
 	if err != nil {
 		return status.Error(err, "Error determining repository information")
 	}

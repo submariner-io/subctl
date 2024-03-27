@@ -33,18 +33,18 @@ const (
 	gnCurlMetricsCommand = curlCmd + " submariner-globalnet-metrics.submariner-operator.svc.cluster.local:8081/metrics"
 )
 
-func checkMetricsConfig(clusterInfo *cluster.Info, status reporter.Interface) error {
+func checkMetricsConfig(clusterInfo *cluster.Info, imageOverrides []string, status reporter.Interface) error {
 	if clusterInfo.Submariner == nil {
 		return nil
 	}
 
 	metricsErrors := []error{}
-	if err := checkComponentMetrics(clusterInfo, status, "gateway", gwCurlMetricsCommand); err != nil {
+	if err := checkComponentMetrics(clusterInfo, imageOverrides, "gateway", gwCurlMetricsCommand, status); err != nil {
 		metricsErrors = append(metricsErrors, err)
 	}
 
 	if clusterInfo.Submariner.Spec.GlobalCIDR != "" {
-		if err := checkComponentMetrics(clusterInfo, status, "globalnet", gnCurlMetricsCommand); err != nil {
+		if err := checkComponentMetrics(clusterInfo, imageOverrides, "globalnet", gnCurlMetricsCommand, status); err != nil {
 			metricsErrors = append(metricsErrors, err)
 		}
 	}
@@ -52,7 +52,7 @@ func checkMetricsConfig(clusterInfo *cluster.Info, status reporter.Interface) er
 	return apierrors.NewAggregate(metricsErrors)
 }
 
-func checkComponentMetrics(clusterInfo *cluster.Info, status reporter.Interface, component, command string) error {
+func checkComponentMetrics(clusterInfo *cluster.Info, imageOverrides []string, component, command string, status reporter.Interface) error {
 	status.Start("Checking that %s metrics are accessible from non-gateway nodes", component)
 	defer status.End()
 
@@ -66,7 +66,7 @@ func checkComponentMetrics(clusterInfo *cluster.Info, status reporter.Interface,
 		return nil
 	}
 
-	repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(deploymentImageOverrides...)
+	repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(imageOverrides...)
 	if err != nil {
 		return status.Error(err, "Error determining repository information")
 	}

@@ -23,7 +23,6 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/restconfig"
@@ -37,17 +36,7 @@ import (
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var deploymentImageOverrides = []string{}
-
-func AddDeploymentImageOverrideFlag(flags *pflag.FlagSet) {
-	flags.StringSliceVar(&deploymentImageOverrides, "image-override", nil, "override component image")
-}
-
-func SetDeploymentImageOverride(imageOverrides []string) {
-	deploymentImageOverrides = imageOverrides
-}
-
-func Deployments(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+func Deployments(clusterInfo *cluster.Info, _ string, imageOverrides []string, status reporter.Interface) error {
 	if clusterInfo.Submariner != nil {
 		if err := checkOverlappingCIDRs(clusterInfo, status); err != nil {
 			return err
@@ -58,7 +47,7 @@ func Deployments(clusterInfo *cluster.Info, _ string, status reporter.Interface)
 		return err
 	}
 
-	return checkMetricsConfig(clusterInfo, status)
+	return checkMetricsConfig(clusterInfo, imageOverrides, status)
 }
 
 func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface) error {
