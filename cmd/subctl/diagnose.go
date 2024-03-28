@@ -23,7 +23,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
@@ -36,8 +35,6 @@ import (
 
 var (
 	diagnoseFirewallOptions diagnose.FirewallOptions
-
-	imageOverrides = []string{}
 
 	diagnoseRestConfigProducer = restconfig.NewProducer().WithDefaultNamespace(constants.OperatorNamespace).WithInClusterFlag()
 
@@ -76,6 +73,7 @@ var (
 		Use:   "deployment",
 		Short: "Check the Submariner deployment",
 		Long:  "This command checks that the Submariner components are properly deployed and running with no overlapping CIDRs.",
+		Args:  checkImageOverrides,
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				diagnoseRestConfigProducer.RunOnAllContexts(func(clusterInfo *cluster.Info, ns string, status reporter.Interface) error {
@@ -85,7 +83,7 @@ var (
 						return nil
 					}
 
-					return diagnose.Deployments(clusterInfo, ns, status)
+					return deployments(clusterInfo, ns, status)
 				}, cli.NewReporter()))
 		},
 	}
@@ -103,9 +101,10 @@ var (
 		Use:   "kube-proxy-mode",
 		Short: "Check the kube-proxy mode",
 		Long:  "This command checks if the kube-proxy mode is supported by Submariner.",
+		Args:  checkImageOverrides,
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
-				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(diagnose.KubeProxyMode), cli.NewReporter()))
+				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(kubeProxyMode), cli.NewReporter()))
 		},
 	}
 
@@ -119,7 +118,7 @@ var (
 		Use:   "intra-cluster",
 		Short: "Check firewall access for intra-cluster Submariner VxLAN traffic",
 		Long:  "This command checks if the firewall configuration allows traffic over vx-submariner interface.",
-		Args:  checkNoArguments,
+		Args:  checkFirewallArguments,
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(firewallIntraVxLANConfig), cli.NewReporter()))
@@ -130,9 +129,9 @@ var (
 		Use:   "inter-cluster --context <localcontext> --remotecontext <remotecontext>",
 		Short: "Check firewall access to setup tunnels between the Gateway node",
 		Long:  "This command checks if the firewall configuration allows tunnels to be configured on the Gateway nodes.",
-		Args:  checkNoArguments,
+		Args:  checkFirewallArguments,
 		Run: func(_ *cobra.Command, _ []string) {
-			runLocalRemoteCommand(diagnoseFirewallTunnelRestConfigProducer, diagnose.TunnelConfigAcrossClusters)
+			runLocalRemoteFirewallCommand(diagnoseFirewallTunnelRestConfigProducer, diagnose.TunnelConfigAcrossClusters)
 		},
 	}
 
@@ -140,9 +139,9 @@ var (
 		Use:   "nat-discovery --context <localcontext> --remotecontext <remotecontext>",
 		Short: "Check firewall access for nat-discovery to function properly",
 		Long:  "This command checks if the firewall configuration allows nat-discovery between the configured Gateway nodes.",
-		Args:  checkNoArguments,
+		Args:  checkFirewallArguments,
 		Run: func(_ *cobra.Command, _ []string) {
-			runLocalRemoteCommand(diagnoseFirewallNatDiscoveryRestConfigProducer, diagnose.NatDiscoveryConfigAcrossClusters)
+			runLocalRemoteFirewallCommand(diagnoseFirewallNatDiscoveryRestConfigProducer, diagnose.NatDiscoveryConfigAcrossClusters)
 		},
 	}
 
@@ -150,6 +149,7 @@ var (
 		Use:   "all",
 		Short: "Run all diagnostic checks (except those requiring two kubecontexts)",
 		Long:  "This command runs all diagnostic checks (except those requiring two kubecontexts) and reports any issues",
+		Args:  checkImageOverrides,
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(diagnoseAll(cli.NewReporter()))
 		},
@@ -177,14 +177,14 @@ func init() {
 
 func addDiagnoseSubCommands() {
 	addDiagnoseFWConfigFlags(diagnoseAllCmd)
-	AddImageImageOverrideFlag(diagnoseAllCmd.Flags())
+	addImageOverrideFlag(diagnoseAllCmd.Flags())
 
 	diagnoseCmd.AddCommand(diagnoseCNICmd)
 	diagnoseCmd.AddCommand(diagnoseConnectionsCmd)
-	diagnose.AddDeploymentImageOverrideFlag(diagnoseDeploymentCmd.Flags())
+	addImageOverrideFlag(diagnoseDeploymentCmd.Flags())
 	diagnoseCmd.AddCommand(diagnoseDeploymentCmd)
 	diagnoseCmd.AddCommand(diagnoseVersionCmd)
-	diagnose.AddKubeProxyImageOverrideFlag(diagnoseKubeProxyModeCmd.Flags())
+	addImageOverrideFlag(diagnoseKubeProxyModeCmd.Flags())
 	diagnoseCmd.AddCommand(diagnoseKubeProxyModeCmd)
 	diagnoseCmd.AddCommand(diagnoseAllCmd)
 	diagnoseCmd.AddCommand(diagnoseFirewallCmd)
@@ -198,16 +198,12 @@ func addDiagnoseFirewallSubCommands() {
 	diagnoseFirewallNatDiscoveryRestConfigProducer.SetupFlags(diagnoseFirewallNatDiscovery.Flags())
 	addDiagnoseFWConfigFlags(diagnoseFirewallNatDiscovery)
 
-	diagnose.AddFirewallImageOverrideFlag(diagnoseFirewallVxLANCmd.Flags())
-	diagnose.AddFirewallImageOverrideFlag(diagnoseFirewallTunnelCmd.Flags())
-	diagnose.AddFirewallImageOverrideFlag(diagnoseFirewallNatDiscovery.Flags())
+	addImageOverrideFlag(diagnoseFirewallVxLANCmd.Flags())
+	addImageOverrideFlag(diagnoseFirewallTunnelCmd.Flags())
+	addImageOverrideFlag(diagnoseFirewallNatDiscovery.Flags())
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallVxLANCmd)
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallTunnelCmd)
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallNatDiscovery)
-}
-
-func AddImageImageOverrideFlag(flags *pflag.FlagSet) {
-	flags.StringSliceVar(&imageOverrides, "image-override", nil, "override component image")
 }
 
 func addDiagnoseFWConfigFlags(command *cobra.Command) {
@@ -218,30 +214,41 @@ func addDiagnoseFWConfigFlags(command *cobra.Command) {
 }
 
 func firewallIntraVxLANConfig(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+	diagnoseFirewallOptions.ImageOverrides = imageOverrides
 	return diagnose.FirewallIntraVxLANConfig( //nolint:wrapcheck // No need to wrap errors here.
 		clusterInfo, namespace, diagnoseFirewallOptions, status)
 }
 
+func checkFirewallArguments(cmd *cobra.Command, args []string) error {
+	err := checkImageOverrides(cmd, args)
+	if err != nil {
+		return err
+	}
+
+	return checkNoArguments(cmd, args)
+}
+
+func kubeProxyMode(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+	return diagnose.KubeProxyMode(clusterInfo, namespace, imageOverrides, status) //nolint:wrapcheck // No need to wrap error here
+}
+
+func deployments(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+	return diagnose.Deployments(clusterInfo, namespace, imageOverrides, status) //nolint:wrapcheck // No need to wrap error here
+}
+
 var allDiagnoseCommands = []restconfig.PerContextFn{
 	diagnose.K8sVersion,
-	diagnose.Deployments,
+	deployments,
 	restconfig.IfConnectivityInstalled(
 		diagnose.CNIConfig,
 		diagnose.Connections,
-		diagnose.KubeProxyMode,
+		kubeProxyMode,
 		firewallIntraVxLANConfig,
 		diagnose.GlobalnetConfig),
 	restconfig.IfServiceDiscoveryInstalled(diagnose.ServiceDiscovery),
 }
 
 func diagnoseAll(status reporter.Interface) error {
-	// When imageOverrides is supplied to the diagnose all command, percolate it to the individual commands.
-	if len(imageOverrides) != 0 {
-		diagnose.SetDeploymentImageOverride(imageOverrides)
-		diagnose.SetKubeProxyImageOverride(imageOverrides)
-		diagnose.SetFirewallImageOverride(imageOverrides)
-	}
-
 	err := diagnoseRestConfigProducer.RunOnAllContexts(
 		func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 			diagnoseErrors := []error{}
@@ -261,12 +268,14 @@ func diagnoseAll(status reporter.Interface) error {
 	return err //nolint:wrapcheck // No need to wrap errors here.
 }
 
-func runLocalRemoteCommand(localRemoteRestConfigProducer *restconfig.Producer,
+func runLocalRemoteFirewallCommand(localRemoteRestConfigProducer *restconfig.Producer,
 	function func(
 		localClusterInfo, remoteClusterInfo *cluster.Info, namespace string, options diagnose.FirewallOptions, status reporter.Interface,
 	) error,
 ) {
 	status := cli.NewReporter()
+
+	diagnoseFirewallOptions.ImageOverrides = imageOverrides
 
 	exit.OnErrorWithMessage(localRemoteRestConfigProducer.RunOnSelectedContext(
 		func(localClusterInfo *cluster.Info, localNamespace string, status reporter.Interface) error {

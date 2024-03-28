@@ -192,6 +192,11 @@ _subctl diagnose firewall nat-discovery --validation-timeout 20 --context cluste
 _subctl diagnose firewall inter-cluster --validation-timeout 20 "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 && exit 1
 # Obsolete firewall nat-discovery variant
 _subctl diagnose firewall nat-discovery --validation-timeout 20 "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 && exit 1
+# Invalid image-override flag
+_subctl diagnose all --image-override=foo=bar && exit 1
+_subctl diagnose firewall inter-cluster --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1 --remoteconfig "${KUBECONFIGS_DIR}"/kind-config-cluster2 --image-override=foo=bar && exit 1
+_subctl diagnose firewall nat-discovery --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1 --remoteconfig "${KUBECONFIGS_DIR}"/kind-config-cluster2 --image-override=foo=bar && exit 1
+_subctl diagnose firewall intra-cluster --image-override=foo=bar && exit 1
 
 # Test subctl diagnose in-cluster
 
@@ -218,12 +223,20 @@ if [[ "${LIGHTHOUSE}" != true ]]; then
 
   _subctl benchmark throughput "${KUBECONFIGS_DIR}"/kind-config-cluster1 "${KUBECONFIGS_DIR}"/kind-config-cluster2 && exit 1
 
+  # Invalid image-override flag
+  _subctl benchmark latency --context cluster1 --image-override=foo=bar && exit 1
+  _subctl benchmark throughput --context cluster1 --image-override=foo=bar && exit 1
+
   # Test subctl verify basic
 
   _subctl verify --context cluster1 --tocontext cluster2 --only basic-connectivity --verbose
 else
   _subctl verify --context cluster1 --tocontext cluster2 --extracontext cluster3 --only service-discovery --verbose
 fi
+
+# Invalid image-override flag
+_subctl verify --context cluster1 --tocontext cluster2 --only basic-connectivity --image-override=foo=bar && exit 1
+_subctl join --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1 broker-info.subm --clusterid cluster1 --image-override=foo=bar && exit 1
 
 # Test subctl cloud prepare invocations
 
