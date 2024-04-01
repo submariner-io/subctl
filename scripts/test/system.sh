@@ -135,11 +135,11 @@ function test_subctl_recover_broker_info() {
 
 function validate_and_clean_broker_info() {
   base64 -d broker-info.subm > decoded_broker_info.subm
-  if ! diff <(yq -P eval decoded_broker_info.subm) <(yq -P eval "$DAPPER_SOURCE"/output/decoded_broker_info.subm.orig); then
+  if ! diff <(yq -P eval 'del(.ClientToken.metadata)' decoded_broker_info.subm) <(yq -P eval 'del(.ClientToken.metadata)' "$DAPPER_SOURCE"/output/decoded_broker_info.subm.orig); then
     echo "Printing the original broker_info.subm file"
-    cat decoded_broker_info.subm.orig
+    yq -P eval "$DAPPER_SOURCE"/output/decoded_broker_info.subm.orig
     echo "Printing the recovered broker_info.subm file"
-    cat decoded_broker_info.subm
+    yq -P eval decoded_broker_info.subm
   fi
   rm -f broker-info.subm decoded_broker_info.subm
 }
