@@ -77,7 +77,7 @@ func checkFWConfig(clusterInfo *cluster.Info, namespace string, options Firewall
 
 	podCommand := fmt.Sprintf("timeout %d %s", options.ValidationTimeout, tcpSniffVxLANCommand)
 
-	repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(firewallImageOverrides...)
+	repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(options.ImageOverrides...)
 	if err != nil {
 		status.Failure("Error determining repository information: %v", err)
 		return

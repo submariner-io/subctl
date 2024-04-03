@@ -229,7 +229,7 @@ func MergeImageOverrides(imageOverrides map[string]string, localImageOverrides [
 		}
 
 		if !slices.Contains(validOverrides, component) {
-			return nil, fmt.Errorf("invalid override component %s provided. Please choose from %q", component, validOverrides)
+			return nil, fmt.Errorf("invalid image override component %q provided. Valid components are %q", component, validOverrides)
 		}
 
 		imageOverrides[component] = imageURL
