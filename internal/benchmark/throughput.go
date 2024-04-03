@@ -88,7 +88,7 @@ func StartThroughputTests(intraCluster, verbose bool) error {
 
 func initFramework(baseName string, verbose bool) *framework.Framework {
 	f := framework.NewBareFramework(baseName)
-	framework.SetStatusFunction(func(str string) {
+	framework.SetStatusFunction(func(str string, _ ...func()) {
 		if verbose {
 			fmt.Println(str)
 		}
