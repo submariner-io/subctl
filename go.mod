@@ -18,9 +18,9 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/submariner-io/admiral v0.18.0-m2
 	github.com/submariner-io/cloud-prepare v0.18.0-m2
-	github.com/submariner-io/lighthouse v0.18.0-m2
-	github.com/submariner-io/shipyard v0.18.0-m2.0.20240403135726-72fb58b5be3e
-	github.com/submariner-io/submariner v0.18.0-m2
+	github.com/submariner-io/lighthouse v0.18.0-m2.0.20240403090408-89e79c3728dc
+	github.com/submariner-io/shipyard v0.18.0-m2.0.20240404134134-e6a082d00068
+	github.com/submariner-io/submariner v0.18.0-m2.0.20240403165334-104a258289ca
 	github.com/submariner-io/submariner-operator v0.18.0-m2
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.24.0
