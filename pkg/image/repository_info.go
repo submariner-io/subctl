@@ -25,6 +25,11 @@ import (
 	imagenames "github.com/submariner-io/submariner-operator/pkg/names"
 )
 
+// move to admiral / operator
+const SubctlComponent = "submariner-subctl"
+
+var subctlImage = "subctl"
+
 type RepositoryInfo struct {
 	Name      string
 	Version   string
@@ -55,4 +60,8 @@ func (i *RepositoryInfo) GetNettestImage() string {
 
 func (i *RepositoryInfo) GetOperatorImage() string {
 	return images.GetImagePath(i.Name, i.Version, imagenames.OperatorImage, names.OperatorComponent, i.Overrides)
+}
+
+func (i *RepositoryInfo) GetSubctlImage() string {
+	return images.GetImagePath(i.Name, i.Version, subctlImage, SubctlComponent, i.Overrides)
 }

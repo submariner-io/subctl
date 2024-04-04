@@ -20,6 +20,7 @@ package subctl
 
 import (
 	"fmt"
+	"github.com/submariner-io/subctl/internal/constants"
 	"strings"
 	"time"
 
@@ -35,6 +36,7 @@ import (
 var options gather.Options
 
 var gatherRestConfigProducer = restconfig.NewProducer().WithContextsFlag()
+var gatherMetricsRestConfigProducer = restconfig.NewProducer().WithDefaultNamespace(constants.OperatorNamespace).WithInClusterFlag()
 
 var gatherCmd = &cobra.Command{
 	Use:   "gather",
@@ -59,9 +61,29 @@ var gatherCmd = &cobra.Command{
 	},
 }
 
+var gatherMetricsCmd = &cobra.Command{
+	Use:   "gather-metrics",
+	Short: "Gather troubleshooting information from a clusters metrics",
+	Long: fmt.Sprintf("This command gathers information from a submariner cluster's prometheus metrics for troubleshooting. The information gathered " +
+		"is specific about the connections recent status history."),
+	Run: func(command *cobra.Command, args []string) {
+		status := cli.NewReporter()
+
+		exit.OnError(gatherMetricsRestConfigProducer.RunOnAllContexts(
+			func(clusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
+				return gather.MetricsData(clusterInfo, options) //nolint:wrapcheck // No need to wrap errors here.
+			}, status))
+	},
+	Hidden: true,
+}
+
 func init() {
 	addGatherFlags(gatherCmd)
 	rootCmd.AddCommand(gatherCmd)
+
+	gatherMetricsRestConfigProducer.SetupFlags(gatherMetricsCmd.PersistentFlags())
+	rootCmd.AddCommand(gatherMetricsCmd)
+
 }
 
 func addGatherFlags(gatherCmd *cobra.Command) {

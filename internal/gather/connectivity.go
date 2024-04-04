@@ -33,6 +33,7 @@ const (
 	ovnMasterPodLabelOCP     = "app=ovnkube-master"
 	ovnMasterPodLabelGeneric = "name=ovnkube-master"
 	ovnKubePodLabel          = "app=ovnkube-node"
+	gatherMetricsPodLabel    = "app=gather-metrics-data"
 )
 
 func gatherGatewayPodLogs(info *Info) {
@@ -89,4 +90,8 @@ func gatherGatewayRoutes(info *Info) {
 
 func gatherNonGatewayRoutes(info *Info) {
 	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("nongatewayroutes"), corev1.NamespaceAll, v1.ListOptions{})
+}
+
+func gatherHistoricalConnections(info *Info) {
+	DataFromMetrics(info)
 }

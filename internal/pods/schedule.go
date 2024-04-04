@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
@@ -65,6 +66,8 @@ type Config struct {
 	Command             string
 	Timeout             uint
 	ImageRepositoryInfo image.RepositoryInfo
+	ServiceAccountName  string
+	PodSpec             *v1.PodSpec
 }
 
 type Scheduled struct {
@@ -100,6 +103,41 @@ func ScheduleAndAwaitCompletion(config *Config) (string, error) {
 	return np.PodOutput, nil
 }
 
+func ScheduleSubctlPod(config *Config) (*Scheduled, error) {
+	if config.Scheduling.ScheduleOn == InvalidScheduling {
+		config.Scheduling.ScheduleOn = GatewayNode
+	}
+
+	if config.Namespace == "" {
+		config.Namespace = constants.OperatorNamespace
+	}
+
+	if err := checkNSLabels(config); err != nil {
+		return nil, err
+	}
+
+	config.PodSpec = &v1.PodSpec{
+		RestartPolicy:      v1.RestartPolicyNever,
+		ServiceAccountName: config.ServiceAccountName,
+		HostNetwork:        bool(config.Scheduling.Networking),
+		Containers: []v1.Container{
+			{
+				Name:            config.Name,
+				Image:           config.ImageRepositoryInfo.GetSubctlImage(),
+				ImagePullPolicy: v1.PullAlways, // TODO: = remove pull policy !!
+				Command:         strings.Split(config.Command, " "),
+			},
+		},
+		Tolerations: []v1.Toleration{{Operator: v1.TolerationOpExists}},
+	}
+	np := &Scheduled{Config: config}
+	if err := np.schedule(); err != nil {
+		return nil, err
+	}
+
+	return np, nil
+}
+
 func Schedule(config *Config) (*Scheduled, error) {
 	if config.Scheduling.ScheduleOn == InvalidScheduling {
 		config.Scheduling.ScheduleOn = GatewayNode
@@ -111,6 +149,22 @@ func Schedule(config *Config) (*Scheduled, error) {
 
 	if err := checkNSLabels(config); err != nil {
 		return nil, err
+	}
+
+	config.PodSpec = &v1.PodSpec{
+		RestartPolicy: v1.RestartPolicyNever,
+		HostNetwork:   bool(config.Scheduling.Networking),
+		Containers: []v1.Container{
+			{
+				Name:    config.Name,
+				Image:   config.ImageRepositoryInfo.GetNettestImage(),
+				Command: []string{"sh", "-c", "$(COMMAND) >/dev/termination-log 2>&1 || exit 0"},
+				Env: []v1.EnvVar{
+					{Name: "COMMAND", Value: config.Command},
+				},
+			},
+		},
+		Tolerations: []v1.Toleration{{Operator: v1.TolerationOpExists}},
 	}
 
 	np := &Scheduled{Config: config}
@@ -134,21 +188,7 @@ func (np *Scheduled) schedule() error {
 				constants.TransientLabel: constants.TrueLabel,
 			},
 		},
-		Spec: v1.PodSpec{
-			RestartPolicy: v1.RestartPolicyNever,
-			HostNetwork:   bool(np.Config.Scheduling.Networking),
-			Containers: []v1.Container{
-				{
-					Name:    np.Config.Name,
-					Image:   np.Config.ImageRepositoryInfo.GetNettestImage(),
-					Command: []string{"sh", "-c", "$(COMMAND) >/dev/termination-log 2>&1 || exit 0"},
-					Env: []v1.EnvVar{
-						{Name: "COMMAND", Value: np.Config.Command},
-					},
-				},
-			},
-			Tolerations: []v1.Toleration{{Operator: v1.TolerationOpExists}},
-		},
+		Spec: *np.Config.PodSpec,
 	}
 
 	if np.Config.Scheduling.Networking == HostNetworking {

@@ -119,6 +119,37 @@ func gatherDataByCluster(clusterInfo *cluster.Info, options Options) {
 	gatherClusterSummary(&info)
 }
 
+func MetricsData(clusterInfo *cluster.Info, options Options) error {
+	var warningsBuf bytes.Buffer
+
+	rest.SetDefaultWarningHandler(rest.NewWarningWriter(&warningsBuf, rest.WarningWriterOptions{
+		Deduplicate: true,
+	}))
+
+	gatherMetricsDataByCluster(clusterInfo, options)
+
+	warnings := warningsBuf.String()
+	if warnings != "" {
+		fmt.Printf("\nEncountered following Kubernetes warnings while running:\n%s", warnings)
+	}
+
+	return nil
+}
+
+func gatherMetricsDataByCluster(clusterInfo *cluster.Info, options Options) {
+	clusterName := clusterInfo.Name
+
+	info := Info{
+		Info:                 *clusterInfo,
+		ClusterName:          clusterName,
+		DirName:              options.Directory,
+		IncludeSensitiveData: options.IncludeSensitiveData,
+		Summary:              &Summary{},
+	}
+
+	collectConnectionsDataFromMetrics(clusterInfo, options, &info)
+}
+
 //nolint:gocritic // hugeParam: info - purposely passed by value.
 func gatherConnectivity(dataType string, info Info) bool {
 	if info.Submariner == nil {
@@ -143,6 +174,7 @@ func gatherConnectivity(dataType string, info Info) bool {
 		gatherClusterGlobalEgressIPs(&info)
 		gatherGlobalEgressIPs(&info)
 		gatherGlobalIngressIPs(&info)
+		gatherHistoricalConnections(&info)
 	default:
 		return false
 	}
