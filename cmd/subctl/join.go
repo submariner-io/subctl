@@ -114,6 +114,7 @@ func addJoinFlags(cmd *cobra.Command) {
 	addAirGappedFlag(cmd, &joinFlags.AirGappedDeployment)
 	addLoadBalancerFlag(cmd, &joinFlags.LoadBalancerEnabled)
 	addImageOverrideFlag(cmd.Flags())
+	addHTTPProxyFlags(cmd.Flags())
 
 	cmd.Flags().BoolVar(&joinFlags.ForceUDPEncaps, "force-udp-encaps", false, "force UDP encapsulation for IPSec")
 
@@ -152,6 +153,7 @@ func joinInContext(brokerInfo *broker.Info, clusterInfo *cluster.Info, status re
 	determineClusterID(clusterInfo.Name, status)
 
 	joinFlags.ImageOverrideArr = imageOverrides
+	joinFlags.HTTPProxyConfig = httpProxyConfig
 
 	ctx := context.TODO()
 	networkDetails := getNetworkDetails(ctx, clusterInfo.ClientProducer, status)

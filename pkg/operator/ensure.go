@@ -32,11 +32,12 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	"golang.org/x/net/context"
+	"golang.org/x/net/http/httpproxy"
 )
 
 //nolint:wrapcheck // No need to wrap errors here.
-func Ensure(ctx context.Context,
-	status reporter.Interface, clientProducer client.Producer, operatorNamespace, operatorImage string, debug bool,
+func Ensure(ctx context.Context, status reporter.Interface, clientProducer client.Producer, operatorNamespace, operatorImage string,
+	debug bool, proxyConfig *httpproxy.Config,
 ) error {
 	if created, err := opcrds.Ensure(ctx, crd.UpdaterFromControllerClient(clientProducer.ForGeneral())); err != nil {
 		return err
@@ -83,7 +84,8 @@ func Ensure(ctx context.Context,
 		return err
 	}
 
-	if created, err := deployment.Ensure(ctx, clientProducer.ForKubernetes(), operatorNamespace, operatorImage, debug); err != nil {
+	if created, err := deployment.Ensure(ctx, clientProducer.ForKubernetes(), operatorNamespace, operatorImage, debug,
+		proxyConfig); err != nil {
 		return err
 	} else if created {
 		status.Success("Deployed the operator successfully")

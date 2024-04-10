@@ -33,6 +33,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submarineropv1a1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
+	"golang.org/x/net/http/httpproxy"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -86,6 +87,18 @@ func addImageOverrideFlag(flags *pflag.FlagSet) {
 func checkImageOverrides(_ *cobra.Command, _ []string) error {
 	_, err := cluster.MergeImageOverrides(make(map[string]string), imageOverrides)
 	return err
+}
+
+var httpProxyConfig httpproxy.Config
+
+func addHTTPProxyFlags(flags *pflag.FlagSet) {
+	flags.StringVar(&httpProxyConfig.HTTPProxy, "http-proxy", "",
+		"Proxy URL to use for HTTP requests. Corresponds to the HTTP_PROXY environment variable.")
+	flags.StringVar(&httpProxyConfig.HTTPSProxy, "https-proxy", "",
+		"Proxy URL to use for HTTPS requests. Corresponds to the HTTPS_PROXY environment variable.")
+	flags.StringVar(&httpProxyConfig.NoProxy, "no-proxy", "",
+		"Comma-separated string specifying hosts that should be excluded from HTTP proxying. "+
+			"Corresponds to the NO_PROXY environment variable.")
 }
 
 func setupTestFrameworkBeforeSuite() {
