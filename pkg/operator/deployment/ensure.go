@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/subctl/pkg/deployment"
+	"golang.org/x/net/http/httpproxy"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -35,7 +36,8 @@ import (
 )
 
 // Ensure the operator is deployed, and running.
-func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace, image string, debug bool) (bool, error) {
+func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace, image string, debug bool, proxyConfig *httpproxy.Config,
+) (bool, error) {
 	operatorName := names.OperatorComponent
 	replicas := int32(1)
 	imagePullPolicy := v1.PullAlways
@@ -76,7 +78,7 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace, ima
 								RunAsNonRoot:             ptr.To(true),
 								AllowPrivilegeEscalation: ptr.To(false),
 							},
-							Env: []v1.EnvVar{
+							Env: addHTTPProxyEnvVars(proxyConfig, []v1.EnvVar{
 								{
 									Name: "WATCH_NAMESPACE", ValueFrom: &v1.EnvVarSource{
 										FieldRef: &v1.ObjectFieldSelector{
@@ -92,7 +94,7 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace, ima
 								}, {
 									Name: "OPERATOR_NAME", Value: operatorName,
 								},
-							},
+							}),
 						},
 					},
 				},
@@ -121,4 +123,20 @@ func GetPodLabelSelector(kubeClient kubernetes.Interface, namespace string) (str
 	}
 
 	return labels.SelectorFromSet(dep.Spec.Template.ObjectMeta.Labels).String(), nil
+}
+
+func addHTTPProxyEnvVars(proxyConfig *httpproxy.Config, vars []v1.EnvVar) []v1.EnvVar {
+	vars = appendEnvVarIfValue(vars, "HTTP_PROXY", proxyConfig.HTTPProxy)
+	vars = appendEnvVarIfValue(vars, "HTTPS_PROXY", proxyConfig.HTTPSProxy)
+	vars = appendEnvVarIfValue(vars, "NO_PROXY", proxyConfig.NoProxy)
+
+	return vars
+}
+
+func appendEnvVarIfValue(vars []v1.EnvVar, name, value string) []v1.EnvVar {
+	if value != "" {
+		vars = append(vars, v1.EnvVar{Name: name, Value: value})
+	}
+
+	return vars
 }

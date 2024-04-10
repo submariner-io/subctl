@@ -18,6 +18,8 @@ limitations under the License.
 
 package join
 
+import "golang.org/x/net/http/httpproxy"
+
 type Options struct {
 	PreferredServer               bool
 	ForceUDPEncaps                bool
@@ -46,4 +48,5 @@ type Options struct {
 	BrokerURL                     string
 	CustomDomains                 []string
 	ImageOverrideArr              []string
+	HTTPProxyConfig               httpproxy.Config
 }

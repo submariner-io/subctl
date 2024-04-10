@@ -33,6 +33,7 @@ import (
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
+	"golang.org/x/net/http/httpproxy"
 	"k8s.io/utils/set"
 )
 
@@ -43,6 +44,7 @@ type BrokerOptions struct {
 	BrokerNamespace string
 	BrokerURL       string
 	BrokerSpec      operatorv1alpha1.BrokerSpec
+	HTTPProxyConfig httpproxy.Config
 }
 
 var ValidComponents = []string{component.ServiceDiscovery, component.Connectivity}
@@ -97,8 +99,8 @@ func Deploy(ctx context.Context, options *BrokerOptions, status reporter.Interfa
 
 	repositoryInfo := image.NewRepositoryInfo(options.Repository, options.ImageVersion, nil)
 
-	err = operator.Ensure(
-		ctx, status, clientProducer, constants.OperatorNamespace, repositoryInfo.GetOperatorImage(), options.OperatorDebug)
+	err = operator.Ensure(ctx, status, clientProducer, constants.OperatorNamespace, repositoryInfo.GetOperatorImage(),
+		options.OperatorDebug, &options.HTTPProxyConfig)
 	if err != nil {
 		return status.Error(err, "error deploying Submariner operator")
 	}
