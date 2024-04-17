@@ -16,20 +16,20 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
-	github.com/submariner-io/admiral v0.17.0
-	github.com/submariner-io/cloud-prepare v0.17.0
-	github.com/submariner-io/lighthouse v0.17.0
-	github.com/submariner-io/shipyard v0.17.0
-	github.com/submariner-io/submariner v0.17.0
-	github.com/submariner-io/submariner-operator v0.17.0
+	github.com/submariner-io/admiral v0.17.1
+	github.com/submariner-io/cloud-prepare v0.17.1
+	github.com/submariner-io/lighthouse v0.17.1
+	github.com/submariner-io/shipyard v0.17.1
+	github.com/submariner-io/submariner v0.17.1
+	github.com/submariner-io/submariner-operator v0.17.1
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.20.0
 	golang.org/x/oauth2 v0.16.0
 	google.golang.org/api v0.154.0
-	k8s.io/api v0.29.1
-	k8s.io/apiextensions-apiserver v0.29.1
-	k8s.io/apimachinery v0.29.1
-	k8s.io/client-go v0.29.1
+	k8s.io/api v0.29.3
+	k8s.io/apiextensions-apiserver v0.29.3
+	k8s.io/apimachinery v0.29.3
+	k8s.io/client-go v0.29.3
 	k8s.io/utils v0.0.0-20231127182322-b307cd553661
 	sigs.k8s.io/controller-runtime v0.17.0
 	sigs.k8s.io/mcs-api v0.1.0
@@ -75,7 +75,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
