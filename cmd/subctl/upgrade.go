@@ -66,6 +66,7 @@ func init() {
 	upgradeCmd.Flags().StringVar(&upgradeSubmarinerVersion, "to-submariner-version", "", "the version of Submariner to which to upgrade")
 	_ = upgradeCmd.Flags().MarkHidden("to-submariner-version")
 	upgradeRestConfigProducer.SetupFlags(upgradeCmd.Flags())
+	addHTTPProxyFlags(upgradeCmd.Flags())
 	rootCmd.AddCommand(upgradeCmd)
 }
 
@@ -244,6 +245,7 @@ func upgradeBroker(ctx context.Context, clusterInfo *cluster.Info, status report
 		ImageVersion:    upgradeOperatorVersion,
 		BrokerNamespace: brokerObj.Namespace,
 		BrokerSpec:      brokerObj.Spec,
+		HTTPProxyConfig: httpProxyConfig,
 	}
 
 	err = deploy.Deploy(ctx, options, status, clusterInfo.ClientProducer)
@@ -271,8 +273,8 @@ func upgradeOperator(ctx context.Context, clusterInfo *cluster.Info, repository 
 
 	repositoryInfo := image.NewRepositoryInfo(repository, upgradeOperatorVersion, imageOverride)
 
-	err = operator.Ensure(
-		ctx, status, clusterInfo.ClientProducer, constants.OperatorNamespace, repositoryInfo.GetOperatorImage(), debug)
+	err = operator.Ensure(ctx, status, clusterInfo.ClientProducer, constants.OperatorNamespace, repositoryInfo.GetOperatorImage(), debug,
+		&httpProxyConfig)
 
 	return status.Error(err, "Error upgrading the Operator")
 }

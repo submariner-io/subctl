@@ -102,7 +102,8 @@ func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Opti
 
 	repositoryInfo := image.NewRepositoryInfo(options.Repository, options.ImageVersion, imageOverrides)
 
-	err = operator.Ensure(ctx, status, clientProducer, operatorNamespace, repositoryInfo.GetOperatorImage(), options.OperatorDebug)
+	err = operator.Ensure(ctx, status, clientProducer, operatorNamespace, repositoryInfo.GetOperatorImage(), options.OperatorDebug,
+		&options.HTTPProxyConfig)
 	if err != nil {
 		return status.Error(err, "Error deploying the operator")
 	}
