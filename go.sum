@@ -517,8 +517,8 @@ github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
-github.com/submariner-io/admiral v0.18.0-m3 h1:L87Jwb4oYAHbfuHxJ0BlKucZT5lP/OdyAuS18NenS6Q=
-github.com/submariner-io/admiral v0.18.0-m3/go.mod h1:vkFQs9wWq1HY4k3JesxlLfKZTaA/llOkbdCDZCdk3yc=
+github.com/submariner-io/admiral v0.18.0-m3.0.20240504143439-22ee51817b45 h1:7wwl7v808XgYCCs1fKXhQHYCA+njJLmWyNekbiefSFg=
+github.com/submariner-io/admiral v0.18.0-m3.0.20240504143439-22ee51817b45/go.mod h1:vkFQs9wWq1HY4k3JesxlLfKZTaA/llOkbdCDZCdk3yc=
 github.com/submariner-io/cloud-prepare v0.18.0-m3 h1:04fGxludphroLPo5eB6BgSg7/Fc8ihc2eUnC2DbP2gg=
 github.com/submariner-io/cloud-prepare v0.18.0-m3/go.mod h1:qHq96HEhW0tgoULtoddHM1pRy6RrXDxEky6BYdyKT4U=
 github.com/submariner-io/lighthouse v0.18.0-m3 h1:CzWXhlCJpeFaD1mchndgxjiVw/XAH3qE/0UbWpTaPdU=
@@ -527,8 +527,8 @@ github.com/submariner-io/shipyard v0.18.0-m3 h1:N0/BAwTv5p6O7PgvQeouUzcgybJtq7QQ
 github.com/submariner-io/shipyard v0.18.0-m3/go.mod h1:qs1LOCrPfM6H3JzR8TWNXFW4hvBiY+8gJ6OOjF4o4E0=
 github.com/submariner-io/submariner v0.18.0-m3 h1:IVpsPwFHLc1AK4/Ga8GtgdXVxnu3w7SfmoEgprmrcOw=
 github.com/submariner-io/submariner v0.18.0-m3/go.mod h1:tvUTVjiY98DavqZODJtP8Qu5ubyrsR9ej8kahSCY8G8=
-github.com/submariner-io/submariner-operator v0.18.0-m3 h1:wVYGmCmBTigeAmZYMq5L3Icx0TseYSYDbn+LIA9RYhA=
-github.com/submariner-io/submariner-operator v0.18.0-m3/go.mod h1:dSFikj+OAQyHS9b0u+LDQQinVauRGJNW7IhJYSdiKPA=
+github.com/submariner-io/submariner-operator v0.18.0-m3.0.20240504214354-4b7e3e23d887 h1:xlqvkX3hN07f/zy7vij8e59ZySpBxuYPrj91MBQ1IqY=
+github.com/submariner-io/submariner-operator v0.18.0-m3.0.20240504214354-4b7e3e23d887/go.mod h1:hVBbXuGfsElwxNnIjfVBUThWni81KarWARIEOifXHV0=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
