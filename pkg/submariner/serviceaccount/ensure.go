@@ -186,8 +186,7 @@ func ensureRoleBindings(ctx context.Context, kubeClient kubernetes.Interface, na
 		return false, errors.Wrap(err, "error provisioning route agent RoleBinding resource")
 	}
 
-	// TODO skitt apply the namespace from the YAML file when there is one
-	createdRouteAgentOVNRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, "openshift-ovn-kubernetes",
+	createdRouteAgentOVNRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_route_agent_ovn_role_binding_yaml)
 	if err != nil {
 		// We don't care if the namespace is missing; that means OVN isn't present
@@ -195,6 +194,7 @@ func ensureRoleBindings(ctx context.Context, kubeClient kubernetes.Interface, na
 		if !missingNamespace {
 			return false, errors.Wrap(err, "error provisioning route agent RoleBinding resource for OVN")
 		}
+		return false, errors.Wrap(err, "error provisioning route agent RoleBinding resource for OVN")
 	}
 
 	createdGlobalnetRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
