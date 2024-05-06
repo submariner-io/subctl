@@ -20,6 +20,7 @@ package serviceaccount
 
 import (
 	"github.com/pkg/errors"
+	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/pkg/clusterrole"
 	"github.com/submariner-io/subctl/pkg/clusterrolebinding"
 	"github.com/submariner-io/subctl/pkg/role"
@@ -97,6 +98,12 @@ func ensureClusterRoles(ctx context.Context, kubeClient kubernetes.Interface) (b
 		return false, errors.Wrap(err, "error provisioning route agent ClusterRole resource")
 	}
 
+	createdRouteAgentOVNCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient,
+		embeddedyamls.Config_rbac_submariner_route_agent_ovn_cluster_role_yaml)
+	if err != nil {
+		return false, errors.Wrap(err, "error provisioning route agent OVN ClusterRole resource")
+	}
+
 	createdGlobalnetCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, embeddedyamls.Config_rbac_submariner_globalnet_cluster_role_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning globalnet ClusterRole resource")
@@ -104,7 +111,7 @@ func ensureClusterRoles(ctx context.Context, kubeClient kubernetes.Interface) (b
 
 	createdDiagnoseCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, embeddedyamls.Config_rbac_submariner_diagnose_cluster_role_yaml)
 
-	return createdSubmarinerCR || createdRouteAgentCR || createdGlobalnetCR || createdDiagnoseCR,
+	return createdSubmarinerCR || createdRouteAgentCR || createdRouteAgentOVNCR || createdGlobalnetCR || createdDiagnoseCR,
 		errors.Wrap(err, "error provisioning diagnose ClusterRole resource")
 }
 
@@ -134,7 +141,6 @@ func ensureClusterRoleBindings(ctx context.Context, kubeClient kubernetes.Interf
 		errors.Wrap(err, "error provisioning diagnose ClusterRoleBinding resource")
 }
 
-//nolint:dupl // Similar code in ensureServiceAccounts, ensureClusterRoleBindings, ensureRoleBindings but not duplicated
 func ensureRoles(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
 	createdSubmarinerRole, err := role.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_gateway_role_yaml)
@@ -167,7 +173,6 @@ func ensureRoles(ctx context.Context, kubeClient kubernetes.Interface, namespace
 		errors.Wrap(err, "error provisioning _metrics reader Role resource")
 }
 
-//nolint:dupl // Similar code in ensureServiceAccounts, ensureClusterRoleBindings, ensureRoles but not duplicated
 func ensureRoleBindings(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
 	createdSubmarinerRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_rbac_submariner_gateway_role_binding_yaml)
@@ -179,6 +184,17 @@ func ensureRoleBindings(ctx context.Context, kubeClient kubernetes.Interface, na
 		embeddedyamls.Config_rbac_submariner_route_agent_role_binding_yaml)
 	if err != nil {
 		return false, errors.Wrap(err, "error provisioning route agent RoleBinding resource")
+	}
+
+	// TODO skitt apply the namespace from the YAML file when there is one
+	createdRouteAgentOVNRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, "openshift-ovn-kubernetes",
+		embeddedyamls.Config_rbac_submariner_route_agent_ovn_role_binding_yaml)
+	if err != nil {
+		// We don't care if the namespace is missing; that means OVN isn't present
+		missingNamespace, _ := resource.IsMissingNamespaceErr(err)
+		if !missingNamespace {
+			return false, errors.Wrap(err, "error provisioning route agent RoleBinding resource for OVN")
+		}
 	}
 
 	createdGlobalnetRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
@@ -196,6 +212,7 @@ func ensureRoleBindings(ctx context.Context, kubeClient kubernetes.Interface, na
 	createdMetricsReaderRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
 		embeddedyamls.Config_openshift_rbac_submariner_metrics_reader_role_binding_yaml)
 
-	return createdSubmarinerRB || createdRouteAgentRB || createdGlobalnetRB || createdMetricsReaderRB || createdDiagnoseRB,
+	return createdSubmarinerRB || createdRouteAgentRB || createdGlobalnetRB || createdRouteAgentOVNRB || createdMetricsReaderRB ||
+			createdDiagnoseRB,
 		errors.Wrap(err, "error provisioning metrics reader RoleBinding resource")
 }
