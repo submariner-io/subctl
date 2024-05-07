@@ -19,6 +19,7 @@ limitations under the License.
 package join
 
 import (
+	"context"
 	goerrors "errors"
 	"fmt"
 	"strings"
@@ -79,7 +80,8 @@ func ClusterToBroker(brokerInfo *broker.Info, clusterInfo *cluster.Info, options
 	}
 
 	if options.GlobalnetEnabled {
-		err = globalnet.AllocateAndUpdateGlobalCIDRConfigMap(brokerClientProducer.ForGeneral(), brokerNamespace, &netconfig, status)
+		err = globalnet.AllocateAndUpdateGlobalCIDRConfigMap(context.TODO(), brokerClientProducer.ForGeneral(), brokerNamespace,
+			&netconfig, status)
 		if err != nil {
 			return errors.Wrap(err, "unable to determine the global CIDR")
 		}

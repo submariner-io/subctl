@@ -19,6 +19,7 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -293,7 +294,7 @@ func determineClusterID(clusterName string, status reporter.Interface) {
 func getNetworkDetails(clientProducer client.Producer, status reporter.Interface) *network.ClusterNetwork {
 	status.Start("Discovering network details")
 
-	networkDetails, err := network.Discover(clientProducer.ForGeneral(), constants.OperatorNamespace)
+	networkDetails, err := network.Discover(context.TODO(), clientProducer.ForGeneral(), constants.OperatorNamespace)
 	if err != nil {
 		status.Warning("Unable to discover network details: %s", err)
 	} else if networkDetails == nil {

@@ -52,13 +52,13 @@ func Ensure(crdUpdater crd.Updater, kubeClient kubernetes.Interface, componentAr
 					return errors.Wrap(err, "error setting up the connectivity requirements")
 				}
 			case component.ServiceDiscovery:
-				_, err := lighthouse.Ensure(crdUpdater, lighthouse.BrokerCluster)
+				_, err := lighthouse.Ensure(context.TODO(), crdUpdater, lighthouse.BrokerCluster)
 				if err != nil {
 					return errors.Wrap(err, "error setting up the service discovery requirements")
 				}
 			case component.Globalnet:
 				// Globalnet needs the Lighthouse CRDs too
-				_, err := lighthouse.Ensure(crdUpdater, lighthouse.BrokerCluster)
+				_, err := lighthouse.Ensure(context.TODO(), crdUpdater, lighthouse.BrokerCluster)
 				if err != nil {
 					return errors.Wrap(err, "error setting up the globalnet requirements")
 				}
