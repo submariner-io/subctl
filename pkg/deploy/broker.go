@@ -19,6 +19,7 @@ limitations under the License.
 package deploy
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -67,12 +68,12 @@ func Broker(options *BrokerOptions, clientProducer client.Producer, status repor
 	}
 
 	if options.BrokerSpec.GlobalnetEnabled {
-		if err = globalnet.ValidateExistingGlobalNetworks(clientProducer.ForGeneral(), options.BrokerNamespace); err != nil {
+		if err = globalnet.ValidateExistingGlobalNetworks(context.TODO(), clientProducer.ForGeneral(), options.BrokerNamespace); err != nil {
 			return status.Error(err, "error validating existing globalCIDR configmap")
 		}
 	}
 
-	if err = globalnet.CreateConfigMap(clientProducer.ForGeneral(), options.BrokerSpec.GlobalnetEnabled,
+	if err = globalnet.CreateConfigMap(context.TODO(), clientProducer.ForGeneral(), options.BrokerSpec.GlobalnetEnabled,
 		options.BrokerSpec.GlobalnetCIDRRange, options.BrokerSpec.DefaultGlobalnetClusterSize, options.BrokerNamespace); err != nil {
 		return status.Error(err, "error creating globalCIDR configmap on Broker")
 	}
