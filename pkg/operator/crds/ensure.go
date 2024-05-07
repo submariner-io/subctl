@@ -31,20 +31,23 @@ func Ensure(ctx context.Context, crdUpdater crd.Updater) (bool, error) {
 	// Attempt to update or create the CRD definitions.
 	// TODO(majopela): In the future we may want to report when we have updated the existing
 	//                 CRD definition with new versions
-	submarinerCreated, err := crdUpdater.CreateOrUpdateFromEmbedded(ctx,
-		embeddedyamls.Deploy_crds_submariner_io_submariners_yaml)
-	if err != nil {
-		return false, errors.Wrap(err, "error provisioning Submariner CRD")
+	created := false
+
+	for _, ref := range []struct {
+		name string
+		crd  string
+	}{
+		{embeddedyamls.Deploy_crds_submariner_io_submariners_yaml, "Submariner"},
+		{embeddedyamls.Deploy_crds_submariner_io_servicediscoveries_yaml, "ServiceDiscovery"},
+		{embeddedyamls.Deploy_crds_submariner_io_brokers_yaml, "Broker"},
+	} {
+		iterCreated, err := crdUpdater.CreateOrUpdateFromEmbedded(ctx, ref.name)
+		if err != nil {
+			return false, errors.Wrapf(err, "error provisioning the %s CRD", ref.crd)
+		}
+
+		created = created || iterCreated
 	}
 
-	serviceDiscoveryCreated, err := crdUpdater.CreateOrUpdateFromEmbedded(ctx,
-		embeddedyamls.Deploy_crds_submariner_io_servicediscoveries_yaml)
-	if err != nil {
-		return false, errors.Wrap(err, "error provisioning ServiceDiscovery CRD")
-	}
-
-	brokerCreated, err := crdUpdater.CreateOrUpdateFromEmbedded(ctx,
-		embeddedyamls.Deploy_crds_submariner_io_brokers_yaml)
-
-	return submarinerCreated || serviceDiscoveryCreated || brokerCreated, errors.Wrap(err, "error provisioning Broker CRD")
+	return created, nil
 }
