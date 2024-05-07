@@ -34,7 +34,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/cloud"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"golang.org/x/oauth2/google"
-	"google.golang.org/api/dns/v1"
+	dnsv1 "google.golang.org/api/dns/v1"
 	"google.golang.org/api/option"
 )
 
@@ -133,7 +133,7 @@ func getCredentials(credentialsFile string) (*google.Credentials, error) {
 		return nil, errors.Wrapf(err, "error reading file %q", credentialsFile)
 	}
 
-	creds, err := google.CredentialsFromJSON(context.TODO(), authJSON, dns.CloudPlatformScope)
+	creds, err := google.CredentialsFromJSON(context.TODO(), authJSON, dnsv1.CloudPlatformScope)
 
 	return creds, errors.Wrapf(err, "error parsing credentials file")
 }
