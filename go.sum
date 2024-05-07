@@ -519,8 +519,8 @@ github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
-github.com/submariner-io/admiral v0.18.0-m3.0.20240506133726-51aed88be10c h1:8t0WsPhp4mXNEu+GvBC6Uda5xyeE1K57UzSo5L7NqDY=
-github.com/submariner-io/admiral v0.18.0-m3.0.20240506133726-51aed88be10c/go.mod h1:vkFQs9wWq1HY4k3JesxlLfKZTaA/llOkbdCDZCdk3yc=
+github.com/submariner-io/admiral v0.18.0-m3.0.20240507170954-5ce341428ad4 h1:raT9f357z0Lb116zbx+n83K5jP3mP/NV3qS4wVT4dbI=
+github.com/submariner-io/admiral v0.18.0-m3.0.20240507170954-5ce341428ad4/go.mod h1:hQtSx5shxVotFbHEC6oQ7+qRKIdSHrXTE1IVNKkI7II=
 github.com/submariner-io/cloud-prepare v0.18.0-m3 h1:04fGxludphroLPo5eB6BgSg7/Fc8ihc2eUnC2DbP2gg=
 github.com/submariner-io/cloud-prepare v0.18.0-m3/go.mod h1:qHq96HEhW0tgoULtoddHM1pRy6RrXDxEky6BYdyKT4U=
 github.com/submariner-io/lighthouse v0.18.0-m3 h1:CzWXhlCJpeFaD1mchndgxjiVw/XAH3qE/0UbWpTaPdU=
@@ -831,8 +831,8 @@ k8s.io/utils v0.0.0-20240310230437-4693a0247e57 h1:gbqbevonBh57eILzModw6mrkbwM0g
 k8s.io/utils v0.0.0-20240310230437-4693a0247e57/go.mod h1:OLgZIPagt7ERELqWJFomSt595RzquPNLL48iOWgYOg0=
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.7/go.mod h1:PHgbrJT7lCHcxMU+mDHEm+nx46H4zuuHZkDP6icnhu0=
 sigs.k8s.io/controller-runtime v0.6.1/go.mod h1:XRYBPdbf5XJu9kpS84VJiZ7h/u1hF3gEORz0efEja7A=
-sigs.k8s.io/controller-runtime v0.18.0 h1:Z7jKuX784TQSUL1TIyeuF7j8KXZ4RtSX0YgtjKcSTME=
-sigs.k8s.io/controller-runtime v0.18.0/go.mod h1:tuAt1+wbVsXIT8lPtk5RURxqAnq7xkpv2Mhttslg7Hw=
+sigs.k8s.io/controller-runtime v0.18.1 h1:RpWbigmuiylbxOCLy0tGnq1cU1qWPwNIQzoJk+QeJx4=
+sigs.k8s.io/controller-runtime v0.18.1/go.mod h1:tuAt1+wbVsXIT8lPtk5RURxqAnq7xkpv2Mhttslg7Hw=
 sigs.k8s.io/controller-tools v0.3.0/go.mod h1:enhtKGfxZD1GFEoMgP8Fdbu+uKQ/cq1/WGJhdVChfvI=
 sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd h1:EDPBXCAspyGV4jQlpZSudPeMmr1bNJefnuqLsRAsHZo=
 sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd/go.mod h1:B8JuhiUyNFVKdsE8h686QcCxMaH6HrOAZj4vswFpcB0=

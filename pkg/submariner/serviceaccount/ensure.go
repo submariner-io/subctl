@@ -106,8 +106,7 @@ var serviceAccountRelatedYAMLs = []embeddedYAMLRefsApplier{
 			// If a RoleBinding has its own namespace, consider that as a gate: if the namespace
 			// doesn't exist, the RoleBinding shouldn't be created, so namespace errors on
 			// RoleBinding-specified namespaces are ignored
-			isMissingNamespace, missingNamespace := resource.IsMissingNamespaceErr(err)
-			if isMissingNamespace && missingNamespace != namespace {
+			if resource.IsMissingNamespaceErr(err) && resource.ExtractMissingNamespaceFromErr(err) != namespace {
 				err = nil
 			}
 
