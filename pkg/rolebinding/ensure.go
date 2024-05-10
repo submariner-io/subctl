@@ -37,6 +37,11 @@ func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namesp
 		return false, err
 	}
 
+	// If the embedded role binding specifies its namespace, use that
+	if roleBinding.Namespace != "" {
+		namespace = roleBinding.Namespace
+	}
+
 	return Ensure(ctx, kubeClient, namespace, roleBinding)
 }
 
