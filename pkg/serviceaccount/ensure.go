@@ -32,7 +32,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -44,11 +43,7 @@ const (
 )
 
 func ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount) (bool, error) {
-	result, err := util.CreateOrUpdate(ctx, resource.ForServiceAccount(kubeClient, namespace), sa,
-		func(existing runtime.Object) (runtime.Object, error) {
-			existing.(*corev1.ServiceAccount).Secrets = nil
-			return existing, nil
-		})
+	result, err := util.CreateOrUpdate(ctx, resource.ForServiceAccount(kubeClient, namespace), sa, util.Replace(sa))
 
 	return result == util.OperationResultCreated, errors.Wrapf(err, "error creating or updating ServiceAccount %q", sa.Name)
 }
