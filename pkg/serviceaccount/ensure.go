@@ -43,11 +43,7 @@ const (
 )
 
 func ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string, sa *corev1.ServiceAccount) (bool, error) {
-	result, err := util.CreateOrUpdate(ctx, resource.ForServiceAccount(kubeClient, namespace), sa,
-		func(existing *corev1.ServiceAccount) (*corev1.ServiceAccount, error) {
-			existing.Secrets = nil
-			return existing, nil
-		})
+	result, err := util.CreateOrUpdate(ctx, resource.ForServiceAccount(kubeClient, namespace), sa, util.Replace(sa))
 
 	return result == util.OperationResultCreated, errors.Wrapf(err, "error creating or updating ServiceAccount %q", sa.Name)
 }
