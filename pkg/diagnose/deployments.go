@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/restconfig"
@@ -200,8 +201,15 @@ func checkPodsStatus(k8sClient kubernetes.Interface, namespace string, status re
 		return
 	}
 
+	activeGwNodeNames := []string{}
+
 	for i := range pods.Items {
 		pod := &pods.Items[i]
+
+		if (pod.Labels["app"] == names.GatewayComponent) && (pod.Labels["gateway.submariner.io/status"] == string(submarinerv1.HAStatusActive)) {
+			activeGwNodeNames = append(activeGwNodeNames, pod.Labels["gateway.submariner.io/node"])
+		}
+
 		if pod.Status.Phase != v1.PodRunning {
 			status.Failure("Pod %q is not running. (current state is %v)", pod.Name, pod.Status.Phase)
 			continue
@@ -213,5 +221,9 @@ func checkPodsStatus(k8sClient kubernetes.Interface, namespace string, status re
 				status.Warning("Pod %q has restarted %d times", pod.Name, c.RestartCount)
 			}
 		}
+	}
+
+	if len(activeGwNodeNames) != 1 {
+		status.Warning("Expected one Gateway pod to be labeled as active. Found %d on nodes %v", len(activeGwNodeNames), activeGwNodeNames)
 	}
 }
