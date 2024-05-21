@@ -75,7 +75,6 @@ var serviceAccountRelatedYAMLs = []embeddedYAMLRefsApplier{
 		[]embeddedYAMLRef{
 			{embeddedyamls.Config_rbac_submariner_gateway_cluster_role_yaml, "gateway ClusterRole"},
 			{embeddedyamls.Config_rbac_submariner_route_agent_cluster_role_yaml, "route agent ClusterRole"},
-			{embeddedyamls.Config_rbac_submariner_route_agent_ovn_cluster_role_yaml, "route agent OVN ClusterRole"},
 			{embeddedyamls.Config_rbac_submariner_globalnet_cluster_role_yaml, "globalnet ClusterRole"},
 			{embeddedyamls.Config_rbac_submariner_diagnose_cluster_role_yaml, "diagnose ClusterRole"},
 		},
@@ -115,7 +114,6 @@ var serviceAccountRelatedYAMLs = []embeddedYAMLRefsApplier{
 		[]embeddedYAMLRef{
 			{embeddedyamls.Config_rbac_submariner_gateway_role_binding_yaml, "gateway RoleBinding"},
 			{embeddedyamls.Config_rbac_submariner_route_agent_role_binding_yaml, "route agent RoleBinding"},
-			{embeddedyamls.Config_rbac_submariner_route_agent_ovn_role_binding_yaml, "route agent RoleBinding for OVN"},
 			{embeddedyamls.Config_rbac_submariner_globalnet_role_binding_yaml, "globalnet RoleBinding"},
 			{embeddedyamls.Config_rbac_submariner_diagnose_role_binding_yaml, "diagnose RoleBinding"},
 			{embeddedyamls.Config_openshift_rbac_submariner_metrics_reader_role_binding_yaml, "metrics reader RoleBinding"},
