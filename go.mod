@@ -1,6 +1,6 @@
 module github.com/submariner-io/subctl
 
-go 1.22.0
+go 1.21
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -10,28 +10,28 @@ require (
 	github.com/google/go-github/v54 v54.0.0
 	github.com/gophercloud/utils v0.0.0-20210909165623-d7085207ff6d
 	github.com/mattn/go-isatty v0.0.20
-	github.com/onsi/ginkgo/v2 v2.17.1
-	github.com/onsi/gomega v1.33.0
+	github.com/onsi/ginkgo/v2 v2.19.0
+	github.com/onsi/gomega v1.33.1
 	github.com/openshift/api v0.0.0-20230714214528-de6ad7979b00
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
-	github.com/submariner-io/admiral v0.18.0-m3.0.20240507170954-5ce341428ad4
-	github.com/submariner-io/cloud-prepare v0.18.0-m3
-	github.com/submariner-io/lighthouse v0.18.0-m3
-	github.com/submariner-io/shipyard v0.18.0-m3
-	github.com/submariner-io/submariner v0.18.0-m3
-	github.com/submariner-io/submariner-operator v0.18.0-m3.0.20240530134353-12491c0a4dd1
+	github.com/submariner-io/admiral v0.18.0-m3.0.20240531140754-48a56ada7857
+	github.com/submariner-io/cloud-prepare v0.18.0-m3.0.20240531140827-7f283df29381
+	github.com/submariner-io/lighthouse v0.18.0-m3.0.20240531140910-6bb3272f5068
+	github.com/submariner-io/shipyard v0.18.0-m3.0.20240530154115-6bd980e3c553
+	github.com/submariner-io/submariner v0.18.0-m3.0.20240531140938-4c0905fb7e70
+	github.com/submariner-io/submariner-operator v0.18.0-m3.0.20240531141614-6a99ba86a410
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.25.0
 	golang.org/x/oauth2 v0.20.0
 	google.golang.org/api v0.178.0
-	k8s.io/api v0.30.1
-	k8s.io/apiextensions-apiserver v0.30.1
-	k8s.io/apimachinery v0.30.1
-	k8s.io/client-go v0.30.1
+	k8s.io/api v0.29.5
+	k8s.io/apiextensions-apiserver v0.29.5
+	k8s.io/apimachinery v0.29.5
+	k8s.io/client-go v0.29.5
 	k8s.io/utils v0.0.0-20240502163921-fe8a2dddb1d0
-	sigs.k8s.io/controller-runtime v0.18.2
+	sigs.k8s.io/controller-runtime v0.17.5
 	sigs.k8s.io/mcs-api v0.1.0
 	sigs.k8s.io/yaml v1.4.0
 )
@@ -40,23 +40,23 @@ require (
 	cloud.google.com/go/auth v0.3.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.2 // indirect
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.2 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute v1.0.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork v1.1.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.26.1 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.27.10 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.10 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.27.11 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.11 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.1 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.5 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.5 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.155.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.159.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.7 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.20.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.20.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.23.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.6 // indirect
 	github.com/aws/smithy-go v1.20.2 // indirect
@@ -72,7 +72,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
-	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
+	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -82,7 +82,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/licenseclassifier v0.0.0-20201113175434-78a70215ca36 // indirect
-	github.com/google/pprof v0.0.0-20230510103437-eeec1cb781c3 // indirect
+	github.com/google/pprof v0.0.0-20240424215950-a892ee059fd6 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
@@ -113,7 +113,7 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rivo/uniseg v0.4.3 // indirect
-	github.com/rs/zerolog v1.32.0 // indirect
+	github.com/rs/zerolog v1.33.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/urfave/cli/v2 v2.4.0 // indirect
@@ -127,7 +127,7 @@ require (
 	golang.org/x/term v0.20.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	golang.org/x/tools v0.18.0 // indirect
+	golang.org/x/tools v0.21.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240429193739-8cf5692501f6 // indirect
 	google.golang.org/grpc v1.63.2 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
