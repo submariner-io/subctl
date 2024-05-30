@@ -21,17 +21,17 @@ require (
 	github.com/submariner-io/lighthouse v0.18.0-m3
 	github.com/submariner-io/shipyard v0.18.0-m3
 	github.com/submariner-io/submariner v0.18.0-m3
-	github.com/submariner-io/submariner-operator v0.18.0-m3.0.20240521182134-0d1789731c2b
+	github.com/submariner-io/submariner-operator v0.18.0-m3.0.20240530134353-12491c0a4dd1
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.25.0
 	golang.org/x/oauth2 v0.20.0
 	google.golang.org/api v0.178.0
-	k8s.io/api v0.30.0
-	k8s.io/apiextensions-apiserver v0.30.0
-	k8s.io/apimachinery v0.30.0
-	k8s.io/client-go v0.30.0
-	k8s.io/utils v0.0.0-20240310230437-4693a0247e57
-	sigs.k8s.io/controller-runtime v0.18.1
+	k8s.io/api v0.30.1
+	k8s.io/apiextensions-apiserver v0.30.1
+	k8s.io/apimachinery v0.30.1
+	k8s.io/client-go v0.30.1
+	k8s.io/utils v0.0.0-20240502163921-fe8a2dddb1d0
+	sigs.k8s.io/controller-runtime v0.18.2
 	sigs.k8s.io/mcs-api v0.1.0
 	sigs.k8s.io/yaml v1.4.0
 )
