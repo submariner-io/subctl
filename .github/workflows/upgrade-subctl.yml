@@ -3,7 +3,7 @@ name: Upgrade command
 
 on:
   pull_request:
-    branches: [devel]
+    branches: [release-0.18]
 
 permissions: {}
 
@@ -44,4 +44,4 @@ jobs:
 
       - name: Post mortem
         if: failure()
-        uses: submariner-io/shipyard/gh-actions/post-mortem@devel
+        uses: submariner-io/shipyard/gh-actions/post-mortem@release-0.18
