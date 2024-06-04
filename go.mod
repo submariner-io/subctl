@@ -16,11 +16,11 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
-	github.com/submariner-io/admiral v0.18.0-m3.0.20240507170954-5ce341428ad4
+	github.com/submariner-io/admiral v0.18.0-m3.0.20240529143949-216f2c69eb25
 	github.com/submariner-io/cloud-prepare v0.18.0-m3
 	github.com/submariner-io/lighthouse v0.18.0-m3
 	github.com/submariner-io/shipyard v0.18.0-m3
-	github.com/submariner-io/submariner v0.18.0-m3
+	github.com/submariner-io/submariner v0.18.0-m3.0.20240604152415-b1edc52299e0
 	github.com/submariner-io/submariner-operator v0.18.0-m3.0.20240530134353-12491c0a4dd1
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.25.0
@@ -31,7 +31,7 @@ require (
 	k8s.io/apimachinery v0.30.1
 	k8s.io/client-go v0.30.1
 	k8s.io/utils v0.0.0-20240502163921-fe8a2dddb1d0
-	sigs.k8s.io/controller-runtime v0.18.2
+	sigs.k8s.io/controller-runtime v0.18.3
 	sigs.k8s.io/mcs-api v0.1.0
 	sigs.k8s.io/yaml v1.4.0
 )
@@ -113,7 +113,7 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rivo/uniseg v0.4.3 // indirect
-	github.com/rs/zerolog v1.32.0 // indirect
+	github.com/rs/zerolog v1.33.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/urfave/cli/v2 v2.4.0 // indirect
