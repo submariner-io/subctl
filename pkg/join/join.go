@@ -210,7 +210,7 @@ func populateBrokerSecret(brokerInfo *broker.Info) *v1.Secret {
 	// We need to copy the broker token secret as an opaque secret to store it in the connecting cluster
 	return &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "submariner-broker-secret",
+			Name: broker.LocalClientBrokerSecretName,
 		},
 		Type: v1.SecretTypeOpaque,
 		Data: brokerInfo.ClientToken.Data,
