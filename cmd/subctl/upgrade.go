@@ -36,13 +36,16 @@ import (
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/deploy"
 	"github.com/submariner-io/subctl/pkg/image"
 	"github.com/submariner-io/subctl/pkg/operator"
+	"github.com/submariner-io/subctl/pkg/secret"
 	"github.com/submariner-io/subctl/pkg/version"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 var (
@@ -251,6 +254,49 @@ func upgradeBroker(ctx context.Context, clusterInfo *cluster.Info, status report
 	return err == nil, status.Error(err, "Error upgrading the Broker")
 }
 
+func migrateBrokerSecret(ctx context.Context, kubeClient kubernetes.Interface, fromSecretName string, status reporter.Interface,
+) (string, error) {
+	if !strings.HasPrefix(fromSecretName, "broker-secret-") {
+		return fromSecretName, nil
+	}
+
+	ns := constants.OperatorNamespace
+
+	_, err := kubeClient.CoreV1().Secrets(ns).Get(ctx, broker.LocalClientBrokerSecretName, metav1.GetOptions{})
+	if err == nil {
+		// Already migrated
+		return broker.LocalClientBrokerSecretName, nil
+	}
+
+	if err != nil && !errors.IsNotFound(err) {
+		return "", status.Error(err, "Error retrieving Broker secret %q", broker.LocalClientBrokerSecretName)
+	}
+
+	oldSecret, err := kubeClient.CoreV1().Secrets(ns).Get(ctx, fromSecretName, metav1.GetOptions{})
+	if err != nil {
+		return "", status.Error(err, "Error retrieving old Broker secret %q", fromSecretName)
+	}
+
+	newSecret := *oldSecret
+	newSecret.ObjectMeta = metav1.ObjectMeta{
+		Name: broker.LocalClientBrokerSecretName,
+	}
+
+	_, err = secret.Ensure(ctx, kubeClient, ns, &newSecret)
+	if err != nil {
+		return "", status.Error(err, "Error creating Broker secret %q", newSecret.Name)
+	}
+
+	err = kubeClient.CoreV1().Secrets(ns).Delete(ctx, oldSecret.Name, metav1.DeleteOptions{})
+	if err != nil {
+		status.Warning("Error deleting the old broker secret %q: %v", oldSecret.Name, err)
+	}
+
+	status.Success("Successfully migrated the Broker secret from %q to %q", fromSecretName, broker.LocalClientBrokerSecretName)
+
+	return newSecret.Name, nil
+}
+
 func upgradeOperator(ctx context.Context, clusterInfo *cluster.Info, repository string, debug bool, imageOverride map[string]string,
 	status reporter.Interface,
 ) error {
@@ -284,7 +330,15 @@ func upgradeConnectivity(ctx context.Context, clusterInfo *cluster.Info, logVers
 
 		clusterInfo.Submariner.Spec.Version = upgradeSubmarinerVersion
 
-		err := deploy.SubmarinerFromSpec(ctx, clusterInfo.ClientProducer.ForGeneral(), &clusterInfo.Submariner.Spec)
+		var err error
+
+		clusterInfo.Submariner.Spec.BrokerK8sSecret, err = migrateBrokerSecret(ctx, clusterInfo.ClientProducer.ForKubernetes(),
+			clusterInfo.Submariner.Spec.BrokerK8sSecret, status)
+		if err != nil {
+			return err
+		}
+
+		err = deploy.SubmarinerFromSpec(ctx, clusterInfo.ClientProducer.ForGeneral(), &clusterInfo.Submariner.Spec)
 
 		return status.Error(err, "Error upgrading the Connectivity component")
 	}
@@ -299,7 +353,15 @@ func upgradeServiceDiscovery(ctx context.Context, clusterInfo *cluster.Info, log
 
 		clusterInfo.ServiceDiscovery.Spec.Version = upgradeSubmarinerVersion
 
-		err := deploy.ServiceDiscoveryFromSpec(ctx, clusterInfo.ClientProducer.ForGeneral(), &clusterInfo.ServiceDiscovery.Spec)
+		var err error
+
+		clusterInfo.ServiceDiscovery.Spec.BrokerK8sSecret, err = migrateBrokerSecret(ctx, clusterInfo.ClientProducer.ForKubernetes(),
+			clusterInfo.ServiceDiscovery.Spec.BrokerK8sSecret, status)
+		if err != nil {
+			return err
+		}
+
+		err = deploy.ServiceDiscoveryFromSpec(ctx, clusterInfo.ClientProducer.ForGeneral(), &clusterInfo.ServiceDiscovery.Spec)
 
 		return status.Error(err, "Error upgrading Service Discovery")
 	}
