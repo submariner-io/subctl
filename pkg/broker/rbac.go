@@ -27,6 +27,7 @@ import (
 )
 
 const (
+	LocalClientBrokerSecretName = "submariner-broker-secret"
 	submarinerBrokerClusterRole = "submariner-k8s-broker-cluster"
 )
 
