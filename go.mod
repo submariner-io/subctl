@@ -17,11 +17,11 @@ require (
 	github.com/submariner-io/admiral v0.15.4-0.20240506145024-da791e73f2c2
 	github.com/submariner-io/cloud-prepare v0.15.3
 	github.com/submariner-io/lighthouse v0.15.3
-	github.com/submariner-io/shipyard v0.15.3
+	github.com/submariner-io/shipyard v0.15.4
 	github.com/submariner-io/submariner v0.15.3
 	github.com/submariner-io/submariner-operator v0.15.4-0.20240507151837-3595b4fa059b
 	github.com/uw-labs/lichen v0.1.7
-	golang.org/x/net v0.19.0
+	golang.org/x/net v0.23.0
 	golang.org/x/oauth2 v0.11.0
 	google.golang.org/api v0.128.0
 	k8s.io/api v0.26.15
@@ -58,7 +58,6 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/creack/pty v1.1.18 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/elazarl/goproxy v0.0.0-20230808193330-2592e75ae04a // indirect
 	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
@@ -111,9 +110,9 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/crypto v0.17.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
-	golang.org/x/term v0.15.0 // indirect
+	golang.org/x/crypto v0.21.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.13.0 // indirect
