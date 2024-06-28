@@ -16,11 +16,11 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/submariner-io/admiral v0.14.8
-	github.com/submariner-io/cloud-prepare v0.14.7
-	github.com/submariner-io/lighthouse v0.14.7
+	github.com/submariner-io/cloud-prepare v0.14.8
+	github.com/submariner-io/lighthouse v0.14.8
 	github.com/submariner-io/shipyard v0.14.8
-	github.com/submariner-io/submariner v0.14.7
-	github.com/submariner-io/submariner-operator v0.14.8-0.20240509104226-f330b19c2227
+	github.com/submariner-io/submariner v0.14.8
+	github.com/submariner-io/submariner-operator v0.14.8
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/oauth2 v0.11.0
 	google.golang.org/api v0.128.0
@@ -112,7 +112,6 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20231016165738-49dd2c1f3d0b // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231106174013-bbf56f31fb17 // indirect
 	google.golang.org/grpc v1.59.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
