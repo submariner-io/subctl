@@ -205,10 +205,10 @@ func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter
 	}
 
 	var submVersion string
-	if clusterInfo.Submariner != nil {
-		submVersion = clusterInfo.Submariner.Spec.Version
-	} else if clusterInfo.ServiceDiscovery != nil {
+	if clusterInfo.ServiceDiscovery != nil {
 		submVersion = clusterInfo.ServiceDiscovery.Spec.Version
+	} else if clusterInfo.Submariner != nil {
+		submVersion = clusterInfo.Submariner.Status.Version
 	}
 
 	if submVersion != "" {
@@ -515,13 +515,15 @@ func clusterNameFromContext(rawConfig *api.Config, overridesContext string) *str
 }
 
 func checkVersionMismatch(submVersion string) error {
-	subctlVer, _ := semver.NewVersion(version.Version)
-	submarinerVer, _ := semver.NewVersion(submVersion)
+	subctlVer, _ := semver.NewVersion(strings.TrimPrefix(version.Version, "v"))
+	submarinerVer, _ := semver.NewVersion(strings.TrimPrefix(submVersion, "v"))
 
-	if subctlVer != nil && submarinerVer != nil && subctlVer.LessThan(*submarinerVer) {
-		return fmt.Errorf(
-			"the subctl version %q is older than the deployed Submariner version %q. Please upgrade your subctl version",
-			version.Version, submVersion)
+	if subctlVer != nil && submarinerVer != nil {
+		if subctlVer.Major != submarinerVer.Major || subctlVer.Minor != submarinerVer.Minor {
+			return fmt.Errorf(
+				"the subctl version %q is different from deployed Submariner version %q. Please use correct subctl version",
+				version.Version, submVersion)
+		}
 	}
 
 	return nil
