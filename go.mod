@@ -16,11 +16,11 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/submariner-io/admiral v0.14.9
-	github.com/submariner-io/cloud-prepare v0.14.8
-	github.com/submariner-io/lighthouse v0.14.8
+	github.com/submariner-io/cloud-prepare v0.14.9
+	github.com/submariner-io/lighthouse v0.14.9
 	github.com/submariner-io/shipyard v0.14.9
-	github.com/submariner-io/submariner v0.14.8
-	github.com/submariner-io/submariner-operator v0.14.8
+	github.com/submariner-io/submariner v0.14.9
+	github.com/submariner-io/submariner-operator v0.14.9
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/oauth2 v0.11.0
 	google.golang.org/api v0.128.0
