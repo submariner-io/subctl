@@ -44,6 +44,12 @@ func gatherGatewayDaemonSet(info *Info, namespace string) {
 	gatherDaemonSet(info, namespace, metav1.ListOptions{LabelSelector: gatewayPodLabel})
 }
 
+func gatherGatewayLBService(info *Info, namespace string) {
+	gatherService(info, namespace, metav1.ListOptions{FieldSelector: fields.Set(map[string]string{
+		"metadata.name": names.GatewayComponent,
+	}).String()})
+}
+
 func gatherMetricsPodDaemonSet(info *Info, namespace string) {
 	gatherDaemonSet(info, namespace, metav1.ListOptions{LabelSelector: metricsProxyPodLabel})
 }

@@ -240,6 +240,7 @@ func gatherOperator(dataType string, info Info) bool {
 		gatherGlobalnetDaemonSet(&info, info.OperatorNamespace())
 		gatherLighthouseAgentDeployment(&info, info.OperatorNamespace())
 		gatherLighthouseCoreDNSDeployment(&info, info.OperatorNamespace())
+		gatherGatewayLBService(&info, info.OperatorNamespace())
 	default:
 		return false
 	}
