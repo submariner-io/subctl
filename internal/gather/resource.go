@@ -109,6 +109,11 @@ func gatherConfigMaps(info *Info, namespace string, listOptions metav1.ListOptio
 	ResourcesToYAMLFile(info, corev1.SchemeGroupVersion.WithResource("configmaps"), namespace, listOptions)
 }
 
+//nolint:gocritic // hugeParam: listOptions - match K8s API.
+func gatherService(info *Info, namespace string, listOptions metav1.ListOptions) {
+	ResourcesToYAMLFile(info, corev1.SchemeGroupVersion.WithResource("services"), namespace, listOptions)
+}
+
 func scrubSensitiveData(info *Info, dataString string) string {
 	if info.IncludeSensitiveData {
 		return dataString
