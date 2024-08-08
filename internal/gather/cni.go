@@ -49,8 +49,9 @@ var ipGatewayCmds = map[string]string{
 }
 
 var ipTablesCmds = map[string]string{
-	"iptables":     "iptables -L -n -v --line-numbers",
-	"iptables-nat": "iptables -L -n -v --line-numbers -t nat",
+	"iptables":        "iptables -L -n -v --line-numbers",
+	"iptables-nat":    "iptables -L -n -v --line-numbers -t nat",
+	"iptables-mangle": "iptables -L -n -v --line-numbers -t mangle",
 }
 
 var libreswanCmds = map[string]string{
