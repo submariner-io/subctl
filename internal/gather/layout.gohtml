@@ -1,11 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>subctl gather report for {{.ClusterName}}</title>
 <style>
   th,
   td {
     padding: 2px;
   }
 </style>
+</head>
 <body>
 <h2 id="cluster-info"><a href="#{{.ClusterName}}-info">Displaying information for {{.ClusterName}}</a></h2>
 <h3 id="versions"><a href="#{{.ClusterName}}-versions">Versions</a></h3>
@@ -72,48 +76,56 @@
 </table>
 <h3 id="node-info"><a href="#{{.ClusterName}}-node-info">Node Information</a></h3>
 <table style="table-layout:fixed; width:100%; text-align:left;">
-  <tr>
-    <th style="width: 15%;">Node name</th>
-    <th style="width: 30%;">Operating System</th>
-    <th style="width: 15%;">Internal IP</th>
-    <th style="width: 15%;">External IP</th>
-  </tr>
-  {{range .NodeConfig}}
+  <thead>
     <tr>
-      <td>{{.Name}}</td>
-      <td>{{.Info.OperatingSystem}} {{.Info.OSImage}} {{.Info.KernelVersion}} {{.Info.Architecture}}</td>
-      <td>{{.InternalIPs}}</td>
-      <td>{{.ExternalIPs}}</td>
+      <th style="width: 15%;">Node name</th>
+      <th style="width: 30%;">Operating System</th>
+      <th style="width: 15%;">Internal IP</th>
+      <th style="width: 15%;">External IP</th>
     </tr>
-  {{end}}
+  </thead>
+  <tbody>
+    {{range .NodeConfig}}
+      <tr>
+        <td>{{.Name}}</td>
+        <td>{{.Info.OperatingSystem}} {{.Info.OSImage}} {{.Info.KernelVersion}} {{.Info.Architecture}}</td>
+        <td>{{.InternalIPs}}</td>
+        <td>{{.ExternalIPs}}</td>
+      </tr>
+    {{end}}
+  </tbody>
 </table>
 <h3 id="log-collected"><a href="#{{.ClusterName}}-log-collected">Summary of logs gathered</a></h3>
 {{ if .PodLogs }}
   <table style="table-layout:fixed; width:100%; text-align:left;">
-    <tr>
-      <th style="width: 20%;">Pod name</th>
-      <th style="width: 15%;">Namespace</th>
-      <th style="width: 10%;">Pod state</th>
-      <th style="width: 10%;">Node name</th>
-      <th style="width: 5%;">Restart count</th>
-      <th style="width: 25%;">Log file(s)</th>
-    </tr>
-    {{range .PodLogs}}
+    <thead>
       <tr>
-        <td>{{.PodName}}</td>
-        <td>{{.Namespace}}</td>
-        <td>{{.PodState}}</td>
-        <td>{{.NodeName}}</td>
-        {{ if gt .RestartCount 0 }}
-          <td style="color: red">{{.RestartCount}}</td>
-        {{ else }}
-          <td>{{.RestartCount}}</td>
-        {{end}}
-        {{range $index, $filename := .LogFileName}}
-          <td><a href="{{$filename}}" target="_blank">{{$filename}}</a></td>
-        {{end}}
+        <th style="width: 20%;">Pod name</th>
+        <th style="width: 15%;">Namespace</th>
+        <th style="width: 10%;">Pod state</th>
+        <th style="width: 10%;">Node name</th>
+        <th style="width: 5%;">Restart count</th>
+        <th style="width: 25%;">Log file(s)</th>
       </tr>
-    {{end}}
+    </thead>
+    <tbody>
+      {{range .PodLogs}}
+        <tr>
+          <td>{{.PodName}}</td>
+          <td>{{.Namespace}}</td>
+          <td>{{.PodState}}</td>
+          <td>{{.NodeName}}</td>
+          {{ if gt .RestartCount 0 }}
+            <td style="color: red">{{.RestartCount}}</td>
+          {{ else }}
+            <td>{{.RestartCount}}</td>
+          {{end}}
+          {{range $index, $filename := .LogFileName}}
+            <td><a href="{{$filename}}" target="_blank">{{$filename}}</a></td>
+          {{end}}
+        </tr>
+      {{end}}
+    </tbody>
   </table>
 {{ else }}
   No Logs gathered
@@ -121,20 +133,24 @@
 <h3 id="resources-collected"><a href="#{{.ClusterName}}-resources-collected">Summary of resources gathered</a></h3>
 {{ if .ResourceInfo }}
   <table style="table-layout:fixed; width:100%; text-align:left;">
-    <tr>
-      <th style="width: 20%;">Resource name</th>
-      <th style="width: 15%;">Namespace</th>
-      <th style="width: 15%;">Resource type</th>
-      <th style="width: 60%;">Resource file(s)</th>
-    </tr>
-    {{range .ResourceInfo}}
+    <thead>
       <tr>
-        <td>{{.Name}}</td>
-        <td>{{.Namespace}}</td>
-        <td>{{.Type}}</td>
-        <td><a href="{{.FileName}}" target="_blank">{{.FileName}}</a></td>
+        <th style="width: 20%;">Resource name</th>
+        <th style="width: 15%;">Namespace</th>
+        <th style="width: 15%;">Resource type</th>
+        <th style="width: 60%;">Resource file(s)</th>
       </tr>
-    {{end}}
+    </thead>
+    <tbody>
+      {{range .ResourceInfo}}
+        <tr>
+          <td>{{.Name}}</td>
+          <td>{{.Namespace}}</td>
+          <td>{{.Type}}</td>
+          <td><a href="{{.FileName}}" target="_blank">{{.FileName}}</a></td>
+        </tr>
+      {{end}}
+    </tbody>
   </table>
 {{ else }}
   No resources gathered
