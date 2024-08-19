@@ -176,11 +176,10 @@ func getNodeConfig(info *Info) ([]nodeConfig, error) {
 	for i := range nodes.Items {
 		node := &nodes.Items[i]
 		nodeInfo := v1.NodeSystemInfo{
-			KernelVersion:    node.Status.NodeInfo.KernelVersion,
-			OSImage:          node.Status.NodeInfo.OSImage,
-			KubeProxyVersion: node.Status.NodeInfo.KubeProxyVersion,
-			OperatingSystem:  node.Status.NodeInfo.OperatingSystem,
-			Architecture:     node.Status.NodeInfo.Architecture,
+			KernelVersion:   node.Status.NodeInfo.KernelVersion,
+			OSImage:         node.Status.NodeInfo.OSImage,
+			OperatingSystem: node.Status.NodeInfo.OperatingSystem,
+			Architecture:    node.Status.NodeInfo.Architecture,
 		}
 		name := node.GetName()
 		config := nodeConfig{
