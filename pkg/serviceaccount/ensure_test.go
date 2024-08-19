@@ -157,23 +157,27 @@ func newTestDriver() *testDriver {
 	t := &testDriver{}
 
 	BeforeEach(func() {
-		t.client = fakeclientset.NewSimpleClientset()
+		t.client = fakeclientset.NewClientset()
 		stopCh := make(chan struct{})
 
-		_, informer := cache.NewInformer(&cache.ListWatch{
-			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-				return t.client.CoreV1().Secrets(namespace).List(context.Background(), options)
+		_, informer := cache.NewInformerWithOptions(cache.InformerOptions{
+			ListerWatcher: &cache.ListWatch{
+				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+					return t.client.CoreV1().Secrets(namespace).List(context.Background(), options)
+				},
+				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+					return t.client.CoreV1().Secrets(namespace).Watch(context.Background(), options)
+				},
 			},
-			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-				return t.client.CoreV1().Secrets(namespace).Watch(context.Background(), options)
-			},
-		}, &corev1.Secret{}, 0, cache.ResourceEventHandlerFuncs{
-			AddFunc: func(obj interface{}) {
-				s := obj.(*corev1.Secret)
-				s.Data = map[string][]byte{"token": {1, 2, 3}}
+			ObjectType: &corev1.Secret{},
+			Handler: cache.ResourceEventHandlerFuncs{
+				AddFunc: func(obj interface{}) {
+					s := obj.(*corev1.Secret)
+					s.Data = map[string][]byte{"token": {1, 2, 3}}
 
-				_, err := t.client.CoreV1().Secrets(namespace).Update(context.Background(), s, metav1.UpdateOptions{})
-				Expect(err).To(Succeed())
+					_, err := t.client.CoreV1().Secrets(namespace).Update(context.Background(), s, metav1.UpdateOptions{})
+					Expect(err).To(Succeed())
+				},
 			},
 		})
 
