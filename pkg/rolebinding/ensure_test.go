@@ -51,7 +51,7 @@ var _ = Describe("EnsureFromYAML", func() {
 	var client *fakeclientset.Clientset
 
 	BeforeEach(func() {
-		client = fakeclientset.NewSimpleClientset()
+		client = fakeclientset.NewClientset()
 	})
 
 	assertRoleBinding := func() {

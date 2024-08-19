@@ -44,7 +44,7 @@ var _ = Describe("Ensure", func() {
 	var client *fakeclientset.Clientset
 
 	BeforeEach(func() {
-		client = fakeclientset.NewSimpleClientset()
+		client = fakeclientset.NewClientset()
 	})
 
 	assertDeployment := func() {
