@@ -248,7 +248,7 @@ func (np *Scheduled) AwaitCompletion() error {
 			}
 		})
 	if err != nil {
-		return errors.Wrapf(err, errorMsg)
+		return errors.Wrap(err, errorMsg)
 	}
 
 	finished := np.Pod.Status.Phase == v1.PodSucceeded || np.Pod.Status.Phase == v1.PodFailed
