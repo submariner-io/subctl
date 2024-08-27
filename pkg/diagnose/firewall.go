@@ -325,6 +325,7 @@ func getTargetPort(submariner *v1alpha1.Submariner, endpoint *subv1.Endpoint, tg
 	switch endpoint.Spec.Backend {
 	case Libreswan, Wireguard, VxLAN:
 		if tgtport == TunnelPort {
+			//nolint:gosec // Need to ignore integer overflow conversion int -> int32
 			targetPort, err = endpoint.Spec.GetBackendPort(subv1.UDPPortConfig, int32(submariner.Spec.CeIPSecNATTPort))
 			if err != nil {
 				return 0, fmt.Errorf("error reading tunnel port: %w", err)

@@ -110,7 +110,7 @@ func runThroughputTest(f *framework.Framework, testParams benchmarkTestParams, v
 	serverClusterName := framework.TestContext.ClusterIDs[testParams.ServerCluster]
 	var connectionTimeout uint = 10
 	var connectionAttempts uint = 2
-	iperf3Port := 5201
+	var iperf3Port int32 = 5201
 
 	framework.By(fmt.Sprintf("Creating a Nettest Server Pod on %q", serverClusterName))
 
