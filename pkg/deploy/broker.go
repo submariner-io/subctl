@@ -31,7 +31,9 @@ import (
 	"github.com/submariner-io/subctl/pkg/image"
 	"github.com/submariner-io/subctl/pkg/operator"
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
+	"github.com/submariner-io/submariner-operator/pkg/cidr"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
+	"github.com/submariner-io/submariner-operator/pkg/discovery/clustersetip"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 	"golang.org/x/net/http/httpproxy"
 	"k8s.io/utils/set"
@@ -66,6 +68,10 @@ func Broker(options *BrokerOptions, clientProducer client.Producer, status repor
 		return status.Error(err, "invalid GlobalCIDR configuration")
 	}
 
+	if err := cidr.IsValid(options.BrokerSpec.ClustersetIPCIDRRange); err != nil {
+		return status.Error(err, "invalid ClustersetIP configuration")
+	}
+
 	err := Deploy(ctx, options, status, clientProducer)
 	if err != nil {
 		return err
@@ -80,6 +86,17 @@ func Broker(options *BrokerOptions, clientProducer client.Producer, status repor
 	if err = globalnet.CreateConfigMap(ctx, clientProducer.ForGeneral(), options.BrokerSpec.GlobalnetEnabled,
 		options.BrokerSpec.GlobalnetCIDRRange, options.BrokerSpec.DefaultGlobalnetClusterSize, options.BrokerNamespace); err != nil {
 		return status.Error(err, "error creating globalCIDR configmap on Broker")
+	}
+
+	if componentSet.Has(component.ServiceDiscovery) {
+		if err = clustersetip.ValidateExistingClustersetIPNetworks(ctx, clientProducer.ForGeneral(), options.BrokerNamespace); err != nil {
+			return status.Error(err, "error validating existing clustersetIPCIDR configmap")
+		}
+	}
+
+	if err = clustersetip.CreateConfigMap(ctx, clientProducer.ForGeneral(), options.BrokerSpec.ClustersetIPEnabled,
+		options.BrokerSpec.ClustersetIPCIDRRange, 0, options.BrokerNamespace); err != nil {
+		return status.Error(err, "error creating clustersetIPCIDR configmap on Broker")
 	}
 
 	return nil
@@ -136,11 +153,11 @@ func checkGlobalnetConfig(options *BrokerOptions) error {
 		return nil
 	}
 
-	options.BrokerSpec.DefaultGlobalnetClusterSize, err = globalnet.GetValidClusterSize(options.BrokerSpec.GlobalnetCIDRRange,
+	options.BrokerSpec.DefaultGlobalnetClusterSize, err = cidr.GetValidAllocationSize(options.BrokerSpec.GlobalnetCIDRRange,
 		options.BrokerSpec.DefaultGlobalnetClusterSize)
 	if err != nil {
 		return err
 	}
 
-	return globalnet.IsValidCIDR(options.BrokerSpec.GlobalnetCIDRRange)
+	return cidr.IsValid(options.BrokerSpec.GlobalnetCIDRRange)
 }

@@ -20,9 +20,11 @@ package service
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/resource"
+	lhconstants "github.com/submariner-io/lighthouse/pkg/constants"
 	"github.com/submariner-io/subctl/internal/gvr"
 	"github.com/submariner-io/subctl/pkg/client"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,7 +32,7 @@ import (
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
-func Export(clientProducer client.Producer, serviceNamespace, svcName string, status reporter.Interface) error {
+func Export(clientProducer client.Producer, serviceNamespace, svcName, useClustersetIP string, status reporter.Interface) error {
 	_, err := clientProducer.ForKubernetes().CoreV1().Services(serviceNamespace).Get(context.TODO(), svcName, metav1.GetOptions{})
 	if err != nil {
 		return status.Error(err, "Unable to find the Service %q in namespace %q", svcName, serviceNamespace)
@@ -41,6 +43,16 @@ func Export(clientProducer client.Producer, serviceNamespace, svcName string, st
 			Name:      svcName,
 			Namespace: serviceNamespace,
 		},
+	}
+
+	// If user specified the use-clusterset-ip flag
+	if useClustersetIP != "" {
+		result, err := strconv.ParseBool(useClustersetIP)
+		if err != nil {
+			return status.Error(err, "use-clusterset-ip must be set to true/false")
+		}
+
+		mcsServiceExport.SetAnnotations(map[string]string{lhconstants.UseClustersetIP: strconv.FormatBool(result)})
 	}
 
 	resourceServiceExport, err := resource.ToUnstructured(mcsServiceExport)

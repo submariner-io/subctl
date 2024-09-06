@@ -38,10 +38,11 @@ func Network(clusterInfo *cluster.Info, _ string, status reporter.Interface) err
 	if clusterInfo.Submariner != nil {
 		msg = "    Discovered network details via Submariner:"
 		clusterNetwork = &network.ClusterNetwork{
-			PodCIDRs:      []string{clusterInfo.Submariner.Status.ClusterCIDR},
-			ServiceCIDRs:  []string{clusterInfo.Submariner.Status.ServiceCIDR},
-			NetworkPlugin: clusterInfo.Submariner.Status.NetworkPlugin,
-			GlobalCIDR:    clusterInfo.Submariner.Status.GlobalCIDR,
+			PodCIDRs:         []string{clusterInfo.Submariner.Status.ClusterCIDR},
+			ServiceCIDRs:     []string{clusterInfo.Submariner.Status.ServiceCIDR},
+			NetworkPlugin:    clusterInfo.Submariner.Status.NetworkPlugin,
+			GlobalCIDR:       clusterInfo.Submariner.Status.GlobalCIDR,
+			ClustersetIPCIDR: clusterInfo.Submariner.Status.ClustersetIPCIDR,
 		}
 	} else {
 		msg = "    Discovered network details"

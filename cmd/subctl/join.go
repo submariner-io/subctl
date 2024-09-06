@@ -147,6 +147,10 @@ func addJoinFlags(cmd *cobra.Command) {
 		"check the broker certificate (disable this to allow \"insecure\" connections)")
 	cmd.Flags().StringVar(&joinFlags.BrokerURL, "broker-url", "",
 		"URL of the broker API endpoint (overrides the URL stored in the broker information file)")
+	cmd.Flags().BoolVar(&joinFlags.EnableClustersetIP, "enable-clusterset-ip", false,
+		"set default support for use of clusterset IP for exported services in the cluster (default disabled)")
+	cmd.Flags().StringVar(&joinFlags.ClustersetIPCIDR, "clusterset-ip-cidr", "",
+		"Clusterset IP CIDR to be allocated to the cluster")
 }
 
 func joinInContext(brokerInfo *broker.Info, clusterInfo *cluster.Info, status reporter.Interface) error {

@@ -36,6 +36,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/operator"
 	"github.com/submariner-io/subctl/pkg/secret"
 	"github.com/submariner-io/subctl/pkg/version"
+	"github.com/submariner-io/submariner-operator/pkg/discovery/clustersetip"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	v1 "k8s.io/api/core/v1"
@@ -83,6 +84,11 @@ func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Opti
 		ClusterSize: options.GlobalnetClusterSize,
 	}
 
+	clustersetConfig := clustersetip.Config{
+		ClusterID:        options.ClusterID,
+		ClustersetIPCIDR: options.ClustersetIPCIDR,
+	}
+
 	operatorNamespace := constants.OperatorNamespace
 
 	err = ensureUniqueCluster(ctx, options.ClusterID, brokerClientProducer, brokerNamespace, clientProducer, operatorNamespace, status)
@@ -95,6 +101,14 @@ func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Opti
 			status)
 		if err != nil {
 			return errors.Wrap(err, "unable to determine the global CIDR")
+		}
+	}
+
+	if brokerInfo.IsServiceDiscoveryEnabled() {
+		err = clustersetip.AllocateCIDRFromConfigMap(ctx, brokerClientProducer.ForGeneral(), brokerNamespace,
+			&clustersetConfig, status)
+		if err != nil {
+			return errors.Wrap(err, "unable to determine the clusterset IP CIDR")
 		}
 	}
 
@@ -127,7 +141,7 @@ func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Opti
 		status.Start("Deploying submariner")
 
 		err := deploy.Submariner(ctx, clientProducer, submarinerOptionsFrom(options), brokerInfo, brokerSecret, netconfig,
-			repositoryInfo, status)
+			clustersetConfig, repositoryInfo, status)
 		if err != nil {
 			return status.Error(err, "Error deploying the Submariner resource")
 		}
@@ -137,7 +151,7 @@ func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Opti
 		status.Start("Deploying service discovery only")
 
 		err := deploy.ServiceDiscovery(ctx, clientProducer, serviceDiscoveryOptionsFrom(options), brokerInfo, brokerSecret,
-			repositoryInfo, status)
+			clustersetConfig, repositoryInfo, status)
 		if err != nil {
 			return status.Error(err, "Error deploying the ServiceDiscovery resource")
 		}
@@ -170,6 +184,7 @@ func submarinerOptionsFrom(joinOptions *Options) *deploy.SubmarinerOptions {
 		ServiceCIDR:                   joinOptions.ServiceCIDR,
 		ClusterCIDR:                   joinOptions.ClusterCIDR,
 		BrokerK8sInsecure:             !joinOptions.BrokerK8sSecure,
+		ClustersetIPEnabled:           joinOptions.EnableClustersetIP,
 	}
 }
 
@@ -182,6 +197,7 @@ func serviceDiscoveryOptionsFrom(joinOptions *Options) *deploy.ServiceDiscoveryO
 		ImageVersion:           joinOptions.ImageVersion,
 		CustomDomains:          joinOptions.CustomDomains,
 		BrokerK8sInsecure:      !joinOptions.BrokerK8sSecure,
+		ClustersetIPEnabled:    joinOptions.EnableClustersetIP,
 	}
 }
 

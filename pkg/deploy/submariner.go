@@ -31,6 +31,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/secret"
 	"github.com/submariner-io/subctl/pkg/submarinercr"
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
+	"github.com/submariner-io/submariner-operator/pkg/discovery/clustersetip"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 	v1 "k8s.io/api/core/v1"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -46,6 +47,7 @@ type SubmarinerOptions struct {
 	LoadBalancerEnabled           bool
 	HealthCheckEnabled            bool
 	BrokerK8sInsecure             bool
+	ClustersetIPEnabled           bool
 	NATTPort                      int
 	HealthCheckInterval           uint64
 	HealthCheckMaxPacketLossCount uint64
@@ -60,14 +62,15 @@ type SubmarinerOptions struct {
 }
 
 func Submariner(ctx context.Context, clientProducer client.Producer, options *SubmarinerOptions, brokerInfo *broker.Info,
-	brokerSecret *v1.Secret, netconfig globalnet.Config, repositoryInfo *image.RepositoryInfo, status reporter.Interface,
+	brokerSecret *v1.Secret, netconfig globalnet.Config, clustersetConfig clustersetip.Config,
+	repositoryInfo *image.RepositoryInfo, status reporter.Interface,
 ) error {
 	pskSecret, err := secret.Ensure(ctx, clientProducer.ForKubernetes(), constants.OperatorNamespace, brokerInfo.IPSecPSK)
 	if err != nil {
 		return status.Error(err, "Error creating PSK secret for cluster")
 	}
 
-	submarinerSpec := populateSubmarinerSpec(options, brokerInfo, brokerSecret, pskSecret, netconfig, repositoryInfo)
+	submarinerSpec := populateSubmarinerSpec(options, brokerInfo, brokerSecret, pskSecret, netconfig, clustersetConfig, repositoryInfo)
 
 	err = SubmarinerFromSpec(ctx, clientProducer.ForGeneral(), submarinerSpec)
 	if err != nil {
@@ -84,7 +87,7 @@ func SubmarinerFromSpec(ctx context.Context, ctlClient controllerClient.Client, 
 }
 
 func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info, brokerSecret *v1.Secret, pskSecret *v1.Secret,
-	netconfig globalnet.Config, repositoryInfo *image.RepositoryInfo,
+	netconfig globalnet.Config, clustersetConfig clustersetip.Config, repositoryInfo *image.RepositoryInfo,
 ) *operatorv1alpha1.SubmarinerSpec {
 	brokerURL := removeSchemaPrefix(brokerInfo.BrokerURL)
 
@@ -105,6 +108,8 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 		BrokerK8sApiServer:       brokerURL,
 		BrokerK8sSecret:          brokerSecret.ObjectMeta.Name,
 		BrokerK8sInsecure:        options.BrokerK8sInsecure,
+		ClustersetIPEnabled:      options.ClustersetIPEnabled,
+		ClustersetIPCIDR:         clustersetConfig.ClustersetIPCIDR,
 		NatEnabled:               options.NATTraversal,
 		Debug:                    options.SubmarinerDebug,
 		ClusterID:                options.ClusterID,

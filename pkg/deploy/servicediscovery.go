@@ -29,6 +29,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/image"
 	"github.com/submariner-io/subctl/pkg/servicediscoverycr"
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
+	"github.com/submariner-io/submariner-operator/pkg/discovery/clustersetip"
 	v1 "k8s.io/api/core/v1"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -36,6 +37,7 @@ import (
 type ServiceDiscoveryOptions struct {
 	SubmarinerDebug        bool
 	BrokerK8sInsecure      bool
+	ClustersetIPEnabled    bool
 	ClusterID              string
 	CoreDNSCustomConfigMap string
 	Repository             string
@@ -43,10 +45,12 @@ type ServiceDiscoveryOptions struct {
 	CustomDomains          []string
 }
 
-func ServiceDiscovery(ctx context.Context, clientProducer client.Producer, options *ServiceDiscoveryOptions, brokerInfo *broker.Info,
-	brokerSecret *v1.Secret, repositoryInfo *image.RepositoryInfo, status reporter.Interface,
+func ServiceDiscovery(ctx context.Context, clientProducer client.Producer, options *ServiceDiscoveryOptions,
+	brokerInfo *broker.Info, brokerSecret *v1.Secret, clustersetConfig clustersetip.Config,
+	repositoryInfo *image.RepositoryInfo, status reporter.Interface,
 ) error {
-	serviceDiscoverySpec := populateServiceDiscoverySpec(options, brokerInfo, brokerSecret, repositoryInfo)
+	serviceDiscoverySpec := populateServiceDiscoverySpec(options, brokerInfo, brokerSecret, clustersetConfig,
+		repositoryInfo)
 
 	err := ServiceDiscoveryFromSpec(ctx, clientProducer.ForGeneral(), serviceDiscoverySpec)
 	if err != nil {
@@ -65,7 +69,7 @@ func ServiceDiscoveryFromSpec(ctx context.Context, cc controllerClient.Client,
 }
 
 func populateServiceDiscoverySpec(options *ServiceDiscoveryOptions, brokerInfo *broker.Info, brokerSecret *v1.Secret,
-	repositoryInfo *image.RepositoryInfo,
+	clustersetConfig clustersetip.Config, repositoryInfo *image.RepositoryInfo,
 ) *operatorv1alpha1.ServiceDiscoverySpec {
 	brokerURL := removeSchemaPrefix(brokerInfo.BrokerURL)
 
@@ -82,6 +86,8 @@ func populateServiceDiscoverySpec(options *ServiceDiscoveryOptions, brokerInfo *
 		ClusterID:                options.ClusterID,
 		Namespace:                constants.OperatorNamespace,
 		ImageOverrides:           repositoryInfo.Overrides,
+		ClustersetIPEnabled:      options.ClustersetIPEnabled,
+		ClustersetIPCIDR:         clustersetConfig.ClustersetIPCIDR,
 	}
 
 	if options.CoreDNSCustomConfigMap != "" {
