@@ -36,6 +36,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/deploy"
+	"github.com/submariner-io/submariner-operator/pkg/discovery/clustersetip"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 	"k8s.io/utils/set"
 )
@@ -89,6 +90,10 @@ func addDeployBrokerFlags(flags *pflag.FlagSet) {
 
 	flags.StringVar(&deployflags.BrokerURL, "broker-url", "",
 		"broker API endpoint URL (stored in the broker information file, defaults to the context URL)")
+	flags.BoolVar(&deployflags.BrokerSpec.ClustersetIPEnabled, "enable-clusterset-ip", false,
+		"set default support for use of clusterset IP for exported services in connecting clusters (default disabled)")
+	flags.StringVar(&deployflags.BrokerSpec.ClustersetIPCIDRRange, "clusterset-ip-cidr-range",
+		clustersetip.DefaultCIDR, "Clusterset IP CIDR supernet range for allocating Clusterset IP CIDRs to each cluster")
 }
 
 func deployBrokerInContext(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {

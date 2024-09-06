@@ -33,6 +33,7 @@ type Options struct {
 	LoadBalancerEnabled           bool
 	HealthCheckEnabled            bool
 	BrokerK8sSecure               bool
+	EnableClustersetIP            bool
 	NATTPort                      int
 	GlobalnetClusterSize          uint
 	HealthCheckInterval           uint64
@@ -46,6 +47,7 @@ type Options struct {
 	CableDriver                   string
 	CoreDNSCustomConfigMap        string
 	BrokerURL                     string
+	ClustersetIPCIDR              string
 	CustomDomains                 []string
 	ImageOverrideArr              []string
 	HTTPProxyConfig               httpproxy.Config

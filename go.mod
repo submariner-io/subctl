@@ -18,16 +18,16 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/submariner-io/admiral v0.19.0-m3
 	github.com/submariner-io/cloud-prepare v0.19.0-m3.0.20240925181844-e1aa569fa944
-	github.com/submariner-io/lighthouse v0.19.0-m3
+	github.com/submariner-io/lighthouse v0.19.0-m3.0.20240925124717-3989a7b0bc55
 	github.com/submariner-io/shipyard v0.19.0-m3
 	github.com/submariner-io/submariner v0.19.0-m3.0.20240917155703-5a6c358065a2
-	github.com/submariner-io/submariner-operator v0.19.0-m3
+	github.com/submariner-io/submariner-operator v0.19.0-m3.0.20240923150922-268a9960c6b7
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.29.0
 	golang.org/x/oauth2 v0.23.0
 	google.golang.org/api v0.195.0
 	k8s.io/api v0.31.1
-	k8s.io/apiextensions-apiserver v0.31.0
+	k8s.io/apiextensions-apiserver v0.31.1
 	k8s.io/apimachinery v0.31.1
 	k8s.io/client-go v0.31.1
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8

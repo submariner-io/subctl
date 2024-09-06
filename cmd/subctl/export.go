@@ -32,6 +32,7 @@ import (
 )
 
 var (
+	useClustersetIP          string
 	exportRestConfigProducer = restconfig.NewProducer().WithNamespace()
 
 	exportCmd = &cobra.Command{
@@ -50,7 +51,7 @@ var (
 
 			exit.OnError(exportRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-					return service.Export(clusterInfo.ClientProducer, namespace, args[0], status)
+					return service.Export(clusterInfo.ClientProducer, namespace, args[0], useClustersetIP, status)
 				}, cli.NewReporter()))
 		},
 	}
@@ -60,7 +61,7 @@ func init() {
 	err := mcsv1a1.Install(scheme.Scheme)
 	exit.OnErrorWithMessage(err, "Failed to add to scheme")
 
-	exportRestConfigProducer.SetupFlags(exportServiceCmd.Flags())
+	addExportServiceFlags(exportServiceCmd)
 	exportCmd.AddCommand(exportServiceCmd)
 	rootCmd.AddCommand(exportCmd)
 }
@@ -71,4 +72,12 @@ func validateArguments(args []string) error {
 	}
 
 	return nil
+}
+
+func addExportServiceFlags(cmd *cobra.Command) {
+	const clustersetIPFlag = "use-clusterset-ip"
+	exportRestConfigProducer.SetupFlags(exportServiceCmd.Flags())
+	cmd.PersistentFlags().StringVar(&useClustersetIP, clustersetIPFlag, "", "use clusterset IP for this service")
+
+	cmd.PersistentFlags().Lookup(clustersetIPFlag).NoOptDefVal = "true"
 }
