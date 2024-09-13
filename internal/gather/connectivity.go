@@ -71,6 +71,10 @@ func gatherGateways(info *Info, namespace string) {
 	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("gateways"), namespace, v1.ListOptions{})
 }
 
+func gatherRouteAgents(info *Info, namespace string) {
+	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("routeagents"), namespace, v1.ListOptions{})
+}
+
 func gatherClusterGlobalEgressIPs(info *Info) {
 	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("clusterglobalegressips"), corev1.NamespaceAll, v1.ListOptions{})
 }

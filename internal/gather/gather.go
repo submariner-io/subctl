@@ -140,6 +140,7 @@ func gatherConnectivity(dataType string, info Info) bool {
 		gatherEndpoints(&info, info.Submariner.Spec.Namespace)
 		gatherClusters(&info, info.Submariner.Spec.Namespace)
 		gatherGateways(&info, info.Submariner.Spec.Namespace)
+		gatherRouteAgents(&info, info.Submariner.Spec.Namespace)
 		gatherClusterGlobalEgressIPs(&info)
 		gatherGlobalEgressIPs(&info)
 		gatherGlobalIngressIPs(&info)
