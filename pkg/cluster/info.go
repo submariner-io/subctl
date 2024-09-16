@@ -110,6 +110,21 @@ func (c *Info) GetGateways() ([]submarinerv1.Gateway, error) {
 	return gateways.Items, nil
 }
 
+func (c *Info) GetRouteAgents() ([]submarinerv1.RouteAgent, error) {
+	routeAgents := &submarinerv1.RouteAgentList{}
+
+	err := c.ClientProducer.ForGeneral().List(context.TODO(), routeAgents, controllerClient.InNamespace(constants.OperatorNamespace))
+	if err != nil {
+		if resource.IsNotFoundErr(err) {
+			return []submarinerv1.RouteAgent{}, nil
+		}
+
+		return nil, err //nolint:wrapcheck // error can't be wrapped.
+	}
+
+	return routeAgents.Items, nil
+}
+
 func (c *Info) HasSingleNode() (bool, error) {
 	if c.nodeCount == -1 {
 		nodes, err := c.ClientProducer.ForKubernetes().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
