@@ -19,15 +19,23 @@ limitations under the License.
 package diagnose
 
 import (
-	"encoding/json"
 	"errors"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
+	utilerrs "k8s.io/apimachinery/pkg/util/errors"
 )
 
 func Connections(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+	return utilerrs.NewAggregate([]error{
+		checkGatewayConnections(clusterInfo, status),
+		checkRouteAgentConnections(clusterInfo, status),
+	})
+}
+
+func checkGatewayConnections(clusterInfo *cluster.Info, status reporter.Interface) error {
 	status.Start("Checking gateway connections")
 	defer status.End()
 
@@ -60,13 +68,8 @@ func Connections(clusterInfo *cluster.Info, _ string, status reporter.Interface)
 			if connection.Status == submv1.Connecting {
 				tracker.Failure("Connection to cluster %q is in progress", connection.Endpoint.ClusterID)
 			} else if connection.Status == submv1.ConnectionError {
-				out, err := json.MarshalIndent(connection, "", "  ")
-				if err != nil {
-					tracker.Warning("Unable to marshal Connection to json: %v", err)
-				}
-
 				tracker.Failure("Connection to cluster %q is not established. Connection details:\n%s",
-					connection.Endpoint.ClusterID, out)
+					connection.Endpoint.ClusterID, resource.ToJSON(connection))
 			}
 		}
 	}
@@ -76,7 +79,47 @@ func Connections(clusterInfo *cluster.Info, _ string, status reporter.Interface)
 	}
 
 	if tracker.HasFailures() {
-		return errors.New("failures while diagnosing connections")
+		return errors.New("failures while diagnosing gateway connections")
+	}
+
+	return nil
+}
+
+func checkRouteAgentConnections(clusterInfo *cluster.Info, status reporter.Interface) error {
+	status.Start("Checking route agent connections")
+	defer status.End()
+
+	routeAgents, err := clusterInfo.GetRouteAgents()
+	if err != nil {
+		return status.Error(err, "Error retrieving route agents")
+	}
+
+	if len(routeAgents) == 0 {
+		return status.Error(errors.New("no route agents were detected"), "")
+	}
+
+	tracker := reporter.NewTracker(status)
+
+	for i := range routeAgents {
+		routeAgent := &routeAgents[i]
+
+		if len(routeAgent.Status.RemoteEndpoints) == 0 {
+			tracker.Success("There are no remote endpoint connections on route agent %q", routeAgent.Name)
+		}
+
+		for j := range routeAgent.Status.RemoteEndpoints {
+			remoteEndpoint := &routeAgent.Status.RemoteEndpoints[j]
+			if remoteEndpoint.Status == submv1.Connecting {
+				tracker.Failure("Connection to cluster %q is in progress", remoteEndpoint.Spec.ClusterID)
+			} else if remoteEndpoint.Status == submv1.ConnectionError {
+				tracker.Failure("Connection to cluster %q is not established. Connection details:\n%s",
+					remoteEndpoint.Spec.ClusterID, resource.ToJSON(remoteEndpoint))
+			}
+		}
+	}
+
+	if tracker.HasFailures() {
+		return errors.New("failures while diagnosing route agent connections")
 	}
 
 	return nil
