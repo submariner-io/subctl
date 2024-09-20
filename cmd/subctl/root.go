@@ -31,6 +31,7 @@ import (
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	"github.com/submariner-io/subctl/pkg/version"
 	submarineropv1a1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"golang.org/x/net/http/httpproxy"
@@ -64,8 +65,9 @@ func init() {
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
-	Use:   filepath.Base(os.Args[0]),
-	Short: "Deploy, manage, verify and diagnose Submariner deployments",
+	Use:     filepath.Base(os.Args[0]),
+	Short:   "Deploy, manage, verify and diagnose Submariner deployments",
+	Version: version.Version,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
