@@ -17,19 +17,19 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/submariner-io/admiral v0.17.2
-	github.com/submariner-io/cloud-prepare v0.17.2
+	github.com/submariner-io/cloud-prepare v0.17.3-0.20241008120503-cf65423281fa
 	github.com/submariner-io/lighthouse v0.17.2
 	github.com/submariner-io/shipyard v0.17.2
 	github.com/submariner-io/submariner v0.17.2
-	github.com/submariner-io/submariner-operator v0.17.3-0.20240709140014-b957cc9ca3c3
+	github.com/submariner-io/submariner-operator v0.17.3-0.20241001091116-ab7ece93bee9
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.23.0
 	golang.org/x/oauth2 v0.16.0
 	google.golang.org/api v0.154.0
-	k8s.io/api v0.29.6
-	k8s.io/apiextensions-apiserver v0.29.6
-	k8s.io/apimachinery v0.29.6
-	k8s.io/client-go v0.29.6
+	k8s.io/api v0.29.9
+	k8s.io/apiextensions-apiserver v0.29.9
+	k8s.io/apimachinery v0.29.9
+	k8s.io/client-go v0.29.9
 	k8s.io/utils v0.0.0-20231127182322-b307cd553661
 	sigs.k8s.io/controller-runtime v0.17.0
 	sigs.k8s.io/mcs-api v0.1.0

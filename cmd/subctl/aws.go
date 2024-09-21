@@ -73,6 +73,15 @@ func init() {
 			"OCP metadata.json file (or directory containing it) to read AWS infra ID and region from (Takes precedence over the flags)")
 		command.Flags().StringVar(&awsConfig.Profile, "profile", cpaws.DefaultProfile(), "AWS profile to use for credentials")
 		command.Flags().StringVar(&awsConfig.CredentialsFile, "credentials", cpaws.DefaultCredentialsFile(), "AWS credentials configuration file")
+
+		command.Flags().StringVar(&awsConfig.ControlPlaneSecurityGroup, "control-plane-security-group", "",
+			"Custom AWS control plane security group name if the default is not used while provisioning")
+		command.Flags().StringVar(&awsConfig.WorkerSecurityGroup, "worker-security-group", "",
+			"Custom AWS worker security group name if the default is not used while provisioning")
+		command.Flags().StringVar(&awsConfig.VpcName, "vpc-name", "",
+			"Custom AWS VPC name if the default is not used while provisioning")
+		command.Flags().StringSliceVar(&awsConfig.SubnetNames, "subnet-names", nil,
+			"Custom AWS subnet names if the default is not used while provisioning (comma-separated list)")
 	}
 
 	addGeneralAWSFlags(awsPrepareCmd)
