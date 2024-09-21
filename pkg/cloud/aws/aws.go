@@ -30,13 +30,17 @@ import (
 )
 
 type Config struct {
-	Gateways        int
-	InfraID         string
-	Region          string
-	Profile         string
-	CredentialsFile string
-	OcpMetadataFile string
-	GWInstanceType  string
+	Gateways                  int
+	InfraID                   string
+	Region                    string
+	Profile                   string
+	CredentialsFile           string
+	OcpMetadataFile           string
+	GWInstanceType            string
+	ControlPlaneSecurityGroup string
+	WorkerSecurityGroup       string
+	VpcName                   string
+	SubnetNames               []string
 }
 
 // RunOn runs the given function on AWS, supplying it with a cloud instance connected to AWS and a reporter that writes to CLI.
@@ -57,9 +61,33 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 
 	status.Start("Initializing AWS connectivity")
 
-	awsCloud, err := aws.NewCloudFromSettings(config.CredentialsFile, config.Profile, config.InfraID, config.Region)
+	var cloudOptions []aws.CloudOption
+
+	if config.ControlPlaneSecurityGroup != "" {
+		cloudOptions = append(cloudOptions, aws.WithControlPlaneSecurityGroup(config.ControlPlaneSecurityGroup))
+	}
+
+	if config.WorkerSecurityGroup != "" {
+		cloudOptions = append(cloudOptions, aws.WithWorkerSecurityGroup(config.WorkerSecurityGroup))
+	}
+
+	if config.VpcName != "" {
+		cloudOptions = append(cloudOptions, aws.WithVPCName(config.VpcName))
+	}
+
+	if len(config.SubnetNames) > 0 {
+		cloudOptions = append(cloudOptions, aws.WithPublicSubnetList(config.SubnetNames))
+	}
+
+	awsCloud, err := aws.NewCloudFromSettings(
+		config.CredentialsFile,
+		config.Profile,
+		config.InfraID,
+		config.Region,
+		cloudOptions...,
+	)
 	if err != nil {
-		return status.Error(err, "error loading default config")
+		return status.Error(err, "error creating cloud object from settings")
 	}
 
 	status.End()
