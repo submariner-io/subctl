@@ -52,6 +52,7 @@ var ipTablesCmds = map[string]string{
 	"iptables":        "iptables -L -n -v --line-numbers",
 	"iptables-nat":    "iptables -L -n -v --line-numbers -t nat",
 	"iptables-mangle": "iptables -L -n -v --line-numbers -t mangle",
+	"iptables-save":   "iptables-save -c",
 }
 
 var libreswanCmds = map[string]string{
