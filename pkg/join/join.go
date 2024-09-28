@@ -105,10 +105,14 @@ func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Opti
 	}
 
 	if brokerInfo.IsServiceDiscoveryEnabled() {
-		err = clustersetip.AllocateCIDRFromConfigMap(ctx, brokerClientProducer.ForGeneral(), brokerNamespace,
+		enabled, err := clustersetip.AllocateCIDRFromConfigMap(ctx, brokerClientProducer.ForGeneral(), brokerNamespace,
 			&clustersetConfig, status)
 		if err != nil {
 			return errors.Wrap(err, "unable to determine the clusterset IP CIDR")
+		}
+
+		if enabled {
+			options.EnableClustersetIP = enabled
 		}
 	}
 
