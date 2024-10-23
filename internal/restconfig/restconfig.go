@@ -66,6 +66,9 @@ type Producer struct {
 	prefixedDefaultNamespaces map[string]*string
 }
 
+// GetInClusterConfig is exposed for unit tests to override.
+var GetInClusterConfig = rest.InClusterConfig
+
 // NewProducer initialises a blank producer which needs to be set up with flags (see SetupFlags).
 func NewProducer() *Producer {
 	return &Producer{prefixedDefaultNamespaces: make(map[string]*string)}
@@ -232,7 +235,7 @@ func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter
 }
 
 func runInCluster(function PerContextFn, status reporter.Interface) error {
-	restConfig, err := rest.InClusterConfig()
+	restConfig, err := GetInClusterConfig()
 	if err != nil {
 		return status.Error(err, "error retrieving the in-cluster configuration")
 	}
