@@ -96,6 +96,7 @@ func (rcp *Producer) WithDefaultNamespace(defaultNamespace string) *Producer {
 // with the given default value.
 // The chosen namespace will be passed to the PerContextFn used to process the context.
 func (rcp *Producer) WithPrefixedNamespace(prefix, prefixedNamespace string) *Producer {
+	rcp.namespaceFlag = true
 	rcp.prefixedDefaultNamespaces[prefix] = &prefixedNamespace
 
 	return rcp
