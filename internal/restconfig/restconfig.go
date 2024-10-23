@@ -40,6 +40,8 @@ import (
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
+const InCluster = "in-cluster"
+
 type RestConfig struct {
 	Config      *rest.Config
 	ClusterName string
@@ -122,7 +124,7 @@ func (rcp *Producer) WithInClusterFlag() *Producer {
 // SetupFlags configures the given flags to control the producer settings.
 func (rcp *Producer) SetupFlags(flags *pflag.FlagSet) {
 	if rcp.inClusterFlag {
-		flags.BoolVar(&rcp.inCluster, "in-cluster", false, "use the in-cluster configuration to connect to Kubernetes")
+		flags.BoolVar(&rcp.inCluster, InCluster, false, "use the in-cluster configuration to connect to Kubernetes")
 	}
 
 	// The base loading rules are shared across all clientcmd setups.
@@ -236,7 +238,7 @@ func runInCluster(function PerContextFn, status reporter.Interface) error {
 	}
 
 	// In-cluster configurations don't give a cluster name, use "in-cluster"
-	clusterInfo, err := cluster.NewInfo("in-cluster", restConfig)
+	clusterInfo, err := cluster.NewInfo(InCluster, restConfig)
 	if err != nil {
 		return status.Error(err, "error building the cluster.Info for the in-cluster configuration")
 	}
