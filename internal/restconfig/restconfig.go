@@ -200,12 +200,7 @@ func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		rcp.defaultClientConfig.loadingRules, rcp.defaultClientConfig.overrides)
 
-	restConfig, err := getRestConfigFromConfig(clientConfig, rcp.defaultClientConfig.overrides)
-	if err != nil {
-		return status.Error(err, "error retrieving the default configuration")
-	}
-
-	clusterInfo, err := cluster.NewInfo(restConfig.ClusterName, restConfig.Config)
+	clusterInfo, err := createClusterInfo(clientConfig, rcp.defaultClientConfig.overrides)
 	if err != nil {
 		return status.Error(err, "error building the cluster.Info for the default configuration")
 	}
@@ -233,6 +228,15 @@ func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter
 	}
 
 	return function(clusterInfo, namespace, status)
+}
+
+func createClusterInfo(clientConfig clientcmd.ClientConfig, overrides *clientcmd.ConfigOverrides) (*cluster.Info, error) {
+	restConfig, err := getRestConfigFromConfig(clientConfig, overrides)
+	if err != nil {
+		return nil, err
+	}
+
+	return cluster.NewInfo(restConfig.ClusterName, restConfig.Config) //nolint:wrapcheck // No need to wrap
 }
 
 func runInCluster(function PerContextFn, status reporter.Interface) error {
@@ -272,12 +276,7 @@ func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerCon
 
 		contextClientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, clientConfig.overrides)
 
-		restConfig, err := getRestConfigFromConfig(contextClientConfig, clientConfig.overrides)
-		if err != nil {
-			return true, status.Error(err, "error retrieving the configuration for prefix %s", prefix)
-		}
-
-		clusterInfo, err := cluster.NewInfo(restConfig.ClusterName, restConfig.Config)
+		clusterInfo, err := createClusterInfo(contextClientConfig, clientConfig.overrides)
 		if err != nil {
 			return true, status.Error(err, "error building the cluster.Info for the configuration for prefix %s", prefix)
 		}
@@ -322,12 +321,7 @@ func (rcp *Producer) RunOnSelectedContexts(function AllContextFn, status reporte
 				clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 					rcp.defaultClientConfig.loadingRules, rcp.defaultClientConfig.overrides)
 
-				restConfig, err := getRestConfigFromConfig(clientConfig, rcp.defaultClientConfig.overrides)
-				if err != nil {
-					return true, status.Error(err, "error retrieving the configuration for context %s", contextName)
-				}
-
-				clusterInfo, err := cluster.NewInfo(restConfig.ClusterName, restConfig.Config)
+				clusterInfo, err := createClusterInfo(clientConfig, rcp.defaultClientConfig.overrides)
 				if err != nil {
 					return true, status.Error(err, "error building the cluster.Info for context %s", contextName)
 				}
@@ -444,15 +438,11 @@ func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Int
 
 func (rcp *Producer) overrideContextAndRun(clusterName, contextName string, function PerContextFn, status reporter.Interface) error {
 	fmt.Printf("Cluster %q\n", clusterName)
+	defer fmt.Println()
 
 	rcp.defaultClientConfig.overrides.CurrentContext = contextName
-	if err := rcp.RunOnSelectedContext(function, status); err != nil {
-		return err
-	}
 
-	fmt.Println()
-
-	return nil
+	return rcp.RunOnSelectedContext(function, status)
 }
 
 func ForBroker(submariner *v1alpha1.Submariner, serviceDisc *v1alpha1.ServiceDiscovery) (*rest.Config, string, error) {
@@ -500,7 +490,7 @@ func getRestConfigFromConfig(config clientcmd.ClientConfig, overrides *clientcmd
 	clusterName := clusterNameFromContext(&raw, overrides.CurrentContext)
 
 	if clusterName == nil {
-		return RestConfig{}, fmt.Errorf("could not obtain the cluster name from kube config: %#v", raw)
+		return RestConfig{}, fmt.Errorf("could not obtain the cluster name from kube config: %s", resource.ToJSON(raw))
 	}
 
 	return RestConfig{Config: clientConfig, ClusterName: *clusterName}, nil
