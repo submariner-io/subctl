@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewProducerFromRestConfig(config *rest.Config) (Producer, error) {
+var NewProducerFromRestConfig = func(config *rest.Config) (Producer, error) {
 	var err error
 	p := &DefaultProducer{}
 
