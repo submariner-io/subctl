@@ -55,6 +55,7 @@ const (
 	user1Name    = "user1"
 	user2Name    = "user2"
 	defaultNS    = "default-ns"
+	specifiedNS  = "specified-ns"
 )
 
 var (
@@ -187,7 +188,6 @@ func testRunOnSelectedContext() {
 		})
 
 		It("should use the specified namespace", func() {
-			specifiedNS := "specified-ns"
 			Expect(t.flags.Set(clientcmd.FlagNamespace, specifiedNS)).To(Succeed())
 
 			err := t.producer.RunOnSelectedContext(func(_ *cluster.Info, namespace string, _ reporter.Interface) error {
@@ -244,9 +244,11 @@ func testRunOnSelectedContext() {
 			t.producer.WithInClusterFlag()
 		})
 
-		It("should use the in-cluster config", func() {
+		JustBeforeEach(func() {
 			Expect(t.flags.Set(restconfig.InCluster, "true")).To(Succeed())
+		})
 
+		It("should use the in-cluster config", func() {
 			err := t.producer.RunOnSelectedContext(func(info *cluster.Info, namespace string, _ reporter.Interface) error {
 				t.actualProcessed++
 
@@ -257,6 +259,27 @@ func testRunOnSelectedContext() {
 			}, reporter.Stdout())
 
 			Expect(err).To(Succeed())
+		})
+
+		Context("and the namespace flag is specified", func() {
+			BeforeEach(func() {
+				t.producer.WithNamespace()
+			})
+
+			It("should use the specified namespace", func() {
+				Expect(t.flags.Set(clientcmd.FlagNamespace, specifiedNS)).To(Succeed())
+
+				err := t.producer.RunOnSelectedContext(func(info *cluster.Info, namespace string, _ reporter.Interface) error {
+					t.actualProcessed++
+
+					Expect(info.Name).To(Equal(restconfig.InCluster))
+					Expect(namespace).To(Equal(specifiedNS))
+
+					return nil
+				}, reporter.Stdout())
+
+				Expect(err).To(Succeed())
+			})
 		})
 	})
 
@@ -350,7 +373,6 @@ func testRunOnSelectedContexts() {
 		})
 
 		It("should use the specified namespace", func() {
-			specifiedNS := "specified-ns"
 			Expect(t.flags.Set(clientcmd.FlagNamespace, specifiedNS)).To(Succeed())
 
 			_, err := t.producer.RunOnSelectedContexts(func(_ []*cluster.Info, namespaces []string, _ reporter.Interface) error {
@@ -392,6 +414,10 @@ func testRunOnSelectedContexts() {
 			t.producer.WithInClusterFlag()
 		})
 
+		JustBeforeEach(func() {
+			Expect(t.flags.Set(restconfig.InCluster, "true")).To(Succeed())
+		})
+
 		It("should use the in-cluster config", func() {
 			Expect(t.flags.Set(restconfig.InCluster, "true")).To(Succeed())
 
@@ -405,6 +431,29 @@ func testRunOnSelectedContexts() {
 			}, reporter.Stdout())
 
 			Expect(err).To(Succeed())
+		})
+
+		Context("and the namespace flag is specified", func() {
+			BeforeEach(func() {
+				t.producer.WithNamespace()
+			})
+
+			It("should use the specified namespace", func() {
+				Expect(t.flags.Set(clientcmd.FlagNamespace, specifiedNS)).To(Succeed())
+
+				_, err := t.producer.RunOnSelectedContexts(
+					func(clusterInfos []*cluster.Info, namespaces []string, _ reporter.Interface) error {
+						t.actualProcessed++
+
+						Expect(clusterInfos).To(HaveLen(1))
+						Expect(clusterInfos[0].Name).To(Equal(restconfig.InCluster))
+						Expect(namespaces[0]).To(Equal(specifiedNS))
+
+						return nil
+					}, reporter.Stdout())
+
+				Expect(err).To(Succeed())
+			})
 		})
 	})
 
@@ -552,13 +601,14 @@ func testRunOnAllContexts() {
 	When("the in-cluster flag is specified", func() {
 		BeforeEach(func() {
 			t.producer.WithInClusterFlag()
+			t.expectedProcessed = 1
+		})
+
+		JustBeforeEach(func() {
+			Expect(t.flags.Set(restconfig.InCluster, "true")).To(Succeed())
 		})
 
 		It("should use the in-cluster config", func() {
-			Expect(t.flags.Set(restconfig.InCluster, "true")).To(Succeed())
-
-			t.expectedProcessed = 1
-
 			err := t.producer.RunOnAllContexts(func(info *cluster.Info, namespace string, _ reporter.Interface) error {
 				t.actualProcessed++
 
@@ -569,6 +619,27 @@ func testRunOnAllContexts() {
 			}, reporter.Stdout())
 
 			Expect(err).To(Succeed())
+		})
+
+		Context("and the namespace flag is specified", func() {
+			BeforeEach(func() {
+				t.producer.WithNamespace()
+			})
+
+			It("should use the specified namespace", func() {
+				Expect(t.flags.Set(clientcmd.FlagNamespace, specifiedNS)).To(Succeed())
+
+				err := t.producer.RunOnAllContexts(func(info *cluster.Info, namespace string, _ reporter.Interface) error {
+					t.actualProcessed++
+
+					Expect(info.Name).To(Equal(restconfig.InCluster))
+					Expect(namespace).To(Equal(namespace))
+
+					return nil
+				}, reporter.Stdout())
+
+				Expect(err).To(Succeed())
+			})
 		})
 	})
 }

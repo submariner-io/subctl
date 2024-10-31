@@ -189,7 +189,7 @@ type PerContextFn func(clusterInfo *cluster.Info, namespace string, status repor
 // RunOnSelectedContext runs the given function on the selected context.
 func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter.Interface) error {
 	if rcp.inCluster {
-		return runInCluster(function, status)
+		return rcp.runInCluster(function, status)
 	}
 
 	if rcp.defaultClientConfig == nil {
@@ -239,7 +239,7 @@ func createClusterInfo(clientConfig clientcmd.ClientConfig, overrides *clientcmd
 	return cluster.NewInfo(restConfig.ClusterName, restConfig.Config) //nolint:wrapcheck // No need to wrap
 }
 
-func runInCluster(function PerContextFn, status reporter.Interface) error {
+func (rcp *Producer) runInCluster(function PerContextFn, status reporter.Interface) error {
 	restConfig, err := GetInClusterConfig()
 	if err != nil {
 		return status.Error(err, "error retrieving the in-cluster configuration")
@@ -251,9 +251,13 @@ func runInCluster(function PerContextFn, status reporter.Interface) error {
 		return status.Error(err, "error building the cluster.Info for the in-cluster configuration")
 	}
 
-	// In-cluster configurations don't specify a namespace, use the default
-	// When using the in-cluster configuration, that's the only configuration we want
-	return function(clusterInfo, "", status)
+	namespace := ""
+
+	if rcp.defaultClientConfig != nil {
+		namespace = rcp.defaultClientConfig.overrides.Context.Namespace
+	}
+
+	return function(clusterInfo, namespace, status)
 }
 
 // RunOnSelectedPrefixedContext runs the given function on the selected prefixed context.
@@ -305,7 +309,7 @@ func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerCon
 // Returns true if there was at least one selected context, false otherwise.
 func (rcp *Producer) RunOnSelectedContexts(function AllContextFn, status reporter.Interface) (bool, error) {
 	if rcp.inCluster {
-		return true, runInCluster(func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+		return true, rcp.runInCluster(func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 			return function([]*cluster.Info{clusterInfo}, []string{namespace}, status)
 		}, status)
 	}
@@ -353,7 +357,7 @@ func (rcp *Producer) RunOnSelectedContexts(function AllContextFn, status reporte
 // Returns an error if no contexts are found.
 func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Interface) error {
 	if rcp.inCluster {
-		return runInCluster(function, status)
+		return rcp.runInCluster(function, status)
 	}
 
 	if rcp.defaultClientConfig == nil {
