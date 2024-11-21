@@ -42,7 +42,7 @@ func gatherServiceDiscoveryPodLogs(info *Info) {
 
 func gatherCoreDNSPodLogs(info *Info) {
 	if isCoreDNSTypeOcp(info) {
-		gatherPodLogsByContainer(ocpCoreDNSPodLabel, "dns", info)
+		gatherPodLogs(ocpCoreDNSPodLabel, info, "dns")
 	} else {
 		gatherPodLogs(k8sCoreDNSPodLabel, info)
 	}

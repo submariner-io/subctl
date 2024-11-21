@@ -44,7 +44,7 @@ function test_subctl_gather() {
     _subctl gather --dir "$gather_out_dir"
 
     echo "::group::Validating 'subctl gather'"
-    ls $gather_out_dir
+    ls -R $gather_out_dir
 
     for cluster in "${clusters[@]}"; do
         with_context "${cluster}" validate_gathered_files
