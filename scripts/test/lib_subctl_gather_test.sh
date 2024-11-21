@@ -19,8 +19,8 @@ function validate_gathered_files () {
   validate_resource_files all 'globalegressips.submariner.io' 'GlobalEgressIP'
   validate_resource_files all 'globalingressips.submariner.io' 'GlobalIngressIP'
 
-  validate_pod_log_files "$subm_ns" '-l app=submariner-gateway'
-  validate_pod_log_files "$subm_ns" '-l app=submariner-routeagent'
+  validate_pod_log_files "$subm_ns" '-l app=submariner-gateway' 'submariner-gateway submariner-gateway-init'
+  validate_pod_log_files "$subm_ns" '-l app=submariner-routeagent' 'submariner-routeagent submariner-routeagent-init'
   validate_pod_log_files "$subm_ns" '-l app=submariner-globalnet'
   validate_pod_log_files "$subm_ns" '-l app=submariner-networkplugin-syncer'
 
@@ -53,6 +53,7 @@ function validate_gathered_files () {
 function validate_pod_log_files() {
   local ns=$1
   local selector=$2
+  local containers=$3
   local nsarg="--namespace=${ns}"
 
   if [[ "$ns" == "all" ]]; then
@@ -61,10 +62,18 @@ function validate_pod_log_files() {
   pod_names=$(kubectl get pods "$nsarg" "$selector" -o=jsonpath='{.items..metadata.name}')
   read -ra pod_names_array <<< "$pod_names"
 
-  for pod_name in "${pod_names_array[@]}"; do
-    file=$gather_out_dir/${cluster}/$pod_name.log
-    cat "$file"
+  read -ra containers_array <<< "$containers"
 
+  for pod_name in "${pod_names_array[@]}"; do
+    if [[ "${#containers_array[@]}" == 0 ]]; then
+        file=$gather_out_dir/${cluster}/$pod_name.log
+        cat "$file"
+    else
+      for container in "${containers_array[@]}"; do
+        file=$gather_out_dir/${cluster}/$pod_name-$container.log
+        cat "$file"
+      done
+    fi
   done
 }
 
