@@ -97,11 +97,13 @@ func ResourcesToYAMLFile(info *Info, ofType schema.GroupVersionResource, namespa
 //nolint:gocritic // hugeParam: listOptions - match K8s API.
 func gatherDaemonSet(info *Info, namespace string, listOptions metav1.ListOptions) {
 	ResourcesToYAMLFile(info, appsv1.SchemeGroupVersion.WithResource("daemonsets"), namespace, listOptions)
+	ResourcesToYAMLFile(info, corev1.SchemeGroupVersion.WithResource("pods"), namespace, listOptions)
 }
 
 //nolint:gocritic // hugeParam: listOptions - match K8s API.
 func gatherDeployment(info *Info, namespace string, listOptions metav1.ListOptions) {
 	ResourcesToYAMLFile(info, appsv1.SchemeGroupVersion.WithResource("deployments"), namespace, listOptions)
+	ResourcesToYAMLFile(info, corev1.SchemeGroupVersion.WithResource("pods"), namespace, listOptions)
 }
 
 //nolint:gocritic // hugeParam: listOptions - match K8s API.
