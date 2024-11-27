@@ -10,28 +10,28 @@ require (
 	github.com/google/go-github/v54 v54.0.0
 	github.com/gophercloud/utils v0.0.0-20210909165623-d7085207ff6d
 	github.com/mattn/go-isatty v0.0.20
-	github.com/onsi/ginkgo/v2 v2.20.2
-	github.com/onsi/gomega v1.34.2
+	github.com/onsi/ginkgo/v2 v2.22.0
+	github.com/onsi/gomega v1.36.0
 	github.com/openshift/api v0.0.0-20230714214528-de6ad7979b00
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
-	github.com/submariner-io/admiral v0.20.0-m0
-	github.com/submariner-io/cloud-prepare v0.20.0-m0.0.20241112203258-ab4e161fbbff
-	github.com/submariner-io/lighthouse v0.20.0-m0
-	github.com/submariner-io/shipyard v0.20.0-m0
-	github.com/submariner-io/submariner v0.20.0-m0
-	github.com/submariner-io/submariner-operator v0.20.0-m0
+	github.com/submariner-io/admiral v0.20.0-m1
+	github.com/submariner-io/cloud-prepare v0.20.0-m1
+	github.com/submariner-io/lighthouse v0.20.0-m1
+	github.com/submariner-io/shipyard v0.20.0-m1
+	github.com/submariner-io/submariner v0.20.0-m1
+	github.com/submariner-io/submariner-operator v0.20.0-m1
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.31.0
 	golang.org/x/oauth2 v0.24.0
 	google.golang.org/api v0.204.0
-	k8s.io/api v0.31.2
-	k8s.io/apiextensions-apiserver v0.31.2
-	k8s.io/apimachinery v0.31.2
-	k8s.io/client-go v0.31.2
+	k8s.io/api v0.31.3
+	k8s.io/apiextensions-apiserver v0.31.3
+	k8s.io/apimachinery v0.31.3
+	k8s.io/client-go v0.31.3
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8
-	sigs.k8s.io/controller-runtime v0.19.1
+	sigs.k8s.io/controller-runtime v0.19.2
 	sigs.k8s.io/mcs-api v0.1.0
 	sigs.k8s.io/yaml v1.4.0
 )
@@ -82,7 +82,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/licenseclassifier v0.0.0-20201113175434-78a70215ca36 // indirect
-	github.com/google/pprof v0.0.0-20240827171923-fa2c70bbbfe5 // indirect
+	github.com/google/pprof v0.0.0-20241029153458-d1b30febd7db // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
@@ -126,7 +126,7 @@ require (
 	golang.org/x/term v0.26.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
-	golang.org/x/tools v0.24.0 // indirect
+	golang.org/x/tools v0.26.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241021214115-324edc3d5d38 // indirect
 	google.golang.org/grpc v1.67.1 // indirect
 	google.golang.org/protobuf v1.35.1 // indirect
