@@ -47,11 +47,11 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace, ima
 		imagePullPolicy = v1.PullIfNotPresent
 	}
 
-	command := []string{operatorName}
+	args := []string{"--leader-elect"}
 	if debug {
-		command = append(command, "-v=3")
+		args = append(args, "-v=3")
 	} else {
-		command = append(command, "-v=1")
+		args = append(args, "-v=1")
 	}
 
 	opDeployment := &appsv1.Deployment{
@@ -72,7 +72,7 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace, ima
 						{
 							Name:            operatorName,
 							Image:           image,
-							Command:         command,
+							Args:            args,
 							ImagePullPolicy: imagePullPolicy,
 							SecurityContext: &v1.SecurityContext{
 								RunAsNonRoot:             ptr.To(true),
