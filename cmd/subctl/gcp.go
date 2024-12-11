@@ -88,6 +88,10 @@ func init() {
 	gcpPrepareCmd.Flags().StringVar(&gcpConfig.GWInstanceType, "gateway-instance", "n1-standard-4", "Type of gateway instance machine")
 	gcpPrepareCmd.Flags().IntVar(&gcpConfig.Gateways, "gateways", defaultNumGateways,
 		"Number of gateways to deploy")
+	gcpPrepareCmd.Flags().StringVar(&gcpConfig.VPCName, "vpc-name", "",
+		"Custom GCP VPC name if the default is not used while provisioning")
+	gcpPrepareCmd.Flags().StringVar(&gcpConfig.PublicSubnetName, "public-subnet-name", "",
+		"Custom public subnet name name if the default is not used while provisioning")
 
 	cloudPrepareCmd.AddCommand(gcpPrepareCmd)
 

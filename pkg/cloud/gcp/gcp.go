@@ -39,13 +39,15 @@ import (
 )
 
 type Config struct {
-	Gateways        int
-	InfraID         string
-	Region          string
-	ProjectID       string
-	CredentialsFile string
-	OcpMetadataFile string
-	GWInstanceType  string
+	Gateways         int
+	InfraID          string
+	Region           string
+	ProjectID        string
+	CredentialsFile  string
+	OcpMetadataFile  string
+	GWInstanceType   string
+	VPCName          string
+	PublicSubnetName string
 }
 
 // RunOn runs the given function on GCP, supplying it with a cloud instance connected to GCP and a reporter that writes to CLI.
@@ -104,6 +106,15 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 		Region:    config.Region,
 		Client:    gcpClient,
 	}
+
+	if config.VPCName != "" {
+		gcpCloudInfo.VpcName = config.VPCName
+	}
+
+	if config.PublicSubnetName != "" {
+		gcpCloudInfo.PublicSubnetName = config.PublicSubnetName
+	}
+
 	gcpCloud := gcp.NewCloud(gcpCloudInfo)
 	msDeployer := ocp.NewK8sMachinesetDeployer(restMapper, dynamicClient)
 	// TODO: Ideally we should be able to specify the image for GWNode, but it was seen that
