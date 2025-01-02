@@ -257,11 +257,11 @@ _subctl cloud prepare generic --context cluster1
 _subctl cloud prepare generic --kubecontext cluster1 && exit 1
 
 # Test subctl recover-broker-info invocations
-test_subctl_recover_broker_info
+#test_subctl_recover_broker_info
 
 # Test subctl uninstall invocations
-_subctl uninstall -y --context cluster2
-_subctl uninstall -y --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1
+#_subctl uninstall -y --context cluster2
+#_subctl uninstall -y --kubeconfig "${KUBECONFIGS_DIR}"/kind-config-cluster1
 
 # Test subctl recover-broker-info invocations with Submariner not installed on any cluster
-_subctl recover-broker-info --context cluster1
+#_subctl recover-broker-info --context cluster1

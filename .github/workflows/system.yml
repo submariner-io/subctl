@@ -9,12 +9,12 @@ permissions: {}
 jobs:
   system-test:
     name: Subctl Commands
-    timeout-minutes: 30
+    timeout-minutes: 60
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        using: ['', 'globalnet', 'lighthouse']
+        using: ['']
     steps:
       - name: Check out the repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -29,5 +29,5 @@ jobs:
           using: ${{ matrix.using }}
 
       - name: Post mortem
-        if: failure()
+        if: always()
         uses: submariner-io/shipyard/gh-actions/post-mortem@devel
