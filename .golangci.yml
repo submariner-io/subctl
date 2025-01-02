@@ -207,3 +207,9 @@ issues:
     - path: cmd/subctl/.*\.go
       linters:
         - goheader
+
+    # Ignore false positive
+    # See https://github.com/golangci/golangci-lint/issues/5284
+    - path: pkg/join/options\.go
+      linters:
+        - goheader
