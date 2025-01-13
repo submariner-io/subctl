@@ -16,14 +16,14 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
-	github.com/submariner-io/admiral v0.19.1
-	github.com/submariner-io/cloud-prepare v0.19.1
-	github.com/submariner-io/lighthouse v0.19.1
-	github.com/submariner-io/shipyard v0.19.1
-	github.com/submariner-io/submariner v0.19.1
-	github.com/submariner-io/submariner-operator v0.19.1
+	github.com/submariner-io/admiral v0.19.2
+	github.com/submariner-io/cloud-prepare v0.19.2
+	github.com/submariner-io/lighthouse v0.19.2
+	github.com/submariner-io/shipyard v0.19.2
+	github.com/submariner-io/submariner v0.19.2
+	github.com/submariner-io/submariner-operator v0.19.2
 	github.com/uw-labs/lichen v0.1.7
-	golang.org/x/net v0.29.0
+	golang.org/x/net v0.33.0
 	golang.org/x/oauth2 v0.23.0
 	google.golang.org/api v0.195.0
 	k8s.io/api v0.31.1
@@ -121,10 +121,10 @@ require (
 	go.opentelemetry.io/otel v1.28.0 // indirect
 	go.opentelemetry.io/otel/metric v1.28.0 // indirect
 	go.opentelemetry.io/otel/trace v1.28.0 // indirect
-	golang.org/x/crypto v0.27.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
-	golang.org/x/term v0.24.0 // indirect
-	golang.org/x/text v0.18.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/term v0.27.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240823204242-4ba0660f739c // indirect
