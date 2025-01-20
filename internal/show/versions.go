@@ -48,7 +48,7 @@ var componentCmd = map[string][]string{
 	names.ServiceDiscoveryComponent:  {"lighthouse-agent", "--version"},
 	names.LighthouseCoreDNSComponent: {"lighthouse-coredns", "--subm-version"},
 	names.OperatorComponent:          {"submariner-operator", "--version"},
-	names.MetricsProxyComponent:      {"cat", "version"},
+	names.MetricsProxyComponent:      {"cat", "/app/version"},
 }
 
 func printDaemonSetVersions(clusterInfo *cluster.Info, printer *table.Printer, components ...string) error {
