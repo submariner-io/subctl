@@ -25,6 +25,7 @@ import (
 	"github.com/submariner-io/subctl/internal/show/table"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
+	k8snet "k8s.io/utils/net"
 )
 
 func Connections(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
@@ -93,8 +94,8 @@ func remoteIPAndNATForConnection(connection *submv1.Connection) (string, bool) {
 	}
 
 	if connection.Endpoint.NATEnabled {
-		return connection.Endpoint.PublicIP, true
+		return connection.Endpoint.GetPublicIP(k8snet.IPv4), true
 	}
 
-	return connection.Endpoint.PrivateIP, false
+	return connection.Endpoint.GetPrivateIP(k8snet.IPv4), false
 }

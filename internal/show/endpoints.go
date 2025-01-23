@@ -24,6 +24,7 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/show/table"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	k8snet "k8s.io/utils/net"
 )
 
 func Endpoints(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
@@ -50,8 +51,8 @@ func Endpoints(clusterInfo *cluster.Info, _ string, status reporter.Interface) e
 		gateway := &gateways[i]
 		printer.Add(
 			gateway.Status.LocalEndpoint.ClusterID,
-			gateway.Status.LocalEndpoint.PrivateIP,
-			gateway.Status.LocalEndpoint.PublicIP,
+			gateway.Status.LocalEndpoint.GetPrivateIP(k8snet.IPv4),
+			gateway.Status.LocalEndpoint.GetPublicIP(k8snet.IPv4),
 			gateway.Status.LocalEndpoint.Backend,
 			"local",
 		)
@@ -60,8 +61,8 @@ func Endpoints(clusterInfo *cluster.Info, _ string, status reporter.Interface) e
 			connection := &gateway.Status.Connections[i]
 			printer.Add(
 				connection.Endpoint.ClusterID,
-				connection.Endpoint.PrivateIP,
-				connection.Endpoint.PublicIP,
+				connection.Endpoint.GetPrivateIP(k8snet.IPv4),
+				connection.Endpoint.GetPublicIP(k8snet.IPv4),
 				connection.Endpoint.Backend,
 				"remote",
 			)

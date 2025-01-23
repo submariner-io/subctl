@@ -36,6 +36,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/kubernetes"
+	k8snet "k8s.io/utils/net"
 )
 
 type TargetPort int
@@ -153,10 +154,10 @@ func getGatewayIP(clusterInfo *cluster.Info, localClusterID string, status repor
 				}
 
 				if conn.Endpoint.NATEnabled {
-					return conn.Endpoint.PublicIP, nil
+					return conn.Endpoint.GetPublicIP(k8snet.IPv4), nil
 				}
 
-				return conn.Endpoint.PrivateIP, nil
+				return conn.Endpoint.GetPrivateIP(k8snet.IPv4), nil
 			}
 		}
 	}
@@ -251,7 +252,7 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 	}
 
 	var espNeeded bool
-	if gatewayPodIP == localEndpoint.Spec.PrivateIP && localEndpoint.Spec.Backend == Libreswan {
+	if gatewayPodIP == localEndpoint.Spec.GetPrivateIP(k8snet.IPv4) && localEndpoint.Spec.Backend == Libreswan {
 		espNeeded = true
 	}
 
