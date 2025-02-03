@@ -16,12 +16,12 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
-	github.com/submariner-io/admiral v0.20.0-m3.0.20250130200921-a919a18a0cdd
+	github.com/submariner-io/admiral v0.20.0-m3.0.20250203090438-6682a22c2d8b
 	github.com/submariner-io/cloud-prepare v0.20.0-m3.0.20250130201611-a2690121eb51
 	github.com/submariner-io/lighthouse v0.20.0-m3.0.20250130210228-8134c581eb6b
-	github.com/submariner-io/shipyard v0.20.0-m3.0.20250130182730-391836d2402a
-	github.com/submariner-io/submariner v0.20.0-m3.0.20250130210129-cda7f6e0147c
-	github.com/submariner-io/submariner-operator v0.20.0-m3.0.20250131033044-f69aad5ece73
+	github.com/submariner-io/shipyard v0.20.0-m3.0.20250203090627-7aa80df2a692
+	github.com/submariner-io/submariner v0.20.0-m3.0.20250203095801-11ecddc8ea15
+	github.com/submariner-io/submariner-operator v0.20.0-m3.0.20250203094933-769db4ee5b7f
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.34.0
 	golang.org/x/oauth2 v0.25.0
@@ -30,7 +30,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.32.1
 	k8s.io/apimachinery v0.32.1
 	k8s.io/client-go v0.32.1
-	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738
+	k8s.io/utils v0.0.0-20241210054802-24370beab758
 	sigs.k8s.io/controller-runtime v0.20.1
 	sigs.k8s.io/mcs-api v0.1.0
 	sigs.k8s.io/yaml v1.4.0
@@ -76,7 +76,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/google/gnostic-models v0.6.8 // indirect
+	github.com/google/gnostic-models v0.6.9 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -132,7 +132,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f // indirect
-	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
+	k8s.io/kube-openapi v0.0.0-20241212045625-5ad02ce6640f // indirect
+	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.5.0 // indirect
 )
