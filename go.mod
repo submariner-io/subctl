@@ -15,7 +15,7 @@ require (
 	github.com/openshift/api v0.0.0-20230714214528-de6ad7979b00
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.1
-	github.com/spf13/pflag v1.0.5
+	github.com/spf13/pflag v1.0.6
 	github.com/submariner-io/admiral v0.20.0-m3.0.20250203090438-6682a22c2d8b
 	github.com/submariner-io/cloud-prepare v0.20.0-m3.0.20250130201611-a2690121eb51
 	github.com/submariner-io/lighthouse v0.20.0-m3.0.20250130210228-8134c581eb6b
