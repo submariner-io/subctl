@@ -123,7 +123,7 @@ func Schedule(config *Config) (*Scheduled, error) {
 
 func (np *Scheduled) schedule() error {
 	if np.Config.Scheduling.ScheduleOn == CustomNode && np.Config.Scheduling.NodeName == "" {
-		return fmt.Errorf("CustomNode is specified for scheduling, but nodeName is missing")
+		return errors.New("CustomNode is specified for scheduling, but nodeName is missing")
 	}
 
 	networkPod := v1.Pod{
