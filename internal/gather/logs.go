@@ -77,11 +77,13 @@ func getContainerNames(containers []corev1.Container) []string {
 }
 
 //nolint:gocritic // hugeParam: podLogOptions - purposely passed by value.
-func outputPodLogs(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, logName string, info *Info) (podLogInfo LogInfo) {
-	podLogInfo.Namespace = pod.Namespace
-	podLogInfo.PodState = pod.Status.Phase
-	podLogInfo.PodName = pod.Name
-	podLogInfo.NodeName = pod.Spec.NodeName
+func outputPodLogs(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, logName string, info *Info) LogInfo {
+	podLogInfo := LogInfo{
+		Namespace: pod.Namespace,
+		PodState:  pod.Status.Phase,
+		PodName:   pod.Name,
+		NodeName:  pod.Spec.NodeName,
+	}
 
 	err := outputPreviousPodLog(pod, podLogOptions, logName, info, &podLogInfo)
 	if err != nil {

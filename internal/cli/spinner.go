@@ -154,7 +154,7 @@ func (s *Spinner) Stop() {
 
 // Write implements io.Writer, interrupting the spinner and writing to
 // the inner writer.
-func (s *Spinner) Write(p []byte) (n int, err error) {
+func (s *Spinner) Write(p []byte) (int, error) {
 	// lock first, so nothing else can start writing until we are done.
 	s.mu.Lock()
 	defer s.mu.Unlock()
