@@ -108,8 +108,8 @@ The following verifications are deemed disruptive:
 					return err //nolint:wrapcheck // No need to wrap errors here.
 				}
 
-				exit.WithMessage(fmt.Sprintf(
-					"This command requires two kube contexts corresponding to the two clusters to verify.\n%s", cmd.UsageString()))
+				exit.WithMessage("This command requires two kube contexts corresponding to the two clusters to verify.\n" +
+					cmd.UsageString())
 				return nil
 			}, cli.NewReporter()))
 	},

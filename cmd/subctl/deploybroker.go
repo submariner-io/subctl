@@ -21,7 +21,6 @@ limitations under the License.
 package subctl
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -81,7 +80,7 @@ func addDeployBrokerFlags(flags *pflag.FlagSet) {
 		"list of domains to use for multicluster service discovery")
 
 	flags.StringSliceVar(&deployflags.BrokerSpec.Components, "components", defaultComponents,
-		fmt.Sprintf("The components to be installed - any of %s", strings.Join(deploy.ValidComponents, ",")))
+		"The components to be installed - any of "+strings.Join(deploy.ValidComponents, ","))
 
 	flags.StringVar(&deployflags.Repository, "repository", "", "image repository")
 	flags.StringVar(&deployflags.ImageVersion, "version", "", "image version")

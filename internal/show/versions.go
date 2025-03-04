@@ -21,7 +21,6 @@ package show
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -172,7 +171,7 @@ func getVersionFromPodBinary(pod *corev1.Pod, clusterInfo *cluster.Info, compone
 		return outStr
 	}
 
-	result, found := strings.CutPrefix(errStr, fmt.Sprintf("%s version: ", component))
+	result, found := strings.CutPrefix(errStr, component+" version: ")
 
 	if !found {
 		return ""
@@ -193,7 +192,7 @@ func getVersionFromPodLogs(pod *corev1.Pod, podClient v1.PodInterface, component
 		logScanner.Split(bufio.ScanLines)
 
 		for line := 1; logScanner.Scan() && line < maxLogLinesToScan; line++ {
-			result, found := strings.CutPrefix(logScanner.Text(), fmt.Sprintf("%s version: ", component))
+			result, found := strings.CutPrefix(logScanner.Text(), component+" version: ")
 
 			if found {
 				return result
