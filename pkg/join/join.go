@@ -239,7 +239,7 @@ func populateBrokerSecret(brokerInfo *broker.Info) *v1.Secret {
 
 func isValidCustomCoreDNSConfig(corednsCustomConfigMap string) error {
 	if corednsCustomConfigMap != "" && strings.Count(corednsCustomConfigMap, "/") > 1 {
-		return fmt.Errorf("coredns-custom-configmap should be in <namespace>/<name> format, namespace is optional")
+		return errors.New("coredns-custom-configmap should be in <namespace>/<name> format, namespace is optional")
 	}
 
 	return nil
