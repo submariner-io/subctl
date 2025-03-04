@@ -91,7 +91,7 @@ func init() {
 	gcpPrepareCmd.Flags().StringVar(&gcpConfig.VPCName, "vpc-name", "",
 		"Custom GCP VPC name if the default is not used while provisioning")
 	gcpPrepareCmd.Flags().StringVar(&gcpConfig.PublicSubnetName, "public-subnet-name", "",
-		"Custom public subnet name name if the default is not used while provisioning")
+		"Custom public subnet name if the default is not used while provisioning")
 
 	cloudPrepareCmd.AddCommand(gcpPrepareCmd)
 
