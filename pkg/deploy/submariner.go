@@ -146,7 +146,9 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 	return submarinerSpec
 }
 
-func getCustomCoreDNSParams(corednsCustomConfigMap string) (namespace, name string) {
+func getCustomCoreDNSParams(corednsCustomConfigMap string) (string, string) {
+	var namespace, name string
+
 	if corednsCustomConfigMap != "" {
 		name = corednsCustomConfigMap
 

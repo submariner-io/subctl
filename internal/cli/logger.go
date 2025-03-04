@@ -79,7 +79,7 @@ func (l *Logger) SetVerbosity(verbosity log.Level) {
 }
 
 // synchronized write to the inner writer.
-func (l *Logger) write(p []byte) (n int, err error) {
+func (l *Logger) write(p []byte) (int, error) {
 	l.writerMu.Lock()
 	defer l.writerMu.Unlock()
 

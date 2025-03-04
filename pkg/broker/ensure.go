@@ -138,36 +138,34 @@ func CreateOrUpdateClusterBrokerRole(ctx context.Context, kubeClient kubernetes.
 }
 
 //nolint:wrapcheck // No need to wrap here
-func CreateOrUpdateBrokerAdminRole(ctx context.Context, clientset kubernetes.Interface, inNamespace string) (created bool, err error) {
+func CreateOrUpdateBrokerAdminRole(ctx context.Context, clientset kubernetes.Interface, inNamespace string) (bool, error) {
 	return role.EnsureFromYAML(ctx, clientset, inNamespace, embeddedyamls.Config_broker_broker_admin_role_yaml)
 }
 
 //nolint:wrapcheck // No need to wrap here
 func CreateNewBrokerRoleBinding(ctx context.Context, kubeClient kubernetes.Interface, serviceAccount, roleName, inNamespace string) (
-	brokerRoleBinding *rbacv1.RoleBinding, err error,
+	*rbacv1.RoleBinding, error,
 ) {
 	return kubeClient.RbacV1().RoleBindings(inNamespace).Create(
 		ctx, NewBrokerRoleBinding(serviceAccount, roleName, inNamespace), metav1.CreateOptions{})
 }
 
 //nolint:wrapcheck // No need to wrap here
-func CreateOrUpdateBrokerAdminRoleBinding(ctx context.Context, kubeClient kubernetes.Interface, inNamespace string) (
-	created bool, err error,
-) {
+func CreateOrUpdateBrokerAdminRoleBinding(ctx context.Context, kubeClient kubernetes.Interface, inNamespace string) (bool, error) {
 	return rolebinding.EnsureFromYAML(ctx, kubeClient, inNamespace, embeddedyamls.Config_broker_broker_admin_role_binding_yaml)
 }
 
 //nolint:wrapcheck // No need to wrap here
-func CreateNewBrokerSA(ctx context.Context, kubeClient kubernetes.Interface, submarinerBrokerSA, inNamespace string) (err error) {
+func CreateNewBrokerSA(ctx context.Context, kubeClient kubernetes.Interface, submarinerBrokerSA, inNamespace string) error {
 	sa := NewBrokerSA(submarinerBrokerSA)
-	_, err = serviceaccount.Ensure(ctx, kubeClient, inNamespace, sa)
+	_, err := serviceaccount.Ensure(ctx, kubeClient, inNamespace, sa)
 
 	return err
 }
 
 //nolint:wrapcheck // No need to wrap here
-func CreateNewBrokerAdminSA(ctx context.Context, kubeClient kubernetes.Interface, inNamespace string) (err error) {
-	_, err = serviceaccount.EnsureFromYAML(ctx, kubeClient, inNamespace, embeddedyamls.Config_broker_broker_admin_service_account_yaml)
+func CreateNewBrokerAdminSA(ctx context.Context, kubeClient kubernetes.Interface, inNamespace string) error {
+	_, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, inNamespace, embeddedyamls.Config_broker_broker_admin_service_account_yaml)
 	if err != nil {
 		return err
 	}
