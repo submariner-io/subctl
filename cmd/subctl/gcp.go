@@ -21,7 +21,6 @@ limitations under the License.
 package subctl
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -80,7 +79,7 @@ func init() {
 			exit.OnErrorWithMessage(err, "failed to find home directory")
 		}
 
-		defaultCredentials := filepath.FromSlash(fmt.Sprintf("%s/.gcp/osServiceAccount.json", dirname))
+		defaultCredentials := filepath.FromSlash(dirname + "/.gcp/osServiceAccount.json")
 		command.Flags().StringVar(&gcpConfig.CredentialsFile, "credentials", defaultCredentials, "GCP credentials configuration file")
 	}
 
