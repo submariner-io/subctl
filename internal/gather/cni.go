@@ -138,7 +138,7 @@ func gatherOVNResources(info *Info, networkPlugin string) {
 	}
 
 	ovnKubePods := getOVNCmdsPod(info)
-	for i := 0; i < len(ovnKubePods); i++ {
+	for i := range ovnKubePods {
 		info.Status.Success("Gathering OVN data from OVN kube pod %q", ovnKubePods[i].Name)
 
 		for name, command := range ovnCmds {

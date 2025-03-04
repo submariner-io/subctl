@@ -296,7 +296,7 @@ func mustFindPod(ctx context.Context, clientSet kubernetes.Interface, labelSelec
 func getOVNNBVersion(ctx context.Context, clientSet kubernetes.Interface, config *rest.Config, pod *corev1.Pod) (*semver.Version, error) {
 	containerName := ""
 
-	for i := 0; i < len(pod.Spec.Containers); i++ {
+	for i := range pod.Spec.Containers {
 		container := pod.Spec.Containers[i]
 		// NBDB container name is nb-ovsdb [vanilla OVNK] or nbdb [OCP].
 		if strings.HasPrefix(container.Name, "nb") {
