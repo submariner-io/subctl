@@ -21,7 +21,6 @@ limitations under the License.
 package subctl
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -80,7 +79,7 @@ func init() {
 			exit.OnErrorWithMessage(err, "failed to find home directory")
 		}
 
-		defaultCredentials := filepath.FromSlash(fmt.Sprintf("%s/.gcp/osServiceAccount.json", dirname))
+		defaultCredentials := filepath.FromSlash(dirname + "/.gcp/osServiceAccount.json")
 		command.Flags().StringVar(&gcpConfig.CredentialsFile, "credentials", defaultCredentials, "GCP credentials configuration file")
 	}
 
@@ -91,7 +90,7 @@ func init() {
 	gcpPrepareCmd.Flags().StringVar(&gcpConfig.VPCName, "vpc-name", "",
 		"Custom GCP VPC name if the default is not used while provisioning")
 	gcpPrepareCmd.Flags().StringVar(&gcpConfig.PublicSubnetName, "public-subnet-name", "",
-		"Custom public subnet name name if the default is not used while provisioning")
+		"Custom public subnet name if the default is not used while provisioning")
 
 	cloudPrepareCmd.AddCommand(gcpPrepareCmd)
 

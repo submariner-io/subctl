@@ -76,7 +76,7 @@ func EnsureTokenSecret(ctx context.Context, client kubernetes.Interface, namespa
 	if apierrors.IsNotFound(err) {
 		newSecret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: fmt.Sprintf("%s-token-", saName),
+				GenerateName: saName + "-token-",
 				Namespace:    namespace,
 				Annotations: map[string]string{
 					corev1.ServiceAccountNameKey: saName,

@@ -285,7 +285,7 @@ func ensureDeleted(clients client.Producer, obj controller.Object, status report
 				podStatusStr = "does not exist"
 			} else {
 				if pods.Items[0].Status.Phase == corev1.PodRunning {
-					return status.Error(fmt.Errorf("the Submariner operator pod appears to be running but did not "+
+					return status.Error(errors.New("the Submariner operator pod appears to be running but did not "+
 						"complete deletion of the resource. Please check the pod logs"), "")
 				}
 

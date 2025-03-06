@@ -21,7 +21,6 @@ package diagnose
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/gvr"
@@ -219,7 +218,7 @@ func verifyInternalService(clusterInfo *cluster.Info, status reporter.Interface,
 	globalIngress *submarinerv1.GlobalIngressIP,
 ) {
 	svcs, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Services(ns).List(
-		context.TODO(), metav1.ListOptions{LabelSelector: fmt.Sprintf("submariner.io/exportedServiceRef=%s", name)})
+		context.TODO(), metav1.ListOptions{LabelSelector: "submariner.io/exportedServiceRef=" + name})
 	if err != nil {
 		status.Failure("Error listing internal Services \"%s/%s\": %v", ns, name, err)
 		return

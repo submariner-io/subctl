@@ -108,8 +108,8 @@ The following verifications are deemed disruptive:
 					return err //nolint:wrapcheck // No need to wrap errors here.
 				}
 
-				exit.WithMessage(fmt.Sprintf(
-					"This command requires two kube contexts corresponding to the two clusters to verify.\n%s", cmd.UsageString()))
+				exit.WithMessage("This command requires two kube contexts corresponding to the two clusters to verify.\n" +
+					cmd.UsageString())
 				return nil
 			}, cli.NewReporter()))
 	},
@@ -157,11 +157,11 @@ func isNonInteractive(err error) bool {
 
 func checkVerifyArguments(cmd *cobra.Command, args []string) error {
 	if connectionAttempts < 1 {
-		return fmt.Errorf("--connection-attempts must be >=1")
+		return errors.New("--connection-attempts must be >=1")
 	}
 
 	if connectionTimeout < 20 {
-		return fmt.Errorf("--connection-timeout must be >=20")
+		return errors.New("--connection-timeout must be >=20")
 	}
 
 	if _, _, err := getVerifySpecLabels(verifyOnly, true); err != nil {
@@ -269,7 +269,7 @@ func getVerifySpecLabels(csv string, includeDisruptive bool) ([]string, []string
 	}
 
 	if len(outputLabels) == 0 {
-		return nil, nil, fmt.Errorf("please specify at least one verification to be performed")
+		return nil, nil, errors.New("please specify at least one verification to be performed")
 	}
 
 	return outputLabels, outputVerifications, nil
@@ -357,7 +357,7 @@ func runVerify(fromClusterInfo, toClusterInfo, extraClusterInfo *cluster.Info, n
 	defer framework.RunCleanupActions()
 
 	if !ginkgo.RunSpecs(&testing.T{}, "Submariner E2E suite", suiteConfig, reporterConfig) {
-		return fmt.Errorf("E2E failed")
+		return errors.New("E2E failed")
 	}
 
 	return nil

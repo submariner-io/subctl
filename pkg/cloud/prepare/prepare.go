@@ -20,7 +20,6 @@ package prepare
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
@@ -36,7 +35,7 @@ func getNetworkDetails(clientProducer client.Producer) (*network.ClusterNetwork,
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to discover network details")
 	} else if networkDetails == nil {
-		return nil, fmt.Errorf("no network details discovered")
+		return nil, errors.New("no network details discovered")
 	}
 
 	return networkDetails, nil

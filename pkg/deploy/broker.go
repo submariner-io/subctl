@@ -20,6 +20,7 @@ package deploy
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -133,7 +134,7 @@ func isValidComponents(componentSet set.Set[string]) error {
 	validComponentSet := set.New(ValidComponents...)
 
 	if componentSet.Len() < 1 {
-		return fmt.Errorf("at least one component must be provided for deployment")
+		return errors.New("at least one component must be provided for deployment")
 	}
 
 	for _, component := range componentSet.UnsortedList() {
