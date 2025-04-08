@@ -1,6 +1,6 @@
 module github.com/submariner-io/subctl
 
-go 1.21
+go 1.23.0
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -24,7 +24,7 @@ require (
 	github.com/submariner-io/submariner-operator v0.17.5
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.33.0
-	golang.org/x/oauth2 v0.16.0
+	golang.org/x/oauth2 v0.27.0
 	google.golang.org/api v0.154.0
 	k8s.io/api v0.29.12
 	k8s.io/apiextensions-apiserver v0.29.12
@@ -37,8 +37,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.23.3 // indirect
-	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute v1.0.0 // indirect
@@ -127,7 +126,6 @@ require (
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
-	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231127180814-3a041ad873d4 // indirect
 	google.golang.org/grpc v1.59.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
