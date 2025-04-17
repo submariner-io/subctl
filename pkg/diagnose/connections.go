@@ -31,12 +31,12 @@ import (
 
 func Connections(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	return utilerrs.NewAggregate([]error{
-		checkGatewayConnections(clusterInfo, status),
-		checkRouteAgentConnections(clusterInfo, status),
+		CheckGatewayConnections(clusterInfo, status),
+		CheckRouteAgentConnections(clusterInfo, status),
 	})
 }
 
-func checkGatewayConnections(clusterInfo *cluster.Info, status reporter.Interface) error {
+func CheckGatewayConnections(clusterInfo *cluster.Info, status reporter.Interface) error {
 	status.Start("Checking gateway connections")
 	defer status.End()
 
@@ -87,7 +87,7 @@ func checkGatewayConnections(clusterInfo *cluster.Info, status reporter.Interfac
 	return nil
 }
 
-func checkRouteAgentConnections(clusterInfo *cluster.Info, status reporter.Interface) error {
+func CheckRouteAgentConnections(clusterInfo *cluster.Info, status reporter.Interface) error {
 	status.Start("Checking route agent connections")
 	defer status.End()
 
