@@ -20,6 +20,7 @@ package show
 
 import (
 	"errors"
+	"net"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/show/table"
@@ -62,7 +63,7 @@ func Connections(clusterInfo *cluster.Info, _ string, status reporter.Interface)
 				ip,
 				nat,
 				connection.Endpoint.Backend,
-				connection.Endpoint.Subnets,
+				toStringSlice(connection.Endpoint.ParseSubnets(k8snet.IPFamilyOfString(ip))),
 				connection.Status,
 				getAverageRTTForConnection(connection),
 			)
@@ -98,4 +99,13 @@ func remoteIPAndNATForConnection(connection *submv1.Connection) (string, bool) {
 	}
 
 	return connection.Endpoint.GetPrivateIP(k8snet.IPv4), false
+}
+
+func toStringSlice(nets []net.IPNet) []string {
+	strs := make([]string, 0, len(nets))
+	for _, n := range nets {
+		strs = append(strs, n.String())
+	}
+
+	return strs
 }

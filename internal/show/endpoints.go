@@ -49,20 +49,24 @@ func Endpoints(clusterInfo *cluster.Info, _ string, status reporter.Interface) e
 
 	for i := range gateways {
 		gateway := &gateways[i]
-		printer.Add(
-			gateway.Status.LocalEndpoint.ClusterID,
-			gateway.Status.LocalEndpoint.GetPrivateIP(k8snet.IPv4),
-			gateway.Status.LocalEndpoint.GetPublicIP(k8snet.IPv4),
-			gateway.Status.LocalEndpoint.Backend,
-			"local",
-		)
+		for _, family := range gateway.Status.LocalEndpoint.GetIPFamilies() {
+			printer.Add(
+				gateway.Status.LocalEndpoint.ClusterID,
+				gateway.Status.LocalEndpoint.GetPrivateIP(family),
+				gateway.Status.LocalEndpoint.GetPublicIP(family),
+				gateway.Status.LocalEndpoint.Backend,
+				"local",
+			)
+		}
 
 		for i := range gateway.Status.Connections {
 			connection := &gateway.Status.Connections[i]
+			family := k8snet.IPFamilyOfString(connection.UsingIP)
+
 			printer.Add(
 				connection.Endpoint.ClusterID,
-				connection.Endpoint.GetPrivateIP(k8snet.IPv4),
-				connection.Endpoint.GetPublicIP(k8snet.IPv4),
+				connection.Endpoint.GetPrivateIP(family),
+				connection.Endpoint.GetPublicIP(family),
 				connection.Endpoint.Backend,
 				"remote",
 			)
