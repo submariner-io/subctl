@@ -14,13 +14,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        using: ['', 'globalnet', 'lighthouse']
+        using: ['', 'globalnet', 'lighthouse', 'dual-stack']
     steps:
       - name: Check out the repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Build non deploy subctl
-        run: make cmd/bin/non_deploy_subctl
+        run: make using="${{ matrix.using }}" cmd/bin/non_deploy_subctl
 
       - name: Deploy the environment and run the tests
         uses: submariner-io/shipyard/gh-actions/e2e@devel

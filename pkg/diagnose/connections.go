@@ -26,16 +26,17 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	utilerrs "k8s.io/apimachinery/pkg/util/errors"
+	k8snet "k8s.io/utils/net"
 )
 
 func Connections(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	return utilerrs.NewAggregate([]error{
-		checkGatewayConnections(clusterInfo, status),
-		checkRouteAgentConnections(clusterInfo, status),
+		CheckGatewayConnections(clusterInfo, status),
+		CheckRouteAgentConnections(clusterInfo, status),
 	})
 }
 
-func checkGatewayConnections(clusterInfo *cluster.Info, status reporter.Interface) error {
+func CheckGatewayConnections(clusterInfo *cluster.Info, status reporter.Interface) error {
 	status.Start("Checking gateway connections")
 	defer status.End()
 
@@ -66,10 +67,11 @@ func checkGatewayConnections(clusterInfo *cluster.Info, status reporter.Interfac
 		for j := range gateway.Status.Connections {
 			connection := &gateway.Status.Connections[j]
 			if connection.Status == submv1.Connecting {
-				tracker.Failure("Connection to cluster %q is in progress", connection.Endpoint.ClusterID)
+				tracker.Failure("IPv%s connection to cluster %q is in progress", connection.GetFamily(),
+					connection.Endpoint.ClusterID)
 			} else if connection.Status == submv1.ConnectionError {
-				tracker.Failure("Connection to cluster %q is not established. Connection details:\n%s",
-					connection.Endpoint.ClusterID, resource.ToJSON(connection))
+				tracker.Failure("IPv%s connection to cluster %q is not established. Connection details:\n%s",
+					connection.GetFamily(), connection.Endpoint.ClusterID, resource.ToJSON(connection))
 			}
 		}
 	}
@@ -85,7 +87,7 @@ func checkGatewayConnections(clusterInfo *cluster.Info, status reporter.Interfac
 	return nil
 }
 
-func checkRouteAgentConnections(clusterInfo *cluster.Info, status reporter.Interface) error {
+func CheckRouteAgentConnections(clusterInfo *cluster.Info, status reporter.Interface) error {
 	status.Start("Checking route agent connections")
 	defer status.End()
 
@@ -110,10 +112,11 @@ func checkRouteAgentConnections(clusterInfo *cluster.Info, status reporter.Inter
 		for j := range routeAgent.Status.RemoteEndpoints {
 			remoteEndpoint := &routeAgent.Status.RemoteEndpoints[j]
 			if remoteEndpoint.Status == submv1.Connecting {
-				tracker.Failure("Connection to cluster %q is in progress", remoteEndpoint.Spec.ClusterID)
+				tracker.Failure("%s connection to cluster %q is in progress", getIPFamilyString(remoteEndpoint),
+					remoteEndpoint.Spec.ClusterID)
 			} else if remoteEndpoint.Status == submv1.ConnectionError {
-				tracker.Failure("Connection to cluster %q is not established. Connection details:\n%s",
-					remoteEndpoint.Spec.ClusterID, resource.ToJSON(remoteEndpoint))
+				tracker.Failure("%s connection to cluster %q is not established. Connection details:\n%s",
+					getIPFamilyString(remoteEndpoint), remoteEndpoint.Spec.ClusterID, resource.ToJSON(remoteEndpoint))
 			}
 		}
 	}
@@ -123,4 +126,12 @@ func checkRouteAgentConnections(clusterInfo *cluster.Info, status reporter.Inter
 	}
 
 	return nil
+}
+
+func getIPFamilyString(ep *submv1.RemoteEndpoint) string {
+	if len(ep.Spec.HealthCheckIPs) != 1 {
+		return "IPv?"
+	}
+
+	return "IPv" + string(k8snet.IPFamilyOfString(ep.Spec.HealthCheckIPs[0]))
 }
