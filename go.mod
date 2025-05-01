@@ -16,12 +16,12 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
-	github.com/submariner-io/admiral v0.21.0-m1
-	github.com/submariner-io/cloud-prepare v0.21.0-m1
-	github.com/submariner-io/lighthouse v0.21.0-m1
-	github.com/submariner-io/shipyard v0.21.0-m1
-	github.com/submariner-io/submariner v0.21.0-m1
-	github.com/submariner-io/submariner-operator v0.21.0-m1.0.20250424195734-5311eb11a366
+	github.com/submariner-io/admiral v0.21.0-m2
+	github.com/submariner-io/cloud-prepare v0.21.0-m2
+	github.com/submariner-io/lighthouse v0.21.0-m2
+	github.com/submariner-io/shipyard v0.21.0-m2
+	github.com/submariner-io/submariner v0.21.0-m2
+	github.com/submariner-io/submariner-operator v0.21.0-m2
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.39.0
 	golang.org/x/oauth2 v0.29.0
@@ -136,5 +136,5 @@ require (
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20241212222426-2c72e554b1e7 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.6.0 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.7.0 // indirect
 )
