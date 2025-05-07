@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.6.0
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.2
 	github.com/coreos/go-semver v0.3.1
 	github.com/go-logr/logr v1.4.2
 	github.com/google/go-github/v54 v54.0.0
@@ -16,20 +16,20 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
-	github.com/submariner-io/admiral v0.18.4
-	github.com/submariner-io/cloud-prepare v0.18.4
-	github.com/submariner-io/lighthouse v0.18.4
-	github.com/submariner-io/shipyard v0.18.4
-	github.com/submariner-io/submariner v0.18.4
-	github.com/submariner-io/submariner-operator v0.18.4
+	github.com/submariner-io/admiral v0.18.5
+	github.com/submariner-io/cloud-prepare v0.18.5
+	github.com/submariner-io/lighthouse v0.18.5
+	github.com/submariner-io/shipyard v0.18.5
+	github.com/submariner-io/submariner v0.18.5
+	github.com/submariner-io/submariner-operator v0.18.5
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.38.0
-	golang.org/x/oauth2 v0.20.0
+	golang.org/x/oauth2 v0.27.0
 	google.golang.org/api v0.178.0
-	k8s.io/api v0.30.8
-	k8s.io/apiextensions-apiserver v0.30.8
-	k8s.io/apimachinery v0.30.8
-	k8s.io/client-go v0.30.8
+	k8s.io/api v0.30.12
+	k8s.io/apiextensions-apiserver v0.30.12
+	k8s.io/apimachinery v0.30.12
+	k8s.io/client-go v0.30.12
 	k8s.io/utils v0.0.0-20240502163921-fe8a2dddb1d0
 	sigs.k8s.io/controller-runtime v0.18.3
 	sigs.k8s.io/mcs-api v0.1.0
@@ -40,11 +40,11 @@ require (
 	cloud.google.com/go/auth v0.3.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.2 // indirect
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.8.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute v1.0.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork v1.1.0 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.17.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6 v6.4.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6 v6.2.0 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.4.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.26.1 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.27.11 // indirect
