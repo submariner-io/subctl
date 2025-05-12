@@ -88,8 +88,7 @@ func CheckGatewayConnections(clusterInfo *cluster.Info, status reporter.Interfac
 }
 
 func CheckRouteAgentConnections(clusterInfo *cluster.Info, status reporter.Interface) error {
-	status.Start("Checking route agent connections")
-	defer status.End()
+	status.Start("Retrieving route agent connections")
 
 	routeAgents, err := clusterInfo.GetRouteAgents()
 	if err != nil {
@@ -100,10 +99,14 @@ func CheckRouteAgentConnections(clusterInfo *cluster.Info, status reporter.Inter
 		return status.Error(errors.New("no route agents were detected"), "")
 	}
 
+	status.End()
+
 	tracker := reporter.NewTracker(status)
 
 	for i := range routeAgents {
 		routeAgent := &routeAgents[i]
+
+		tracker.Start("Checking remote connections for route agent %q", routeAgent.Name)
 
 		if len(routeAgent.Status.RemoteEndpoints) == 0 {
 			tracker.Success("There are no remote endpoint connections on route agent %q", routeAgent.Name)
@@ -119,6 +122,8 @@ func CheckRouteAgentConnections(clusterInfo *cluster.Info, status reporter.Inter
 					getIPFamilyString(remoteEndpoint), remoteEndpoint.Spec.ClusterID, resource.ToJSON(remoteEndpoint))
 			}
 		}
+
+		tracker.End()
 	}
 
 	if tracker.HasFailures() {
