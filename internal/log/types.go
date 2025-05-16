@@ -46,7 +46,7 @@ type Logger interface {
 	//
 	// It is expected that the returned InfoLogger will be extremely cheap
 	// to interact with for a Level greater than the enabled level.
-	V(Level) InfoLogger
+	V(level Level) InfoLogger
 }
 
 // InfoLogger defines the info logging interface kind uses.
