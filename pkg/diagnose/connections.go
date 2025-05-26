@@ -25,15 +25,14 @@ import (
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
-	utilerrs "k8s.io/apimachinery/pkg/util/errors"
 	k8snet "k8s.io/utils/net"
 )
 
 func Connections(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-	return utilerrs.NewAggregate([]error{
+	return errors.Join(
 		CheckGatewayConnections(clusterInfo, status),
 		CheckRouteAgentConnections(clusterInfo, status),
-	})
+	)
 }
 
 func CheckGatewayConnections(clusterInfo *cluster.Info, status reporter.Interface) error {

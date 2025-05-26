@@ -19,12 +19,12 @@ limitations under the License.
 package diagnose
 
 import (
+	goerrors "errors"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	apierrors "k8s.io/apimachinery/pkg/util/errors"
 )
 
 const (
@@ -49,7 +49,7 @@ func checkMetricsConfig(clusterInfo *cluster.Info, imageOverrides []string, stat
 		}
 	}
 
-	return apierrors.NewAggregate(metricsErrors)
+	return goerrors.Join(metricsErrors...)
 }
 
 func checkComponentMetrics(clusterInfo *cluster.Info, imageOverrides []string, component, command string, status reporter.Interface) error {
