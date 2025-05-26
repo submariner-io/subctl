@@ -19,13 +19,13 @@ limitations under the License.
 package show
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	"k8s.io/apimachinery/pkg/util/errors"
 )
 
 var showAllSubmarinerFunctions = []restconfig.PerContextFn{
@@ -50,7 +50,7 @@ func All(clusterInfo *cluster.Info, namespace string, status reporter.Interface)
 
 		status.Warning(constants.ConnectivityNotInstalled)
 
-		return errors.NewAggregate(allErrors)
+		return errors.Join(allErrors...)
 	}
 
 	for _, function := range showAllSubmarinerFunctions {
@@ -59,5 +59,5 @@ func All(clusterInfo *cluster.Info, namespace string, status reporter.Interface)
 		fmt.Println()
 	}
 
-	return errors.NewAggregate(allErrors)
+	return errors.Join(allErrors...)
 }

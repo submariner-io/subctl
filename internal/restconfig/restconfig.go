@@ -19,6 +19,7 @@ limitations under the License.
 package restconfig
 
 import (
+	goerrors "errors"
 	"fmt"
 	"strings"
 
@@ -33,7 +34,6 @@ import (
 	"github.com/submariner-io/subctl/pkg/version"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	subv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
-	k8serrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -437,7 +437,7 @@ func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Int
 		return status.Error(errors.New("no Kubernetes configuration or context was found"), "")
 	}
 
-	return k8serrors.NewAggregate(contextErrors)
+	return goerrors.Join(contextErrors...)
 }
 
 func (rcp *Producer) overrideContextAndRun(clusterName, contextName string, function PerContextFn, status reporter.Interface) error {
@@ -541,7 +541,7 @@ func IfConnectivityInstalled(functions ...PerContextFn) PerContextFn {
 			aggregateErrors = append(aggregateErrors, function(clusterInfo, namespace, status))
 		}
 
-		return k8serrors.NewAggregate(aggregateErrors)
+		return goerrors.Join(aggregateErrors...)
 	}
 }
 
@@ -559,7 +559,7 @@ func IfServiceDiscoveryInstalled(functions ...PerContextFn) PerContextFn {
 			aggregateErrors = append(aggregateErrors, function(clusterInfo, namespace, status))
 		}
 
-		return k8serrors.NewAggregate(aggregateErrors)
+		return goerrors.Join(aggregateErrors...)
 	}
 }
 
