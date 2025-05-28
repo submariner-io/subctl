@@ -61,7 +61,7 @@ func KubeProxyMode(clusterInfo *cluster.Info, namespace string, imageOverrides [
 		return status.Error(err, "Error spawning the network pod")
 	}
 
-	if !(strings.Contains(podOutput, missingInterface) || strings.Contains(podOutput, notEnabled)) {
+	if !strings.Contains(podOutput, missingInterface) && !strings.Contains(podOutput, notEnabled) {
 		status.Failure("The cluster is deployed with kube-proxy ipvs mode which Submariner does not support")
 		return nil
 	}

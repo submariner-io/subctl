@@ -36,11 +36,11 @@ import (
 
 type Info struct {
 	BrokerURL        string         `json:"brokerURL"`
-	ClientToken      *corev1.Secret `omitempty,json:"clientToken"`
-	IPSecPSK         *corev1.Secret `omitempty,json:"ipsecPSK"`
-	ServiceDiscovery bool           `omitempty,json:"serviceDiscovery"`
+	ClientToken      *corev1.Secret `json:"clientToken,omitempty"`
+	IPSecPSK         *corev1.Secret `json:"ipsecPSK,omitempty"`
+	ServiceDiscovery bool           `json:"serviceDiscovery,omitempty"`
 	Components       []string       `json:",omitempty"`
-	CustomDomains    *[]string      `omitempty,json:"customDomains"`
+	CustomDomains    *[]string      `json:"customDomains,omitempty"`
 }
 
 func (d *Info) writeToFile(filename string) error {
