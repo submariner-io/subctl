@@ -19,6 +19,7 @@ limitations under the License.
 package subctl
 
 import (
+	goerrors "errors"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -30,7 +31,6 @@ import (
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/diagnose"
-	k8serrors "k8s.io/apimachinery/pkg/util/errors"
 )
 
 var (
@@ -259,7 +259,7 @@ func diagnoseAll(status reporter.Interface) error {
 				fmt.Println()
 			}
 
-			return k8serrors.NewAggregate(diagnoseErrors)
+			return goerrors.Join(diagnoseErrors...)
 		}, status)
 
 	fmt.Printf("Skipping inter-cluster firewall check as it requires two kubeconfigs." +
