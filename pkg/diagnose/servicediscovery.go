@@ -80,7 +80,7 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 		_, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Services(se.Namespace).Get(ctx, se.Name, metav1.GetOptions{})
 		if apierrors.IsNotFound(err) {
 			status.Warning("Exported Service %s/%s not found", se.Namespace, se.Name)
-			verifyStatusCondition(se, mcsv1a1.ServiceExportValid, corev1.ConditionFalse, status)
+			verifyStatusCondition(se, mcsv1a1.ServiceExportValid, metav1.ConditionFalse, status)
 
 			continue
 		}
@@ -90,17 +90,17 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 			continue
 		}
 
-		verifyStatusCondition(se, mcsv1a1.ServiceExportValid, corev1.ConditionTrue, status)
-		verifyStatusCondition(se, lhconstants.ServiceExportReady, corev1.ConditionTrue, status)
-		verifyStatusCondition(se, mcsv1a1.ServiceExportConflict, corev1.ConditionFalse, status)
+		verifyStatusCondition(se, mcsv1a1.ServiceExportValid, metav1.ConditionTrue, status)
+		verifyStatusCondition(se, lhconstants.ServiceExportReady, metav1.ConditionTrue, status)
+		verifyStatusCondition(se, mcsv1a1.ServiceExportConflict, metav1.ConditionFalse, status)
 
 		ep := clusterInfo.ClientProducer.ForKubernetes().DiscoveryV1().EndpointSlices(se.Namespace)
 
 		epsList, err := ep.List(ctx, metav1.ListOptions{
 			LabelSelector: labels.SelectorFromSet(map[string]string{
-				discovery.LabelManagedBy:          lhconstants.LabelValueManagedBy,
-				mcsv1a1.LabelServiceName:          se.Name,
-				lhconstants.MCSLabelSourceCluster: clusterInfo.Submariner.Spec.ClusterID,
+				discovery.LabelManagedBy:   lhconstants.LabelValueManagedBy,
+				mcsv1a1.LabelServiceName:   se.Name,
+				mcsv1a1.LabelSourceCluster: clusterInfo.Submariner.Spec.ClusterID,
 			}).String(),
 		})
 		if err != nil {
@@ -140,7 +140,7 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 	}
 }
 
-func verifyStatusCondition(se *mcsv1a1.ServiceExport, condType mcsv1a1.ServiceExportConditionType, condStatus corev1.ConditionStatus,
+func verifyStatusCondition(se *mcsv1a1.ServiceExport, condType string, condStatus metav1.ConditionStatus,
 	status reporter.Interface,
 ) {
 	for i := range se.Status.Conditions {
@@ -156,7 +156,7 @@ func verifyStatusCondition(se *mcsv1a1.ServiceExport, condType mcsv1a1.ServiceEx
 		}
 	}
 
-	if condStatus == corev1.ConditionTrue {
+	if condStatus == metav1.ConditionTrue {
 		status.Failure("The ServiceExport for %s/%s is missing the %q status condition type", se.Namespace, se.Name, condType)
 	}
 }
