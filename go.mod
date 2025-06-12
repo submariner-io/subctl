@@ -18,7 +18,7 @@ require (
 	github.com/spf13/pflag v1.0.6
 	github.com/submariner-io/admiral v0.21.0-m2
 	github.com/submariner-io/cloud-prepare v0.21.0-m2
-	github.com/submariner-io/lighthouse v0.21.0-m2.0.20250519102227-c28e43bf734f
+	github.com/submariner-io/lighthouse v0.21.0-m2.0.20250611141934-2954931a273b
 	github.com/submariner-io/shipyard v0.21.0-m2
 	github.com/submariner-io/submariner v0.21.0-m2
 	github.com/submariner-io/submariner-operator v0.21.0-m2.0.20250611175819-aead1a6054c5
@@ -32,7 +32,7 @@ require (
 	k8s.io/client-go v0.32.3
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
 	sigs.k8s.io/controller-runtime v0.20.4
-	sigs.k8s.io/mcs-api v0.1.0
+	sigs.k8s.io/mcs-api v0.1.1-0.20250224121229-6c631f4730d0
 	sigs.k8s.io/yaml v1.4.0
 )
 
