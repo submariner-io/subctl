@@ -40,7 +40,7 @@ import (
 var _ = BeforeSuite(func() {
 	Expect(v1alpha1.AddToScheme(scheme.Scheme)).To(Succeed())
 	Expect(submarinerv1.AddToScheme(scheme.Scheme)).To(Succeed())
-	Expect(mcsv1a1.AddToScheme(scheme.Scheme)).To(Succeed())
+	Expect(mcsv1a1.Install(scheme.Scheme)).To(Succeed())
 })
 
 func TestDiagnose(t *testing.T) {
