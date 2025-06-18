@@ -60,6 +60,7 @@ var (
 	verifyOnly                      string
 	disruptiveTests                 bool
 	packetSize                      uint
+	skipConnectorSrcIPCheck         bool
 )
 
 var verifyRestConfigProducer = restconfig.NewProducer().
@@ -134,6 +135,7 @@ func addVerifyFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&verifyOnly, "only", strings.Join(getAllVerifyKeys(), ","), "comma separated verifications to be performed")
 	cmd.Flags().BoolVar(&disruptiveTests, "disruptive-tests", false, "enable disruptive verifications like gateway-failover")
 	cmd.Flags().UintVar(&packetSize, "packet-size", 3000, "set packet size used in TCP connectivity tests")
+	cmd.Flags().BoolVar(&skipConnectorSrcIPCheck, "skip-src-ip-check", false, "skip source IP verification for connector pod traffic")
 }
 
 func isNonInteractive(err error) bool {
@@ -318,6 +320,7 @@ func runVerify(fromClusterInfo, toClusterInfo, extraClusterInfo *cluster.Info, n
 	framework.TestContext.ConnectionAttempts = connectionAttempts
 	framework.TestContext.SubmarinerNamespace = namespace
 	framework.TestContext.PacketSize = packetSize
+	framework.TestContext.SkipConnectorSrcIPCheck = skipConnectorSrcIPCheck
 
 	// This field isn't used for verify so set it to some non-empty string to bypass shipyard's validation checking.
 	framework.TestContext.KubeConfig = "not-used"
