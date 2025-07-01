@@ -29,6 +29,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/admiral/pkg/slices"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
@@ -101,8 +102,8 @@ func init() {
 
 func addJoinFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&joinFlags.ClusterID, "clusterid", "", "cluster ID used to identify the tunnels")
-	cmd.Flags().StringVar(&joinFlags.ServiceCIDR, "servicecidr", "", "service CIDR")
-	cmd.Flags().StringVar(&joinFlags.ClusterCIDR, "clustercidr", "", "cluster CIDR")
+	cmd.Flags().StringVar(&joinFlags.ServiceCIDR, "servicecidr", "", "comma-separated service CIDRs")
+	cmd.Flags().StringVar(&joinFlags.ClusterCIDR, "clustercidr", "", "comma-separated cluster CIDRs")
 	cmd.Flags().StringVar(&joinFlags.Repository, "repository", "", "image repository")
 	cmd.Flags().StringVar(&joinFlags.ImageVersion, "version", "", "image version")
 	cmd.Flags().IntVar(&joinFlags.NATTPort, "nattport", 4500, "IPsec NATT port")
@@ -161,8 +162,8 @@ func joinInContext(brokerInfo *broker.Info, clusterInfo *cluster.Info, status re
 
 	ctx := context.TODO()
 	networkDetails := getNetworkDetails(ctx, clusterInfo.ClientProducer, status)
-	determinePodCIDR(networkDetails, status)
-	determineServiceCIDR(networkDetails, status)
+	joinFlags.ClusterCIDR = determineCIDR("Pod", joinFlags.ClusterCIDR, networkDetails.PodCIDRs, status)
+	joinFlags.ServiceCIDR = determineCIDR("Service", joinFlags.ServiceCIDR, networkDetails.ServiceCIDRs, status)
 
 	if brokerInfo.IsConnectivityEnabled() && labelGateway {
 		possiblyLabelGateway(clusterInfo.ClientProducer.ForKubernetes(), status)
@@ -276,7 +277,7 @@ func askForClusterID() (string, error) {
 func askForCIDR(name string) (string, error) {
 	qs := []*survey.Question{{
 		Name:     "cidr",
-		Prompt:   &survey.Input{Message: fmt.Sprintf("What's the %s CIDR for your cluster?", name)},
+		Prompt:   &survey.Input{Message: fmt.Sprintf("What's the %s CIDR for your cluster (comma-separated for multiple)?", name)},
 		Validate: survey.Required,
 	}}
 
@@ -331,33 +332,25 @@ func getNetworkDetails(ctx context.Context, clientProducer client.Producer, stat
 
 	if networkDetails != nil {
 		networkDetails.Show()
+	} else {
+		networkDetails = &network.ClusterNetwork{}
 	}
 
 	return networkDetails
 }
 
-func determinePodCIDR(nd *network.ClusterNetwork, status reporter.Interface) {
-	if joinFlags.ClusterCIDR != "" {
-		if nd != nil && len(nd.PodCIDRs) > 0 && nd.PodCIDRs[0] != joinFlags.ClusterCIDR {
-			status.Warning("The provided pod CIDR for the cluster (%s) does not match the discovered CIDR (%s)",
-				joinFlags.ClusterCIDR, nd.PodCIDRs[0])
+func determineCIDR(name, reqCIDR string, detectedCIDRs []string, status reporter.Interface) string {
+	if reqCIDR != "" {
+		reqCIDRs := strings.Split(reqCIDR, ",")
+		if len(detectedCIDRs) > 0 && !slices.Equivalent(detectedCIDRs, reqCIDRs, slices.Key[string]) {
+			status.Warning("The provided %s CIDR for the cluster (%s) does not match the discovered CIDR (%s)",
+				name, reqCIDR, strings.Join(detectedCIDRs, ","))
 		}
-	} else if nd == nil || len(nd.PodCIDRs) == 0 {
+	} else if len(detectedCIDRs) == 0 {
 		var err error
-		joinFlags.ClusterCIDR, err = askForCIDR("Pod")
+		reqCIDR, err = askForCIDR(name)
 		exit.OnError(status.Error(err, "Error collecting CIDR"))
 	}
-}
 
-func determineServiceCIDR(nd *network.ClusterNetwork, status reporter.Interface) {
-	if joinFlags.ServiceCIDR != "" {
-		if nd != nil && len(nd.ServiceCIDRs) > 0 && nd.ServiceCIDRs[0] != joinFlags.ServiceCIDR {
-			status.Warning("The provided service CIDR for the cluster (%s) does not match the discovered CIDR (%s)",
-				joinFlags.ServiceCIDR, nd.ServiceCIDRs[0])
-		}
-	} else if nd == nil || len(nd.ServiceCIDRs) == 0 {
-		var err error
-		joinFlags.ServiceCIDR, err = askForCIDR("Service")
-		exit.OnError(status.Error(err, "Error collecting CIDR"))
-	}
+	return reqCIDR
 }
