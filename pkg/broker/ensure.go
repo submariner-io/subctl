@@ -29,8 +29,9 @@ import (
 	"github.com/submariner-io/subctl/pkg/role"
 	"github.com/submariner-io/subctl/pkg/rolebinding"
 	"github.com/submariner-io/subctl/pkg/serviceaccount"
+	brokeradmin "github.com/submariner-io/submariner-operator/config/broker/broker-admin"
+	brokerclient "github.com/submariner-io/submariner-operator/config/broker/broker-client"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	"github.com/submariner-io/submariner-operator/pkg/lighthouse"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	v1 "k8s.io/api/core/v1"
@@ -134,12 +135,12 @@ func createBrokerAdministratorRoleAndSA(ctx context.Context, kubeClient kubernet
 
 //nolint:wrapcheck // No need to wrap here
 func CreateOrUpdateClusterBrokerRole(ctx context.Context, kubeClient kubernetes.Interface, inNamespace string) (bool, error) {
-	return role.EnsureFromYAML(ctx, kubeClient, inNamespace, embeddedyamls.Config_broker_broker_client_role_yaml)
+	return role.EnsureFromYAML(ctx, kubeClient, inNamespace, brokerclient.Role)
 }
 
 //nolint:wrapcheck // No need to wrap here
 func CreateOrUpdateBrokerAdminRole(ctx context.Context, clientset kubernetes.Interface, inNamespace string) (bool, error) {
-	return role.EnsureFromYAML(ctx, clientset, inNamespace, embeddedyamls.Config_broker_broker_admin_role_yaml)
+	return role.EnsureFromYAML(ctx, clientset, inNamespace, brokeradmin.Role)
 }
 
 //nolint:wrapcheck // No need to wrap here
@@ -152,7 +153,7 @@ func CreateNewBrokerRoleBinding(ctx context.Context, kubeClient kubernetes.Inter
 
 //nolint:wrapcheck // No need to wrap here
 func CreateOrUpdateBrokerAdminRoleBinding(ctx context.Context, kubeClient kubernetes.Interface, inNamespace string) (bool, error) {
-	return rolebinding.EnsureFromYAML(ctx, kubeClient, inNamespace, embeddedyamls.Config_broker_broker_admin_role_binding_yaml)
+	return rolebinding.EnsureFromYAML(ctx, kubeClient, inNamespace, brokeradmin.RoleBinding)
 }
 
 //nolint:wrapcheck // No need to wrap here
@@ -165,7 +166,7 @@ func CreateNewBrokerSA(ctx context.Context, kubeClient kubernetes.Interface, sub
 
 //nolint:wrapcheck // No need to wrap here
 func CreateNewBrokerAdminSA(ctx context.Context, kubeClient kubernetes.Interface, inNamespace string) error {
-	_, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, inNamespace, embeddedyamls.Config_broker_broker_admin_service_account_yaml)
+	_, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, inNamespace, brokeradmin.ServiceAccount)
 	if err != nil {
 		return err
 	}

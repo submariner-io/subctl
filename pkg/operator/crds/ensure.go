@@ -22,8 +22,8 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"github.com/submariner-io/submariner-operator/deploy/crds"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 )
 
 // Ensure functions updates or installs the operator CRDs in the cluster.
@@ -35,15 +35,15 @@ func Ensure(ctx context.Context, crdUpdater crd.Updater) (bool, error) {
 
 	for _, ref := range []struct {
 		name string
-		crd  string
+		crd  []byte
 	}{
-		{embeddedyamls.Deploy_crds_submariner_io_submariners_yaml, "Submariner"},
-		{embeddedyamls.Deploy_crds_submariner_io_servicediscoveries_yaml, "ServiceDiscovery"},
-		{embeddedyamls.Deploy_crds_submariner_io_brokers_yaml, "Broker"},
+		{"Submariner", crds.SubmarinerCRD},
+		{"ServiceDiscovery", crds.ServiceDiscoveryCRD},
+		{"Broker", crds.BrokerCRD},
 	} {
-		iterCreated, err := crdUpdater.CreateOrUpdateFromEmbedded(ctx, ref.name)
+		iterCreated, err := crdUpdater.CreateOrUpdateFromBytes(ctx, ref.crd)
 		if err != nil {
-			return false, errors.Wrapf(err, "error provisioning the %s CRD", ref.crd)
+			return false, errors.Wrapf(err, "error provisioning the %s CRD", ref.name)
 		}
 
 		created = created || iterCreated

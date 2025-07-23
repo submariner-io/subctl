@@ -29,8 +29,8 @@ import (
 	"github.com/submariner-io/subctl/pkg/operator/ocp"
 	"github.com/submariner-io/subctl/pkg/operator/serviceaccount"
 	"github.com/submariner-io/subctl/pkg/submariner"
+	submarineroperator "github.com/submariner-io/submariner-operator/config/rbac/submariner-operator"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	"golang.org/x/net/context"
 	"golang.org/x/net/http/httpproxy"
 )
@@ -63,9 +63,9 @@ func Ensure(ctx context.Context, status reporter.Interface, clientProducer clien
 
 	componentsRbac := []ocp.RbacInfo{
 		{
-			ComponentName:          names.OperatorComponent,
-			ClusterRoleFile:        embeddedyamls.Config_rbac_submariner_operator_ocp_cluster_role_yaml,
-			ClusterRoleBindingFile: embeddedyamls.Config_rbac_submariner_operator_ocp_cluster_role_binding_yaml,
+			ComponentName:      names.OperatorComponent,
+			ClusterRole:        submarineroperator.OCPClusterRole,
+			ClusterRoleBinding: submarineroperator.OCPClusterRoleBinding,
 		},
 	}
 

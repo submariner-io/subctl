@@ -25,7 +25,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/role"
 	"github.com/submariner-io/subctl/pkg/rolebinding"
 	"github.com/submariner-io/subctl/pkg/serviceaccount"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
+	submarineroperator "github.com/submariner-io/submariner-operator/config/rbac/submariner-operator"
 	"golang.org/x/net/context"
 	"k8s.io/client-go/kubernetes"
 )
@@ -61,30 +61,26 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace stri
 }
 
 func ensureServiceAccounts(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdOperatorSA, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, namespace,
-		embeddedyamls.Config_rbac_submariner_operator_service_account_yaml)
+	createdOperatorSA, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, namespace, submarineroperator.ServiceAccount)
 	return createdOperatorSA, errors.Wrap(err, "error provisioning operator ServiceAccount resource")
 }
 
 func ensureClusterRoles(ctx context.Context, kubeClient kubernetes.Interface) (bool, error) {
-	createdOperatorCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, embeddedyamls.Config_rbac_submariner_operator_cluster_role_yaml)
+	createdOperatorCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, submarineroperator.ClusterRole)
 	return createdOperatorCR, errors.Wrap(err, "error provisioning operator ClusterRole resource")
 }
 
 func ensureClusterRoleBindings(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdOperatorCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
-		embeddedyamls.Config_rbac_submariner_operator_cluster_role_binding_yaml)
+	createdOperatorCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace, submarineroperator.ClusterRoleBinding)
 	return createdOperatorCRB, errors.Wrap(err, "error provisioning operator ClusterRoleBinding resource")
 }
 
 func ensureRoles(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdOperatorRole, err := role.EnsureFromYAML(ctx, kubeClient, namespace,
-		embeddedyamls.Config_rbac_submariner_operator_role_yaml)
+	createdOperatorRole, err := role.EnsureFromYAML(ctx, kubeClient, namespace, submarineroperator.Role)
 	return createdOperatorRole, errors.Wrap(err, "error provisioning operator Role resource")
 }
 
 func ensureRoleBindings(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdOperatorRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, namespace,
-		embeddedyamls.Config_rbac_submariner_operator_role_binding_yaml)
+	createdOperatorRB, err := rolebinding.EnsureFromYAML(ctx, kubeClient, namespace, submarineroperator.RoleBinding)
 	return createdOperatorRB, errors.Wrap(err, "error provisioning operator RoleBinding resource")
 }

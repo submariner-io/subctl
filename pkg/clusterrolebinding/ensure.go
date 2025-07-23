@@ -21,20 +21,19 @@ package clusterrolebinding
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
 	resourceutil "github.com/submariner-io/subctl/pkg/resource"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
-//nolint:wrapcheck // No need to wrap errors here.
-func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namespace, yaml string) (bool, error) {
+func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namespace string, clusterRoleBindingYaml []byte) (bool, error) {
 	clusterRoleBinding := &rbacv1.ClusterRoleBinding{}
 
-	err := embeddedyamls.GetObject(yaml, clusterRoleBinding)
-	if err != nil {
-		return false, err
+	if err := yaml.Unmarshal(clusterRoleBindingYaml, &clusterRoleBinding); err != nil {
+		return false, errors.Wrapf(err, "error extracting embedded ClusterRoleBinding")
 	}
 
 	clusterRoleBinding.Subjects[0].Namespace = namespace

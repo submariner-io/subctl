@@ -23,7 +23,8 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/lighthouse/serviceaccount"
 	"github.com/submariner-io/subctl/pkg/operator/ocp"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
+	lighthouseagent "github.com/submariner-io/submariner-operator/config/rbac/lighthouse-agent"
+	lighthousecoredns "github.com/submariner-io/submariner-operator/config/rbac/lighthouse-coredns"
 	"golang.org/x/net/context"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -40,14 +41,14 @@ func Ensure(ctx context.Context, status reporter.Interface, kubeClient kubernete
 
 	componentsRbac := []ocp.RbacInfo{
 		{
-			ComponentName:          names.ServiceDiscoveryComponent,
-			ClusterRoleFile:        embeddedyamls.Config_rbac_lighthouse_agent_ocp_cluster_role_yaml,
-			ClusterRoleBindingFile: embeddedyamls.Config_rbac_lighthouse_agent_ocp_cluster_role_binding_yaml,
+			ComponentName:      names.ServiceDiscoveryComponent,
+			ClusterRole:        lighthouseagent.OCPClusterRole,
+			ClusterRoleBinding: lighthouseagent.OCPClusterRoleBinding,
 		},
 		{
-			ComponentName:          names.LighthouseCoreDNSComponent,
-			ClusterRoleFile:        embeddedyamls.Config_rbac_lighthouse_coredns_ocp_cluster_role_yaml,
-			ClusterRoleBindingFile: embeddedyamls.Config_rbac_lighthouse_coredns_ocp_cluster_role_binding_yaml,
+			ComponentName:      names.LighthouseCoreDNSComponent,
+			ClusterRole:        lighthousecoredns.OCPClusterRole,
+			ClusterRoleBinding: lighthousecoredns.OCPClusterRoleBinding,
 		},
 	}
 

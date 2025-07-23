@@ -21,23 +21,22 @@ package clusterrole
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
 	resourceutil "github.com/submariner-io/subctl/pkg/resource"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
-//nolint:wrapcheck // No need to wrap errors here.
-func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, yaml string) (bool, error) {
-	role := &rbacv1.ClusterRole{}
+func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, clusterRoleYaml []byte) (bool, error) {
+	clusterRole := &rbacv1.ClusterRole{}
 
-	err := embeddedyamls.GetObject(yaml, role)
-	if err != nil {
-		return false, err
+	if err := yaml.Unmarshal(clusterRoleYaml, &clusterRole); err != nil {
+		return false, errors.Wrapf(err, "error extracting embedded ClusterRole")
 	}
 
-	return Ensure(ctx, kubeClient, role)
+	return Ensure(ctx, kubeClient, clusterRole)
 }
 
 //nolint:wrapcheck // No need to wrap errors here.

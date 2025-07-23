@@ -67,7 +67,7 @@ var _ = Describe("EnsureFromYAML", func() {
 
 	When("the ClusterRoleBinding doesn't exist", func() {
 		It("should create it", func() {
-			created, err := clusterrolebinding.EnsureFromYAML(context.TODO(), client, namespace, clusterRoleBindingYAML)
+			created, err := clusterrolebinding.EnsureFromYAML(context.TODO(), client, namespace, []byte(clusterRoleBindingYAML))
 			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
 			assertClusterRoleBinding()
@@ -99,7 +99,7 @@ var _ = Describe("EnsureFromYAML", func() {
 			Expect(err).To(Succeed())
 			assertClusterRoleBinding()
 
-			created, err := clusterrolebinding.EnsureFromYAML(context.TODO(), client, namespace, clusterRoleBindingYAML)
+			created, err := clusterrolebinding.EnsureFromYAML(context.TODO(), client, namespace, []byte(clusterRoleBindingYAML))
 			Expect(created).To(BeFalse())
 			Expect(err).To(Succeed())
 		})

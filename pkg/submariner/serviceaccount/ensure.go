@@ -25,7 +25,11 @@ import (
 	"github.com/submariner-io/subctl/pkg/role"
 	"github.com/submariner-io/subctl/pkg/rolebinding"
 	"github.com/submariner-io/subctl/pkg/serviceaccount"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
+	submarinermetricsreader "github.com/submariner-io/submariner-operator/config/openshift/rbac/submariner-metrics-reader"
+	submarinerdiagnose "github.com/submariner-io/submariner-operator/config/rbac/submariner-diagnose"
+	submarinergateway "github.com/submariner-io/submariner-operator/config/rbac/submariner-gateway"
+	submarinerglobalnet "github.com/submariner-io/submariner-operator/config/rbac/submariner-globalnet"
+	submarinerrouteagent "github.com/submariner-io/submariner-operator/config/rbac/submariner-route-agent"
 	"golang.org/x/net/context"
 	"k8s.io/client-go/kubernetes"
 )
@@ -36,7 +40,7 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace stri
 
 	for _, applier := range serviceAccountRelatedYAMLs {
 		for _, ref := range applier.refs {
-			iterCreated, err := applier.applier(ctx, kubeClient, namespace, ref.name)
+			iterCreated, err := applier.applier(ctx, kubeClient, namespace, ref.content)
 			if err != nil {
 				return created, err
 			}
@@ -49,12 +53,12 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace stri
 }
 
 type embeddedYAMLRef struct {
-	name        string
-	description string
+	name    string
+	content []byte
 }
 
 type embeddedYAMLRefsApplier struct {
-	applier func(ctx context.Context, kubeClient kubernetes.Interface, namespace, yaml string) (bool, error)
+	applier func(ctx context.Context, kubeClient kubernetes.Interface, namespace string, yaml []byte) (bool, error)
 	refs    []embeddedYAMLRef
 }
 
@@ -62,44 +66,44 @@ var serviceAccountRelatedYAMLs = []embeddedYAMLRefsApplier{
 	{
 		serviceaccount.EnsureFromYAML,
 		[]embeddedYAMLRef{
-			{embeddedyamls.Config_rbac_submariner_gateway_service_account_yaml, "gateway ServiceAccount"},
-			{embeddedyamls.Config_rbac_submariner_route_agent_service_account_yaml, "route agent ServiceAccount"},
-			{embeddedyamls.Config_rbac_submariner_globalnet_service_account_yaml, "globalnet ServiceAccount"},
-			{embeddedyamls.Config_rbac_submariner_diagnose_service_account_yaml, "diagnose ServiceAccount"},
+			{"gateway ServiceAccount", submarinergateway.ServiceAccount},
+			{"route agent ServiceAccount", submarinerrouteagent.ServiceAccount},
+			{"globalnet ServiceAccount", submarinerglobalnet.ServiceAccount},
+			{"diagnose ServiceAccount", submarinerdiagnose.ServiceAccount},
 		},
 	},
 	{
-		func(ctx context.Context, kubeClient kubernetes.Interface, _, yaml string) (bool, error) {
+		func(ctx context.Context, kubeClient kubernetes.Interface, _ string, yaml []byte) (bool, error) {
 			return clusterrole.EnsureFromYAML(ctx, kubeClient, yaml)
 		},
 		[]embeddedYAMLRef{
-			{embeddedyamls.Config_rbac_submariner_gateway_cluster_role_yaml, "gateway ClusterRole"},
-			{embeddedyamls.Config_rbac_submariner_route_agent_cluster_role_yaml, "route agent ClusterRole"},
-			{embeddedyamls.Config_rbac_submariner_globalnet_cluster_role_yaml, "globalnet ClusterRole"},
-			{embeddedyamls.Config_rbac_submariner_diagnose_cluster_role_yaml, "diagnose ClusterRole"},
+			{"gateway ClusterRole", submarinergateway.ClusterRole},
+			{"route agent ClusterRole", submarinerrouteagent.ClusterRole},
+			{"globalnet ClusterRole", submarinerglobalnet.ClusterRole},
+			{"diagnose ClusterRole", submarinerdiagnose.ClusterRole},
 		},
 	},
 	{
 		clusterrolebinding.EnsureFromYAML,
 		[]embeddedYAMLRef{
-			{embeddedyamls.Config_rbac_submariner_gateway_cluster_role_binding_yaml, "gateway ClusterRoleBinding"},
-			{embeddedyamls.Config_rbac_submariner_route_agent_cluster_role_binding_yaml, "route agent ClusterRoleBinding"},
-			{embeddedyamls.Config_rbac_submariner_globalnet_cluster_role_binding_yaml, "globalnet ClusterRoleBinding"},
-			{embeddedyamls.Config_rbac_submariner_diagnose_cluster_role_binding_yaml, "diagnose ClusterRoleBinding"},
+			{"gateway ClusterRoleBinding", submarinergateway.ClusterRoleBinding},
+			{"route agent ClusterRoleBinding", submarinerrouteagent.ClusterRoleBinding},
+			{"globalnet ClusterRoleBinding", submarinerglobalnet.ClusterRoleBinding},
+			{"diagnose ClusterRoleBinding", submarinerdiagnose.ClusterRoleBinding},
 		},
 	},
 	{
 		role.EnsureFromYAML,
 		[]embeddedYAMLRef{
-			{embeddedyamls.Config_rbac_submariner_gateway_role_yaml, "gateway Role"},
-			{embeddedyamls.Config_rbac_submariner_route_agent_role_yaml, "route agent Role"},
-			{embeddedyamls.Config_rbac_submariner_globalnet_role_yaml, "globalnet Role"},
-			{embeddedyamls.Config_rbac_submariner_diagnose_role_yaml, "diagnose Role"},
-			{embeddedyamls.Config_openshift_rbac_submariner_metrics_reader_role_yaml, "metrics reader Role"},
+			{"gateway Role", submarinergateway.Role},
+			{"route agent Role", submarinerrouteagent.Role},
+			{"globalnet Role", submarinerglobalnet.Role},
+			{"diagnose Role", submarinerdiagnose.Role},
+			{"metrics reader Role", submarinermetricsreader.Role},
 		},
 	},
 	{
-		func(ctx context.Context, kubeClient kubernetes.Interface, namespace, yaml string) (bool, error) {
+		func(ctx context.Context, kubeClient kubernetes.Interface, namespace string, yaml []byte) (bool, error) {
 			created, err := rolebinding.EnsureFromYAML(ctx, kubeClient, namespace, yaml)
 
 			// If a RoleBinding has its own namespace, consider that as a gate: if the namespace
@@ -112,11 +116,11 @@ var serviceAccountRelatedYAMLs = []embeddedYAMLRefsApplier{
 			return created, err
 		},
 		[]embeddedYAMLRef{
-			{embeddedyamls.Config_rbac_submariner_gateway_role_binding_yaml, "gateway RoleBinding"},
-			{embeddedyamls.Config_rbac_submariner_route_agent_role_binding_yaml, "route agent RoleBinding"},
-			{embeddedyamls.Config_rbac_submariner_globalnet_role_binding_yaml, "globalnet RoleBinding"},
-			{embeddedyamls.Config_rbac_submariner_diagnose_role_binding_yaml, "diagnose RoleBinding"},
-			{embeddedyamls.Config_openshift_rbac_submariner_metrics_reader_role_binding_yaml, "metrics reader RoleBinding"},
+			{"gateway RoleBinding", submarinergateway.RoleBinding},
+			{"route agent RoleBinding", submarinerrouteagent.RoleBinding},
+			{"globalnet RoleBinding", submarinerglobalnet.RoleBinding},
+			{"diagnose RoleBinding", submarinerdiagnose.RoleBinding},
+			{"metrics reader RoleBinding", submarinermetricsreader.RoleBinding},
 		},
 	},
 }
