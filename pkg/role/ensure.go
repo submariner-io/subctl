@@ -21,20 +21,20 @@ package role
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
 	resourceutil "github.com/submariner-io/subctl/pkg/resource"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
-//nolint:wrapcheck // No need to wrap errors here.
-func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namespace, yaml string) (bool, error) {
+func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namespace string, roleYaml []byte) (bool, error) {
 	role := &rbacv1.Role{}
 
-	err := embeddedyamls.GetObject(yaml, role)
+	err := yaml.Unmarshal(roleYaml, &role)
 	if err != nil {
-		return false, err
+		return false, errors.Wrapf(err, "error extracting embedded Role")
 	}
 
 	return Ensure(ctx, kubeClient, namespace, role)

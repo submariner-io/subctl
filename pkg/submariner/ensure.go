@@ -23,7 +23,10 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/operator/ocp"
 	"github.com/submariner-io/subctl/pkg/submariner/serviceaccount"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
+	submarinerdiagnose "github.com/submariner-io/submariner-operator/config/rbac/submariner-diagnose"
+	submarinergateway "github.com/submariner-io/submariner-operator/config/rbac/submariner-gateway"
+	submarinerglobalnet "github.com/submariner-io/submariner-operator/config/rbac/submariner-globalnet"
+	submarinerrouteagent "github.com/submariner-io/submariner-operator/config/rbac/submariner-route-agent"
 	"golang.org/x/net/context"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -40,24 +43,24 @@ func Ensure(ctx context.Context, status reporter.Interface, kubeClient kubernete
 
 	componentsRbac := []ocp.RbacInfo{
 		{
-			ComponentName:          names.GatewayComponent,
-			ClusterRoleFile:        embeddedyamls.Config_rbac_submariner_gateway_ocp_cluster_role_yaml,
-			ClusterRoleBindingFile: embeddedyamls.Config_rbac_submariner_gateway_ocp_cluster_role_binding_yaml,
+			ComponentName:      names.GatewayComponent,
+			ClusterRole:        submarinergateway.OCPClusterRole,
+			ClusterRoleBinding: submarinergateway.OCPClusterRoleBinding,
 		},
 		{
-			ComponentName:          names.RouteAgentComponent,
-			ClusterRoleFile:        embeddedyamls.Config_rbac_submariner_route_agent_ocp_cluster_role_yaml,
-			ClusterRoleBindingFile: embeddedyamls.Config_rbac_submariner_route_agent_ocp_cluster_role_binding_yaml,
+			ComponentName:      names.RouteAgentComponent,
+			ClusterRole:        submarinerrouteagent.OCPClusterRole,
+			ClusterRoleBinding: submarinerrouteagent.OCPClusterRoleBinding,
 		},
 		{
-			ComponentName:          names.GatewayComponent,
-			ClusterRoleFile:        embeddedyamls.Config_rbac_submariner_globalnet_ocp_cluster_role_yaml,
-			ClusterRoleBindingFile: embeddedyamls.Config_rbac_submariner_globalnet_ocp_cluster_role_binding_yaml,
+			ComponentName:      names.GatewayComponent,
+			ClusterRole:        submarinerglobalnet.OCPClusterRole,
+			ClusterRoleBinding: submarinerglobalnet.OCPClusterRoleBinding,
 		},
 		{
-			ComponentName:          "submariner-diagnose",
-			ClusterRoleFile:        embeddedyamls.Config_rbac_submariner_diagnose_ocp_cluster_role_yaml,
-			ClusterRoleBindingFile: embeddedyamls.Config_rbac_submariner_diagnose_ocp_cluster_role_binding_yaml,
+			ComponentName:      "submariner-diagnose",
+			ClusterRole:        submarinerdiagnose.OCPClusterRole,
+			ClusterRoleBinding: submarinerdiagnose.OCPClusterRoleBinding,
 		},
 	}
 

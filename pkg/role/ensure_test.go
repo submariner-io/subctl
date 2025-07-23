@@ -65,7 +65,7 @@ var _ = Describe("EnsureFromYAML", func() {
 
 	When("the Role doesn't exist", func() {
 		It("should create it", func() {
-			created, err := role.EnsureFromYAML(context.TODO(), client, namespace, roleYAML)
+			created, err := role.EnsureFromYAML(context.TODO(), client, namespace, []byte(roleYAML))
 			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
 			assertRole()
@@ -93,7 +93,7 @@ var _ = Describe("EnsureFromYAML", func() {
 			Expect(err).To(Succeed())
 			assertRole()
 
-			created, err := role.EnsureFromYAML(context.TODO(), client, namespace, roleYAML)
+			created, err := role.EnsureFromYAML(context.TODO(), client, namespace, []byte(roleYAML))
 			Expect(created).To(BeFalse())
 			Expect(err).To(Succeed())
 		})

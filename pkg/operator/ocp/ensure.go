@@ -31,9 +31,9 @@ import (
 )
 
 type RbacInfo struct {
-	ComponentName          string
-	ClusterRoleFile        string
-	ClusterRoleBindingFile string
+	ComponentName      string
+	ClusterRole        []byte
+	ClusterRoleBinding []byte
 }
 
 func EnsureRBAC(ctx context.Context,
@@ -47,12 +47,12 @@ func EnsureRBAC(ctx context.Context,
 	updateRbac := false
 
 	for _, componentRbac := range componentsRbac {
-		createdCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, componentRbac.ClusterRoleFile)
+		createdCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, componentRbac.ClusterRole)
 		if err != nil {
 			return false, errors.Wrapf(err, "error provisioning the %s OCP ClusterRole resource", componentRbac.ComponentName)
 		}
 
-		createdCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace, componentRbac.ClusterRoleBindingFile)
+		createdCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace, componentRbac.ClusterRoleBinding)
 		if err != nil {
 			return false, errors.Wrapf(err, "error provisioning the %s OCP ClusterRoleBinding resource", componentRbac.ComponentName)
 		}

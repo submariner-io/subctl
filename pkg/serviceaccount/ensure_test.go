@@ -90,7 +90,7 @@ var _ = Describe("EnsureFromYAML", func() {
 
 	When("the ServiceAccount doesn't exist", func() {
 		It("should create it", func() {
-			created, err := serviceaccount.EnsureFromYAML(context.Background(), t.client, namespace, saYAML)
+			created, err := serviceaccount.EnsureFromYAML(context.Background(), t.client, namespace, []byte(saYAML))
 			Expect(err).To(Succeed())
 			Expect(created).To(BeTrue())
 			t.assertServiceAccount()
@@ -108,7 +108,7 @@ var _ = Describe("EnsureFromYAML", func() {
 		})
 
 		It("should succeed", func() {
-			created, err := serviceaccount.EnsureFromYAML(context.Background(), t.client, namespace, saYAML)
+			created, err := serviceaccount.EnsureFromYAML(context.Background(), t.client, namespace, []byte(saYAML))
 			Expect(err).To(Succeed())
 			Expect(created).To(BeFalse())
 			t.assertServiceAccount()

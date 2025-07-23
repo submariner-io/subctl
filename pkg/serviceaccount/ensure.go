@@ -27,7 +27,6 @@ import (
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/util"
 	"github.com/submariner-io/subctl/pkg/secret"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,6 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -60,12 +60,12 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace stri
 }
 
 // EnsureFromYAML creates the given service account from the YAML representation.
-func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namespace, yaml string) (bool, error) {
+func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namespace string, saYaml []byte) (bool, error) {
 	sa := &corev1.ServiceAccount{}
 
-	err := embeddedyamls.GetObject(yaml, sa)
+	err := yaml.Unmarshal(saYaml, &sa)
 	if err != nil {
-		return false, errors.Wrap(err, "error extracting ServiceAccount resource from YAML")
+		return false, errors.Wrap(err, "error extracting embedded ServiceAccount")
 	}
 
 	return ensure(ctx, kubeClient, namespace, sa)

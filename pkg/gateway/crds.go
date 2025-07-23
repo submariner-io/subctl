@@ -20,32 +20,35 @@ package gateway
 
 import (
 	"context"
+	goerrors "errors"
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
+	"github.com/submariner-io/submariner/deploy/crds"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // Ensure ensures that the required resources are deployed on the target system.
 // The resources handled here are the gateway CRDs: Cluster and Endpoint.
 func Ensure(ctx context.Context, crdUpdater crd.Updater) error {
+	var errs []error
+
 	for _, ref := range []struct {
 		name string
-		crd  string
+		crd  []byte
 	}{
-		{embeddedyamls.Deploy_submariner_crds_submariner_io_clusters_yaml, "Cluster"},
-		{embeddedyamls.Deploy_submariner_crds_submariner_io_endpoints_yaml, "Endpoint"},
-		{embeddedyamls.Deploy_submariner_crds_submariner_io_gateways_yaml, "Gateway"},
-		{embeddedyamls.Deploy_submariner_crds_submariner_io_clusterglobalegressips_yaml, "ClusterGlobalEgressIP"},
-		{embeddedyamls.Deploy_submariner_crds_submariner_io_globalegressips_yaml, "GlobalEgressIP"},
-		{embeddedyamls.Deploy_submariner_crds_submariner_io_globalingressips_yaml, "GlobalIngressIP"},
+		{"Cluster", crds.ClustersCRD},
+		{"Endpoint", crds.EndpointsCRD},
+		{"Gateway", crds.GatewaysCRD},
+		{"ClusterGlobalEgressIP", crds.ClusterGlobalEgressIPsCRD},
+		{"GlobalEgressIP", crds.GlobalEgressIPsCRD},
+		{"GlobalIngressIP", crds.GlobalIngressIPsCRD},
 	} {
-		_, err := crdUpdater.CreateOrUpdateFromEmbedded(ctx, ref.name)
+		_, err := crdUpdater.CreateOrUpdateFromBytes(ctx, ref.crd)
 		if err != nil && !apierrors.IsAlreadyExists(err) {
-			return errors.Wrapf(err, "error provisioning the %s CRD", ref.crd)
+			errs = append(errs, errors.Wrapf(err, "error provisioning the %s CRD", ref.name))
 		}
 	}
 
-	return nil
+	return goerrors.Join(errs...)
 }

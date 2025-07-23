@@ -67,7 +67,7 @@ var _ = Describe("EnsureFromYAML", func() {
 
 	When("the RoleBinding doesn't exist", func() {
 		It("should create it", func() {
-			created, err := rolebinding.EnsureFromYAML(context.TODO(), client, namespace, roleBindingYAML)
+			created, err := rolebinding.EnsureFromYAML(context.TODO(), client, namespace, []byte(roleBindingYAML))
 			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
 			assertRoleBinding()
@@ -99,7 +99,7 @@ var _ = Describe("EnsureFromYAML", func() {
 			Expect(err).To(Succeed())
 			assertRoleBinding()
 
-			created, err := rolebinding.EnsureFromYAML(context.TODO(), client, namespace, roleBindingYAML)
+			created, err := rolebinding.EnsureFromYAML(context.TODO(), client, namespace, []byte(roleBindingYAML))
 			Expect(created).To(BeFalse())
 			Expect(err).To(Succeed())
 		})

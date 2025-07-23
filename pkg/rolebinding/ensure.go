@@ -21,20 +21,20 @@ package rolebinding
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
 	resourceutil "github.com/submariner-io/subctl/pkg/resource"
-	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
-//nolint:wrapcheck // No need to wrap errors here.
-func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namespace, yaml string) (bool, error) {
+func EnsureFromYAML(ctx context.Context, kubeClient kubernetes.Interface, namespace string, roleBindingYaml []byte) (bool, error) {
 	roleBinding := &rbacv1.RoleBinding{}
 
-	err := embeddedyamls.GetObject(yaml, roleBinding)
+	err := yaml.Unmarshal(roleBindingYaml, &roleBinding)
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "error extracting embedded RoleBinding")
 	}
 
 	// If the embedded role binding specifies its namespace, use that
