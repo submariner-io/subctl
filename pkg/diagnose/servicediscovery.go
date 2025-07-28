@@ -20,7 +20,6 @@ package diagnose
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -34,17 +33,20 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
 func ServiceDiscovery(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+	ctx := context.TODO()
+
 	status.Start("Checking that services have been exported properly")
 	defer status.End()
 
 	tracker := reporter.NewTracker(status)
 
-	checkServiceExport(clusterInfo, tracker)
+	checkServiceExports(ctx, clusterInfo, tracker)
 
 	if tracker.HasFailures() {
 		return errors.New("failures while diagnosing service discovery")
@@ -54,9 +56,7 @@ func ServiceDiscovery(clusterInfo *cluster.Info, _ string, status reporter.Inter
 }
 
 // This function checks if all ServiceExports have a matching ServiceImport and if an EndpointSlice has been created for the service.
-func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
-	ctx := context.TODO()
-
+func checkServiceExports(ctx context.Context, clusterInfo *cluster.Info, status reporter.Interface) {
 	serviceExportGVR := gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports")
 
 	serviceExports, err := clusterInfo.ClientProducer.ForDynamic().Resource(serviceExportGVR).Namespace(corev1.NamespaceAll).
@@ -66,33 +66,43 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 		return
 	}
 
-	serviceImportsGVR := gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceimports")
-
 	for i := range serviceExports.Items {
-		se := &mcsv1a1.ServiceExport{}
-
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(serviceExports.Items[i].Object, se)
-		if err != nil {
-			status.Failure("Error converting ServiceExport: %v", err)
-			continue
-		}
+		se := resource.MustFromUnstructured(&serviceExports.Items[i], &mcsv1a1.ServiceExport{})
 
 		_, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Services(se.Namespace).Get(ctx, se.Name, metav1.GetOptions{})
 		if apierrors.IsNotFound(err) {
-			status.Warning("Exported Service %s/%s not found", se.Namespace, se.Name)
+			status.Warning("Exported Service \"%s/%s\" not found", se.Namespace, se.Name)
 			verifyStatusCondition(se, mcsv1a1.ServiceExportValid, metav1.ConditionFalse, status)
 
 			continue
 		}
 
 		if err != nil {
-			status.Failure("Error retrieving Service %s/%s: %v", se.Namespace, se.Name, err)
+			status.Failure("Error retrieving Service \"%s/%s\": %v", se.Namespace, se.Name, err)
+			return
+		}
+
+		if !verifyStatusCondition(se, mcsv1a1.ServiceExportValid, metav1.ConditionTrue, status) {
 			continue
 		}
 
-		verifyStatusCondition(se, mcsv1a1.ServiceExportValid, metav1.ConditionTrue, status)
 		verifyStatusCondition(se, lhconstants.ServiceExportReady, metav1.ConditionTrue, status)
 		verifyStatusCondition(se, mcsv1a1.ServiceExportConflict, metav1.ConditionFalse, status)
+
+		serviceImportClient := clusterInfo.ClientProducer.ForDynamic().Resource(serviceImportGVR())
+
+		if !localServiceImportExists(ctx, serviceImportClient, se.Name, se.Namespace, status) {
+			continue
+		}
+
+		_, err = serviceImportClient.Namespace(se.Namespace).Get(ctx, se.Name, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				status.Failure("No ServiceImport found for exported service \"%s/%s\"", se.Namespace, se.Name)
+			} else {
+				status.Failure("Error retrieving ServiceImport for exported service \"%s/%s\": %v", se.Namespace, se.Name, err)
+			}
+		}
 
 		ep := clusterInfo.ClientProducer.ForKubernetes().DiscoveryV1().EndpointSlices(se.Namespace)
 
@@ -104,59 +114,67 @@ func checkServiceExport(clusterInfo *cluster.Info, status reporter.Interface) {
 			}).String(),
 		})
 		if err != nil {
-			status.Failure("Error retrieving EndPointSlice for exported service %s/%s: %v", se.Namespace, se.Name, err)
+			status.Failure("Error retrieving EndpointSlices for exported service \"%s/%s\": %v", se.Namespace, se.Name, err)
 			return
 		}
 
 		if len(epsList.Items) == 0 {
-			status.Failure("No EndpointSlice found for exported service %s/%s", se.Namespace, se.Name)
-		}
-
-		checkForAggregateSI := false
-
-		serviceImportClient := clusterInfo.ClientProducer.ForDynamic().Resource(serviceImportsGVR)
-
-		localSI, err := serviceImportClient.Namespace(constants.OperatorNamespace).Get(ctx,
-			fmt.Sprintf("%s-%s-%s", se.Name, se.Namespace, clusterInfo.Submariner.Spec.ClusterID), metav1.GetOptions{})
-		if err == nil {
-			_, checkForAggregateSI = localSI.GetLabels()[mcsv1a1.LabelServiceName]
-		} else if apierrors.IsNotFound(err) {
-			status.Failure("No local ServiceImport in %q found for exported service %s/%s", constants.OperatorNamespace,
-				se.Namespace, se.Name)
-		} else {
-			status.Failure("Error retrieving ServiceImport for exported service %s/%s: %v", se.Namespace, se.Name, err)
-		}
-
-		if checkForAggregateSI {
-			_, err = serviceImportClient.Namespace(se.Namespace).Get(ctx, se.Name, metav1.GetOptions{})
-			if err != nil {
-				if apierrors.IsNotFound(err) {
-					status.Failure("No ServiceImport found for exported service %s/%s", se.Namespace, se.Name)
-				} else {
-					status.Failure("Error retrieving ServiceImport for exported service %s/%s: %v", se.Namespace, se.Name, err)
-				}
-			}
+			status.Failure("No EndpointSlice found for exported service \"%s/%s\"", se.Namespace, se.Name)
 		}
 	}
 }
 
+func localServiceImportExists(ctx context.Context, siClient dynamic.NamespaceableResourceInterface, serviceName, serviceNamespace string,
+	status reporter.Interface,
+) bool {
+	list, err := siClient.Namespace(constants.OperatorNamespace).List(ctx, metav1.ListOptions{
+		LabelSelector: labels.SelectorFromSet(map[string]string{
+			mcsv1a1.LabelServiceName:         serviceName,
+			lhconstants.LabelSourceNamespace: serviceNamespace,
+		}).String(),
+	})
+	if err != nil {
+		status.Failure("Error retrieving ServiceImport for exported service \"%s/%s\": %v", serviceNamespace, serviceName, err)
+
+		return false
+	}
+
+	if len(list.Items) > 0 {
+		return true
+	}
+
+	status.Failure("No local ServiceImport in %q found for exported service \"%s/%s\"", constants.OperatorNamespace,
+		serviceNamespace, serviceName)
+
+	return false
+}
+
 func verifyStatusCondition(se *mcsv1a1.ServiceExport, condType string, condStatus metav1.ConditionStatus,
 	status reporter.Interface,
-) {
+) bool {
 	for i := range se.Status.Conditions {
 		condition := &se.Status.Conditions[i]
 		if condition.Type == condType || (condType == lhconstants.ServiceExportReady && condition.Type == "Synced") {
 			if condition.Status != condStatus {
 				status.Failure(
-					"The ServiceExport %q status condition type for %s/%s is not satisfied. Expected condition status %q. Actual:\n%s",
+					"The ServiceExport %q status condition type for \"%s/%s\" is not satisfied. Expected condition status %q. Actual:\n%s",
 					condition.Type, se.Namespace, se.Name, condStatus, resource.ToJSON(condition))
+
+				return false
 			}
 
-			return
+			return true
 		}
 	}
 
 	if condStatus == metav1.ConditionTrue {
-		status.Failure("The ServiceExport for %s/%s is missing the %q status condition type", se.Namespace, se.Name, condType)
+		status.Failure("The ServiceExport for \"%s/%s\" is missing the %q status condition type", se.Namespace, se.Name, condType)
+		return false
 	}
+
+	return true
+}
+
+func serviceImportGVR() schema.GroupVersionResource {
+	return gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceimports")
 }
