@@ -20,11 +20,13 @@ package diagnose_test
 
 import (
 	"context"
+	"encoding/base64"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/submariner-io/admiral/pkg/reporter"
+	reportertest "github.com/submariner-io/admiral/pkg/reporter/test"
+	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/syncer/test"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
@@ -38,6 +40,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	controllerclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -58,11 +61,11 @@ func TestDiagnose(t *testing.T) {
 type testDriver struct {
 	fakeProducer  *client.DefaultProducer
 	submariner    *v1alpha1.Submariner
-	statusTracker *StatusTracker
+	statusTracker *reportertest.Tracker
 }
 
-func (t *testDriver) createResource(resource controllerclient.Object) {
-	err := t.fakeProducer.GeneralClient.Create(context.TODO(), resource)
+func (t *testDriver) createResource(obj controllerclient.Object) {
+	err := t.fakeProducer.GeneralClient.Create(context.TODO(), obj)
 	Expect(err).NotTo(HaveOccurred())
 }
 
@@ -86,11 +89,27 @@ func (t *testDriver) creatEndpointSlice(eps *discoveryv1.EndpointSlice) {
 	Expect(err).NotTo(HaveOccurred())
 }
 
+func (t *testDriver) createNamespace(name string) {
+	_, err := t.fakeProducer.KubeClient.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}, metav1.CreateOptions{})
+	Expect(err).NotTo(HaveOccurred())
+
+	test.CreateResource(t.fakeProducer.DynamicClient.Resource(corev1.SchemeGroupVersion.WithResource("namespaces")),
+		&corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: name,
+			},
+		})
+}
+
 func newTestDriver() *testDriver {
 	t := &testDriver{}
 
 	BeforeEach(func() {
-		t.statusTracker = &StatusTracker{Interface: cli.NewReporter()}
+		t.statusTracker = &reportertest.Tracker{Interface: cli.NewReporter()}
 		t.fakeProducer = clientfake.New()
 		t.submariner = &v1alpha1.Submariner{
 			ObjectMeta: metav1.ObjectMeta{
@@ -98,8 +117,15 @@ func newTestDriver() *testDriver {
 				Namespace: constants.OperatorNamespace,
 			},
 			Spec: v1alpha1.SubmarinerSpec{
-				ClusterID: "east",
+				ClusterID:                "east",
+				BrokerK8sApiServer:       "api-server",
+				BrokerK8sApiServerToken:  base64.StdEncoding.EncodeToString([]byte("token")),
+				BrokerK8sRemoteNamespace: constants.DefaultBrokerNamespace,
 			},
+		}
+
+		resource.NewDynamicClient = func(_ *rest.Config) (dynamic.Interface, error) {
+			return t.fakeProducer.DynamicClient, nil
 		}
 	})
 
@@ -108,34 +134,6 @@ func newTestDriver() *testDriver {
 	})
 
 	return t
-}
-
-type StatusTracker struct {
-	reporter.Interface
-	failures []string
-	warnings []string
-}
-
-func (t *StatusTracker) Warning(message string, args ...any) {
-	t.warnings = append(t.warnings, message)
-	t.Interface.Warning(message, args...)
-}
-
-func (t *StatusTracker) Failure(message string, args ...any) {
-	t.failures = append(t.failures, message)
-	t.Interface.Failure(message, args...)
-}
-
-func (t *StatusTracker) assertFailureCount(count int) {
-	Expect(t.failures).To(HaveLen(count))
-}
-
-func (t *StatusTracker) assertHasFailure() {
-	Expect(t.failures).NotTo(BeEmpty())
-}
-
-func (t *StatusTracker) assertWarningCount(count int) {
-	Expect(t.warnings).To(HaveLen(count))
 }
 
 func newClusterInfo() *cluster.Info {
