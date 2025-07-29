@@ -27,6 +27,8 @@ import (
 	lhconstants "github.com/submariner-io/lighthouse/pkg/constants"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/gvr"
+	"github.com/submariner-io/subctl/internal/restconfig"
+	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	corev1 "k8s.io/api/core/v1"
 	discovery "k8s.io/api/discovery/v1"
@@ -41,12 +43,13 @@ import (
 func ServiceDiscovery(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	ctx := context.TODO()
 
-	status.Start("Checking that services have been exported properly")
+	status.Start("Checking that services have been exported/imported properly")
 	defer status.End()
 
 	tracker := reporter.NewTracker(status)
 
 	checkServiceExports(ctx, clusterInfo, tracker)
+	checkServiceImports(ctx, clusterInfo, tracker)
 
 	if tracker.HasFailures() {
 		return errors.New("failures while diagnosing service discovery")
@@ -173,6 +176,48 @@ func verifyStatusCondition(se *mcsv1a1.ServiceExport, condType string, condStatu
 	}
 
 	return true
+}
+
+func checkServiceImports(ctx context.Context, clusterInfo *cluster.Info, status reporter.Interface) {
+	brokerRestConfig, brokerNamespace, err := restconfig.ForBroker(clusterInfo.Submariner, nil)
+	if err != nil {
+		status.Failure("Error getting the Broker's REST config: %v", err)
+		return
+	}
+
+	clientProducer, err := client.NewProducerFromRestConfig(brokerRestConfig)
+	if err != nil {
+		status.Failure("Error creating broker client Producer: %v", err)
+		return
+	}
+
+	serviceImports, err := clientProducer.ForDynamic().Resource(serviceImportGVR()).Namespace(brokerNamespace).List(
+		ctx, metav1.ListOptions{})
+	if err != nil {
+		status.Failure("Error listing ServiceImports on the broker: %v", err)
+		return
+	}
+
+	for i := range serviceImports.Items {
+		if _, ok := serviceImports.Items[i].GetAnnotations()[mcsv1a1.LabelServiceName]; !ok {
+			continue
+		}
+
+		// This is an aggregated ServiceImport on the broker - check for the local copy.
+		serviceName := serviceImports.Items[i].GetAnnotations()[mcsv1a1.LabelServiceName]
+		serviceNamespace := serviceImports.Items[i].GetAnnotations()[lhconstants.LabelSourceNamespace]
+
+		_, err = clusterInfo.ClientProducer.ForDynamic().Resource(serviceImportGVR()).Namespace(serviceNamespace).Get(
+			ctx, serviceName, metav1.GetOptions{})
+		if resource.IsMissingNamespaceErr(err) {
+			status.Warning("The namespace %q for imported service %q does not exist therefore the service will "+
+				"not be accessible via DNS on this cluster. This may be intentional.", serviceNamespace, serviceName)
+		} else if apierrors.IsNotFound(err) {
+			status.Failure("No ServiceImport found for imported service \"%s/%s\"", serviceNamespace, serviceName)
+		} else if err != nil {
+			status.Failure("Error retrieving ServiceImport for imported service \"%s/%s\": %v", serviceNamespace, serviceName, err)
+		}
+	}
 }
 
 func serviceImportGVR() schema.GroupVersionResource {

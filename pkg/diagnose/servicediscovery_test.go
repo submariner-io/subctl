@@ -43,6 +43,7 @@ const (
 
 var _ = Describe("ServiceDiscovery", func() {
 	Describe("Exported Services", testExportedServices)
+	Describe("Imported Services", testImportedServices)
 })
 
 func testExportedServices() {
@@ -125,8 +126,8 @@ func testExportedServices() {
 
 		It("should succeed", func() {
 			Expect(t.runServiceDiscovery()).To(Succeed())
-			t.statusTracker.assertFailureCount(0)
-			t.statusTracker.assertWarningCount(0)
+			t.statusTracker.AssertFailureCount(0)
+			t.statusTracker.AssertWarningCount(0)
 		})
 	})
 
@@ -144,7 +145,7 @@ func testExportedServices() {
 
 			It("should fail", func() {
 				Expect(t.runServiceDiscovery()).NotTo(Succeed())
-				t.statusTracker.assertFailureCount(1)
+				t.statusTracker.AssertFailureCount(1)
 			})
 		})
 
@@ -156,7 +157,7 @@ func testExportedServices() {
 
 			It("should fail", func() {
 				Expect(t.runServiceDiscovery()).NotTo(Succeed())
-				t.statusTracker.assertFailureCount(1)
+				t.statusTracker.AssertFailureCount(1)
 			})
 		})
 
@@ -167,7 +168,7 @@ func testExportedServices() {
 
 			It("should fail", func() {
 				Expect(t.runServiceDiscovery()).NotTo(Succeed())
-				t.statusTracker.assertHasFailure()
+				t.statusTracker.AssertHasFailure()
 			})
 		})
 
@@ -179,14 +180,14 @@ func testExportedServices() {
 
 			It("should fail", func() {
 				Expect(t.runServiceDiscovery()).NotTo(Succeed())
-				t.statusTracker.assertFailureCount(1)
+				t.statusTracker.AssertFailureCount(1)
 			})
 		})
 
 		Context("but no local ServiceImport exists", func() {
 			It("should fail", func() {
 				Expect(t.runServiceDiscovery()).NotTo(Succeed())
-				t.statusTracker.assertFailureCount(1)
+				t.statusTracker.AssertFailureCount(1)
 			})
 		})
 
@@ -198,7 +199,7 @@ func testExportedServices() {
 
 			It("should fail", func() {
 				Expect(t.runServiceDiscovery()).NotTo(Succeed())
-				t.statusTracker.assertFailureCount(1)
+				t.statusTracker.AssertFailureCount(1)
 			})
 		})
 	})
@@ -211,16 +212,16 @@ func testExportedServices() {
 
 		It("should succeed but emit a warning", func() {
 			Expect(t.runServiceDiscovery()).To(Succeed())
-			t.statusTracker.assertFailureCount(0)
-			t.statusTracker.assertWarningCount(1)
+			t.statusTracker.AssertFailureCount(0)
+			t.statusTracker.AssertWarningCount(1)
 		})
 	})
 
 	When("no services are exported", func() {
 		It("should succeed", func() {
 			Expect(t.runServiceDiscovery()).To(Succeed())
-			t.statusTracker.assertFailureCount(0)
-			t.statusTracker.assertWarningCount(0)
+			t.statusTracker.AssertFailureCount(0)
+			t.statusTracker.AssertWarningCount(0)
 		})
 	})
 
@@ -232,7 +233,7 @@ func testExportedServices() {
 
 		It("should fail", func() {
 			Expect(t.runServiceDiscovery()).NotTo(Succeed())
-			t.statusTracker.assertFailureCount(1)
+			t.statusTracker.AssertFailureCount(1)
 		})
 	})
 
@@ -245,7 +246,7 @@ func testExportedServices() {
 
 		It("should fail", func() {
 			Expect(t.runServiceDiscovery()).NotTo(Succeed())
-			t.statusTracker.assertFailureCount(1)
+			t.statusTracker.AssertFailureCount(1)
 		})
 	})
 
@@ -254,12 +255,12 @@ func testExportedServices() {
 			t.createService(service)
 			t.createServiceExport(serviceExport)
 			t.createServiceImport(localServiceImport)
-			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports", "list", nil, false)
+			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports", "list", nil, true)
 		})
 
 		It("should fail", func() {
 			Expect(t.runServiceDiscovery()).NotTo(Succeed())
-			t.statusTracker.assertFailureCount(1)
+			t.statusTracker.AssertFailureCount(1)
 		})
 	})
 
@@ -275,7 +276,106 @@ func testExportedServices() {
 
 		It("should fail", func() {
 			Expect(t.runServiceDiscovery()).NotTo(Succeed())
-			t.statusTracker.assertFailureCount(1)
+			t.statusTracker.AssertFailureCount(1)
+		})
+	})
+}
+
+func testImportedServices() {
+	t := newTestDriver()
+
+	BeforeEach(func() {
+		fake.AddVerifyNamespaceReactor(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports")
+	})
+
+	JustBeforeEach(func() {
+		t.createNamespace(t.submariner.Spec.BrokerK8sRemoteNamespace)
+
+		// Aggregated ServiceImport on the broker
+		t.createServiceImport(&mcsv1a1.ServiceImport{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      serviceName + "-" + serviceNamespace,
+				Namespace: t.submariner.Spec.BrokerK8sRemoteNamespace,
+				Annotations: map[string]string{
+					mcsv1a1.LabelServiceName:         serviceName,
+					lhconstants.LabelSourceNamespace: serviceNamespace,
+				},
+			},
+		})
+
+		// Some cluster-local ServiceImport on the broker
+		t.createServiceImport(&mcsv1a1.ServiceImport{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      serviceName + "-wdglkj",
+				Namespace: t.submariner.Spec.BrokerK8sRemoteNamespace,
+				Labels: map[string]string{
+					mcsv1a1.LabelServiceName:         serviceName,
+					lhconstants.LabelSourceNamespace: serviceNamespace,
+					mcsv1a1.LabelSourceCluster:       "west",
+				},
+			},
+		})
+	})
+
+	When("an imported service's local ServiceImport exists", func() {
+		JustBeforeEach(func() {
+			t.createNamespace(serviceNamespace)
+
+			// Local aggregated ServiceImport
+			t.createServiceImport(&mcsv1a1.ServiceImport{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      serviceName,
+					Namespace: serviceNamespace,
+				},
+			})
+		})
+
+		It("should succeed", func() {
+			Expect(t.runServiceDiscovery()).To(Succeed())
+			t.statusTracker.AssertFailureCount(0)
+			t.statusTracker.AssertWarningCount(0)
+		})
+	})
+
+	When("an imported service's namespace doesn't exist locally", func() {
+		It("should succeed but emit a warning", func() {
+			Expect(t.runServiceDiscovery()).To(Succeed())
+			t.statusTracker.AssertFailureCount(0)
+			t.statusTracker.AssertWarningCount(1)
+		})
+	})
+
+	When("an imported service's local ServiceImport doesn't exist", func() {
+		JustBeforeEach(func() {
+			t.createNamespace(serviceNamespace)
+		})
+
+		It("should fail", func() {
+			Expect(t.runServiceDiscovery()).NotTo(Succeed())
+			t.statusTracker.AssertFailureCount(1)
+			t.statusTracker.AssertWarningCount(0)
+		})
+	})
+
+	When("broker ServiceImport retrieval fails", func() {
+		BeforeEach(func() {
+			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports", "list", nil, true)
+		})
+
+		It("should fail", func() {
+			Expect(t.runServiceDiscovery()).NotTo(Succeed())
+			t.statusTracker.AssertFailureCount(1)
+		})
+	})
+
+	When("local ServiceImport retrieval fails", func() {
+		BeforeEach(func() {
+			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports", "get", nil, true)
+		})
+
+		It("should fail", func() {
+			Expect(t.runServiceDiscovery()).NotTo(Succeed())
+			t.statusTracker.AssertFailureCount(1)
 		})
 	})
 }
