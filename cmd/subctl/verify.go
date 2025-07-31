@@ -25,16 +25,10 @@ import (
 	"os"
 	"strings"
 	"syscall"
-	"testing"
-	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/onsi/ginkgo/v2"
-	"github.com/onsi/gomega"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
-	_ "github.com/submariner-io/lighthouse/test/e2e/discovery"
-	_ "github.com/submariner-io/lighthouse/test/e2e/framework"
 	lhlabels "github.com/submariner-io/lighthouse/test/e2e/labels"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/cli"
@@ -43,27 +37,25 @@ import (
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	_ "github.com/submariner-io/submariner/test/e2e/compliance"
-	_ "github.com/submariner-io/submariner/test/e2e/dataplane"
 	submlabels "github.com/submariner-io/submariner/test/e2e/labels"
-	_ "github.com/submariner-io/submariner/test/e2e/redundancy"
-	"k8s.io/client-go/rest"
 )
 
-const globalnetLabel = "globalnet"
+type VerifyOptions struct {
+	VerboseConnectivityVerification bool
+	DisruptiveTests                 bool
+	SkipConnectorSrcIPCheck         bool
+	OperationTimeout                uint
+	ConnectionTimeout               uint
+	ConnectionAttempts              uint
+	PacketSize                      uint
+	JunitReport                     string
+	VerifyOnly                      string
+}
 
-var (
-	verboseConnectivityVerification bool
-	operationTimeout                uint
-	connectionTimeout               uint
-	connectionAttempts              uint
-	junitReport                     string
-	submarinerNamespace             string
-	verifyOnly                      string
-	disruptiveTests                 bool
-	packetSize                      uint
-	skipConnectorSrcIPCheck         bool
-)
+var RunVerify func(options VerifyOptions, fromClusterInfo, toClusterInfo, extraClusterInfo *cluster.Info,
+	namespace string, specLabels []string) error
+
+var verifyFlags VerifyOptions
 
 var verifyRestConfigProducer = restconfig.NewProducer().
 	WithPrefixedContext("to").
@@ -97,13 +89,14 @@ The following verifications are deemed disruptive:
 						extraContextPresent, err := verifyRestConfigProducer.RunOnSelectedPrefixedContext(
 							"extra",
 							func(extraClusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
-								return runVerify(fromClusterInfo, toClusterInfo, extraClusterInfo, namespace, determineSpecLabelsToVerify())
+								return RunVerify(verifyFlags, fromClusterInfo, toClusterInfo, extraClusterInfo, namespace,
+									determineSpecLabelsToVerify())
 							}, status)
 						if extraContextPresent {
 							return err //nolint:wrapcheck // No need to wrap errors here.
 						}
 
-						return runVerify(fromClusterInfo, toClusterInfo, nil, namespace, determineSpecLabelsToVerify())
+						return RunVerify(verifyFlags, fromClusterInfo, toClusterInfo, nil, namespace, determineSpecLabelsToVerify())
 					}, status)
 
 				if toContextPresent {
@@ -127,17 +120,18 @@ func init() {
 }
 
 func addVerifyFlags(cmd *cobra.Command) {
-	cmd.Flags().BoolVar(&verboseConnectivityVerification, "verbose", false, "produce verbose logs during connectivity verification")
-	cmd.Flags().UintVar(&operationTimeout, "operation-timeout", 240, "operation timeout for K8s API calls")
-	cmd.Flags().UintVar(&connectionTimeout, "connection-timeout", 60, "timeout in seconds per connection attempt")
-	cmd.Flags().UintVar(&connectionAttempts, "connection-attempts", 2, "maximum number of connection attempts")
-	cmd.Flags().StringVar(&junitReport, "junit-report", "", "XML report path and report name")
-	cmd.Flags().StringVar(&submarinerNamespace, "submariner-namespace", constants.OperatorNamespace,
-		"namespace in which submariner is deployed")
-	cmd.Flags().StringVar(&verifyOnly, "only", strings.Join(getAllVerifyKeys(), ","), "comma separated verifications to be performed")
-	cmd.Flags().BoolVar(&disruptiveTests, "disruptive-tests", false, "enable disruptive verifications like gateway-failover")
-	cmd.Flags().UintVar(&packetSize, "packet-size", 3000, "set packet size used in TCP connectivity tests")
-	cmd.Flags().BoolVar(&skipConnectorSrcIPCheck, "skip-src-ip-check", false, "skip source IP verification for connector pod traffic")
+	cmd.Flags().BoolVar(&verifyFlags.VerboseConnectivityVerification, "verbose", false,
+		"produce verbose logs during connectivity verification")
+	cmd.Flags().UintVar(&verifyFlags.OperationTimeout, "operation-timeout", 240, "operation timeout for K8s API calls")
+	cmd.Flags().UintVar(&verifyFlags.ConnectionTimeout, "connection-timeout", 60, "timeout in seconds per connection attempt")
+	cmd.Flags().UintVar(&verifyFlags.ConnectionAttempts, "connection-attempts", 2, "maximum number of connection attempts")
+	cmd.Flags().StringVar(&verifyFlags.JunitReport, "junit-report", "", "XML report path and report name")
+	cmd.Flags().StringVar(&verifyFlags.VerifyOnly, "only", strings.Join(getAllVerifyKeys(), ","),
+		"comma separated verifications to be performed")
+	cmd.Flags().BoolVar(&verifyFlags.DisruptiveTests, "disruptive-tests", false, "enable disruptive verifications like gateway-failover")
+	cmd.Flags().UintVar(&verifyFlags.PacketSize, "packet-size", 3000, "set packet size used in TCP connectivity tests")
+	cmd.Flags().BoolVar(&verifyFlags.SkipConnectorSrcIPCheck, "skip-src-ip-check", false,
+		"skip source IP verification for connector pod traffic")
 }
 
 func isNonInteractive(err error) bool {
@@ -159,15 +153,15 @@ func isNonInteractive(err error) bool {
 }
 
 func checkVerifyArguments(cmd *cobra.Command, args []string) error {
-	if connectionAttempts < 1 {
+	if verifyFlags.ConnectionAttempts < 1 {
 		return errors.New("--connection-attempts must be >=1")
 	}
 
-	if connectionTimeout < 20 {
+	if verifyFlags.ConnectionTimeout < 20 {
 		return errors.New("--connection-timeout must be >=20")
 	}
 
-	if _, _, err := getVerifySpecLabels(verifyOnly, true); err != nil {
+	if _, _, err := getVerifySpecLabels(verifyFlags.VerifyOnly, true); err != nil {
 		return err
 	}
 
@@ -180,9 +174,9 @@ func checkVerifyArguments(cmd *cobra.Command, args []string) error {
 }
 
 var verifyE2ESpecLabels = map[string]string{
-	component.Connectivity: fmt.Sprintf("%s&&!%s", submlabels.Dataplane, globalnetLabel),
+	component.Connectivity: fmt.Sprintf("%s&&!%s", submlabels.Dataplane, submlabels.Globalnet),
 	fmt.Sprintf("%s-%s", framework.BasicTestLabel, component.Connectivity): fmt.Sprintf("%s&&%s&&!%s",
-		submlabels.Dataplane, framework.BasicTestLabel, globalnetLabel),
+		submlabels.Dataplane, framework.BasicTestLabel, submlabels.Globalnet),
 	component.ServiceDiscovery: lhlabels.ServiceDiscovery,
 	"compliance":               submlabels.Compliance,
 }
@@ -279,12 +273,12 @@ func getVerifySpecLabels(csv string, includeDisruptive bool) ([]string, []string
 }
 
 func determineSpecLabelsToVerify() []string {
-	disruptive := extractDisruptiveVerifications(verifyOnly)
-	if !disruptiveTests && len(disruptive) > 0 {
+	disruptive := extractDisruptiveVerifications(verifyFlags.VerifyOnly)
+	if !verifyFlags.DisruptiveTests && len(disruptive) > 0 {
 		err := survey.AskOne(&survey.Confirm{
 			Message: fmt.Sprintf("You have specified disruptive verifications (%s). Are you sure you want to run them?",
 				strings.Join(disruptive, ",")),
-		}, &disruptiveTests)
+		}, &verifyFlags.DisruptiveTests)
 		if err != nil {
 			if isNonInteractive(err) {
 				fmt.Printf(`
@@ -296,7 +290,7 @@ prompt for confirmation therefore you must specify --enable-disruptive to run th
 		}
 	}
 
-	labels, verifications, err := getVerifySpecLabels(verifyOnly, disruptiveTests)
+	labels, verifications, err := getVerifySpecLabels(verifyFlags.VerifyOnly, verifyFlags.DisruptiveTests)
 	if err != nil {
 		exit.WithMessage(err.Error())
 	}
@@ -304,65 +298,4 @@ prompt for confirmation therefore you must specify --enable-disruptive to run th
 	fmt.Printf("Performing the following verifications: %s\n", strings.Join(verifications, ", "))
 
 	return labels
-}
-
-func runVerify(fromClusterInfo, toClusterInfo, extraClusterInfo *cluster.Info, namespace string, specLabels []string) error {
-	framework.RestConfigs = []*rest.Config{fromClusterInfo.RestConfig, toClusterInfo.RestConfig}
-	framework.TestContext.ClusterIDs = []string{fromClusterInfo.Name, toClusterInfo.Name}
-	framework.TestContext.KubeContexts = []string{fromClusterInfo.Name, toClusterInfo.Name}
-
-	if extraClusterInfo != nil {
-		framework.RestConfigs = append(framework.RestConfigs, extraClusterInfo.RestConfig)
-		framework.TestContext.ClusterIDs = append(framework.TestContext.ClusterIDs, extraClusterInfo.Name)
-		framework.TestContext.KubeContexts = append(framework.TestContext.KubeContexts, extraClusterInfo.Name)
-	}
-
-	framework.TestContext.OperationTimeout = operationTimeout
-	framework.TestContext.ConnectionTimeout = connectionTimeout
-	framework.TestContext.ConnectionAttempts = connectionAttempts
-	framework.TestContext.SubmarinerNamespace = namespace
-	framework.TestContext.PacketSize = packetSize
-	framework.TestContext.SkipConnectorSrcIPCheck = skipConnectorSrcIPCheck
-
-	// This field isn't used for verify so set it to some non-empty string to bypass shipyard's validation checking.
-	framework.TestContext.KubeConfig = "not-used"
-
-	suiteConfig, reporterConfig := ginkgo.GinkgoConfiguration()
-	suiteConfig.RandomSeed = 1
-	suiteConfig.LabelFilter = strings.Join(specLabels, "||")
-
-	if fromClusterInfo.Submariner.Spec.GlobalCIDR != "" {
-		suiteConfig.LabelFilter = strings.ReplaceAll(suiteConfig.LabelFilter, "!"+globalnetLabel, globalnetLabel)
-	}
-
-	reporterConfig.Verbose = true
-	reporterConfig.JUnitReport = junitReport
-
-	if verboseConnectivityVerification {
-		framework.SetStatusFunction(func(text string, _ ...func()) {
-			fmt.Println(time.Now().Format(time.StampMilli) + ": " + text)
-		})
-	} else {
-		framework.SetStatusFunction(func(_ string, _ ...func()) {
-		})
-	}
-
-	framework.SetFailFunction(func(text string, _ ...int) {
-		ginkgo.Fail(text)
-	})
-
-	framework.SetUserAgentFunction(func() string {
-		return fmt.Sprintf("%v -- %v", rest.DefaultKubernetesUserAgent(), ginkgo.CurrentSpecReport().FullText())
-	})
-
-	gomega.RegisterFailHandler(ginkgo.Fail)
-
-	framework.BeforeSuite()
-	defer framework.RunCleanupActions()
-
-	if !ginkgo.RunSpecs(&testing.T{}, "Submariner E2E suite", suiteConfig, reporterConfig) {
-		return errors.New("E2E failed")
-	}
-
-	return nil
 }
