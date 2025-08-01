@@ -24,11 +24,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
+	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/version"
@@ -63,6 +65,12 @@ func init() {
 	log.SetLogger(logr.New(log.NullLogSink{}))
 }
 
+var NewInputPrompt = func(from survey.Prompt) survey.Prompt {
+	return from
+}
+
+var NewReporter = cli.NewReporter
+
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:     filepath.Base(os.Args[0]),
@@ -81,24 +89,24 @@ func Execute() {
 
 var imageOverrides = []string{}
 
-func addImageOverrideFlag(flags *pflag.FlagSet) {
-	flags.StringSliceVar(&imageOverrides, "image-override", nil, "override component image")
+func addImageOverrideFlag(flags *pflag.FlagSet, value *[]string) {
+	flags.StringSliceVar(value, "image-override", nil, "override component image")
 }
 
 //nolint:wrapcheck // No need to wrap error here
-func checkImageOverrides(_ *cobra.Command, _ []string) error {
-	_, err := cluster.MergeImageOverrides(make(map[string]string), imageOverrides)
+func checkImageOverrides(overrides []string) error {
+	_, err := cluster.MergeImageOverrides(make(map[string]string), overrides)
 	return err
 }
 
 var httpProxyConfig httpproxy.Config
 
-func addHTTPProxyFlags(flags *pflag.FlagSet) {
-	flags.StringVar(&httpProxyConfig.HTTPProxy, "http-proxy", "",
+func addHTTPProxyFlags(flags *pflag.FlagSet, config *httpproxy.Config) {
+	flags.StringVar(&config.HTTPProxy, "http-proxy", "",
 		"Proxy URL to use for HTTP requests. Corresponds to the HTTP_PROXY environment variable.")
-	flags.StringVar(&httpProxyConfig.HTTPSProxy, "https-proxy", "",
+	flags.StringVar(&config.HTTPSProxy, "https-proxy", "",
 		"Proxy URL to use for HTTPS requests. Corresponds to the HTTPS_PROXY environment variable.")
-	flags.StringVar(&httpProxyConfig.NoProxy, "no-proxy", "",
+	flags.StringVar(&config.NoProxy, "no-proxy", "",
 		"Comma-separated string specifying hosts that should be excluded from HTTP proxying. "+
 			"Corresponds to the NO_PROXY environment variable.")
 }

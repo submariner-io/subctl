@@ -61,7 +61,7 @@ var deployBroker = &cobra.Command{
 func init() {
 	addDeployBrokerFlags(deployBroker.Flags())
 	deployRestConfigProducer.SetupFlags(deployBroker.Flags())
-	addHTTPProxyFlags(deployBroker.Flags())
+	addHTTPProxyFlags(deployBroker.Flags(), &deployflags.HTTPProxyConfig)
 	rootCmd.AddCommand(deployBroker)
 }
 
@@ -97,7 +97,6 @@ func addDeployBrokerFlags(flags *pflag.FlagSet) {
 
 func deployBrokerInContext(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 	deployflags.BrokerNamespace = namespace
-	deployflags.HTTPProxyConfig = httpProxyConfig
 
 	if err := deploy.Broker(&deployflags, clusterInfo.ClientProducer, status); err != nil {
 		return err //nolint:wrapcheck // No need to wrap errors here.
