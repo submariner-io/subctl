@@ -752,7 +752,7 @@ func testRunOnSelectedPrefixedContext() {
 				Cluster: prefixClusterName,
 			}
 
-			prefixConfigFile = createKubeConfigFile(clientConfig)
+			prefixConfigFile = clientfake.CreateKubeConfigFile(clientConfig)
 		})
 
 		JustBeforeEach(func() {
@@ -995,7 +995,7 @@ func newTestDriver() *testDriver {
 
 	JustBeforeEach(func() {
 		if t.setupKubeConfig {
-			os.Setenv("KUBECONFIG", createKubeConfigFile(t.clientConfig))
+			os.Setenv("KUBECONFIG", clientfake.CreateKubeConfigFile(t.clientConfig))
 		}
 
 		if t.submariner != nil {
@@ -1015,17 +1015,4 @@ func newTestDriver() *testDriver {
 func (t *testDriver) noopPerContext(_ *cluster.Info, _ string, _ reporter.Interface) error {
 	t.actualProcessed++
 	return nil
-}
-
-func createKubeConfigFile(clientConfig *api.Config) string {
-	file, err := os.CreateTemp("", "subctl-unit-test")
-	Expect(err).To(Succeed())
-
-	DeferCleanup(func() {
-		_ = os.Remove(file.Name())
-	})
-
-	Expect(clientcmd.WriteToFile(*clientConfig, file.Name())).To(Succeed())
-
-	return file.Name()
 }

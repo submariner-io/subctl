@@ -19,11 +19,17 @@ limitations under the License.
 package fake
 
 import (
+	"os"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"github.com/submariner-io/subctl/pkg/client"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 	controllerfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -39,4 +45,17 @@ func New() *client.DefaultProducer {
 	}
 
 	return p
+}
+
+func CreateKubeConfigFile(clientConfig *api.Config) string {
+	file, err := os.CreateTemp("", "subctl-unit-test")
+	Expect(err).To(Succeed())
+
+	DeferCleanup(func() {
+		_ = os.Remove(file.Name())
+	})
+
+	Expect(clientcmd.WriteToFile(*clientConfig, file.Name())).To(Succeed())
+
+	return file.Name()
 }
