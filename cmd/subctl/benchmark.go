@@ -66,7 +66,7 @@ func init() {
 	benchmarkCmd.AddCommand(benchmarkLatencyCmd)
 	rootCmd.AddCommand(benchmarkCmd)
 
-	addImageOverrideFlag(benchmarkCmd.PersistentFlags())
+	addImageOverrideFlag(benchmarkCmd.PersistentFlags(), &imageOverrides)
 	framework.AddBeforeSuite(setupTestFrameworkBeforeSuite)
 }
 
@@ -77,7 +77,7 @@ func addBenchmarkFlags(cmd *cobra.Command) {
 }
 
 func checkBenchmarkArguments(cmd *cobra.Command, args []string) error {
-	err := checkImageOverrides(cmd, args)
+	err := checkImageOverrides(imageOverrides)
 	if err != nil {
 		return err
 	}

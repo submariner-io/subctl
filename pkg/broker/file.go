@@ -82,7 +82,7 @@ func WriteInfoToFile(restConfig *rest.Config, brokerNamespace, brokerURL string,
 		data.CustomDomains = &customDomains
 	}
 
-	return status.Error(data.writeToFile(InfoFileName), "error saving broker info")
+	return status.Error(data.WriteToFile(InfoFileName), "error saving broker info")
 }
 
 func ReadInfoFromFile(filename string) (*Info, error) {

@@ -115,7 +115,7 @@ func init() {
 	addVerifyFlags(verifyCmd)
 	rootCmd.AddCommand(verifyCmd)
 
-	addImageOverrideFlag(verifyCmd.PersistentFlags())
+	addImageOverrideFlag(verifyCmd.PersistentFlags(), &imageOverrides)
 	framework.AddBeforeSuite(setupTestFrameworkBeforeSuite)
 }
 
@@ -165,7 +165,7 @@ func checkVerifyArguments(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	err := checkImageOverrides(cmd, args)
+	err := checkImageOverrides(imageOverrides)
 	if err != nil {
 		return err
 	}

@@ -69,7 +69,7 @@ func init() {
 	upgradeCmd.Flags().StringVar(&upgradeSubmarinerVersion, "to-submariner-version", "", "the version of Submariner to which to upgrade")
 	_ = upgradeCmd.Flags().MarkHidden("to-submariner-version")
 	upgradeRestConfigProducer.SetupFlags(upgradeCmd.Flags())
-	addHTTPProxyFlags(upgradeCmd.Flags())
+	addHTTPProxyFlags(upgradeCmd.Flags(), &httpProxyConfig)
 	rootCmd.AddCommand(upgradeCmd)
 }
 

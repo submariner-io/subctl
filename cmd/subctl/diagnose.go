@@ -73,7 +73,7 @@ var (
 		Use:   "deployment",
 		Short: "Check the Submariner deployment",
 		Long:  "This command checks that the Submariner components are properly deployed and running with no overlapping CIDRs.",
-		Args:  checkImageOverrides,
+		Args:  checkDiagnoseArguments,
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				diagnoseRestConfigProducer.RunOnAllContexts(func(clusterInfo *cluster.Info, ns string, status reporter.Interface) error {
@@ -101,7 +101,7 @@ var (
 		Use:   "kube-proxy-mode",
 		Short: "Check the kube-proxy mode",
 		Long:  "This command checks if the kube-proxy mode is supported by Submariner.",
-		Args:  checkImageOverrides,
+		Args:  checkDiagnoseArguments,
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
 				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(kubeProxyMode), cli.NewReporter()))
@@ -149,7 +149,7 @@ var (
 		Use:   "all",
 		Short: "Run all diagnostic checks (except those requiring two kubecontexts)",
 		Long:  "This command runs all diagnostic checks (except those requiring two kubecontexts) and reports any issues",
-		Args:  checkImageOverrides,
+		Args:  checkDiagnoseArguments,
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(diagnoseAll(cli.NewReporter()))
 		},
@@ -177,14 +177,14 @@ func init() {
 
 func addDiagnoseSubCommands() {
 	addDiagnoseFWConfigFlags(diagnoseAllCmd)
-	addImageOverrideFlag(diagnoseAllCmd.Flags())
+	addImageOverrideFlag(diagnoseAllCmd.Flags(), &imageOverrides)
 
 	diagnoseCmd.AddCommand(diagnoseCNICmd)
 	diagnoseCmd.AddCommand(diagnoseConnectionsCmd)
-	addImageOverrideFlag(diagnoseDeploymentCmd.Flags())
+	addImageOverrideFlag(diagnoseDeploymentCmd.Flags(), &imageOverrides)
 	diagnoseCmd.AddCommand(diagnoseDeploymentCmd)
 	diagnoseCmd.AddCommand(diagnoseVersionCmd)
-	addImageOverrideFlag(diagnoseKubeProxyModeCmd.Flags())
+	addImageOverrideFlag(diagnoseKubeProxyModeCmd.Flags(), &imageOverrides)
 	diagnoseCmd.AddCommand(diagnoseKubeProxyModeCmd)
 	diagnoseCmd.AddCommand(diagnoseAllCmd)
 	diagnoseCmd.AddCommand(diagnoseFirewallCmd)
@@ -198,9 +198,9 @@ func addDiagnoseFirewallSubCommands() {
 	diagnoseFirewallNatDiscoveryRestConfigProducer.SetupFlags(diagnoseFirewallNatDiscovery.Flags())
 	addDiagnoseFWConfigFlags(diagnoseFirewallNatDiscovery)
 
-	addImageOverrideFlag(diagnoseFirewallVxLANCmd.Flags())
-	addImageOverrideFlag(diagnoseFirewallTunnelCmd.Flags())
-	addImageOverrideFlag(diagnoseFirewallNatDiscovery.Flags())
+	addImageOverrideFlag(diagnoseFirewallVxLANCmd.Flags(), &imageOverrides)
+	addImageOverrideFlag(diagnoseFirewallTunnelCmd.Flags(), &imageOverrides)
+	addImageOverrideFlag(diagnoseFirewallNatDiscovery.Flags(), &imageOverrides)
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallVxLANCmd)
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallTunnelCmd)
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallNatDiscovery)
@@ -219,8 +219,12 @@ func firewallIntraVxLANConfig(clusterInfo *cluster.Info, namespace string, statu
 		clusterInfo, namespace, diagnoseFirewallOptions, status)
 }
 
+func checkDiagnoseArguments(cmd *cobra.Command, args []string) error {
+	return checkImageOverrides(imageOverrides)
+}
+
 func checkFirewallArguments(cmd *cobra.Command, args []string) error {
-	err := checkImageOverrides(cmd, args)
+	err := checkImageOverrides(imageOverrides)
 	if err != nil {
 		return err
 	}

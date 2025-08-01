@@ -43,7 +43,7 @@ type Info struct {
 	CustomDomains    *[]string      `json:"customDomains,omitempty"`
 }
 
-func (d *Info) writeToFile(filename string) error {
+func (d *Info) WriteToFile(filename string) error {
 	dataStr, err := d.encode()
 	if err != nil {
 		return err
