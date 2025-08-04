@@ -33,8 +33,9 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/lighthouse/test/e2e/discovery"
+	_ "github.com/submariner-io/lighthouse/test/e2e/discovery"
 	_ "github.com/submariner-io/lighthouse/test/e2e/framework"
+	lhlabels "github.com/submariner-io/lighthouse/test/e2e/labels"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/component"
@@ -42,9 +43,10 @@ import (
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/cluster"
-	"github.com/submariner-io/submariner/test/e2e/compliance"
-	"github.com/submariner-io/submariner/test/e2e/dataplane"
-	"github.com/submariner-io/submariner/test/e2e/redundancy"
+	_ "github.com/submariner-io/submariner/test/e2e/compliance"
+	_ "github.com/submariner-io/submariner/test/e2e/dataplane"
+	submlabels "github.com/submariner-io/submariner/test/e2e/labels"
+	_ "github.com/submariner-io/submariner/test/e2e/redundancy"
 	"k8s.io/client-go/rest"
 )
 
@@ -178,15 +180,15 @@ func checkVerifyArguments(cmd *cobra.Command, args []string) error {
 }
 
 var verifyE2ESpecLabels = map[string]string{
-	component.Connectivity: fmt.Sprintf("%s&&!%s", dataplane.TestLabel, globalnetLabel),
+	component.Connectivity: fmt.Sprintf("%s&&!%s", submlabels.Dataplane, globalnetLabel),
 	fmt.Sprintf("%s-%s", framework.BasicTestLabel, component.Connectivity): fmt.Sprintf("%s&&%s&&!%s",
-		dataplane.TestLabel, framework.BasicTestLabel, globalnetLabel),
-	component.ServiceDiscovery: discovery.TestLabel,
-	"compliance":               compliance.TestLabel,
+		submlabels.Dataplane, framework.BasicTestLabel, globalnetLabel),
+	component.ServiceDiscovery: lhlabels.ServiceDiscovery,
+	"compliance":               submlabels.Compliance,
 }
 
 var verifyE2EDisruptiveSpecLabels = map[string]string{
-	"gateway-failover": redundancy.TestLabel,
+	"gateway-failover": submlabels.Redundancy,
 }
 
 type verificationType int

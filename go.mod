@@ -18,7 +18,7 @@ require (
 	github.com/spf13/pflag v1.0.7
 	github.com/submariner-io/admiral v0.22.0-m0
 	github.com/submariner-io/cloud-prepare v0.22.0-m0
-	github.com/submariner-io/lighthouse v0.22.0-m0
+	github.com/submariner-io/lighthouse v0.22.0-m0.0.20250804124049-c11c354a394c
 	github.com/submariner-io/shipyard v0.22.0-m0
 	github.com/submariner-io/submariner v0.22.0-m0.0.20250803185413-042d407ab377
 	github.com/submariner-io/submariner-operator v0.22.0-m0.0.20250803183351-7b8ef0300d9a
