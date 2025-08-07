@@ -34,6 +34,11 @@ import (
 	"k8s.io/utils/set"
 )
 
+var NewSubmarinerClientset = func(config *rest.Config) (submarinerClientset.Interface, error) {
+	c, err := submarinerClientset.NewForConfig(config)
+	return c, err //nolint:wrapcheck // No need to wrap
+}
+
 type Info struct {
 	BrokerURL        string         `json:"brokerURL"`
 	ClientToken      *corev1.Secret `json:"clientToken,omitempty"`
@@ -82,7 +87,7 @@ func (d *Info) GetBrokerAdministratorConfig(ctx context.Context, insecure bool) 
 func (d *Info) getAndCheckBrokerAdministratorConfig(ctx context.Context, private, insecure bool) (*rest.Config, error) {
 	config := d.getBrokerAdministratorConfig(private, insecure)
 
-	submClientset, err := submarinerClientset.NewForConfig(config)
+	submClientset, err := NewSubmarinerClientset(config)
 	if err != nil {
 		return config, errors.Wrap(err, "error creating client")
 	}
