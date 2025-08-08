@@ -377,7 +377,7 @@ spec:
         - name: name
           value: ecosystem-cert-preflight-checks
         - name: bundle
-          value: quay.io/konflux-ci/tekton-catalog/task-ecosystem-cert-preflight-checks:0.2@sha256:f0c7632803ea659ae224ce16db6e0728ac1d79996c85bb43eea80a9de2a8a8d6
+          value: quay.io/konflux-ci/tekton-catalog/task-ecosystem-cert-preflight-checks:0.2@sha256:3de22bd7d3c274bc00f95a6bb5ed61559c3354aae74568d7afa364b896b513a6
         - name: kind
           value: task
         resolver: bundles
