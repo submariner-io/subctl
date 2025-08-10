@@ -31,19 +31,19 @@ ARG BASE_BRANCH
 ARG SOURCE
 ARG TARGETPLATFORM
 
-RUN adduser -r -l -u 1001010000 subctl
+RUN adduser -r -l -u 1001 -G root submariner
 
 WORKDIR /
 COPY --from=builder \
     ${SOURCE}/bin/${TARGETPLATFORM}/subctl \
     /usr/local/bin/
 
-RUN chown 0:0 /usr/local/bin/subctl && \
-    chmod 500 /usr/local/bin/subctl
+RUN chown -Rc submariner:root /usr/local/bin
+RUN chmod -Rc 775 /usr/local/bin
 
 COPY --from=builder ${SOURCE}/LICENSE /licenses/LICENSE
 
-USER 1001010000
+USER submariner
 
 ENTRYPOINT ["/usr/local/bin/subctl"]
 
