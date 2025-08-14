@@ -27,16 +27,8 @@ import (
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/scheme"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-func init() {
-	err := operatorv1alpha1.AddToScheme(scheme.Scheme)
-	if err != nil {
-		panic(err)
-	}
-}
 
 func Ensure(ctx context.Context,
 	client controllerClient.Client, namespace string, serviceDiscoverySpec *operatorv1alpha1.ServiceDiscoverySpec,
