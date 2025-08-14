@@ -71,7 +71,7 @@ func ServiceDiscoveryFromSpec(ctx context.Context, cc controllerClient.Client,
 func populateServiceDiscoverySpec(options *ServiceDiscoveryOptions, brokerInfo *broker.Info, brokerSecret *v1.Secret,
 	clustersetConfig clustersetip.Config, repositoryInfo *image.RepositoryInfo,
 ) *operatorv1alpha1.ServiceDiscoverySpec {
-	brokerURL := removeSchemaPrefix(brokerInfo.BrokerURL)
+	brokerURL := RemoveSchemaPrefix(brokerInfo.BrokerURL)
 
 	serviceDiscoverySpec := operatorv1alpha1.ServiceDiscoverySpec{
 		Repository:               options.Repository,
@@ -91,7 +91,7 @@ func populateServiceDiscoverySpec(options *ServiceDiscoveryOptions, brokerInfo *
 	}
 
 	if options.CoreDNSCustomConfigMap != "" {
-		namespace, name := getCustomCoreDNSParams(options.CoreDNSCustomConfigMap)
+		namespace, name := ParseCustomCoreDNSParam(options.CoreDNSCustomConfigMap)
 		serviceDiscoverySpec.CoreDNSCustomConfig = &operatorv1alpha1.CoreDNSCustomConfig{
 			ConfigMapName: name,
 			Namespace:     namespace,
