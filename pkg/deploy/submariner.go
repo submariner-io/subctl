@@ -73,11 +73,8 @@ func Submariner(ctx context.Context, clientProducer client.Producer, options *Su
 	submarinerSpec := populateSubmarinerSpec(options, brokerInfo, brokerSecret, pskSecret, netconfig, clustersetConfig, repositoryInfo)
 
 	err = SubmarinerFromSpec(ctx, clientProducer.ForGeneral(), submarinerSpec)
-	if err != nil {
-		return status.Error(err, "Submariner deployment failed")
-	}
 
-	return nil
+	return status.Error(err, "Submariner deployment failed")
 }
 
 func SubmarinerFromSpec(ctx context.Context, ctlClient controllerClient.Client, submarinerSpec *operatorv1alpha1.SubmarinerSpec) error {
@@ -89,7 +86,7 @@ func SubmarinerFromSpec(ctx context.Context, ctlClient controllerClient.Client, 
 func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info, brokerSecret *v1.Secret, pskSecret *v1.Secret,
 	netconfig globalnet.Config, clustersetConfig clustersetip.Config, repositoryInfo *image.RepositoryInfo,
 ) *operatorv1alpha1.SubmarinerSpec {
-	brokerURL := removeSchemaPrefix(brokerInfo.BrokerURL)
+	brokerURL := RemoveSchemaPrefix(brokerInfo.BrokerURL)
 
 	// For backwards compatibility, the connection information is populated through the secret and individual components
 	// TODO skitt This will be removed in the release following 0.12
@@ -132,7 +129,7 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 	}
 
 	if options.CoreDNSCustomConfigMap != "" {
-		namespace, name := getCustomCoreDNSParams(options.CoreDNSCustomConfigMap)
+		namespace, name := ParseCustomCoreDNSParam(options.CoreDNSCustomConfigMap)
 		submarinerSpec.CoreDNSCustomConfig = &operatorv1alpha1.CoreDNSCustomConfig{
 			ConfigMapName: name,
 			Namespace:     namespace,
@@ -146,7 +143,7 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 	return submarinerSpec
 }
 
-func getCustomCoreDNSParams(corednsCustomConfigMap string) (string, string) {
+func ParseCustomCoreDNSParam(corednsCustomConfigMap string) (string, string) {
 	var namespace, name string
 
 	if corednsCustomConfigMap != "" {
@@ -162,7 +159,7 @@ func getCustomCoreDNSParams(corednsCustomConfigMap string) (string, string) {
 	return namespace, name
 }
 
-func removeSchemaPrefix(brokerURL string) string {
+func RemoveSchemaPrefix(brokerURL string) string {
 	if idx := strings.Index(brokerURL, "://"); idx >= 0 {
 		// Submariner doesn't work with a schema prefix
 		brokerURL = brokerURL[idx+3:]
