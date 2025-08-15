@@ -25,7 +25,6 @@ import (
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/util"
 	v1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -34,7 +33,7 @@ import (
 func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string, namespaceLabels map[string]string) (bool, error) {
 	ns := &v1.Namespace{ObjectMeta: v1meta.ObjectMeta{Name: namespace, Labels: namespaceLabels}}
 
-	_, err := util.CreateOrUpdate(ctx, resource.ForNamespace(kubeClient), ns, func(ns *v1.Namespace) (*v1.Namespace, error) {
+	result, err := util.CreateOrUpdate(ctx, resource.ForNamespace(kubeClient), ns, func(ns *v1.Namespace) (*v1.Namespace, error) {
 		if ns.Labels == nil {
 			ns.Labels = map[string]string{}
 		}
@@ -46,11 +45,5 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace stri
 		return ns, nil
 	})
 
-	if err == nil {
-		return true, nil
-	} else if apierrors.IsAlreadyExists(err) {
-		return false, nil
-	}
-
-	return false, errors.Wrap(err, "error creating Namespace")
+	return result == util.OperationResultCreated, errors.Wrap(err, "error creating Namespace")
 }
