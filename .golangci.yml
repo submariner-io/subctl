@@ -9,6 +9,13 @@ linters:
           deny:
             - pkg: github.com/mcuadros/go-version
               desc: Use coreos/go-semver instead
+    errcheck:
+      exclude-functions:
+        - encoding/json.Marshal
+        - encoding/json.MarshalIndent
+    errchkjson:
+      check-error-free-encoding: true
+      report-no-exported: true
     gocritic:
       disabled-checks:
         - ifElseChain
