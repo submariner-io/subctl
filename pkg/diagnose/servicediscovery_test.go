@@ -73,11 +73,11 @@ func testExportedServices() {
 			Status: mcsv1a1.ServiceExportStatus{
 				Conditions: []metav1.Condition{
 					{
-						Type:   mcsv1a1.ServiceExportValid,
+						Type:   string(mcsv1a1.ServiceExportConditionValid),
 						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   lhconstants.ServiceExportReady,
+						Type:   string(mcsv1a1.ServiceExportConditionReady),
 						Status: metav1.ConditionTrue,
 					},
 				},
@@ -139,8 +139,8 @@ func testExportedServices() {
 
 		Context("but the ServiceExport Valid condition isn't present", func() {
 			BeforeEach(func() {
-				meta.RemoveStatusCondition(&serviceExport.Status.Conditions, mcsv1a1.ServiceExportValid)
-				meta.RemoveStatusCondition(&serviceExport.Status.Conditions, lhconstants.ServiceExportReady)
+				meta.RemoveStatusCondition(&serviceExport.Status.Conditions, string(mcsv1a1.ServiceExportConditionValid))
+				meta.RemoveStatusCondition(&serviceExport.Status.Conditions, string(mcsv1a1.ServiceExportConditionReady))
 			})
 
 			It("should fail", func() {
@@ -151,8 +151,9 @@ func testExportedServices() {
 
 		Context("but the ServiceExport Valid condition status is False", func() {
 			BeforeEach(func() {
-				meta.FindStatusCondition(serviceExport.Status.Conditions, mcsv1a1.ServiceExportValid).Status = metav1.ConditionFalse
-				meta.RemoveStatusCondition(&serviceExport.Status.Conditions, lhconstants.ServiceExportReady)
+				meta.FindStatusCondition(serviceExport.Status.Conditions,
+					string(mcsv1a1.ServiceExportConditionValid)).Status = metav1.ConditionFalse
+				meta.RemoveStatusCondition(&serviceExport.Status.Conditions, string(mcsv1a1.ServiceExportConditionReady))
 			})
 
 			It("should fail", func() {
@@ -163,7 +164,8 @@ func testExportedServices() {
 
 		Context("but the ServiceExport Ready condition status is False", func() {
 			BeforeEach(func() {
-				meta.FindStatusCondition(serviceExport.Status.Conditions, lhconstants.ServiceExportReady).Status = metav1.ConditionFalse
+				meta.FindStatusCondition(serviceExport.Status.Conditions,
+					string(mcsv1a1.ServiceExportConditionReady)).Status = metav1.ConditionFalse
 			})
 
 			It("should fail", func() {
@@ -206,7 +208,8 @@ func testExportedServices() {
 
 	When("a ServiceExport exists but the Service resource is missing", func() {
 		JustBeforeEach(func() {
-			meta.FindStatusCondition(serviceExport.Status.Conditions, mcsv1a1.ServiceExportValid).Status = metav1.ConditionFalse
+			meta.FindStatusCondition(serviceExport.Status.Conditions,
+				string(mcsv1a1.ServiceExportConditionValid)).Status = metav1.ConditionFalse
 			t.createServiceExport(serviceExport)
 		})
 

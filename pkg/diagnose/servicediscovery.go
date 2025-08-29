@@ -75,7 +75,7 @@ func checkServiceExports(ctx context.Context, clusterInfo *cluster.Info, status 
 		_, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Services(se.Namespace).Get(ctx, se.Name, metav1.GetOptions{})
 		if apierrors.IsNotFound(err) {
 			status.Warning("Exported Service \"%s/%s\" not found", se.Namespace, se.Name)
-			verifyStatusCondition(se, mcsv1a1.ServiceExportValid, metav1.ConditionFalse, status)
+			verifyStatusCondition(se, mcsv1a1.ServiceExportConditionValid, metav1.ConditionFalse, status)
 
 			continue
 		}
@@ -85,12 +85,12 @@ func checkServiceExports(ctx context.Context, clusterInfo *cluster.Info, status 
 			return
 		}
 
-		if !verifyStatusCondition(se, mcsv1a1.ServiceExportValid, metav1.ConditionTrue, status) {
+		if !verifyStatusCondition(se, mcsv1a1.ServiceExportConditionValid, metav1.ConditionTrue, status) {
 			continue
 		}
 
-		verifyStatusCondition(se, lhconstants.ServiceExportReady, metav1.ConditionTrue, status)
-		verifyStatusCondition(se, mcsv1a1.ServiceExportConflict, metav1.ConditionFalse, status)
+		verifyStatusCondition(se, mcsv1a1.ServiceExportConditionReady, metav1.ConditionTrue, status)
+		verifyStatusCondition(se, mcsv1a1.ServiceExportConditionConflict, metav1.ConditionFalse, status)
 
 		serviceImportClient := clusterInfo.ClientProducer.ForDynamic().Resource(serviceImportGVR())
 
@@ -152,12 +152,12 @@ func localServiceImportExists(ctx context.Context, siClient dynamic.Namespaceabl
 	return false
 }
 
-func verifyStatusCondition(se *mcsv1a1.ServiceExport, condType string, condStatus metav1.ConditionStatus,
+func verifyStatusCondition(se *mcsv1a1.ServiceExport, condType mcsv1a1.ServiceExportConditionType, condStatus metav1.ConditionStatus,
 	status reporter.Interface,
 ) bool {
 	for i := range se.Status.Conditions {
 		condition := &se.Status.Conditions[i]
-		if condition.Type == condType || (condType == lhconstants.ServiceExportReady && condition.Type == "Synced") {
+		if condition.Type == string(condType) {
 			if condition.Status != condStatus {
 				status.Failure(
 					"The ServiceExport %q status condition type for \"%s/%s\" is not satisfied. Expected condition status %q. Actual:\n%s",
