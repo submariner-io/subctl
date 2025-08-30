@@ -247,8 +247,8 @@ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81P
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-github.com/submariner-io/admiral v0.22.0-m2 h1:xqTAG4K3KZK/njZzFhHvHSUmySFccH5tjt7eZyAQbS4=
-github.com/submariner-io/admiral v0.22.0-m2/go.mod h1:hUo1VXXN4u1MUF0S6KS4Zro4NsjvGo7Rb0QjhGOhHU0=
+github.com/submariner-io/admiral v0.22.0-m2.0.20250922120533-cf7a419a6959 h1:mh952jf9nCbK5xrSC5zmjTR6Vihti3JNh8M/jXMKfNw=
+github.com/submariner-io/admiral v0.22.0-m2.0.20250922120533-cf7a419a6959/go.mod h1:hUo1VXXN4u1MUF0S6KS4Zro4NsjvGo7Rb0QjhGOhHU0=
 github.com/submariner-io/cloud-prepare v0.22.0-m2 h1:le2iU8OsuCtJNo15jZfOCalZV2+hWuI9HlzX6MLvyB0=
 github.com/submariner-io/cloud-prepare v0.22.0-m2/go.mod h1:ALnO8V+FRFgiN6dmvdzb9a9G/bhucAIDLEvuNSolZQQ=
 github.com/submariner-io/lighthouse v0.22.0-m2 h1:1k9x6yu+a6l71GMBKsiElGDiZIGm7OxGhMOX6slqYnA=
@@ -257,8 +257,8 @@ github.com/submariner-io/shipyard v0.22.0-m2 h1:gP9tcFtbgbIML59F7vFShl9jbjdzVDic
 github.com/submariner-io/shipyard v0.22.0-m2/go.mod h1:ZwubwufiF8aZ/jetFWWC/SuIOagKgq8G6pFePYB5t6w=
 github.com/submariner-io/submariner v0.22.0-m2 h1:C5hOsedKZ9hMIqpCjb88qLfVJMoLWaPeh8N7K04hK90=
 github.com/submariner-io/submariner v0.22.0-m2/go.mod h1:LX+5vD/1udyGMQdwECDfD/cMw/eZT43z02oNHmRQXtQ=
-github.com/submariner-io/submariner-operator v0.22.0-m2.0.20251006131426-b9ae4a931715 h1:k7YC+4dQ1OEaeE4Pik+gCijgNJlkzU6lZBc+cyZzPlM=
-github.com/submariner-io/submariner-operator v0.22.0-m2.0.20251006131426-b9ae4a931715/go.mod h1:xjeA1+bTFxOUUapVw4KLgoIa+ydKW7yPtI3Zq7wk3Mc=
+github.com/submariner-io/submariner-operator v0.22.0-m2.0.20251006173019-fe8429dd6c83 h1:Kef4Mp9oxEgKkgGf9224POFXiFsNKmN9U/yxqBjALFw=
+github.com/submariner-io/submariner-operator v0.22.0-m2.0.20251006173019-fe8429dd6c83/go.mod h1:Rit7h62Me4e/daz7HTOfguykbDjkhGjIUR1ZhgKgQkk=
 github.com/urfave/cli/v2 v2.4.0 h1:m2pxjjDFgDxSPtO8WSdbndj17Wu2y8vOT86wE/tjr+I=
 github.com/urfave/cli/v2 v2.4.0/go.mod h1:NX9W0zmTvedE5oDoOMs2RTC8RvdK98NTYZE5LbaEYPg=
 github.com/uw-labs/lichen v0.1.7 h1:SDNE3kThhhtP70XfLN/C2bqaT9Epefg1i10lhWYIG4g=

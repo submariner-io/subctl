@@ -31,6 +31,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/serviceaccount"
 	brokeradmin "github.com/submariner-io/submariner-operator/config/broker/broker-admin"
 	brokerclient "github.com/submariner-io/submariner-operator/config/broker/broker-client"
+	submarineroperator "github.com/submariner-io/submariner-operator/config/rbac/submariner-operator"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 	"github.com/submariner-io/submariner-operator/pkg/lighthouse"
 	"github.com/submariner-io/submariner-operator/pkg/names"
@@ -128,6 +129,16 @@ func createBrokerAdministratorRoleAndSA(ctx context.Context, kubeClient kubernet
 	_, err = CreateOrUpdateBrokerAdminRoleBinding(ctx, kubeClient, inNamespace)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return errors.Wrap(err, "error creating the broker rolebinding")
+	}
+
+	_, err = role.EnsureFromYAML(ctx, kubeClient, inNamespace, submarineroperator.CertsRole)
+	if err != nil {
+		return errors.Wrap(err, "error provisioning certs Role resource")
+	}
+
+	_, err = rolebinding.EnsureFromYAML(ctx, kubeClient, inNamespace, submarineroperator.CertsRoleBinding)
+	if err != nil {
+		return errors.Wrap(err, "error provisioning certs RoleBinding resource")
 	}
 
 	return nil
