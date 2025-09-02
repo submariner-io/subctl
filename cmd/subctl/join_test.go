@@ -87,6 +87,7 @@ func testRunJoinCommand() {
 				Expect(options.HealthCheckEnabled).To(BeTrue())
 				Expect(options.BrokerK8sSecure).To(BeTrue())
 				Expect(options.EnableClustersetIP).To(BeFalse())
+				Expect(options.DisableIntraClusterConnectivity).To(BeFalse())
 				Expect(options.NATTPort).To(Equal(4500))
 				Expect(options.GlobalnetClusterSize).To(Equal(uint(0)))
 				Expect(options.HealthCheckInterval).To(Equal(uint64(1)))
@@ -129,7 +130,8 @@ func testRunJoinCommand() {
 				"--version=0.21.0", "--cable-driver=vxlan", "--coredns-custom-configmap=my-map",
 				"--clusterset-ip-cidr=10.0.0.0/32", "--custom-domains=domain1,domain2",
 				"--image-override=submariner-gateway=http://localhost", "--broker-url="+otherBrokerURL,
-				"--http-proxy=http://my-proxy", "--https-proxy=https://my-proxy", "--no-proxy=foo")
+				"--http-proxy=http://my-proxy", "--https-proxy=https://my-proxy", "--no-proxy=foo",
+				"--disable-intra-cluster-connectivity")
 		})
 
 		It("should invoke join with the specified values", func() {
@@ -149,6 +151,7 @@ func testRunJoinCommand() {
 				Expect(options.HealthCheckEnabled).To(BeFalse())
 				Expect(options.BrokerK8sSecure).To(BeFalse())
 				Expect(options.EnableClustersetIP).To(BeTrue())
+				Expect(options.DisableIntraClusterConnectivity).To(BeTrue())
 				Expect(options.NATTPort).To(Equal(1234))
 				Expect(options.GlobalnetClusterSize).To(Equal(uint(16)))
 				Expect(options.HealthCheckInterval).To(Equal(uint64(1)))
