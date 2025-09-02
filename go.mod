@@ -14,8 +14,8 @@ require (
 	github.com/onsi/gomega v1.38.0
 	github.com/openshift/api v0.0.0-20230714214528-de6ad7979b00
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.9.1
-	github.com/spf13/pflag v1.0.7
+	github.com/spf13/cobra v1.10.1
+	github.com/spf13/pflag v1.0.9
 	github.com/submariner-io/admiral v0.22.0-m1
 	github.com/submariner-io/cloud-prepare v0.22.0-m1
 	github.com/submariner-io/lighthouse v0.22.0-m1
@@ -32,7 +32,7 @@ require (
 	k8s.io/client-go v0.33.4
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 	sigs.k8s.io/controller-runtime v0.21.0
-	sigs.k8s.io/mcs-api v0.2.1-0.20250724073829-5b846203867b
+	sigs.k8s.io/mcs-api v0.3.0
 	sigs.k8s.io/yaml v1.5.0
 )
 
