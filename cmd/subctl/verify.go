@@ -41,15 +41,16 @@ import (
 )
 
 type VerifyOptions struct {
-	VerboseConnectivityVerification bool
-	DisruptiveTests                 bool
-	SkipConnectorSrcIPCheck         bool
-	OperationTimeout                uint
-	ConnectionTimeout               uint
-	ConnectionAttempts              uint
-	PacketSize                      uint
-	JunitReport                     string
-	VerifyOnly                      string
+	VerboseConnectivityVerification   bool
+	DisruptiveTests                   bool
+	SkipConnectorSrcIPCheck           bool
+	SkipIntraClusterConnectivityTests bool
+	OperationTimeout                  uint
+	ConnectionTimeout                 uint
+	ConnectionAttempts                uint
+	PacketSize                        uint
+	JunitReport                       string
+	VerifyOnly                        string
 }
 
 var RunVerify func(options VerifyOptions, fromClusterInfo, toClusterInfo, extraClusterInfo *cluster.Info,
@@ -132,6 +133,9 @@ func addVerifyFlags(cmd *cobra.Command) {
 	cmd.Flags().UintVar(&verifyFlags.PacketSize, "packet-size", 3000, "set packet size used in TCP connectivity tests")
 	cmd.Flags().BoolVar(&verifyFlags.SkipConnectorSrcIPCheck, "skip-src-ip-check", false,
 		"skip source IP verification for connector pod traffic")
+	cmd.Flags().BoolVar(&verifyFlags.SkipIntraClusterConnectivityTests,
+		"skip-intra-cluster-connectivity-tests", false,
+		"skip tests that verify intra-cluster connectivity")
 }
 
 func isNonInteractive(err error) bool {
