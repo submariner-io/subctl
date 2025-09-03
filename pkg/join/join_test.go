@@ -56,26 +56,27 @@ func testDeployment() {
 
 	BeforeEach(func() {
 		t.options = join.Options{
-			PreferredServer:               true,
-			ForceUDPEncaps:                true,
-			NATTraversal:                  true,
-			IPSecDebug:                    true,
-			SubmarinerDebug:               true,
-			OperatorDebug:                 true,
-			AirGappedDeployment:           true,
-			LoadBalancerEnabled:           true,
-			HealthCheckEnabled:            true,
-			BrokerK8sSecure:               false,
-			GlobalnetEnabled:              true,
-			NATTPort:                      123,
-			HealthCheckInterval:           1,
-			HealthCheckMaxPacketLossCount: 5,
-			ClusterID:                     "east",
-			ServiceCIDR:                   "101.42.0.0/16",
-			ClusterCIDR:                   "201.67.0.0/16",
-			CableDriver:                   "vxlan",
-			CoreDNSCustomConfigMap:        "my-map",
-			CustomDomains:                 []string{"my-domain"},
+			PreferredServer:                 true,
+			ForceUDPEncaps:                  true,
+			NATTraversal:                    true,
+			IPSecDebug:                      true,
+			SubmarinerDebug:                 true,
+			OperatorDebug:                   true,
+			AirGappedDeployment:             true,
+			LoadBalancerEnabled:             true,
+			HealthCheckEnabled:              true,
+			DisableIntraClusterConnectivity: true,
+			BrokerK8sSecure:                 false,
+			GlobalnetEnabled:                true,
+			NATTPort:                        123,
+			HealthCheckInterval:             1,
+			HealthCheckMaxPacketLossCount:   5,
+			ClusterID:                       "east",
+			ServiceCIDR:                     "101.42.0.0/16",
+			ClusterCIDR:                     "201.67.0.0/16",
+			CableDriver:                     "vxlan",
+			CoreDNSCustomConfigMap:          "my-map",
+			CustomDomains:                   []string{"my-domain"},
 			HTTPProxyConfig: httpproxy.Config{
 				HTTPProxy: "http://my-proxy",
 			},
@@ -110,6 +111,7 @@ func testDeployment() {
 		Expect(subm.Spec.LoadBalancerEnabled).To(Equal(t.options.LoadBalancerEnabled))
 		Expect(subm.Spec.Debug).To(Equal(t.options.SubmarinerDebug))
 		Expect(subm.Spec.ServiceDiscoveryEnabled).To(BeTrue())
+		Expect(subm.Spec.DisableIntraClusterConnectivity).To(BeTrue())
 
 		Expect(subm.Spec.ClustersetIPEnabled).To(BeFalse())
 		Expect(subm.Spec.ClustersetIPCIDR).To(HavePrefix("243."))

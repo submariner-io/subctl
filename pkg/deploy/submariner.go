@@ -38,27 +38,28 @@ import (
 )
 
 type SubmarinerOptions struct {
-	PreferredServer               bool
-	ForceUDPEncaps                bool
-	NATTraversal                  bool
-	IPSecDebug                    bool
-	SubmarinerDebug               bool
-	AirGappedDeployment           bool
-	LoadBalancerEnabled           bool
-	HealthCheckEnabled            bool
-	BrokerK8sInsecure             bool
-	ClustersetIPEnabled           bool
-	NATTPort                      int
-	HealthCheckInterval           uint64
-	HealthCheckMaxPacketLossCount uint64
-	ClusterID                     string
-	CableDriver                   string
-	CoreDNSCustomConfigMap        string
-	Repository                    string
-	ImageVersion                  string
-	ServiceCIDR                   string
-	ClusterCIDR                   string
-	CustomDomains                 []string
+	PreferredServer                 bool
+	ForceUDPEncaps                  bool
+	NATTraversal                    bool
+	IPSecDebug                      bool
+	SubmarinerDebug                 bool
+	AirGappedDeployment             bool
+	LoadBalancerEnabled             bool
+	HealthCheckEnabled              bool
+	BrokerK8sInsecure               bool
+	ClustersetIPEnabled             bool
+	DisableIntraClusterConnectivity bool
+	NATTPort                        int
+	HealthCheckInterval             uint64
+	HealthCheckMaxPacketLossCount   uint64
+	ClusterID                       string
+	CableDriver                     string
+	CoreDNSCustomConfigMap          string
+	Repository                      string
+	ImageVersion                    string
+	ServiceCIDR                     string
+	ClusterCIDR                     string
+	CustomDomains                   []string
 }
 
 func Submariner(ctx context.Context, clientProducer client.Producer, options *SubmarinerOptions, brokerInfo *broker.Info,
@@ -91,33 +92,34 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 	// For backwards compatibility, the connection information is populated through the secret and individual components
 	// TODO skitt This will be removed in the release following 0.12
 	submarinerSpec := &operatorv1alpha1.SubmarinerSpec{
-		Repository:               repositoryInfo.Name,
-		Version:                  repositoryInfo.Version,
-		CeIPSecNATTPort:          options.NATTPort,
-		CeIPSecDebug:             options.IPSecDebug,
-		CeIPSecForceUDPEncaps:    options.ForceUDPEncaps,
-		CeIPSecPreferredServer:   options.PreferredServer,
-		CeIPSecPSK:               base64.StdEncoding.EncodeToString(brokerInfo.IPSecPSK.Data["psk"]),
-		CeIPSecPSKSecret:         pskSecret.ObjectMeta.Name,
-		BrokerK8sCA:              base64.StdEncoding.EncodeToString(brokerSecret.Data["ca.crt"]),
-		BrokerK8sRemoteNamespace: string(brokerSecret.Data["namespace"]),
-		BrokerK8sApiServerToken:  string(brokerSecret.Data["token"]),
-		BrokerK8sApiServer:       brokerURL,
-		BrokerK8sSecret:          brokerSecret.ObjectMeta.Name,
-		BrokerK8sInsecure:        options.BrokerK8sInsecure,
-		ClustersetIPEnabled:      options.ClustersetIPEnabled,
-		ClustersetIPCIDR:         clustersetConfig.ClustersetIPCIDR,
-		NatEnabled:               options.NATTraversal,
-		Debug:                    options.SubmarinerDebug,
-		ClusterID:                options.ClusterID,
-		ServiceCIDR:              options.ServiceCIDR,
-		ClusterCIDR:              options.ClusterCIDR,
-		Namespace:                constants.OperatorNamespace,
-		CableDriver:              options.CableDriver,
-		ServiceDiscoveryEnabled:  brokerInfo.IsServiceDiscoveryEnabled(),
-		ImageOverrides:           repositoryInfo.Overrides,
-		AirGappedDeployment:      options.AirGappedDeployment,
-		LoadBalancerEnabled:      options.LoadBalancerEnabled,
+		Repository:                      repositoryInfo.Name,
+		Version:                         repositoryInfo.Version,
+		CeIPSecNATTPort:                 options.NATTPort,
+		CeIPSecDebug:                    options.IPSecDebug,
+		CeIPSecForceUDPEncaps:           options.ForceUDPEncaps,
+		CeIPSecPreferredServer:          options.PreferredServer,
+		CeIPSecPSK:                      base64.StdEncoding.EncodeToString(brokerInfo.IPSecPSK.Data["psk"]),
+		CeIPSecPSKSecret:                pskSecret.ObjectMeta.Name,
+		BrokerK8sCA:                     base64.StdEncoding.EncodeToString(brokerSecret.Data["ca.crt"]),
+		BrokerK8sRemoteNamespace:        string(brokerSecret.Data["namespace"]),
+		BrokerK8sApiServerToken:         string(brokerSecret.Data["token"]),
+		BrokerK8sApiServer:              brokerURL,
+		BrokerK8sSecret:                 brokerSecret.ObjectMeta.Name,
+		BrokerK8sInsecure:               options.BrokerK8sInsecure,
+		ClustersetIPEnabled:             options.ClustersetIPEnabled,
+		ClustersetIPCIDR:                clustersetConfig.ClustersetIPCIDR,
+		NatEnabled:                      options.NATTraversal,
+		Debug:                           options.SubmarinerDebug,
+		ClusterID:                       options.ClusterID,
+		ServiceCIDR:                     options.ServiceCIDR,
+		ClusterCIDR:                     options.ClusterCIDR,
+		Namespace:                       constants.OperatorNamespace,
+		CableDriver:                     options.CableDriver,
+		ServiceDiscoveryEnabled:         brokerInfo.IsServiceDiscoveryEnabled(),
+		ImageOverrides:                  repositoryInfo.Overrides,
+		AirGappedDeployment:             options.AirGappedDeployment,
+		LoadBalancerEnabled:             options.LoadBalancerEnabled,
+		DisableIntraClusterConnectivity: options.DisableIntraClusterConnectivity,
 		ConnectionHealthCheck: &operatorv1alpha1.HealthCheckSpec{
 			Enabled:            options.HealthCheckEnabled,
 			IntervalSeconds:    options.HealthCheckInterval,

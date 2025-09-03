@@ -256,8 +256,8 @@ github.com/submariner-io/shipyard v0.22.0-m1 h1:JRho0/+vIzm2YscpVVrOjDoZZHyvkkpS
 github.com/submariner-io/shipyard v0.22.0-m1/go.mod h1:amRaRqk41/TCk1JiO16s5OwVW1Up299tuSwomIKELDE=
 github.com/submariner-io/submariner v0.22.0-m1 h1:AjTMfHyhh7WyaRkoAwHdoMuTZTutVg9EI9mkUMw833g=
 github.com/submariner-io/submariner v0.22.0-m1/go.mod h1:c4bugXANk0Qf13nli6C+L/thgL5LgFWIXRxa30z+I6M=
-github.com/submariner-io/submariner-operator v0.22.0-m1 h1:Eze43mCaMokD5WTW5nWWaDrBMMthy3Cb0Q+lKjOs8D0=
-github.com/submariner-io/submariner-operator v0.22.0-m1/go.mod h1:7MTfX9xLNzHZRM988JUmNmYpJBCZm3KRT/Vfjo3Y8U4=
+github.com/submariner-io/submariner-operator v0.22.0-m1.0.20250902133810-6c377eabd526 h1:jrDMLn+svM3jyjgopJt/DrukyCBmsf6x+nkgnKRHvL0=
+github.com/submariner-io/submariner-operator v0.22.0-m1.0.20250902133810-6c377eabd526/go.mod h1:lWLeyQ7syBwc9eLzpfgW1zDwoAn9c13mgnlBd0lyhpY=
 github.com/urfave/cli/v2 v2.4.0 h1:m2pxjjDFgDxSPtO8WSdbndj17Wu2y8vOT86wE/tjr+I=
 github.com/urfave/cli/v2 v2.4.0/go.mod h1:NX9W0zmTvedE5oDoOMs2RTC8RvdK98NTYZE5LbaEYPg=
 github.com/uw-labs/lichen v0.1.7 h1:SDNE3kThhhtP70XfLN/C2bqaT9Epefg1i10lhWYIG4g=
