@@ -61,6 +61,7 @@ func runVerify(options subctl.VerifyOptions, fromClusterInfo, toClusterInfo, ext
 	framework.TestContext.SubmarinerNamespace = namespace
 	framework.TestContext.PacketSize = options.PacketSize
 	framework.TestContext.SkipConnectorSrcIPCheck = options.SkipConnectorSrcIPCheck
+	framework.TestContext.SkipIntraClusterConnectivityTests = options.SkipIntraClusterConnectivityTests
 
 	// This field isn't used for verify so set it to some non-empty string to bypass shipyard's validation checking.
 	framework.TestContext.KubeConfig = "not-used"
