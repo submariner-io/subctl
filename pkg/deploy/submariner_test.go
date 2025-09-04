@@ -55,25 +55,26 @@ func testSubmariner() {
 
 	BeforeEach(func() {
 		options = &deploy.SubmarinerOptions{
-			PreferredServer:               true,
-			ForceUDPEncaps:                true,
-			NATTraversal:                  true,
-			IPSecDebug:                    true,
-			SubmarinerDebug:               true,
-			AirGappedDeployment:           true,
-			LoadBalancerEnabled:           true,
-			HealthCheckEnabled:            true,
-			BrokerK8sInsecure:             true,
-			ClustersetIPEnabled:           true,
-			NATTPort:                      4500,
-			HealthCheckInterval:           30,
-			HealthCheckMaxPacketLossCount: 5,
-			ClusterID:                     "test-cluster",
-			CableDriver:                   "vxlan",
-			Repository:                    "quay.io/submariner",
-			ImageVersion:                  "devel",
-			ServiceCIDR:                   "10.96.0.0/12",
-			ClusterCIDR:                   "10.244.0.0/16",
+			PreferredServer:                 true,
+			ForceUDPEncaps:                  true,
+			NATTraversal:                    true,
+			IPSecDebug:                      true,
+			SubmarinerDebug:                 true,
+			AirGappedDeployment:             true,
+			LoadBalancerEnabled:             true,
+			HealthCheckEnabled:              true,
+			BrokerK8sInsecure:               true,
+			ClustersetIPEnabled:             true,
+			DisableIntraClusterConnectivity: true,
+			NATTPort:                        4500,
+			HealthCheckInterval:             30,
+			HealthCheckMaxPacketLossCount:   5,
+			ClusterID:                       "test-cluster",
+			CableDriver:                     "vxlan",
+			Repository:                      "quay.io/submariner",
+			ImageVersion:                    "devel",
+			ServiceCIDR:                     "10.96.0.0/12",
+			ClusterCIDR:                     "10.244.0.0/16",
 		}
 	})
 
@@ -131,6 +132,7 @@ func testSubmariner() {
 		Expect(spec.ImageOverrides).To(Equal(t.repositoryInfo.Overrides))
 		Expect(spec.AirGappedDeployment).To(Equal(options.AirGappedDeployment))
 		Expect(spec.LoadBalancerEnabled).To(Equal(options.LoadBalancerEnabled))
+		Expect(spec.DisableIntraClusterConnectivity).To(Equal(options.DisableIntraClusterConnectivity))
 		Expect(spec.GlobalCIDR).To(Equal(netconfig.GlobalCIDR))
 		Expect(spec.CustomDomains).To(Equal(options.CustomDomains))
 		Expect(spec.CoreDNSCustomConfig).To(BeNil())

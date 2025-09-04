@@ -164,6 +164,8 @@ func (c *JoinCommand) addFlags() {
 		"set default support for use of clusterset IP for exported services in the cluster (default disabled)")
 	c.cmd.Flags().StringVar(&c.flags.ClustersetIPCIDR, "clusterset-ip-cidr", "",
 		"Clusterset IP CIDR to be allocated to the cluster")
+	c.cmd.Flags().BoolVar(&c.flags.DisableIntraClusterConnectivity, "disable-intra-cluster-connectivity", false,
+		"disable intra-cluster connectivity in the Route Agent. Only inter-cluster connectivity is performed")
 }
 
 func (c *JoinCommand) joinInContext(brokerInfo *broker.Info, clusterInfo *cluster.Info, status reporter.Interface) error {
