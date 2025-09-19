@@ -57,4 +57,5 @@ LABEL com.redhat.component="subctl-container" \
       io.openshift.tags="submariner, subctl, rhacm" \
       maintainer="multi-cluster-networking@redhat.com" \
       com.github.url="https://github.com/submariner-io/submariner-operator" \
-      com.github.commit="${BASE_BRANCH}"
+      com.github.commit="${BASE_BRANCH}" \
+      cpe="cpe:/a:redhat:acm:2.14::el9"
