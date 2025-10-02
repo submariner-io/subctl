@@ -19,9 +19,11 @@ limitations under the License.
 package serviceaccount
 
 import (
-	"github.com/pkg/errors"
+	"github.com/submariner-io/subctl/pkg/apply"
 	"github.com/submariner-io/subctl/pkg/clusterrole"
 	"github.com/submariner-io/subctl/pkg/clusterrolebinding"
+	"github.com/submariner-io/subctl/pkg/role"
+	"github.com/submariner-io/subctl/pkg/rolebinding"
 	"github.com/submariner-io/subctl/pkg/serviceaccount"
 	lighthouseagent "github.com/submariner-io/submariner-operator/config/rbac/lighthouse-agent"
 	lighthousecoredns "github.com/submariner-io/submariner-operator/config/rbac/lighthouse-coredns"
@@ -31,53 +33,45 @@ import (
 
 // Ensure functions updates or installs the operator CRDs in the cluster.
 func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdSA, err := ensureServiceAccounts(ctx, kubeClient, namespace)
-	if err != nil {
-		return false, err
-	}
-
-	createdCR, err := ensureClusterRoles(ctx, kubeClient)
-	if err != nil {
-		return false, err
-	}
-
-	createdCRB, err := ensureClusterRoleBindings(ctx, kubeClient, namespace)
-	if err != nil {
-		return false, err
-	}
-
-	return createdSA || createdCR || createdCRB, nil
+	return apply.EmbeddedYAMLs(ctx, kubeClient, namespace, serviceAccountRelatedYAMLs) //nolint:wrapcheck // No need to wrap
 }
 
-func ensureServiceAccounts(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdAgentSA, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, namespace, lighthouseagent.ServiceAccount)
-	if err != nil {
-		return false, errors.Wrap(err, "error provisioning the agent ServiceAccount resource")
-	}
-
-	createdCoreDNSSA, err := serviceaccount.EnsureFromYAML(ctx, kubeClient, namespace, lighthousecoredns.ServiceAccount)
-
-	return createdAgentSA || createdCoreDNSSA, errors.Wrap(err, "error provisioning the coredns ServiceAccount resource")
-}
-
-func ensureClusterRoles(ctx context.Context, kubeClient kubernetes.Interface) (bool, error) {
-	createdAgentCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, lighthouseagent.ClusterRole)
-	if err != nil {
-		return false, errors.Wrap(err, "error provisioning the agent ClusterRole resource")
-	}
-
-	createdCoreDNSCR, err := clusterrole.EnsureFromYAML(ctx, kubeClient, lighthousecoredns.ClusterRole)
-
-	return createdAgentCR || createdCoreDNSCR, errors.Wrap(err, "error provisioning the coredns ClusterRole resource")
-}
-
-func ensureClusterRoleBindings(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (bool, error) {
-	createdAgentCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace, lighthouseagent.ClusterRoleBinding)
-	if err != nil {
-		return false, errors.Wrap(err, "error provisioning the agent ClusterRoleBinding resource")
-	}
-
-	createdCoreDNSCRB, err := clusterrolebinding.EnsureFromYAML(ctx, kubeClient, namespace, lighthousecoredns.ClusterRoleBinding)
-
-	return createdAgentCRB || createdCoreDNSCRB, errors.Wrap(err, "error provisioning the coredns ClusterRoleBinding resource")
+var serviceAccountRelatedYAMLs = []apply.EmbeddedYAMLRefsApplier{
+	{
+		Applier: serviceaccount.EnsureFromYAML,
+		Refs: []apply.EmbeddedYAMLRef{
+			{Name: "agent ServiceAccount", Content: lighthouseagent.ServiceAccount},
+			{Name: "coredns ServiceAccount", Content: lighthousecoredns.ServiceAccount},
+		},
+	},
+	{
+		Applier: func(ctx context.Context, kubeClient kubernetes.Interface, _ string, yaml []byte) (bool, error) {
+			return clusterrole.EnsureFromYAML(ctx, kubeClient, yaml)
+		},
+		Refs: []apply.EmbeddedYAMLRef{
+			{Name: "agent ClusterRole", Content: lighthouseagent.ClusterRole},
+			{Name: "coredns ClusterRole", Content: lighthousecoredns.ClusterRole},
+		},
+	},
+	{
+		Applier: clusterrolebinding.EnsureFromYAML,
+		Refs: []apply.EmbeddedYAMLRef{
+			{Name: "agent ClusterRoleBinding", Content: lighthouseagent.ClusterRoleBinding},
+			{Name: "coredns ClusterRoleBinding", Content: lighthousecoredns.ClusterRoleBinding},
+		},
+	},
+	{
+		Applier: role.EnsureFromYAML,
+		Refs: []apply.EmbeddedYAMLRef{
+			{Name: "agent Role", Content: lighthouseagent.Role},
+			{Name: "coredns Role", Content: lighthousecoredns.Role},
+		},
+	},
+	{
+		Applier: rolebinding.EnsureFromYAML,
+		Refs: []apply.EmbeddedYAMLRef{
+			{Name: "agent RoleBinding", Content: lighthouseagent.RoleBinding},
+			{Name: "coredns RoleBinding", Content: lighthousecoredns.RoleBinding},
+		},
+	},
 }

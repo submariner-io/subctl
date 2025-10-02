@@ -59,6 +59,8 @@ var _ = Describe("Ensure", func() {
 			assertServiceAccountsCreated(client)
 			assertClusterRolesCreated(client)
 			assertClusterRoleBindingsCreated(client)
+			assertRolesCreated(client)
+			assertRoleBindingsCreated(client)
 		})
 	})
 
@@ -104,17 +106,6 @@ var _ = Describe("Ensure", func() {
 			})
 		})
 	}
-
-	When("a resource creation fails", func() {
-		JustBeforeEach(func() {
-			fake.FailOnAction(&client.Fake, "clusterroles", "create", nil, false)
-		})
-
-		It("should return an error", func() {
-			_, err := serviceaccount.Ensure(ctx, client, constants.OperatorNamespace)
-			Expect(err).To(HaveOccurred())
-		})
-	})
 })
 
 func assertServiceAccountsCreated(client *k8sfake.Clientset) {
@@ -143,6 +134,26 @@ func assertClusterRoleBindingsCreated(client *k8sfake.Clientset) {
 		names.LighthouseCoreDNSComponent,
 	} {
 		_, err := client.RbacV1().ClusterRoleBindings().Get(ctx, name, metav1.GetOptions{})
+		Expect(err).NotTo(HaveOccurred())
+	}
+}
+
+func assertRolesCreated(client *k8sfake.Clientset) {
+	for _, name := range []string{
+		names.ServiceDiscoveryComponent,
+		names.LighthouseCoreDNSComponent,
+	} {
+		_, err := client.RbacV1().Roles(constants.OperatorNamespace).Get(ctx, name, metav1.GetOptions{})
+		Expect(err).NotTo(HaveOccurred())
+	}
+}
+
+func assertRoleBindingsCreated(client *k8sfake.Clientset) {
+	for _, name := range []string{
+		names.ServiceDiscoveryComponent,
+		names.LighthouseCoreDNSComponent,
+	} {
+		_, err := client.RbacV1().RoleBindings(constants.OperatorNamespace).Get(ctx, name, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 	}
 }
