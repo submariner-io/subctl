@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.12.0
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.0
 	github.com/coreos/go-semver v0.3.1
 	github.com/go-logr/logr v1.4.3
 	github.com/google/go-github/v54 v54.0.0
@@ -24,7 +24,7 @@ require (
 	github.com/submariner-io/submariner-operator v0.22.0-m2.0.20251006173019-fe8429dd6c83
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.44.0
-	golang.org/x/oauth2 v0.31.0
+	golang.org/x/oauth2 v0.32.0
 	google.golang.org/api v0.248.0
 	k8s.io/api v0.33.5
 	k8s.io/apiextensions-apiserver v0.33.5
