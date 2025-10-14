@@ -35,6 +35,7 @@ type Options struct {
 	BrokerK8sSecure                 bool
 	EnableClustersetIP              bool
 	DisableIntraClusterConnectivity bool
+	UseIPSecCertAuthMode            bool
 	NATTPort                        int
 	GlobalnetClusterSize            uint
 	HealthCheckInterval             uint

@@ -80,6 +80,7 @@ func testDeployment() {
 			HTTPProxyConfig: httpproxy.Config{
 				HTTPProxy: "http://my-proxy",
 			},
+			UseIPSecCertAuthMode: true,
 		}
 	})
 
@@ -99,6 +100,7 @@ func testDeployment() {
 		Expect(err).NotTo(HaveOccurred())
 
 		subm := t.assertSubmarinerResource()
+		Expect(subm.Spec.CeIPSecUseOVNCertAuthMode).To(BeTrue())
 		Expect(subm.Spec.Namespace).To(Equal(constants.OperatorNamespace))
 		Expect(subm.Spec.ClusterID).To(Equal(t.options.ClusterID))
 		Expect(subm.Spec.ServiceCIDR).To(Equal(t.options.ServiceCIDR))

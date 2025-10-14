@@ -105,6 +105,7 @@ func testRunJoinCommand() {
 				Expect(options.CustomDomains).To(BeEmpty())
 				Expect(options.ImageOverrideArr).To(BeEmpty())
 				Expect(options.HTTPProxyConfig).To(Equal(httpproxy.Config{}))
+				Expect(options.UseIPSecCertAuthMode).To(BeFalse())
 
 				return nil
 			}
@@ -131,7 +132,7 @@ func testRunJoinCommand() {
 				"--clusterset-ip-cidr=10.0.0.0/32", "--custom-domains=domain1,domain2",
 				"--image-override=submariner-gateway=http://localhost", "--broker-url="+otherBrokerURL,
 				"--http-proxy=http://my-proxy", "--https-proxy=https://my-proxy", "--no-proxy=foo",
-				"--disable-intra-cluster-connectivity")
+				"--disable-intra-cluster-connectivity", "--use-ipsec-cert-auth-mode")
 		})
 
 		It("should invoke join with the specified values", func() {
@@ -175,6 +176,7 @@ func testRunJoinCommand() {
 				}))
 
 				Expect(info.BrokerURL).To(Equal(options.BrokerURL))
+				Expect(options.UseIPSecCertAuthMode).To(BeTrue())
 
 				return nil
 			}

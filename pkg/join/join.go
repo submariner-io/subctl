@@ -190,6 +190,7 @@ func submarinerOptionsFrom(joinOptions *Options) *deploy.SubmarinerOptions {
 		BrokerK8sInsecure:               !joinOptions.BrokerK8sSecure,
 		ClustersetIPEnabled:             joinOptions.EnableClustersetIP,
 		DisableIntraClusterConnectivity: joinOptions.DisableIntraClusterConnectivity,
+		UseIPSecCertAuthMode:            joinOptions.UseIPSecCertAuthMode,
 	}
 }
 

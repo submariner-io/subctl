@@ -49,6 +49,7 @@ type SubmarinerOptions struct {
 	BrokerK8sInsecure               bool
 	ClustersetIPEnabled             bool
 	DisableIntraClusterConnectivity bool
+	UseIPSecCertAuthMode            bool
 	NATTPort                        int
 	HealthCheckInterval             uint
 	HealthCheckMaxPacketLossCount   uint
@@ -125,6 +126,7 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 			IntervalSeconds:    options.HealthCheckInterval,
 			MaxPacketLossCount: options.HealthCheckMaxPacketLossCount,
 		},
+		CeIPSecUseOVNCertAuthMode: options.UseIPSecCertAuthMode,
 	}
 	if netconfig.GlobalCIDR != "" {
 		submarinerSpec.GlobalCIDR = netconfig.GlobalCIDR
