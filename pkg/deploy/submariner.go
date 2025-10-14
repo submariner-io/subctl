@@ -50,8 +50,8 @@ type SubmarinerOptions struct {
 	ClustersetIPEnabled             bool
 	DisableIntraClusterConnectivity bool
 	NATTPort                        int
-	HealthCheckInterval             uint64
-	HealthCheckMaxPacketLossCount   uint64
+	HealthCheckInterval             uint
+	HealthCheckMaxPacketLossCount   uint
 	ClusterID                       string
 	CableDriver                     string
 	CoreDNSCustomConfigMap          string

@@ -37,8 +37,8 @@ type Options struct {
 	DisableIntraClusterConnectivity bool
 	NATTPort                        int
 	GlobalnetClusterSize            uint
-	HealthCheckInterval             uint64
-	HealthCheckMaxPacketLossCount   uint64
+	HealthCheckInterval             uint
+	HealthCheckMaxPacketLossCount   uint
 	ClusterID                       string
 	ServiceCIDR                     string
 	ClusterCIDR                     string
