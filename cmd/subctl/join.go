@@ -166,6 +166,12 @@ func (c *JoinCommand) addFlags() {
 		"Clusterset IP CIDR to be allocated to the cluster")
 	c.cmd.Flags().BoolVar(&c.flags.DisableIntraClusterConnectivity, "disable-intra-cluster-connectivity", false,
 		"disable intra-cluster connectivity in the Route Agent. Only inter-cluster connectivity is performed")
+	c.cmd.Flags().BoolVar(
+		&c.flags.UseIPSecCertAuthMode,
+		"use-ipsec-cert-auth-mode",
+		false,
+		"Use certificates for authentication when OVN IPsec is enabled",
+	)
 }
 
 func (c *JoinCommand) joinInContext(brokerInfo *broker.Info, clusterInfo *cluster.Info, status reporter.Interface) error {
