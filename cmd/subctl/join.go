@@ -145,9 +145,9 @@ func (c *JoinCommand) addFlags() {
 		"list of domains to use for multicluster service discovery")
 	c.cmd.Flags().BoolVar(&c.flags.HealthCheckEnabled, "health-check", true,
 		"enable Gateway health check")
-	c.cmd.Flags().Uint64Var(&c.flags.HealthCheckInterval, "health-check-interval", 1,
+	c.cmd.Flags().UintVar(&c.flags.HealthCheckInterval, "health-check-interval", 1,
 		"interval in seconds between health check packets")
-	c.cmd.Flags().Uint64Var(&c.flags.HealthCheckMaxPacketLossCount, "health-check-max-packet-loss-count", 5,
+	c.cmd.Flags().UintVar(&c.flags.HealthCheckMaxPacketLossCount, "health-check-max-packet-loss-count", 5,
 		"maximum number of packets lost before the connection is marked as down")
 	c.cmd.Flags().BoolVar(&c.flags.GlobalnetEnabled, "globalnet", true,
 		"enable/disable Globalnet for this cluster")
