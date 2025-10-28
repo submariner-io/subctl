@@ -120,86 +120,97 @@ func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface)
 }
 
 func checkPods(clusterInfo *cluster.Info, status reporter.Interface) error {
-	tracker := reporter.NewTracker(status)
+	hasFailures := false
 
 	if clusterInfo.Submariner != nil {
-		checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-gateway", tracker)
-		checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-routeagent", tracker)
+		hasFailures = checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, names.GatewayComponent,
+			status) || hasFailures
+		hasFailures = checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, names.RouteAgentComponent,
+			status) || hasFailures
+		hasFailures = checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), clusterInfo.Submariner.Namespace,
+			names.MetricsProxyComponent, status) || hasFailures
 
 		// Check if globalnet components are deployed and running if enabled
 		if clusterInfo.Submariner.Spec.GlobalCIDR != "" {
-			checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-globalnet", tracker)
+			hasFailures = checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, names.GlobalnetComponent,
+				status) || hasFailures
 		}
-
-		checkDaemonset(clusterInfo.ClientProducer.ForKubernetes(), clusterInfo.Submariner.Namespace, "submariner-metrics-proxy", tracker)
 	}
 
 	// Check if service-discovery components are deployed and running if enabled
 	if clusterInfo.ServiceDiscovery != nil {
-		checkDeployment(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-lighthouse-agent", tracker)
-		checkDeployment(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, "submariner-lighthouse-coredns", tracker)
+		hasFailures = checkDeployment(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace,
+			names.ServiceDiscoveryComponent, status) || hasFailures
+		hasFailures = checkDeployment(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace,
+			names.LighthouseCoreDNSComponent, status) || hasFailures
 	}
 
 	if clusterInfo.Submariner != nil || clusterInfo.ServiceDiscovery != nil {
-		checkPodsStatus(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, tracker)
+		hasFailures = checkPodsStatus(clusterInfo.ClientProducer.ForKubernetes(), constants.OperatorNamespace, status) || hasFailures
 	}
 
-	if tracker.HasFailures() {
+	if hasFailures {
 		return errors.New("failures while diagnosing pods")
 	}
 
 	return nil
 }
 
-func checkDeployment(k8sClient kubernetes.Interface, namespace, deploymentName string, status reporter.Interface) {
-	status.Start("Checking Deployment %q", deploymentName)
-	defer status.End()
+func checkDeployment(k8sClient kubernetes.Interface, namespace, deploymentName string, status reporter.Interface) bool {
+	tracker := reporter.NewTracker(status)
+
+	tracker.Start("Checking Deployment %q", deploymentName)
+	defer tracker.End()
 
 	deployment, err := k8sClient.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 	if err != nil {
-		status.Failure("Error obtaining Deployment %q: %v", deploymentName, err)
-		return
+		tracker.Failure("Error obtaining Deployment %q: %v", deploymentName, err)
+	} else {
+		var replicas int32 = 1
+		if deployment.Spec.Replicas != nil {
+			replicas = *deployment.Spec.Replicas
+		}
+
+		if deployment.Status.AvailableReplicas != replicas {
+			tracker.Failure("The desired number of replicas for Deployment %q (%d)"+
+				" does not match the actual number running (%d)", deploymentName, replicas,
+				deployment.Status.AvailableReplicas)
+		}
 	}
 
-	var replicas int32 = 1
-	if deployment.Spec.Replicas != nil {
-		replicas = *deployment.Spec.Replicas
-	}
-
-	if deployment.Status.AvailableReplicas != replicas {
-		status.Failure("The desired number of replicas for Deployment %q (%d)"+
-			" does not match the actual number running (%d)", deploymentName, replicas,
-			deployment.Status.AvailableReplicas)
-	}
+	return tracker.HasFailures()
 }
 
-func checkDaemonset(k8sClient kubernetes.Interface, namespace, daemonSetName string, status reporter.Interface) {
-	status.Start("Checking DaemonSet %q", daemonSetName)
-	defer status.End()
+func checkDaemonset(k8sClient kubernetes.Interface, namespace, daemonSetName string, status reporter.Interface) bool {
+	tracker := reporter.NewTracker(status)
+
+	tracker.Start("Checking DaemonSet %q", daemonSetName)
+	defer tracker.End()
 
 	daemonSet, err := k8sClient.AppsV1().DaemonSets(namespace).Get(context.TODO(), daemonSetName, metav1.GetOptions{})
 	if err != nil {
-		status.Failure("Error obtaining Daemonset %q: %v", daemonSetName, err)
-		return
-	}
-
-	if daemonSet.Status.CurrentNumberScheduled != daemonSet.Status.DesiredNumberScheduled {
-		status.Failure("The desired number of running pods for DaemonSet %q (%d)"+
+		tracker.Failure("Error obtaining Daemonset %q: %v", daemonSetName, err)
+	} else if daemonSet.Status.CurrentNumberScheduled != daemonSet.Status.DesiredNumberScheduled {
+		tracker.Failure("The desired number of running pods for DaemonSet %q (%d)"+
 			" does not match the actual number (%d)", daemonSetName, daemonSet.Status.DesiredNumberScheduled,
 			daemonSet.Status.CurrentNumberScheduled)
 	}
+
+	return tracker.HasFailures()
 }
 
-func checkPodsStatus(k8sClient kubernetes.Interface, namespace string, status reporter.Interface) {
-	status.Start("Checking the status of all Submariner pods")
-	defer status.End()
+func checkPodsStatus(k8sClient kubernetes.Interface, namespace string, status reporter.Interface) bool {
+	tracker := reporter.NewTracker(status)
+
+	tracker.Start("Checking the status of all Submariner pods")
+	defer tracker.End()
 
 	pods, err := k8sClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s!=%s", constants.TransientLabel, constants.TrueLabel),
 	})
 	if err != nil {
-		status.Failure("Error obtaining Pods list: %v", err)
-		return
+		tracker.Failure("Error obtaining Pods list: %v", err)
+		return true
 	}
 
 	activeGwNodeNames := []string{}
@@ -212,19 +223,21 @@ func checkPodsStatus(k8sClient kubernetes.Interface, namespace string, status re
 		}
 
 		if pod.Status.Phase != v1.PodRunning {
-			status.Failure("Pod %q is not running. (current state is %v)", pod.Name, pod.Status.Phase)
+			tracker.Failure("Pod %q is not running. (current state is %v)", pod.Name, pod.Status.Phase)
 			continue
 		}
 
 		for j := range pod.Status.ContainerStatuses {
 			c := &pod.Status.ContainerStatuses[j]
 			if c.RestartCount >= 5 {
-				status.Warning("Pod %q has restarted %d times", pod.Name, c.RestartCount)
+				tracker.Warning("Pod %q has restarted %d times", pod.Name, c.RestartCount)
 			}
 		}
 	}
 
 	if len(activeGwNodeNames) != 1 {
-		status.Warning("Expected one Gateway pod to be labeled as active. Found %d on nodes %v", len(activeGwNodeNames), activeGwNodeNames)
+		tracker.Warning("Expected one Gateway pod to be labeled as active. Found %d on nodes %v", len(activeGwNodeNames), activeGwNodeNames)
 	}
+
+	return tracker.HasFailures()
 }
