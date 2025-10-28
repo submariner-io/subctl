@@ -21,13 +21,18 @@ package diagnose_test
 import (
 	"context"
 	"encoding/base64"
+	"errors"
+	"maps"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/submariner-io/admiral/pkg/fake"
 	reportertest "github.com/submariner-io/admiral/pkg/reporter/test"
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/admiral/pkg/syncer/test"
+	"github.com/submariner-io/admiral/pkg/util"
+	"github.com/submariner-io/shipyard/test/e2e/framework"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/gvr"
@@ -37,20 +42,26 @@ import (
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
+	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	controllerclient "sigs.k8s.io/controller-runtime/pkg/client"
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
+var errFake = errors.New("fake error")
+
 var _ = BeforeSuite(func() {
 	Expect(v1alpha1.AddToScheme(scheme.Scheme)).To(Succeed())
 	Expect(submarinerv1.AddToScheme(scheme.Scheme)).To(Succeed())
 	Expect(mcsv1a1.Install(scheme.Scheme)).To(Succeed())
+
+	framework.TestContext.OperationTimeout = 1
 })
 
 func TestDiagnose(t *testing.T) {
@@ -59,9 +70,10 @@ func TestDiagnose(t *testing.T) {
 }
 
 type testDriver struct {
-	fakeProducer  *client.DefaultProducer
-	submariner    *v1alpha1.Submariner
-	statusTracker *reportertest.Tracker
+	fakeProducer     *client.DefaultProducer
+	submariner       *v1alpha1.Submariner
+	serviceDiscovery *v1alpha1.ServiceDiscovery
+	statusTracker    *reportertest.Tracker
 }
 
 func (t *testDriver) createResource(obj controllerclient.Object) {
@@ -105,6 +117,93 @@ func (t *testDriver) createNamespace(name string) {
 		})
 }
 
+func (t *testDriver) createNode(name string) {
+	_, err := t.fakeProducer.KubeClient.CoreV1().Nodes().Create(context.TODO(), &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}, metav1.CreateOptions{})
+	Expect(err).NotTo(HaveOccurred())
+}
+
+func (t *testDriver) createEndpoint(name, clusterID string, subnets []string) {
+	t.createResource(&submarinerv1.Endpoint{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: t.submariner.Spec.BrokerK8sRemoteNamespace,
+		},
+		Spec: submarinerv1.EndpointSpec{
+			ClusterID: clusterID,
+			Subnets:   subnets,
+		},
+	})
+}
+
+func (t *testDriver) ensureDeployment(name string, desiredReplicas, availableReplicas int32) {
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: constants.OperatorNamespace,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &desiredReplicas,
+		},
+		Status: appsv1.DeploymentStatus{
+			AvailableReplicas: availableReplicas,
+		},
+	}
+
+	_, err := util.CreateOrUpdate(context.TODO(), resource.ForDeployment(t.fakeProducer.KubeClient, constants.OperatorNamespace), deployment,
+		func(existing *appsv1.Deployment) (*appsv1.Deployment, error) {
+			existing.Spec = deployment.Spec
+			existing.Status = deployment.Status
+
+			return existing, nil
+		})
+	Expect(err).NotTo(HaveOccurred())
+}
+
+func (t *testDriver) ensureDaemonSet(name string, desired, current int32) {
+	daemonSet := &appsv1.DaemonSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: constants.OperatorNamespace,
+		},
+		Status: appsv1.DaemonSetStatus{
+			DesiredNumberScheduled: desired,
+			CurrentNumberScheduled: current,
+		},
+	}
+
+	_, err := util.CreateOrUpdate(context.TODO(), resource.ForDaemonSet(t.fakeProducer.KubeClient, constants.OperatorNamespace), daemonSet,
+		func(existing *appsv1.DaemonSet) (*appsv1.DaemonSet, error) {
+			existing.Status = daemonSet.Status
+			return existing, nil
+		})
+	Expect(err).NotTo(HaveOccurred())
+}
+
+//nolint:gocritic // Ignore huge param
+func (t *testDriver) ensurePodWithStatus(name string, labels map[string]string, status corev1.PodStatus) {
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: constants.OperatorNamespace,
+			Labels:    map[string]string{"app": name},
+		},
+		Status: status,
+	}
+
+	maps.Copy(pod.Labels, labels)
+
+	_, err := util.CreateOrUpdate(context.TODO(), resource.ForPod(t.fakeProducer.KubeClient, constants.OperatorNamespace), pod,
+		func(existing *corev1.Pod) (*corev1.Pod, error) {
+			existing.Status = pod.Status
+			return existing, nil
+		})
+	Expect(err).NotTo(HaveOccurred())
+}
+
 func newTestDriver() *testDriver {
 	t := &testDriver{}
 
@@ -123,17 +222,73 @@ func newTestDriver() *testDriver {
 				BrokerK8sRemoteNamespace: constants.DefaultBrokerNamespace,
 			},
 		}
+		t.serviceDiscovery = &v1alpha1.ServiceDiscovery{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      names.ServiceDiscoveryCrName,
+				Namespace: constants.OperatorNamespace,
+			},
+		}
 
 		resource.NewDynamicClient = func(_ *rest.Config) (dynamic.Interface, error) {
 			return t.fakeProducer.DynamicClient, nil
 		}
+
+		fake.AddBasicReactors(&t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake)
 	})
 
 	JustBeforeEach(func() {
-		t.createResource(t.submariner)
+		t.createNode("master")
+
+		if t.submariner != nil {
+			t.createResource(t.submariner)
+		}
 	})
 
 	return t
+}
+
+func (t *testDriver) testFailure(run func() error, msgs ...string) {
+	It("should fail", func() {
+		t.assertFailure(run, msgs...)
+	})
+}
+
+func (t *testDriver) assertFailure(run func() error, msgs ...string) {
+	Expect(run()).NotTo(Succeed())
+	t.statusTracker.AssertFailureContainsStrings(msgs...)
+}
+
+func (t *testDriver) testSuccess(run func() error) {
+	It("should succeed", func() {
+		t.assertSuccess(run)
+	})
+}
+
+func (t *testDriver) assertSuccess(run func() error) {
+	Expect(run()).To(Succeed())
+
+	t.statusTracker.AssertFailureCount(0)
+	t.statusTracker.AssertWarningCount(0)
+}
+
+func (t *testDriver) testSuccessWithWarning(run func() error, msgs ...string) {
+	It("should succeed but emit a warning", func() {
+		Expect(run()).To(Succeed())
+
+		t.statusTracker.AssertFailureCount(0)
+		t.statusTracker.AssertWarningCount(1)
+		t.statusTracker.AssertWarningContainsStrings(msgs...)
+	})
+}
+
+func (t *testDriver) testImageRepositoryInfoFailure(before func(), run func() error) {
+	When("image repository information cannot be determined", func() {
+		JustBeforeEach(func() {
+			before()
+		})
+
+		t.testFailure(run, "repository")
+	})
 }
 
 func newClusterInfo() *cluster.Info {
