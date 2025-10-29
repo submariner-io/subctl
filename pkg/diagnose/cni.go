@@ -21,12 +21,12 @@ package diagnose
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"github.com/submariner-io/submariner/pkg/cni"
@@ -34,6 +34,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -42,7 +43,7 @@ import (
 
 const ovnKubeDBPodLabel = "ovn-db-pod=true"
 
-var minOVNNBVersion = semver.New("6.1.0")
+var MinOVNNBVersion = semver.New("6.1.0")
 
 var supportedNetworkPlugins = []string{
 	cni.Generic, cni.CanalFlannel, cni.WeaveNet,
@@ -50,7 +51,7 @@ var supportedNetworkPlugins = []string{
 	cni.KindNet,
 }
 
-var calicoGVR = schema.GroupVersionResource{
+var CalicoGVR = schema.GroupVersionResource{
 	Group:    "crd.projectcalico.org",
 	Version:  "v1",
 	Resource: "ippools",
@@ -114,7 +115,7 @@ func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface
 		return status.Error(errors.New("no gateways detected on the cluster"), "")
 	}
 
-	client := info.ClientProducer.ForDynamic().Resource(calicoGVR)
+	client := info.ClientProducer.ForDynamic().Resource(CalicoGVR)
 
 	ippoolList, err := client.List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -129,13 +130,8 @@ func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface
 	ippools := make(map[string]unstructured.Unstructured)
 
 	for _, pool := range ippoolList.Items {
-		cidr, found, err := unstructured.NestedString(pool.Object, "spec", "cidr")
-		if err != nil {
-			tracker.Failure("Error extracting field cidr from IPPool %q", pool.GetName())
-			continue
-		}
-
-		if !found {
+		cidr := getSpecString(pool, "cidr")
+		if cidr == "" {
 			tracker.Failure("No CIDR found in IPPool %q", pool.GetName())
 			continue
 		}
@@ -170,14 +166,9 @@ func checkCalicoSubmConfig(gateway *submv1.Gateway, ippools map[string]unstructu
 		for _, subnet := range connection.Endpoint.Subnets {
 			ipPool, found := ippools[subnet]
 			if found {
-				isDisabled, err := getSpecBool(ipPool, "disabled")
-				if err != nil {
-					status.Failure(err.Error())
-					continue
-				}
-
 				// When spec.disabled is set to true, Calico IPAM will not assign addresses from this Pool.
 				// The IPPools configured for Submariner remote CIDRs should have disabled as true.
+				isDisabled := getSpecBool(ipPool, "disabled")
 				if !isDisabled {
 					status.Failure("The IPPool %q with CIDR %q for remote endpoint"+
 						" %q has disabled set to false", ipPool.GetName(), subnet, connection.Endpoint.CableName)
@@ -185,15 +176,10 @@ func checkCalicoSubmConfig(gateway *submv1.Gateway, ippools map[string]unstructu
 					continue
 				}
 
-				natOutgoing, err := getSpecBool(ipPool, "natOutgoing")
-				if err != nil {
-					status.Failure(err.Error())
-					continue
-				}
-
-				// When spec.natOutgoing is set to true, packets from K8s pods to destinations outside of
+				// When spec.natOutgoing is set to true, packets from K8s pods to destinations outside
 				// any Calico IP pools will be masqueraded.
 				// The IPPools configured for Submariner remote CIDRs should have natOutgoing as false.
+				natOutgoing := getSpecBool(ipPool, "natOutgoing")
 				if natOutgoing {
 					status.Failure("The IPPool %q with CIDR %q for remote endpoint"+
 						" %q has natOutgoing set to true", ipPool.GetName(), subnet, connection.Endpoint.CableName)
@@ -214,39 +200,33 @@ func checkCalicoEncapsulation(gateway *submv1.Gateway, ippools map[string]unstru
 	for _, subnet := range gateway.Status.LocalEndpoint.Subnets {
 		ipPool, found := ippools[subnet]
 		if found {
-			vxlanMode, err := getSpecString(ipPool, "vxlanMode")
-			if err != nil {
-				status.Failure(err.Error())
-				continue
-			}
+			vxlanMode := getSpecString(ipPool, "vxlanMode")
 
 			// Calico supports different types of overlay networking. Currently, Submariner is validated only
 			// when Calico is deployed with VXLAN encapsulation.
 			if vxlanMode != "Always" {
-				status.Failure("Calico IPPool %q does not seem to be configured with VXLAN overlay encapsulation.", ipPool.GetName())
+				status.Failure("Calico IPPool %q is not configured with VXLAN overlay encapsulation (vxlanMode set to %q)",
+					ipPool.GetName(), vxlanMode)
+
 				continue
 			}
 		}
 	}
 }
 
-func getSpecBool(pool unstructured.Unstructured, key string) (bool, error) {
+func getSpecBool(obj unstructured.Unstructured, key string) bool {
 	// value defaults to false when not found; not finding a bool isn't an error
-	value, _, err := unstructured.NestedBool(pool.Object, "spec", key)
-	return value, errors.Wrap(err, "error getting spec field")
+	value, _, err := unstructured.NestedBool(obj.Object, "spec", key)
+	utilruntime.Must(errors.Wrapf(err, "error retrieving %v field from %#v", key, obj))
+
+	return value
 }
 
-func getSpecString(pool unstructured.Unstructured, key string) (string, error) {
-	value, found, err := unstructured.NestedString(pool.Object, "spec", key)
-	if err != nil {
-		return "", errors.Wrap(err, "error getting spec field")
-	}
+func getSpecString(obj unstructured.Unstructured, key string) string {
+	value, _, err := unstructured.NestedString(obj.Object, "spec", key)
+	utilruntime.Must(errors.Wrapf(err, "error retrieving %v field from %#v", key, obj))
 
-	if !found {
-		return "", fmt.Errorf("%s value not found for IPPool %q", key, pool.GetName())
-	}
-
-	return value, nil
+	return value
 }
 
 func mustHaveSubmariner(clusterInfo *cluster.Info) {
@@ -271,8 +251,8 @@ func checkOVNVersion(ctx context.Context, info *cluster.Info, status reporter.In
 		return status.Error(err, "Failed to get ovn-nb database version")
 	}
 
-	if ovnNBVersion.LessThan(*minOVNNBVersion) {
-		status.Failure("The ovn-nb database version %v is less than the minimum supported version %v", ovnNBVersion, minOVNNBVersion)
+	if ovnNBVersion.LessThan(*MinOVNNBVersion) {
+		status.Failure("The ovn-nb database version %v is less than the minimum supported version %v", ovnNBVersion, MinOVNNBVersion)
 		return errors.New("unsupported ovn-nb database version")
 	}
 
@@ -291,7 +271,7 @@ func mustFindPod(ctx context.Context, clientSet kubernetes.Interface, labelSelec
 	}
 
 	if len(pods.Items) == 0 {
-		return nil, errors.WithMessagef(err, "no pod found with label %v", labelSelector)
+		return nil, errors.Errorf("no pod found with label %q", labelSelector)
 	}
 
 	return &pods.Items[0], nil
@@ -307,6 +287,10 @@ func getOVNNBVersion(ctx context.Context, clientSet kubernetes.Interface, config
 			containerName = container.Name
 			break
 		}
+	}
+
+	if containerName == "" {
+		return nil, errors.Errorf("no \"nb\" container found in OVN pod %q", pod.Name)
 	}
 
 	cmd := []string{"ovn-nbctl", "-V"}
@@ -332,7 +316,7 @@ func getOVNNBVersion(ctx context.Context, clientSet kubernetes.Interface, config
 
 	var stdout, stderr bytes.Buffer
 
-	exec, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
+	exec, err := resource.NewSPDYExecutor(config, "POST", req.URL())
 	if err != nil {
 		return nil, errors.WithMessagef(err, "failed to create SPDY executor")
 	}
@@ -350,7 +334,7 @@ func getOVNNBVersion(ctx context.Context, clientSet kubernetes.Interface, config
 	results := strings.Split(stdout.String(), "DB Schema")
 
 	if len(results) < 2 {
-		return nil, errors.WithMessagef(err, "unable to determine the version from the ovn-nbctl output: %q", stdout.String())
+		return nil, errors.Errorf("unable to determine the version from the ovn-nbctl output: %q", stdout.String())
 	}
 
 	return semver.New(strings.TrimSpace(results[1])), nil
