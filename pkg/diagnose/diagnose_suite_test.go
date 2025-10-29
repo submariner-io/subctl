@@ -39,6 +39,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/client"
 	clientfake "github.com/submariner-io/subctl/pkg/client/fake"
 	"github.com/submariner-io/subctl/pkg/cluster"
+	"github.com/submariner-io/subctl/pkg/diagnose"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/names"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
@@ -46,6 +47,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -60,6 +62,8 @@ var _ = BeforeSuite(func() {
 	Expect(v1alpha1.AddToScheme(scheme.Scheme)).To(Succeed())
 	Expect(submarinerv1.AddToScheme(scheme.Scheme)).To(Succeed())
 	Expect(mcsv1a1.Install(scheme.Scheme)).To(Succeed())
+
+	scheme.Scheme.AddKnownTypeWithName(diagnose.CalicoGVR.GroupVersion().WithKind("IPPoolList"), &unstructured.UnstructuredList{})
 
 	framework.TestContext.OperationTimeout = 1
 })
@@ -301,7 +305,7 @@ func newClusterInfo() *cluster.Info {
 func newGateway(haStatus submarinerv1.HAStatus, conns ...submarinerv1.Connection) *submarinerv1.Gateway {
 	return &submarinerv1.Gateway{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test",
+			Name:      "test-gateway",
 			Namespace: constants.OperatorNamespace,
 		},
 		Status: submarinerv1.GatewayStatus{
