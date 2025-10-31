@@ -236,9 +236,13 @@ func verifyInternalService(clusterInfo *cluster.Info, status reporter.Interface,
 		return
 	}
 
-	if svcs.Items[0].Spec.ExternalIPs[0] != globalIngress.Status.AllocatedIP {
+	if len(svcs.Items[0].Spec.ExternalIPs) != 1 {
 		status.Failure(
-			"The external IP (%s) for internal service associated with exported service \"%s/%s\" doesn't"+
+			"The internal service associated with exported service \"%s/%s\" has %d external IPs - expected 1",
+			ns, name, len(svcs.Items[0].Spec.ExternalIPs))
+	} else if svcs.Items[0].Spec.ExternalIPs[0] != globalIngress.Status.AllocatedIP {
+		status.Failure(
+			"The external IP (%s) for internal service associated with exported service \"%s/%s\" doesn't "+
 				"match allocated IP (%s) in GlobalIngressIP %q",
 			svcs.Items[0].Spec.ExternalIPs[0], ns, name, globalIngress.Status.AllocatedIP, globalIngress.Name)
 	}
