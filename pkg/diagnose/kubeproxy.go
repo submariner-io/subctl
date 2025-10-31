@@ -19,6 +19,7 @@ limitations under the License.
 package diagnose
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -29,8 +30,8 @@ import (
 
 const (
 	kubeProxyIPVSIfaceCommand = "ip a s kube-ipvs0"
-	missingInterface          = "ip: can't find device"
-	notEnabled                = "Device \"kube-ipvs0\" does not exist"
+	KubeProxyMissingInterface = "ip: can't find device"
+	KubeProxyNotEnabled       = "Device \"kube-ipvs0\" does not exist"
 )
 
 func KubeProxyMode(clusterInfo *cluster.Info, namespace string, imageOverrides []string, status reporter.Interface) error {
@@ -61,9 +62,8 @@ func KubeProxyMode(clusterInfo *cluster.Info, namespace string, imageOverrides [
 		return status.Error(err, "Error spawning the network pod")
 	}
 
-	if !strings.Contains(podOutput, missingInterface) && !strings.Contains(podOutput, notEnabled) {
-		status.Failure("The cluster is deployed with kube-proxy ipvs mode which Submariner does not support")
-		return nil
+	if !strings.Contains(podOutput, KubeProxyMissingInterface) && !strings.Contains(podOutput, KubeProxyNotEnabled) {
+		return status.Error(errors.New("the cluster is deployed with kube-proxy ipvs mode which Submariner does not support"), "")
 	}
 
 	status.Success("The kube-proxy mode is supported")
