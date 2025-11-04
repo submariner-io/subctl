@@ -80,7 +80,7 @@ var _ = Describe("Deployments", func() {
 		JustBeforeEach(func() {
 			Expect(util.MustUpdate(context.TODO(), resource.ForPod(t.fakeProducer.KubeClient, constants.OperatorNamespace),
 				&corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: names.GatewayComponent}}, func(existing *corev1.Pod) (*corev1.Pod, error) {
-					existing.Labels["gateway.submariner.io/status"] = string(submarinerv1.HAStatusPassive)
+					existing.Labels[diagnose.GatewayHAStatusLabel] = string(submarinerv1.HAStatusPassive)
 					return existing, nil
 				})).To(Succeed())
 		})
@@ -228,8 +228,8 @@ func newDeploymentTestDriver() *deploymentTestDriver {
 
 		// Create healthy gateway pod.
 		t.ensurePodWithStatus(names.GatewayComponent, map[string]string{
-			"gateway.submariner.io/status": string(submarinerv1.HAStatusActive),
-			"gateway.submariner.io/node":   "node1",
+			diagnose.GatewayHAStatusLabel: string(submarinerv1.HAStatusActive),
+			diagnose.GatewayNodeLabel:     "node1",
 		}, corev1.PodStatus{Phase: corev1.PodRunning})
 	})
 

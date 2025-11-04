@@ -26,6 +26,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/admiral/pkg/reporter"
+	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/pods"
 	"github.com/submariner-io/subctl/pkg/cluster"
@@ -37,6 +38,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/kubernetes"
 	k8snet "k8s.io/utils/net"
+	"k8s.io/utils/ptr"
 )
 
 type TargetPort int
@@ -53,10 +55,10 @@ const (
 )
 
 const (
-	clientSourcePort = "9898"
-	loadBalancerName = "submariner-gateway"
-	encapsPortName   = "cable-encaps"
-	nattPortName     = "natt-discovery"
+	clientSourcePort           = "9898"
+	LoadBalancerName           = "submariner-gateway"
+	LoadBalancerEncapsPortName = "cable-encaps"
+	LoadBalancerNattPortName   = "natt-discovery"
 )
 
 const (
@@ -116,28 +118,34 @@ func spawnSnifferPodOnNode(client kubernetes.Interface, nodeName, namespace, pod
 func getActiveGatewayNodeName(clusterInfo *cluster.Info, status reporter.Interface) (string, error) {
 	gwPods, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Pods(constants.OperatorNamespace).List(context.TODO(),
 		metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("app=%s,gateway.submariner.io/status=active", names.GatewayComponent),
+			LabelSelector: fmt.Sprintf("app=%s,%s=%s", names.GatewayComponent, GatewayHAStatusLabel, string(subv1.HAStatusActive)),
 		})
 	if err != nil {
 		return "", status.Error(err, "Error listing Pods in cluster %q", clusterInfo.Name)
 	}
 
 	if len(gwPods.Items) > 0 {
-		return gwPods.Items[0].Labels["gateway.submariner.io/node"], nil
+		nodeName := gwPods.Items[0].Labels[GatewayNodeLabel]
+		if nodeName == "" {
+			return "", status.Error(fmt.Errorf("the active Gateway pod %q in cluster %q is missing the %q label",
+				gwPods.Items[0].Name, clusterInfo.Name, GatewayNodeLabel), "")
+		}
+
+		return nodeName, nil
 	}
 
-	return "", status.Error(fmt.Errorf("could not find the active Gateway node in local cluster %q",
+	return "", status.Error(fmt.Errorf("could not find the active Gateway pod in local cluster %q",
 		clusterInfo.Name), "")
 }
 
-func getGatewayIP(clusterInfo *cluster.Info, localClusterID string, status reporter.Interface) (string, error) {
+func getGatewayIP(clusterInfo *cluster.Info, localClusterID string) (string, error) {
 	gateways, err := clusterInfo.GetGateways()
 	if err != nil {
-		return "", status.Error(err, "Error retrieving gateways from cluster %q", clusterInfo.Name)
+		return "", errors.Wrapf(err, "Error retrieving gateways from cluster %q", clusterInfo.Name)
 	}
 
 	if len(gateways) == 0 {
-		return "", status.Error(fmt.Errorf("there are no gateways detected on cluster %q", clusterInfo.Name), "Error")
+		return "", fmt.Errorf("there are no gateways detected on cluster %q", clusterInfo.Name)
 	}
 
 	for i := range gateways {
@@ -153,17 +161,14 @@ func getGatewayIP(clusterInfo *cluster.Info, localClusterID string, status repor
 					return conn.UsingIP, nil
 				}
 
-				if conn.Endpoint.NATEnabled {
-					return conn.Endpoint.GetPublicIP(k8snet.IPv4), nil
-				}
-
-				return conn.Endpoint.GetPrivateIP(k8snet.IPv4), nil
+				// UsingIP should always be set but flag an error if not.
+				return "", fmt.Errorf("the gateway on cluster %q has a connection to cluster %q but with no IP set: %s",
+					clusterInfo.Name, localClusterID, resource.ToJSON(conn))
 			}
 		}
 	}
 
-	return "", status.Error(fmt.Errorf("the gateway on cluster %q does not have an active connection to cluster %q",
-		clusterInfo.Name, localClusterID), "Error")
+	return "", fmt.Errorf("the gateway on cluster %q does not have an active connection to cluster %q", clusterInfo.Name, localClusterID)
 }
 
 func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, namespace string, options FirewallOptions,
@@ -224,7 +229,7 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 
 	defer sPod.Delete()
 
-	gatewayPodIP, err := getGatewayIP(remoteClusterInfo, localClusterInfo.Submariner.Status.ClusterID, status)
+	gatewayPodIP, err := getGatewayIP(remoteClusterInfo, localClusterInfo.Submariner.Status.ClusterID)
 	if err != nil {
 		return status.Error(err, "Error retrieving the gateway IP of cluster %q", localClusterInfo.Name)
 	}
@@ -345,18 +350,18 @@ func getTargetPort(submariner *v1alpha1.Submariner, endpoint *subv1.Endpoint, tg
 }
 
 func getLbNodePort(clusterInfo *cluster.Info, endpoint *subv1.Endpoint, tgtport TargetPort) (int32, error) {
-	usingLoadBalancer, _ := endpoint.Spec.GetBackendBool(subv1.UsingLoadBalancer, nil)
-	if usingLoadBalancer == nil || !*usingLoadBalancer {
+	usingLoadBalancer, _ := endpoint.Spec.GetBackendBool(subv1.UsingLoadBalancer, ptr.To(false))
+	if !*usingLoadBalancer {
 		return 0, nil
 	}
 
-	portName := encapsPortName
+	portName := LoadBalancerEncapsPortName
 	if tgtport == NatDiscoveryPort {
-		portName = nattPortName
+		portName = LoadBalancerNattPortName
 	}
 
 	svc, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Services(endpoint.GetNamespace()).Get(
-		context.TODO(), loadBalancerName, metav1.GetOptions{})
+		context.TODO(), LoadBalancerName, metav1.GetOptions{})
 	if err == nil {
 		for _, port := range svc.Spec.Ports {
 			if port.Name == portName {
@@ -364,8 +369,8 @@ func getLbNodePort(clusterInfo *cluster.Info, endpoint *subv1.Endpoint, tgtport 
 			}
 		}
 	} else {
-		return 0, fmt.Errorf("error reading the details of LB service %s: %w", loadBalancerName, err)
+		return 0, fmt.Errorf("error reading the details of LB service %s: %w", LoadBalancerName, err)
 	}
 
-	return 0, fmt.Errorf("could not determine nodePort for port name %q of LB service %s", portName, loadBalancerName)
+	return 0, fmt.Errorf("could not determine nodePort for port name %q of LB service %s", portName, LoadBalancerName)
 }
