@@ -102,12 +102,14 @@ func (p *Printer) columnNames() []string {
 func (p *Printer) initTemplate() string {
 	columnLengths := p.findColumnLengths()
 
-	sprintfTemplate := ""
+	var sprintfTemplate strings.Builder
 	for _, length := range columnLengths {
-		sprintfTemplate += fmt.Sprintf("%%-%d.%ds", length+3, length)
+		sprintfTemplate.WriteString(fmt.Sprintf("%%-%d.%ds", length+3, length))
 	}
 
-	return sprintfTemplate + "\n"
+	sprintfTemplate.WriteString("\n")
+
+	return sprintfTemplate.String()
 }
 
 func (p *Printer) findColumnLengths() []int {

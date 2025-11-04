@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
@@ -330,15 +331,15 @@ func checkNSLabels(config *Config) error {
 		return nil
 	}
 
-	labelStr := ""
+	var labels strings.Builder
 	for key, val := range expectedLabels {
-		labelStr += fmt.Sprintf("  %s=%s", key, val) + "\n"
+		labels.WriteString(fmt.Sprintf("  %s=%s\n", key, val))
 	}
 
 	status := cli.NewReporter()
 	status.Warning("Starting with Kubernetes 1.23, the Pod Security admission controller expects namespaces to have security labels."+
 		" Without these, you will see warnings in subctl's output. subctl should work fine, but you can avoid the warnings and ensure "+
-		"correct behavior by adding at least one of these labels to the namespace %q:\n%s", config.Namespace, labelStr)
+		"correct behavior by adding at least one of these labels to the namespace %q:\n%s", config.Namespace, labels.String())
 
 	return nil
 }
