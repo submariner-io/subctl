@@ -211,18 +211,20 @@ func checkRequirements(kubeClient kubernetes.Interface, ignoreRequirements bool,
 	_, failedRequirements, err := version.CheckRequirements(kubeClient, brokerInfo.ServiceDiscovery)
 
 	if len(failedRequirements) > 0 {
-		msg := "The target cluster fails to meet Submariner's version requirements:\n"
+		var msg strings.Builder
+		msg.WriteString("The target cluster fails to meet Submariner's version requirements:\n")
+
 		for i := range failedRequirements {
-			msg += fmt.Sprintf("* %s\n", failedRequirements[i])
+			msg.WriteString(fmt.Sprintf("* %s\n", failedRequirements[i]))
 		}
 
 		if !ignoreRequirements {
-			status.Failure(msg)
+			status.Failure(msg.String())
 
 			return goerrors.New("version requirements not met")
 		}
 
-		status.Warning(msg)
+		status.Warning(msg.String())
 	}
 
 	return status.Error(err, "unable to check version requirements")
