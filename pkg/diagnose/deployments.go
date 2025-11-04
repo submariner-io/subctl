@@ -37,6 +37,11 @@ import (
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	GatewayHAStatusLabel = "gateway.submariner.io/status"
+	GatewayNodeLabel     = "gateway.submariner.io/node"
+)
+
 func Deployments(clusterInfo *cluster.Info, _ string, imageOverrides []string, status reporter.Interface) error {
 	if clusterInfo.Submariner != nil {
 		if err := checkOverlappingCIDRs(clusterInfo, status); err != nil {
@@ -218,8 +223,8 @@ func checkPodsStatus(k8sClient kubernetes.Interface, namespace string, status re
 	for i := range pods.Items {
 		pod := &pods.Items[i]
 
-		if (pod.Labels["app"] == names.GatewayComponent) && (pod.Labels["gateway.submariner.io/status"] == string(submarinerv1.HAStatusActive)) {
-			activeGwNodeNames = append(activeGwNodeNames, pod.Labels["gateway.submariner.io/node"])
+		if (pod.Labels["app"] == names.GatewayComponent) && (pod.Labels[GatewayHAStatusLabel] == string(submarinerv1.HAStatusActive)) {
+			activeGwNodeNames = append(activeGwNodeNames, pod.Labels[GatewayNodeLabel])
 		}
 
 		if pod.Status.Phase != v1.PodRunning {

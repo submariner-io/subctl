@@ -56,6 +56,11 @@ import (
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
+const (
+	localCluster  = "local-cluster"
+	remoteCluster = "remote-cluster"
+)
+
 var errFake = errors.New("fake error")
 
 var _ = BeforeSuite(func() {
@@ -220,10 +225,13 @@ func newTestDriver() *testDriver {
 				Namespace: constants.OperatorNamespace,
 			},
 			Spec: v1alpha1.SubmarinerSpec{
-				ClusterID:                "east",
+				ClusterID:                localCluster,
 				BrokerK8sApiServer:       "api-server",
 				BrokerK8sApiServerToken:  base64.StdEncoding.EncodeToString([]byte("token")),
 				BrokerK8sRemoteNamespace: constants.DefaultBrokerNamespace,
+			},
+			Status: v1alpha1.SubmarinerStatus{
+				ClusterID: localCluster,
 			},
 		}
 		t.serviceDiscovery = &v1alpha1.ServiceDiscovery{
@@ -296,7 +304,7 @@ func (t *testDriver) testImageRepositoryInfoFailure(before func(), run func() er
 }
 
 func newClusterInfo() *cluster.Info {
-	info, err := cluster.NewInfo("east", &rest.Config{})
+	info, err := cluster.NewInfo(localCluster, &rest.Config{})
 	Expect(err).NotTo(HaveOccurred())
 
 	return info
