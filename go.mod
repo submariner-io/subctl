@@ -16,12 +16,12 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
-	github.com/submariner-io/admiral v0.21.1
-	github.com/submariner-io/cloud-prepare v0.21.1
-	github.com/submariner-io/lighthouse v0.21.1
-	github.com/submariner-io/shipyard v0.21.1
-	github.com/submariner-io/submariner v0.21.1
-	github.com/submariner-io/submariner-operator v0.21.1
+	github.com/submariner-io/admiral v0.21.2
+	github.com/submariner-io/cloud-prepare v0.21.2
+	github.com/submariner-io/lighthouse v0.21.2
+	github.com/submariner-io/shipyard v0.21.2
+	github.com/submariner-io/submariner v0.21.2
+	github.com/submariner-io/submariner-operator v0.21.2
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.41.0
 	golang.org/x/oauth2 v0.30.0
