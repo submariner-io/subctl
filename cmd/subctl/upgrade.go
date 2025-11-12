@@ -22,13 +22,18 @@ package subctl
 
 import (
 	"context"
+	"encoding/json"
+	goerrors "errors"
+	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/coreos/go-semver/semver"
-	"github.com/google/go-github/v54/github"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -107,12 +112,11 @@ func upgradeSubctl(status reporter.Interface) (string, error) {
 
 	// If the user hasn't specified a version, try to find the latest release on GitHub
 	if upgradeSubctlVersion == "" {
-		client := github.NewClient(nil)
-		latestRelease, _, err := client.Repositories.GetLatestRelease(context.TODO(), "submariner-io", "releases")
-
-		// If we can't determine the latest release, we'll force a download and delegate to get.submariner.io
-		if err == nil {
-			upgradeSubctlVersion = *latestRelease.TagName
+		tag, err := retrieveLatestReleaseTag()
+		if err != nil {
+			status.Warning("Couldn't retrieve the latest release tag, forcing a download: %v", err)
+		} else {
+			upgradeSubctlVersion = tag
 		}
 	}
 
@@ -163,6 +167,37 @@ func upgradeSubctl(status reporter.Interface) (string, error) {
 	status.End()
 
 	return absolutePath, nil
+}
+
+func retrieveLatestReleaseTag() (string, error) {
+	// Retrieve the latest release tag from https://api.github.com/repos/submariner-io/releases/releases/latest
+	// (the duplicate "releases" portion is normal, it points to the releases of the Submariner releases project)
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+
+	r, err := httpClient.Get("https://api.github.com/repos/submariner-io/releases/releases/latest")
+	if err != nil {
+		return "", fmt.Errorf("error accessing GitHub: %w", err)
+	}
+	defer r.Body.Close()
+
+	response, err := io.ReadAll(r.Body)
+	if err != nil {
+		return "", fmt.Errorf("error reading from GitHub: %w", err)
+	}
+
+	var unstructured map[string]any
+
+	err = json.Unmarshal(response, &unstructured)
+	if err != nil {
+		return "", fmt.Errorf("error unmarshaling the JSON response from GitHub: %w", err)
+	}
+
+	tagName, ok := unstructured["tag_name"]
+	if ok {
+		return tagName.(string), nil
+	}
+
+	return "", goerrors.New("no tag name found in the latest release data")
 }
 
 func upgradeSubmariner(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
