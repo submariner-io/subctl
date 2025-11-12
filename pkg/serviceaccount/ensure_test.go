@@ -161,14 +161,14 @@ func newTestDriver() *testDriver {
 		stopCh := make(chan struct{})
 
 		_, informer := cache.NewInformerWithOptions(cache.InformerOptions{
-			ListerWatcher: &cache.ListWatch{
+			ListerWatcher: cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 					return t.client.CoreV1().Secrets(namespace).List(context.Background(), options)
 				},
 				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 					return t.client.CoreV1().Secrets(namespace).Watch(context.Background(), options)
 				},
-			},
+			}, t.client),
 			ObjectType: &corev1.Secret{},
 			Handler: cache.ResourceEventHandlerFuncs{
 				AddFunc: func(obj any) {
