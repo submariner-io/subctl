@@ -209,8 +209,7 @@ func disruptiveVerificationNames() []string {
 func extractDisruptiveVerifications(csv string) []string {
 	var disruptive []string
 
-	verifications := strings.Split(csv, ",")
-	for _, verification := range verifications {
+	for verification := range strings.SplitSeq(csv, ",") {
 		verification = strings.Trim(strings.ToLower(verification), " ")
 		if _, ok := verifyE2EDisruptiveSpecLabels[verification]; ok {
 			disruptive = append(disruptive, verification)
@@ -250,8 +249,7 @@ func getVerifySpecLabels(csv string, includeDisruptive bool) ([]string, []string
 	outputLabels := []string{}
 	outputVerifications := []string{}
 
-	verifications := strings.Split(csv, ",")
-	for _, verification := range verifications {
+	for verification := range strings.SplitSeq(csv, ",") {
 		verification = strings.Trim(strings.ToLower(verification), " ")
 
 		vtype, label := getVerifySpecLabel(verification)
