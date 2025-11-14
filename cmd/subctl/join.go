@@ -264,7 +264,7 @@ func askForClusterID() (string, error) {
 	qs = append(qs, &survey.Question{
 		Name:   "clusterID",
 		Prompt: NewInputPrompt(&survey.Input{Message: "What is your cluster ID?"}),
-		Validate: func(val interface{}) error {
+		Validate: func(val any) error {
 			str, ok := val.(string)
 			if !ok {
 				return nil

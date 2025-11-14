@@ -111,11 +111,11 @@ type FakePrompt struct {
 	value any
 }
 
-func (f *FakePrompt) Prompt(_ *survey.PromptConfig) (interface{}, error) {
+func (f *FakePrompt) Prompt(_ *survey.PromptConfig) (any, error) {
 	return f.value, nil
 }
 
-func (f *FakePrompt) Cleanup(_ *survey.PromptConfig, _ interface{}) error {
+func (f *FakePrompt) Cleanup(_ *survey.PromptConfig, _ any) error {
 	return nil
 }
 
