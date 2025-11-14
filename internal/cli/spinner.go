@@ -86,6 +86,7 @@ func NewSpinner(w io.Writer) *Spinner {
 func (s *Spinner) SetPrefix(prefix string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	s.prefix = prefix
 }
 
@@ -93,6 +94,7 @@ func (s *Spinner) SetPrefix(prefix string) {
 func (s *Spinner) SetSuffix(suffix string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	s.suffix = suffix
 }
 
@@ -141,10 +143,12 @@ func (s *Spinner) Start() {
 // Stop signals the spinner to stop.
 func (s *Spinner) Stop() {
 	s.mu.Lock()
+
 	if !s.running {
 		s.mu.Unlock()
 		return
 	}
+
 	// try to stop, do nothing if channel is full (IE already busy stopping).
 	s.stop <- struct{}{}
 	s.mu.Unlock()

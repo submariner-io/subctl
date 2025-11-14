@@ -126,6 +126,7 @@ func (f *FakePrompt) Error(_ *survey.PromptConfig, _ error) error {
 func setupPrompts(respValues map[string]any) {
 	subctl.NewInputPrompt = func(from survey.Prompt) survey.Prompt {
 		var msg string
+
 		switch p := from.(type) {
 		case *survey.Input:
 			msg = p.Message

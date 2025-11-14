@@ -442,6 +442,7 @@ func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Int
 
 func (rcp *Producer) overrideContextAndRun(clusterName, contextName string, function PerContextFn, status reporter.Interface) error {
 	fmt.Printf("Cluster %q\n", clusterName)
+
 	defer fmt.Println()
 
 	rcp.defaultClientConfig.overrides.CurrentContext = contextName

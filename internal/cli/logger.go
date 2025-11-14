@@ -56,6 +56,7 @@ func NewLogger(writer io.Writer, verbosity log.Level) *Logger {
 func (l *Logger) SetWriter(w io.Writer) {
 	l.writerMu.Lock()
 	defer l.writerMu.Unlock()
+
 	l.writer = w
 	_, isSpinner := w.(*Spinner)
 	l.isSmartWriter = isSpinner || env.IsSmartTerminal(w)
