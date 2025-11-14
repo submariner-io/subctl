@@ -41,7 +41,7 @@ func NewBrokerSA(submarinerBrokerSA string) *v1.ServiceAccount {
 	return sa
 }
 
-// Create a role for to bind the cluster admin (subctl) SA.
+// NewBrokerRoleBinding creates a role for to bind the cluster admin (subctl) SA.
 func NewBrokerRoleBinding(serviceAccount, role, namespace string) *rbacv1.RoleBinding {
 	binding := &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
