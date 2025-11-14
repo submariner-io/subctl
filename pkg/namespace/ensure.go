@@ -20,6 +20,7 @@ package namespace
 
 import (
 	"context"
+	"maps"
 
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/resource"
@@ -38,9 +39,7 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace stri
 			ns.Labels = map[string]string{}
 		}
 
-		for k, v := range namespaceLabels {
-			ns.Labels[k] = v
-		}
+		maps.Copy(ns.Labels, namespaceLabels)
 
 		return ns, nil
 	})
