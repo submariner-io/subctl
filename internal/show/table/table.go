@@ -38,7 +38,7 @@ type Printer struct {
 // Add a new row consisting of values to be printed.
 // The value will be cast to string, with special care given to bool and slice.
 // It's up to the caller to ensure the number of values match the nubmer of table columns.
-func (p *Printer) Add(values ...interface{}) {
+func (p *Printer) Add(values ...any) {
 	row := make([]string, len(values))
 
 	for i, value := range values {
@@ -82,7 +82,7 @@ func (p *Printer) Print() {
 }
 
 func printRow(template string, row []string) {
-	values := make([]interface{}, len(row))
+	values := make([]any, len(row))
 	for i, v := range row {
 		values[i] = v
 	}

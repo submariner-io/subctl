@@ -201,9 +201,9 @@ func (np *Scheduled) awaitUntilScheduled() error {
 	pods := np.Config.ClientSet.CoreV1().Pods(np.Config.Namespace)
 
 	pod, errmsg, err := framework.AwaitResultOrError("await pod ready",
-		func() (interface{}, error) {
+		func() (any, error) {
 			return pods.Get(context.TODO(), np.Pod.Name, metav1.GetOptions{})
-		}, func(result interface{}) (bool, string, error) {
+		}, func(result any) (bool, string, error) {
 			pod := result.(*v1.Pod)
 			if pod.Status.Phase != v1.PodRunning && pod.Status.Phase != v1.PodSucceeded {
 				statusStr, _ := json.MarshalIndent(pod.Status, "", "  ")
@@ -234,9 +234,9 @@ func (np *Scheduled) AwaitCompletion() error {
 	pods := np.Config.ClientSet.CoreV1().Pods(np.Config.Namespace)
 
 	_, errorMsg, err := framework.AwaitResultOrError(
-		fmt.Sprintf("await pod %q finished", np.Pod.Name), func() (interface{}, error) {
+		fmt.Sprintf("await pod %q finished", np.Pod.Name), func() (any, error) {
 			return pods.Get(context.TODO(), np.Pod.Name, metav1.GetOptions{})
-		}, func(result interface{}) (bool, string, error) {
+		}, func(result any) (bool, string, error) {
 			np.Pod = result.(*v1.Pod)
 
 			switch np.Pod.Status.Phase { //nolint:exhaustive // 'missing cases in switch' - OK

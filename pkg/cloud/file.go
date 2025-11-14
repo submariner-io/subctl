@@ -26,7 +26,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func ReadMetadataFile(fileName string, metadata interface{}) error {
+func ReadMetadataFile(fileName string, metadata any) error {
 	fileInfo, err := os.Stat(fileName)
 	if err != nil {
 		return errors.Wrapf(err, "failed to stat file %q", fileName)

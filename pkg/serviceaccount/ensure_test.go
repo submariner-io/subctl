@@ -171,7 +171,7 @@ func newTestDriver() *testDriver {
 			},
 			ObjectType: &corev1.Secret{},
 			Handler: cache.ResourceEventHandlerFuncs{
-				AddFunc: func(obj interface{}) {
+				AddFunc: func(obj any) {
 					s := obj.(*corev1.Secret)
 					s.Data = map[string][]byte{"token": {1, 2, 3}}
 

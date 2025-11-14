@@ -106,7 +106,7 @@ func (l *Logger) print(message string) {
 }
 
 // printf is roughly fmt.Fprintf against the log writer.
-func (l *Logger) printf(format string, args ...interface{}) {
+func (l *Logger) printf(format string, args ...any) {
 	buf := l.bufferPool.Get()
 	fmt.Fprintf(buf, format, args...)
 	l.writeBuffer(buf)
@@ -148,7 +148,7 @@ func (l *Logger) debug(message string) {
 }
 
 // debugf is like printf but with a debug log header.
-func (l *Logger) debugf(format string, args ...interface{}) {
+func (l *Logger) debugf(format string, args ...any) {
 	buf := l.bufferPool.Get()
 	addDebugHeader(buf)
 	fmt.Fprintf(buf, format, args...)
@@ -162,7 +162,7 @@ func (l *Logger) Warn(message string) {
 }
 
 // Warnf is part of the log.Logger interface.
-func (l *Logger) Warnf(format string, args ...interface{}) {
+func (l *Logger) Warnf(format string, args ...any) {
 	l.printf(format, args...)
 }
 
@@ -172,7 +172,7 @@ func (l *Logger) Error(message string) {
 }
 
 // Errorf is part of the log.Logger interface.
-func (l *Logger) Errorf(format string, args ...interface{}) {
+func (l *Logger) Errorf(format string, args ...any) {
 	l.printf(format, args...)
 }
 
@@ -211,7 +211,7 @@ func (i infoLogger) Info(message string) {
 }
 
 // Infof is part of the log.InfoLogger interface.
-func (i infoLogger) Infof(format string, args ...interface{}) {
+func (i infoLogger) Infof(format string, args ...any) {
 	if !i.enabled {
 		return
 	}
@@ -232,7 +232,7 @@ type bufferPool struct {
 func newBufferPool() *bufferPool {
 	return &bufferPool{
 		sync.Pool{
-			New: func() interface{} {
+			New: func() any {
 				// The Pool's New function should generally only return pointer
 				// types, since a pointer can be put into the return interface
 				// value without an allocation:
