@@ -64,11 +64,11 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 	}
 
 	submariner := &v1alpha1.Submariner{}
+
 	err = info.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
 		Namespace: constants.OperatorNamespace,
 		Name:      opnames.SubmarinerCrName,
 	}, submariner)
-
 	if err == nil {
 		info.Submariner = submariner
 	} else if !resource.IsNotFoundErr(err) {
@@ -76,11 +76,11 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 	}
 
 	serviceDiscovery := &v1alpha1.ServiceDiscovery{}
+
 	err = info.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
 		Namespace: constants.OperatorNamespace,
 		Name:      opnames.ServiceDiscoveryCrName,
 	}, serviceDiscovery)
-
 	if err == nil {
 		info.ServiceDiscovery = serviceDiscovery
 	} else if !resource.IsNotFoundErr(err) {

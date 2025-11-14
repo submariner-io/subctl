@@ -141,6 +141,7 @@ func checkGlobalEgressIPs(clusterInfo *cluster.Info, status reporter.Interface) 
 		} else if condition.Status != metav1.ConditionTrue {
 			status.Failure("The allocation of global IPs for GlobalEgressIP %q failed with reason %q and message %q",
 				gip.Name, condition.Reason, condition.Message)
+
 			continue
 		}
 	}
@@ -201,6 +202,7 @@ func checkGlobalIngressIPs(clusterInfo *cluster.Info, status reporter.Interface)
 		if condition == nil {
 			status.Failure("GlobalIngressIP %q associated with exported service \"%s/%s\" is missing"+
 				"the %q status condition", globalIngress.Name, ns, name, submarinerv1.GlobalEgressIPAllocated)
+
 			continue
 		} else if condition.Status != metav1.ConditionTrue {
 			status.Failure("The allocation of global IPs for GlobalIngressIP %q associated with exported"+

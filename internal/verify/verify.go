@@ -97,6 +97,7 @@ func runVerify(options subctl.VerifyOptions, fromClusterInfo, toClusterInfo, ext
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
 	framework.BeforeSuite()
+
 	defer framework.RunCleanupActions()
 
 	if !ginkgo.RunSpecs(&testing.T{}, "Submariner E2E suite", suiteConfig, reporterConfig) {
