@@ -229,6 +229,7 @@ func newTestDriver() *testDriver {
 				BrokerK8sApiServer:       "api-server",
 				BrokerK8sApiServerToken:  base64.StdEncoding.EncodeToString([]byte("token")),
 				BrokerK8sRemoteNamespace: constants.DefaultBrokerNamespace,
+				CeIPSecNATTPort:          7319,
 			},
 			Status: v1alpha1.SubmarinerStatus{
 				ClusterID: localCluster,
