@@ -37,25 +37,17 @@ func FirewallIntraVxLANConfig(clusterInfo *cluster.Info, namespace string, optio
 	status.Start("Checking that firewall configuration allows intra-cluster VXLAN traffic")
 	defer status.End()
 
-	singleNode, err := clusterInfo.HasSingleNode()
-	if err != nil {
-		return status.Error(err, "Error determining whether the cluster has a single node")
-	}
+	return runIfSingleNode(clusterInfo, status, func() error {
+		tracker := reporter.NewTracker(status)
 
-	if singleNode {
-		status.Success(singleNodeMessage)
+		checkFWConfig(clusterInfo, namespace, options, tracker)
+
+		if tracker.HasFailures() {
+			return errors.New("failures while diagnosing the intra-VXLAN firewall configuration")
+		}
+
 		return nil
-	}
-
-	tracker := reporter.NewTracker(status)
-
-	checkFWConfig(clusterInfo, namespace, options, tracker)
-
-	if tracker.HasFailures() {
-		return errors.New("failures while diagnosing the intra-VXLAN firewall configuration")
-	}
-
-	return nil
+	})
 }
 
 func checkFWConfig(clusterInfo *cluster.Info, namespace string, options FirewallOptions, status reporter.Interface) {

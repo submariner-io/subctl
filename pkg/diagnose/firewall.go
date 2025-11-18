@@ -171,6 +171,20 @@ func getGatewayIP(clusterInfo *cluster.Info, localClusterID string) (string, err
 	return "", fmt.Errorf("the gateway on cluster %q does not have an active connection to cluster %q", clusterInfo.Name, localClusterID)
 }
 
+func runIfSingleNode(clusterInfo *cluster.Info, status reporter.Interface, run func() error) error {
+	singleNode, err := clusterInfo.HasSingleNode()
+	if err != nil {
+		return status.Error(err, "error determining whether the cluster has a single node")
+	}
+
+	if singleNode {
+		status.Success(singleNodeMessage)
+		return nil
+	}
+
+	return run()
+}
+
 func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, namespace string, options FirewallOptions,
 	status reporter.Interface, targetPort TargetPort, message string,
 ) error {
@@ -180,88 +194,80 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 	status.Start(message)
 	defer status.End()
 
-	singleNode, err := remoteClusterInfo.HasSingleNode()
-	if err != nil {
-		return status.Error(err, "")
-	}
+	return runIfSingleNode(remoteClusterInfo, status, func() error {
+		localEndpoint, err := localClusterInfo.GetLocalEndpoint()
+		if err != nil {
+			return status.Error(err, "Unable to obtain the local endpoint")
+		}
 
-	if singleNode {
-		status.Success(singleNodeMessage)
-		return nil
-	}
+		gwNodeName, err := getActiveGatewayNodeName(localClusterInfo, status)
+		if err != nil {
+			return err
+		}
 
-	localEndpoint, err := localClusterInfo.GetLocalEndpoint()
-	if err != nil {
-		return status.Error(err, "Unable to obtain the local endpoint")
-	}
+		destPort, err := getTargetPort(localClusterInfo.Submariner, localEndpoint, targetPort)
+		if err != nil {
+			return status.Error(err, "Could not determine the target port")
+		}
 
-	gwNodeName, err := getActiveGatewayNodeName(localClusterInfo, status)
-	if err != nil {
-		return err
-	}
+		portFilter, err := getPortFilter(destPort, localClusterInfo, localEndpoint, targetPort, status)
+		if err != nil {
+			return err
+		}
 
-	destPort, err := getTargetPort(localClusterInfo.Submariner, localEndpoint, targetPort)
-	if err != nil {
-		return status.Error(err, "Could not determine the target port")
-	}
+		clientMessage := string(uuid.NewUUID())[0:8]
+		// The following construct ensures that tcpdump will be stopped as soon as the message is seen, instead of waiting
+		// for a timeout; but when the message isn't seen, it will be killed once the timeout expires
+		podCommand := fmt.Sprintf(
+			"(tcpdump --immediate-mode -ln -Q in -A -s 100 -i any udp and %s & pid=\"$!\"; (sleep %d; kill \"$pid\") &) | sed '/%s/q'",
+			portFilter, options.ValidationTimeout, clientMessage)
 
-	portFilter, err := getPortFilter(destPort, localClusterInfo, localEndpoint, targetPort, status)
-	if err != nil {
-		return err
-	}
+		repositoryInfo, err := localClusterInfo.GetImageRepositoryInfo(options.ImageOverrides...)
+		if err != nil {
+			return status.Error(err, "Error determining repository information")
+		}
 
-	clientMessage := string(uuid.NewUUID())[0:8]
-	// The following construct ensures that tcpdump will be stopped as soon as the message is seen, instead of waiting
-	// for a timeout; but when the message isn't seen, it will be killed once the timeout expires
-	podCommand := fmt.Sprintf(
-		"(tcpdump --immediate-mode -ln -Q in -A -s 100 -i any udp and %s & pid=\"$!\"; (sleep %d; kill \"$pid\") &) | sed '/%s/q'",
-		portFilter, options.ValidationTimeout, clientMessage)
+		sPod, err := spawnSnifferPodOnNode(localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, namespace, podCommand, repositoryInfo)
+		if err != nil {
+			return status.Error(err, "Error spawning the sniffer pod on the Gateway node %q", gwNodeName)
+		}
 
-	repositoryInfo, err := localClusterInfo.GetImageRepositoryInfo(options.ImageOverrides...)
-	if err != nil {
-		return status.Error(err, "Error determining repository information")
-	}
+		defer sPod.Delete()
 
-	sPod, err := spawnSnifferPodOnNode(localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, namespace, podCommand, repositoryInfo)
-	if err != nil {
-		return status.Error(err, "Error spawning the sniffer pod on the Gateway node %q", gwNodeName)
-	}
+		gatewayPodIP, err := getGatewayIP(remoteClusterInfo, localClusterInfo.Submariner.Status.ClusterID)
+		if err != nil {
+			return status.Error(err, "Error retrieving the gateway IP of cluster %q", localClusterInfo.Name)
+		}
 
-	defer sPod.Delete()
+		podCommand = fmt.Sprintf("for x in $(seq 1000); do echo %s; done | for i in $(seq 5);"+
+			" do timeout 2 nc -n -p %s -u %s %d; done", clientMessage, clientSourcePort, gatewayPodIP, destPort)
 
-	gatewayPodIP, err := getGatewayIP(remoteClusterInfo, localClusterInfo.Submariner.Status.ClusterID)
-	if err != nil {
-		return status.Error(err, "Error retrieving the gateway IP of cluster %q", localClusterInfo.Name)
-	}
+		// Spawn the pod on the nonGateway node. If we spawn the pod on Gateway node, the tunnel process can
+		// sometimes drop the udp traffic from client pod until the tunnels are properly setup.
+		cPod, err := spawnClientPodOnNonGatewayNodeWithHostNet(remoteClusterInfo.ClientProducer.ForKubernetes(), namespace,
+			podCommand, repositoryInfo)
+		if err != nil {
+			return status.Error(err, "Error spawning the client pod on non-Gateway node of cluster %q", remoteClusterInfo.Name)
+		}
 
-	podCommand = fmt.Sprintf("for x in $(seq 1000); do echo %s; done | for i in $(seq 5);"+
-		" do timeout 2 nc -n -p %s -u %s %d; done", clientMessage, clientSourcePort, gatewayPodIP, destPort)
+		defer cPod.Delete()
 
-	// Spawn the pod on the nonGateway node. If we spawn the pod on Gateway node, the tunnel process can
-	// sometimes drop the udp traffic from client pod until the tunnels are properly setup.
-	cPod, err := spawnClientPodOnNonGatewayNodeWithHostNet(remoteClusterInfo.ClientProducer.ForKubernetes(), namespace,
-		podCommand, repositoryInfo)
-	if err != nil {
-		return status.Error(err, "Error spawning the client pod on non-Gateway node of cluster %q", remoteClusterInfo.Name)
-	}
+		err = awaitPodCompletion(cPod, sPod, status)
+		if err != nil {
+			return err
+		}
 
-	defer cPod.Delete()
+		if options.VerboseOutput {
+			status.Success("tcpdump output from sniffer pod on Gateway node:\n%s", sPod.PodOutput)
+		}
 
-	err = awaitPodCompletion(cPod, sPod, status)
-	if err != nil {
-		return err
-	}
+		var espNeeded bool
+		if gatewayPodIP == localEndpoint.Spec.GetPrivateIP(k8snet.IPv4) && localEndpoint.Spec.Backend == Libreswan {
+			espNeeded = true
+		}
 
-	if options.VerboseOutput {
-		status.Success("tcpdump output from sniffer pod on Gateway node:\n%s", sPod.PodOutput)
-	}
-
-	var espNeeded bool
-	if gatewayPodIP == localEndpoint.Spec.GetPrivateIP(k8snet.IPv4) && localEndpoint.Spec.Backend == Libreswan {
-		espNeeded = true
-	}
-
-	return validateOutput(sPod, clientMessage, localEndpoint.Spec.Hostname, destPort, espNeeded, status)
+		return validateOutput(sPod, clientMessage, localEndpoint.Spec.Hostname, destPort, espNeeded, status)
+	})
 }
 
 func awaitPodCompletion(cPod, sPod *pods.Scheduled, status reporter.Interface) error {

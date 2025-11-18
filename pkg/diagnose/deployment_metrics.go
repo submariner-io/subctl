@@ -56,38 +56,30 @@ func checkComponentMetrics(clusterInfo *cluster.Info, imageOverrides []string, c
 	status.Start("Checking that %s metrics are accessible from non-gateway nodes", component)
 	defer status.End()
 
-	singleNode, err := clusterInfo.HasSingleNode()
-	if err != nil {
-		return status.Error(err, "Error determining whether the cluster has a single node")
-	}
+	return runIfSingleNode(clusterInfo, status, func() error {
+		repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(imageOverrides...)
+		if err != nil {
+			return status.Error(err, "Error determining repository information")
+		}
 
-	if singleNode {
-		status.Success(singleNodeMessage)
+		cPod, err := spawnClientPodOnNonGatewayNode(clusterInfo.ClientProducer.ForKubernetes(),
+			clusterInfo.Submariner.Namespace, command, repositoryInfo)
+		if err != nil {
+			return status.Error(err, "Error spawning the client pod on non-Gateway node")
+		}
+
+		defer cPod.Delete()
+
+		if err = cPod.AwaitCompletion(); err != nil {
+			return status.Error(err, "Error waiting for the client pod to finish its execution")
+		}
+
+		// Expected response: "HTTP/1.1 200 OK"
+		if !strings.Contains(cPod.PodOutput, "200 OK") {
+			return status.Error(errors.Errorf("Unexpected output %v", cPod.PodOutput),
+				"Unable to access %s metrics service in submariner-operator namespace", component)
+		}
+
 		return nil
-	}
-
-	repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(imageOverrides...)
-	if err != nil {
-		return status.Error(err, "Error determining repository information")
-	}
-
-	cPod, err := spawnClientPodOnNonGatewayNode(clusterInfo.ClientProducer.ForKubernetes(),
-		clusterInfo.Submariner.Namespace, command, repositoryInfo)
-	if err != nil {
-		return status.Error(err, "Error spawning the client pod on non-Gateway node")
-	}
-
-	defer cPod.Delete()
-
-	if err = cPod.AwaitCompletion(); err != nil {
-		return status.Error(err, "Error waiting for the client pod to finish its execution")
-	}
-
-	// Expected response: "HTTP/1.1 200 OK"
-	if !strings.Contains(cPod.PodOutput, "200 OK") {
-		return status.Error(errors.Errorf("Unexpected output %v", cPod.PodOutput),
-			"Unable to access %s metrics service in submariner-operator namespace", component)
-	}
-
-	return nil
+	})
 }
