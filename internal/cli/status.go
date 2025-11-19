@@ -51,7 +51,7 @@ type status struct {
 	failureFormat string
 	warningFormat string
 	// message queue
-	messageQueue []interface{}
+	messageQueue []any
 }
 
 func NewReporter() reporter.Interface {
@@ -65,7 +65,7 @@ func NewReporter() reporter.Interface {
 		successFormat: " ✓ %s\n",
 		failureFormat: " ✗ %s\n",
 		warningFormat: " ⚠ %s\n",
-		messageQueue:  []interface{}{},
+		messageQueue:  []any{},
 	}
 
 	// if we're using the CLI logger, check for if it has a spinner setup
@@ -117,7 +117,7 @@ func (s *status) resultFromMessages() resultType {
 
 // Start starts a new phase of the status, if attached to a terminal
 // there will be a loading spinner with this status.
-func (s *status) Start(message string, args ...interface{}) {
+func (s *status) Start(message string, args ...any) {
 	s.End()
 	s.status = fmt.Sprintf(message, args...)
 
@@ -131,7 +131,7 @@ func (s *status) Start(message string, args ...interface{}) {
 
 // Failure queues up a message, which will be displayed once
 // the status ends (using the failure format).
-func (s *status) Failure(message string, a ...interface{}) {
+func (s *status) Failure(message string, a ...any) {
 	if message == "" {
 		return
 	}
@@ -145,7 +145,7 @@ func (s *status) Failure(message string, a ...interface{}) {
 
 // Success queues up a message, which will be displayed once
 // the status ends (using the warning format).
-func (s *status) Success(message string, a ...interface{}) {
+func (s *status) Success(message string, a ...any) {
 	if message == "" {
 		return
 	}
@@ -159,7 +159,7 @@ func (s *status) Success(message string, a ...interface{}) {
 
 // Warning queues up a message, which will be displayed once
 // the status ends (using the warning format).
-func (s *status) Warning(message string, a ...interface{}) {
+func (s *status) Warning(message string, a ...any) {
 	if message == "" {
 		return
 	}
@@ -206,5 +206,5 @@ func (s *status) End() {
 	}
 
 	s.status = ""
-	s.messageQueue = []interface{}{}
+	s.messageQueue = []any{}
 }

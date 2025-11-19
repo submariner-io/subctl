@@ -215,6 +215,7 @@ func addDiagnoseFWConfigFlags(command *cobra.Command) {
 
 func firewallIntraVxLANConfig(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 	diagnoseFirewallOptions.ImageOverrides = imageOverrides
+
 	return diagnose.FirewallIntraVxLANConfig( //nolint:wrapcheck // No need to wrap errors here.
 		clusterInfo, namespace, diagnoseFirewallOptions, status)
 }

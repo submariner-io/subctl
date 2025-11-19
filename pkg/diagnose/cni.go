@@ -79,6 +79,7 @@ func CNIConfig(clusterInfo *cluster.Info, _ string, status reporter.Interface) e
 	if !isSupportedPlugin {
 		status.Failure("The detected CNI plugin (%q) is not supported by Submariner. Supported plugins: %v",
 			clusterInfo.Submariner.Status.NetworkPlugin, supportedNetworkPlugins)
+
 		return errors.New("unsupported CNI plugin")
 	}
 
@@ -180,6 +181,7 @@ func checkCalicoSubmConfig(gateway *submv1.Gateway, ippools map[string]unstructu
 				if !isDisabled {
 					status.Failure("The IPPool %q with CIDR %q for remote endpoint"+
 						" %q has disabled set to false", ipPool.GetName(), subnet, connection.Endpoint.CableName)
+
 					continue
 				}
 
@@ -195,11 +197,13 @@ func checkCalicoSubmConfig(gateway *submv1.Gateway, ippools map[string]unstructu
 				if natOutgoing {
 					status.Failure("The IPPool %q with CIDR %q for remote endpoint"+
 						" %q has natOutgoing set to true", ipPool.GetName(), subnet, connection.Endpoint.CableName)
+
 					continue
 				}
 			} else {
-				status.Failure("Could not find any IPPool with CIDR %q for remote"+
-					" endpoint %q", subnet, connection.Endpoint.CableName)
+				status.Failure("Could not find any IPPool with CIDR %q for remote endpoint %q",
+					subnet, connection.Endpoint.CableName)
+
 				continue
 			}
 		}

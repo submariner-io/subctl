@@ -60,7 +60,7 @@ var _ = Describe("Ensure", func() {
 		statusReporter = &test.Tracker{Interface: cli.NewReporter()}
 
 		dynClient.PrependReactor("get", "securitycontextconstraints", func(action k8stesting.Action) (bool, runtime.Object, error) {
-			return true, &unstructured.Unstructured{Object: map[string]interface{}{}}, nil // Simulate OCP platform detection
+			return true, &unstructured.Unstructured{Object: map[string]any{}}, nil // Simulate OCP platform detection
 		})
 	})
 

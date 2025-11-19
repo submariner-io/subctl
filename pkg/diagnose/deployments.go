@@ -92,6 +92,7 @@ func checkOverlappingCIDRs(clusterInfo *cluster.Info, status reporter.Interface)
 			if source.Spec.ClusterID == dest.Spec.ClusterID {
 				tracker.Failure("Found multiple Submariner endpoints (%q and %q) in cluster %q",
 					source.Name, dest.Name, source.Spec.ClusterID)
+
 				continue
 			}
 
