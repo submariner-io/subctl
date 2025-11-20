@@ -20,14 +20,16 @@ package diagnose_test
 
 import (
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/pkg/diagnose"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 )
 
 var _ = Describe("CheckGatewayConnections", func() {
 	t := newTestDriver()
+
+	run := func() error {
+		return diagnose.CheckGatewayConnections(newClusterInfo(), t.statusTracker)
+	}
 
 	When("all connections are established", func() {
 		BeforeEach(func() {
@@ -37,9 +39,7 @@ var _ = Describe("CheckGatewayConnections", func() {
 			}))
 		})
 
-		It("should succeed", func() {
-			Expect(diagnose.CheckGatewayConnections(newClusterInfo(), cli.NewReporter())).To(Succeed())
-		})
+		t.testSuccess(run)
 	})
 
 	When("a connection is in progress", func() {
@@ -54,9 +54,7 @@ var _ = Describe("CheckGatewayConnections", func() {
 			}))
 		})
 
-		It("should fail", func() {
-			Expect(diagnose.CheckGatewayConnections(newClusterInfo(), cli.NewReporter())).NotTo(Succeed())
-		})
+		t.testFailure(run, "in progress")
 	})
 
 	When("a connection is in error", func() {
@@ -69,9 +67,7 @@ var _ = Describe("CheckGatewayConnections", func() {
 			}))
 		})
 
-		It("should fail", func() {
-			Expect(diagnose.CheckGatewayConnections(newClusterInfo(), cli.NewReporter())).NotTo(Succeed())
-		})
+		t.testFailure(run, "not established")
 	})
 
 	When("there's no connections", func() {
@@ -79,9 +75,7 @@ var _ = Describe("CheckGatewayConnections", func() {
 			t.createResource(newGateway(submarinerv1.HAStatusActive))
 		})
 
-		It("should fail", func() {
-			Expect(diagnose.CheckGatewayConnections(newClusterInfo(), cli.NewReporter())).NotTo(Succeed())
-		})
+		t.testFailure(run, "no", "connections")
 	})
 
 	When("there's no active Gateway", func() {
@@ -89,20 +83,20 @@ var _ = Describe("CheckGatewayConnections", func() {
 			t.createResource(newGateway(submarinerv1.HAStatusPassive))
 		})
 
-		It("should fail", func() {
-			Expect(diagnose.CheckGatewayConnections(newClusterInfo(), cli.NewReporter())).NotTo(Succeed())
-		})
+		t.testFailure(run, "active gateway")
 	})
 
 	When("there's no Gateways", func() {
-		It("should fail", func() {
-			Expect(diagnose.CheckGatewayConnections(newClusterInfo(), cli.NewReporter())).NotTo(Succeed())
-		})
+		t.testFailure(run, "gateways")
 	})
 })
 
 var _ = Describe("CheckRouteAgentConnections", func() {
 	t := newTestDriver()
+
+	run := func() error {
+		return diagnose.CheckRouteAgentConnections(newClusterInfo(), t.statusTracker)
+	}
 
 	When("all connections are established", func() {
 		BeforeEach(func() {
@@ -111,9 +105,7 @@ var _ = Describe("CheckRouteAgentConnections", func() {
 			}))
 		})
 
-		It("should succeed", func() {
-			Expect(diagnose.CheckRouteAgentConnections(newClusterInfo(), cli.NewReporter())).To(Succeed())
-		})
+		t.testSuccess(run)
 	})
 
 	When("a connection is in progress", func() {
@@ -136,9 +128,7 @@ var _ = Describe("CheckRouteAgentConnections", func() {
 				}))
 		})
 
-		It("should fail", func() {
-			Expect(diagnose.CheckRouteAgentConnections(newClusterInfo(), cli.NewReporter())).NotTo(Succeed())
-		})
+		t.testFailure(run, "in progress")
 	})
 
 	When("a connection is in error", func() {
@@ -161,9 +151,7 @@ var _ = Describe("CheckRouteAgentConnections", func() {
 				}))
 		})
 
-		It("should fail", func() {
-			Expect(diagnose.CheckRouteAgentConnections(newClusterInfo(), cli.NewReporter())).NotTo(Succeed())
-		})
+		t.testFailure(run, "not established")
 	})
 
 	When("there's no connections", func() {
@@ -171,20 +159,20 @@ var _ = Describe("CheckRouteAgentConnections", func() {
 			t.createResource(newRouteAgent())
 		})
 
-		It("should succeed", func() {
-			Expect(diagnose.CheckRouteAgentConnections(newClusterInfo(), cli.NewReporter())).To(Succeed())
-		})
+		t.testSuccess(run)
 	})
 
 	When("there's no RouteAgents", func() {
-		It("should fail", func() {
-			Expect(diagnose.CheckRouteAgentConnections(newClusterInfo(), cli.NewReporter())).NotTo(Succeed())
-		})
+		t.testFailure(run, "route agents")
 	})
 })
 
 var _ = Describe("Connections", func() {
 	t := newTestDriver()
+
+	run := func() error {
+		return diagnose.Connections(newClusterInfo(), "", t.statusTracker)
+	}
 
 	When("all connections are established", func() {
 		BeforeEach(func() {
@@ -198,9 +186,7 @@ var _ = Describe("Connections", func() {
 			}))
 		})
 
-		It("should succeed", func() {
-			Expect(diagnose.Connections(newClusterInfo(), "", cli.NewReporter())).To(Succeed())
-		})
+		t.testSuccess(run)
 	})
 
 	When("there's a fully-connected RouteAgent but no Gateway", func() {
@@ -210,9 +196,7 @@ var _ = Describe("Connections", func() {
 			}))
 		})
 
-		It("should fail", func() {
-			Expect(diagnose.Connections(newClusterInfo(), "", cli.NewReporter())).NotTo(Succeed())
-		})
+		t.testFailure(run, "gateways", "detected")
 	})
 
 	When("there's a fully-connected Gateway but no RouteAgent", func() {
@@ -223,8 +207,6 @@ var _ = Describe("Connections", func() {
 			}))
 		})
 
-		It("should fail", func() {
-			Expect(diagnose.Connections(newClusterInfo(), "", cli.NewReporter())).NotTo(Succeed())
-		})
+		t.testFailure(run, "route agents", "detected")
 	})
 })
