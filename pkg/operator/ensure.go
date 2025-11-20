@@ -19,6 +19,8 @@ limitations under the License.
 package operator
 
 import (
+	"context"
+
 	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/client"
@@ -31,7 +33,6 @@ import (
 	"github.com/submariner-io/subctl/pkg/submariner"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 	"github.com/submariner-io/submariner-operator/pkg/embeddedyamls"
-	"golang.org/x/net/context"
 	"golang.org/x/net/http/httpproxy"
 )
 
