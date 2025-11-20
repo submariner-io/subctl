@@ -22,7 +22,6 @@ import (
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/submariner-io/admiral/pkg/fake"
 	lhconstants "github.com/submariner-io/lighthouse/pkg/constants"
 	"github.com/submariner-io/subctl/internal/constants"
@@ -55,7 +54,7 @@ func testExportedServices() {
 		endpointSlice           *discoveryv1.EndpointSlice
 	)
 
-	t := newTestDriver()
+	t := newServiceDiscoveryTestDriver()
 
 	BeforeEach(func() {
 		service = &corev1.Service{
@@ -124,11 +123,7 @@ func testExportedServices() {
 			t.creatEndpointSlice(endpointSlice)
 		})
 
-		It("should succeed", func() {
-			Expect(t.runServiceDiscovery()).To(Succeed())
-			t.statusTracker.AssertFailureCount(0)
-			t.statusTracker.AssertWarningCount(0)
-		})
+		t.testSuccess(t.run)
 	})
 
 	When("a service is exported", func() {
@@ -143,10 +138,7 @@ func testExportedServices() {
 				meta.RemoveStatusCondition(&serviceExport.Status.Conditions, string(mcsv1a1.ServiceExportConditionReady))
 			})
 
-			It("should fail", func() {
-				Expect(t.runServiceDiscovery()).NotTo(Succeed())
-				t.statusTracker.AssertFailureCount(1)
-			})
+			t.testFailure(t.run, "missing", string(mcsv1a1.ServiceExportConditionValid))
 		})
 
 		Context("but the ServiceExport Valid condition status is False", func() {
@@ -156,10 +148,7 @@ func testExportedServices() {
 				meta.RemoveStatusCondition(&serviceExport.Status.Conditions, string(mcsv1a1.ServiceExportConditionReady))
 			})
 
-			It("should fail", func() {
-				Expect(t.runServiceDiscovery()).NotTo(Succeed())
-				t.statusTracker.AssertFailureCount(1)
-			})
+			t.testFailure(t.run, string(mcsv1a1.ServiceExportConditionValid), string(metav1.ConditionFalse))
 		})
 
 		Context("but the ServiceExport Ready condition status is False", func() {
@@ -168,10 +157,7 @@ func testExportedServices() {
 					string(mcsv1a1.ServiceExportConditionReady)).Status = metav1.ConditionFalse
 			})
 
-			It("should fail", func() {
-				Expect(t.runServiceDiscovery()).NotTo(Succeed())
-				t.statusTracker.AssertHasFailure()
-			})
+			t.testFailure(t.run, string(mcsv1a1.ServiceExportConditionReady), string(metav1.ConditionFalse))
 		})
 
 		Context("but no EndpointSlice exists", func() {
@@ -180,17 +166,11 @@ func testExportedServices() {
 				t.createServiceImport(aggregatedServiceImport)
 			})
 
-			It("should fail", func() {
-				Expect(t.runServiceDiscovery()).NotTo(Succeed())
-				t.statusTracker.AssertFailureCount(1)
-			})
+			t.testFailure(t.run, "EndpointSlice", serviceName)
 		})
 
 		Context("but no local ServiceImport exists", func() {
-			It("should fail", func() {
-				Expect(t.runServiceDiscovery()).NotTo(Succeed())
-				t.statusTracker.AssertFailureCount(1)
-			})
+			t.testFailure(t.run, "local", "ServiceImport", serviceName)
 		})
 
 		Context("but no aggregate ServiceImport exists", func() {
@@ -199,10 +179,7 @@ func testExportedServices() {
 				t.creatEndpointSlice(endpointSlice)
 			})
 
-			It("should fail", func() {
-				Expect(t.runServiceDiscovery()).NotTo(Succeed())
-				t.statusTracker.AssertFailureCount(1)
-			})
+			t.testFailure(t.run, "ServiceImport", serviceName)
 		})
 	})
 
@@ -213,44 +190,30 @@ func testExportedServices() {
 			t.createServiceExport(serviceExport)
 		})
 
-		It("should succeed but emit a warning", func() {
-			Expect(t.runServiceDiscovery()).To(Succeed())
-			t.statusTracker.AssertFailureCount(0)
-			t.statusTracker.AssertWarningCount(1)
-		})
+		t.testSuccessWithWarning(t.run, serviceName, "not found")
 	})
 
 	When("no services are exported", func() {
-		It("should succeed", func() {
-			Expect(t.runServiceDiscovery()).To(Succeed())
-			t.statusTracker.AssertFailureCount(0)
-			t.statusTracker.AssertWarningCount(0)
-		})
+		t.testSuccess(t.run)
 	})
 
 	When("ServiceExports retrieval fails", func() {
 		BeforeEach(func() {
 			t.createServiceExport(serviceExport)
-			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceexports", "list", nil, false)
+			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceexports", "list", errFake, false)
 		})
 
-		It("should fail", func() {
-			Expect(t.runServiceDiscovery()).NotTo(Succeed())
-			t.statusTracker.AssertFailureCount(1)
-		})
+		t.testFailure(t.run, "ServiceExport", errFake.Error())
 	})
 
 	When("Service retrieval fails", func() {
 		BeforeEach(func() {
 			t.createService(service)
 			t.createServiceExport(serviceExport)
-			fake.FailOnAction(&t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake, "services", "get", nil, false)
+			fake.FailOnAction(&t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake, "services", "get", errFake, false)
 		})
 
-		It("should fail", func() {
-			Expect(t.runServiceDiscovery()).NotTo(Succeed())
-			t.statusTracker.AssertFailureCount(1)
-		})
+		t.testFailure(t.run, "Service", errFake.Error())
 	})
 
 	When("ServiceImport retrieval fails", func() {
@@ -258,13 +221,10 @@ func testExportedServices() {
 			t.createService(service)
 			t.createServiceExport(serviceExport)
 			t.createServiceImport(localServiceImport)
-			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports", "list", nil, true)
+			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports", "list", errFake, true)
 		})
 
-		It("should fail", func() {
-			Expect(t.runServiceDiscovery()).NotTo(Succeed())
-			t.statusTracker.AssertFailureCount(1)
-		})
+		t.testFailure(t.run, "ServiceImport", errFake.Error())
 	})
 
 	When("EndpointSlice retrieval fails", func() {
@@ -274,18 +234,15 @@ func testExportedServices() {
 			t.createServiceImport(localServiceImport)
 			t.createServiceImport(aggregatedServiceImport)
 			t.creatEndpointSlice(endpointSlice)
-			fake.FailOnAction(&t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake, "endpointslices", "list", nil, false)
+			fake.FailOnAction(&t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake, "endpointslices", "list", errFake, false)
 		})
 
-		It("should fail", func() {
-			Expect(t.runServiceDiscovery()).NotTo(Succeed())
-			t.statusTracker.AssertFailureCount(1)
-		})
+		t.testFailure(t.run, "EndpointSlice", errFake.Error())
 	})
 }
 
 func testImportedServices() {
-	t := newTestDriver()
+	t := newServiceDiscoveryTestDriver()
 
 	BeforeEach(func() {
 		fake.AddVerifyNamespaceReactor(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports")
@@ -333,19 +290,11 @@ func testImportedServices() {
 			})
 		})
 
-		It("should succeed", func() {
-			Expect(t.runServiceDiscovery()).To(Succeed())
-			t.statusTracker.AssertFailureCount(0)
-			t.statusTracker.AssertWarningCount(0)
-		})
+		t.testSuccess(t.run)
 	})
 
 	When("an imported service's namespace doesn't exist locally", func() {
-		It("should succeed but emit a warning", func() {
-			Expect(t.runServiceDiscovery()).To(Succeed())
-			t.statusTracker.AssertFailureCount(0)
-			t.statusTracker.AssertWarningCount(1)
-		})
+		t.testSuccessWithWarning(t.run, serviceNamespace)
 	})
 
 	When("an imported service's local ServiceImport doesn't exist", func() {
@@ -353,36 +302,34 @@ func testImportedServices() {
 			t.createNamespace(serviceNamespace)
 		})
 
-		It("should fail", func() {
-			Expect(t.runServiceDiscovery()).NotTo(Succeed())
-			t.statusTracker.AssertFailureCount(1)
-			t.statusTracker.AssertWarningCount(0)
-		})
+		t.testFailure(t.run, "No ServiceImport")
 	})
 
 	When("broker ServiceImport retrieval fails", func() {
 		BeforeEach(func() {
-			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports", "list", nil, true)
+			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports", "list", errFake, true)
 		})
 
-		It("should fail", func() {
-			Expect(t.runServiceDiscovery()).NotTo(Succeed())
-			t.statusTracker.AssertFailureCount(1)
-		})
+		t.testFailure(t.run, "ServiceImports", errFake.Error())
 	})
 
 	When("local ServiceImport retrieval fails", func() {
 		BeforeEach(func() {
-			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports", "get", nil, true)
+			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports", "get", errFake, true)
 		})
 
-		It("should fail", func() {
-			Expect(t.runServiceDiscovery()).NotTo(Succeed())
-			t.statusTracker.AssertFailureCount(1)
-		})
+		t.testFailure(t.run, serviceName, errFake.Error())
 	})
 }
 
-func (t *testDriver) runServiceDiscovery() error {
+type serviceDiscoveryTestDriver struct {
+	*testDriver
+}
+
+func newServiceDiscoveryTestDriver() *serviceDiscoveryTestDriver {
+	return &serviceDiscoveryTestDriver{testDriver: newTestDriver()}
+}
+
+func (t *serviceDiscoveryTestDriver) run() error {
 	return diagnose.ServiceDiscovery(newClusterInfo(), "", t.statusTracker)
 }
