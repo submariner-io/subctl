@@ -34,14 +34,25 @@ import (
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/clustersetip"
 	v1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+	k8stesting "k8s.io/client-go/testing"
+)
+
+const (
+	testBrokerNamespace = "broker-namespace"
+	testRepository      = "quay.io/submariner"
+	testImageVersion    = "devel"
 )
 
 var ctx = context.TODO()
 
 var _ = BeforeSuite(func() {
 	Expect(operatorv1alpha1.AddToScheme(scheme.Scheme)).To(Succeed())
+	Expect(apiextensionsv1.AddToScheme(scheme.Scheme)).To(Succeed())
 })
 
 func TestDeploy(t *testing.T) {
@@ -65,6 +76,29 @@ func newTestDriver() *testDriver {
 		t.fakeProducer = clientfake.New()
 		t.statusReporter = &test.Tracker{Interface: cli.NewReporter()}
 
+		// Add reactor to automatically generate tokens for secrets
+		t.fakeProducer.KubeClient.(*k8sfake.Clientset).PrependReactor("create", "secrets",
+			func(a k8stesting.Action) (bool, runtime.Object, error) {
+				s := a.(k8stesting.CreateAction).GetObject().(*v1.Secret)
+				if s.Data == nil {
+					s.Data = map[string][]byte{}
+				}
+
+				if len(s.Data["token"]) == 0 {
+					if s.Name != "" {
+						s.Data["token"] = []byte(s.Name)
+					} else {
+						s.Data["token"] = []byte(s.GenerateName)
+					}
+				}
+
+				if len(s.Data["namespace"]) == 0 {
+					s.Data["namespace"] = []byte(a.GetNamespace())
+				}
+
+				return false, nil, nil
+			})
+
 		t.brokerInfo = &broker.Info{
 			BrokerURL: "https://broker.example.com:8443",
 			IPSecPSK: &v1.Secret{
@@ -78,14 +112,14 @@ func newTestDriver() *testDriver {
 			ObjectMeta: metav1.ObjectMeta{Name: "broker-secret"},
 			Data: map[string][]byte{
 				"ca.crt":    []byte("test-ca-cert"),
-				"namespace": []byte("broker-namespace"),
+				"namespace": []byte(testBrokerNamespace),
 				"token":     []byte("test-token"),
 			},
 		}
 
 		t.repositoryInfo = &image.RepositoryInfo{
-			Name:    "quay.io/submariner",
-			Version: "devel",
+			Name:    testRepository,
+			Version: testImageVersion,
 		}
 
 		t.clustersetConfig = clustersetip.Config{
