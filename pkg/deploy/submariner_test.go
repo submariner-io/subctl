@@ -71,8 +71,8 @@ func testSubmariner() {
 			HealthCheckMaxPacketLossCount:   5,
 			ClusterID:                       "test-cluster",
 			CableDriver:                     "vxlan",
-			Repository:                      "quay.io/submariner",
-			ImageVersion:                    "devel",
+			Repository:                      testRepository,
+			ImageVersion:                    testImageVersion,
 			ServiceCIDR:                     "10.96.0.0/12",
 			ClusterCIDR:                     "10.244.0.0/16",
 		}

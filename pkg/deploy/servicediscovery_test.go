@@ -46,8 +46,8 @@ var _ = Describe("ServiceDiscovery", func() {
 			BrokerK8sInsecure:   true,
 			ClustersetIPEnabled: true,
 			ClusterID:           "test-cluster",
-			Repository:          "quay.io/submariner",
-			ImageVersion:        "devel",
+			Repository:          testRepository,
+			ImageVersion:        testImageVersion,
 		}
 	})
 
