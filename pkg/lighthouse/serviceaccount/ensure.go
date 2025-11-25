@@ -19,6 +19,8 @@ limitations under the License.
 package serviceaccount
 
 import (
+	"context"
+
 	"github.com/submariner-io/subctl/pkg/apply"
 	"github.com/submariner-io/subctl/pkg/clusterrole"
 	"github.com/submariner-io/subctl/pkg/clusterrolebinding"
@@ -27,7 +29,6 @@ import (
 	"github.com/submariner-io/subctl/pkg/serviceaccount"
 	lighthouseagent "github.com/submariner-io/submariner-operator/config/rbac/lighthouse-agent"
 	lighthousecoredns "github.com/submariner-io/submariner-operator/config/rbac/lighthouse-coredns"
-	"golang.org/x/net/context"
 	"k8s.io/client-go/kubernetes"
 )
 

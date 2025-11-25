@@ -19,13 +19,14 @@ limitations under the License.
 package lighthouse
 
 import (
+	"context"
+
 	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/lighthouse/serviceaccount"
 	"github.com/submariner-io/subctl/pkg/operator/ocp"
 	lighthouseagent "github.com/submariner-io/submariner-operator/config/rbac/lighthouse-agent"
 	lighthousecoredns "github.com/submariner-io/submariner-operator/config/rbac/lighthouse-coredns"
-	"golang.org/x/net/context"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
