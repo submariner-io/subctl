@@ -19,6 +19,8 @@ limitations under the License.
 package serviceaccount
 
 import (
+	"context"
+
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/pkg/apply"
 	"github.com/submariner-io/subctl/pkg/clusterrole"
@@ -31,7 +33,6 @@ import (
 	submarinergateway "github.com/submariner-io/submariner-operator/config/rbac/submariner-gateway"
 	submarinerglobalnet "github.com/submariner-io/submariner-operator/config/rbac/submariner-globalnet"
 	submarinerrouteagent "github.com/submariner-io/submariner-operator/config/rbac/submariner-route-agent"
-	"golang.org/x/net/context"
 	"k8s.io/client-go/kubernetes"
 )
 

@@ -19,6 +19,8 @@ limitations under the License.
 package submariner
 
 import (
+	"context"
+
 	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/operator/ocp"
@@ -27,7 +29,6 @@ import (
 	submarinergateway "github.com/submariner-io/submariner-operator/config/rbac/submariner-gateway"
 	submarinerglobalnet "github.com/submariner-io/submariner-operator/config/rbac/submariner-globalnet"
 	submarinerrouteagent "github.com/submariner-io/submariner-operator/config/rbac/submariner-route-agent"
-	"golang.org/x/net/context"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
