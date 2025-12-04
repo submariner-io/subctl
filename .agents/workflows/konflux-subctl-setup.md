@@ -52,7 +52,31 @@ git add .tekton/subctl-0-${TARGET_VERSION}-*.yaml package/Dockerfile.subctl.konf
 git commit -s -m "Add Konflux config for subctl"
 ```
 
-##### 5. Review and Push
+##### 5. Update Tekton Task References
+
+```bash
+bash << 'EOF'
+set -e
+
+PATCHER_SHA="b001763bb1cd0286a894cfb570fe12dd7f4504bd"
+EXPECTED_SHA256="080ad5d7cf7d0cee732a774b7e4dda0e2ccf26b58e08a8516a3b812bc73beb53"
+
+SCRIPT=$(curl -sL "https://raw.githubusercontent.com/simonbaird/konflux-pipeline-patcher/${PATCHER_SHA}/pipeline-patcher")
+ACTUAL_SHA256=$(echo "$SCRIPT" | sha256sum | cut -d' ' -f1)
+
+if [[ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]]; then
+  echo "ERROR: Script checksum mismatch!"
+  exit 1
+fi
+
+echo "$SCRIPT" | bash -s bump-task-refs
+EOF
+git diff --quiet .tekton/*.yaml || \
+  { git add .tekton/*.yaml && \
+    git commit -s -m "Update Tekton task references to latest versions"; }
+```
+
+##### 6. Review and Push
 
 ```bash
 git log origin/<target-branch>..HEAD
@@ -60,7 +84,7 @@ git status
 git push origin konflux-subctl-<X-Y> --force-with-lease
 ```
 
-Expected: 2 commits (bot's initial + your configuration), clean working tree.
+Expected: 3 commits (bot's initial + configuration + task refs update), clean working tree.
 
 **Troubleshooting:**
 
