@@ -1,0 +1,63 @@
+ARG BASE_BRANCH=release-0.19
+ARG SOURCE=/go/src/github.com/submariner-io/subctl
+
+FROM --platform=${BUILDPLATFORM} registry.redhat.io/ubi9/go-toolset:latest AS builder
+ARG SOURCE
+ARG TARGETPLATFORM
+ARG BASE_BRANCH
+
+ENV GOEXPERIMENT=strictfipsruntime
+ARG BUILD_TAGS="strictfipsruntime"
+
+COPY . ${SOURCE}
+
+USER root
+RUN chown -R 1001:0 ${SOURCE}
+USER 1001
+
+RUN git config --global --add safe.directory ${SOURCE}
+
+WORKDIR ${SOURCE}
+
+RUN CGO_ENABLED=1 GOARCH=${TARGETPLATFORM##*/} go build \
+    -ldflags "-s -w \
+    -X github.com/submariner-io/subctl/pkg/version.Version=${BASE_BRANCH}" \
+    -tags "${BUILD_TAGS}" \
+    -v -o ${SOURCE}/bin/${TARGETPLATFORM}/subctl \
+    ./cmd
+
+FROM --platform=${TARGETPLATFORM} registry.redhat.io/ubi9:latest
+ARG BASE_BRANCH
+ARG SOURCE
+ARG SOURCE_DATE_EPOCH
+ARG TARGETPLATFORM
+
+RUN adduser -r -l -u 1001 -G root submariner
+
+WORKDIR /
+COPY --from=builder \
+    ${SOURCE}/bin/${TARGETPLATFORM}/subctl \
+    /usr/local/bin/
+
+RUN chown -Rc submariner:root /usr/local/bin
+RUN chmod -Rc 775 /usr/local/bin
+
+COPY --from=builder ${SOURCE}/LICENSE /licenses/LICENSE
+
+USER submariner
+
+ENTRYPOINT ["/usr/local/bin/subctl"]
+
+LABEL com.redhat.component="subctl-container" \
+      name="rhacm2/subctl-rhel9" \
+      version="${BASE_BRANCH}" \
+      summary="The command-line interface for Submariner (subctl)" \
+      description="A command-line utility for installing, configuring, and troubleshooting Submariner cross-cluster connectivity." \
+      io.k8s.display-name="Submariner Control Utility (subctl)" \
+      io.k8s.description="A command-line utility for installing, configuring, and troubleshooting Submariner cross-cluster connectivity." \
+      io.openshift.tags="submariner, subctl, rhacm" \
+      maintainer="multi-cluster-networking@redhat.com" \
+      com.github.url="https://github.com/submariner-io/submariner-operator" \
+      com.github.commit="${BASE_BRANCH}" \
+      cpe="cpe:/a:redhat:acm:2.14::el9" \
+      org.opencontainers.image.created="${SOURCE_DATE_EPOCH}"
