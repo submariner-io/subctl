@@ -19,6 +19,8 @@ limitations under the License.
 package serviceaccount
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/submariner-io/subctl/pkg/clusterrole"
 	"github.com/submariner-io/subctl/pkg/clusterrolebinding"
@@ -26,7 +28,6 @@ import (
 	"github.com/submariner-io/subctl/pkg/rolebinding"
 	"github.com/submariner-io/subctl/pkg/serviceaccount"
 	submarineroperator "github.com/submariner-io/submariner-operator/config/rbac/submariner-operator"
-	"golang.org/x/net/context"
 	"k8s.io/client-go/kubernetes"
 )
 
