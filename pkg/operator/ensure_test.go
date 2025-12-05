@@ -19,6 +19,7 @@ limitations under the License.
 package operator_test
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -29,7 +30,6 @@ import (
 	"github.com/submariner-io/subctl/pkg/client"
 	clientfake "github.com/submariner-io/subctl/pkg/client/fake"
 	"github.com/submariner-io/subctl/pkg/operator"
-	"golang.org/x/net/context"
 	"golang.org/x/net/http/httpproxy"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
