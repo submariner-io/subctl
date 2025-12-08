@@ -13,7 +13,7 @@ require (
 	github.com/onsi/gomega v1.38.2
 	github.com/openshift/api v0.0.0-20230714214528-de6ad7979b00
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/submariner-io/admiral v0.22.0-m2.0.20251020132010-7ac697e3ece9
 	github.com/submariner-io/cloud-prepare v0.22.0-m2.0.20251020133215-5071005e2819
