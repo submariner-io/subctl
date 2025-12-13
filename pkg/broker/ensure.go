@@ -99,7 +99,7 @@ func CreateSAForCluster(ctx context.Context, kubeClient kubernetes.Interface, cl
 		return nil, errors.Wrap(err, "error creating cluster sa")
 	}
 
-	_, err = CreateNewBrokerRoleBinding(ctx, kubeClient, saName, submarinerBrokerClusterRole, inNamespace)
+	_, err = CreateNewBrokerRoleBinding(ctx, kubeClient, saName, SubmarinerBrokerClusterRole, inNamespace)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return nil, errors.Wrap(err, "error binding sa to cluster role")
 	}

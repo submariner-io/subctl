@@ -23,6 +23,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"os"
+	"path"
 	"sort"
 	"strings"
 	"time"
@@ -39,22 +40,33 @@ import (
 
 const InfoFileName = "broker-info.subm"
 
+var (
+	InfoFileDir = ""
+
+	NewKubeClient = func(config *rest.Config) (kubernetes.Interface, error) {
+		c, err := kubernetes.NewForConfig(config)
+		return c, err //nolint:wrapcheck // No need to wrap
+	}
+)
+
 func WriteInfoToFile(restConfig *rest.Config, brokerNamespace, brokerURL string, ipsecPSK []byte, components set.Set[string],
 	customDomains []string, status reporter.Interface,
 ) error {
-	status.Start("Saving broker info to file %q", InfoFileName)
+	infoFileName := path.Join(InfoFileDir, InfoFileName)
+
+	status.Start("Saving broker info to file %q", infoFileName)
 	defer status.End()
 
-	newFilename, err := backupIfExists(InfoFileName)
+	newFilename, err := backupIfExists(infoFileName)
 	if err != nil {
 		return status.Error(err, "error backing up the broker file")
 	}
 
 	if newFilename != "" {
-		status.Success("Backed up previous file %q to %q", InfoFileName, newFilename)
+		status.Success("Backed up previous file %q to %q", infoFileName, newFilename)
 	}
 
-	kubeClient, err := kubernetes.NewForConfig(restConfig)
+	kubeClient, err := NewKubeClient(restConfig)
 	if err != nil {
 		return status.Error(err, "error creating Kubernetes client")
 	}
@@ -63,7 +75,7 @@ func WriteInfoToFile(restConfig *rest.Config, brokerNamespace, brokerURL string,
 
 	data.ClientToken, err = serviceaccount.GetTokenSecretFor(context.TODO(), kubeClient, brokerNamespace, constants.SubmarinerBrokerAdminSA)
 	if err != nil {
-		return errors.Wrap(err, "error getting broker client secret")
+		return status.Error(err, "error getting broker client secret")
 	}
 
 	data.IPSecPSK = wrapIPSecPSKSecret(ipsecPSK)
@@ -82,7 +94,7 @@ func WriteInfoToFile(restConfig *rest.Config, brokerNamespace, brokerURL string,
 		data.CustomDomains = &customDomains
 	}
 
-	return status.Error(data.WriteToFile(InfoFileName), "error saving broker info")
+	return status.Error(data.WriteToFile(infoFileName), "error saving broker info")
 }
 
 func ReadInfoFromFile(filename string) (*Info, error) {

@@ -28,7 +28,7 @@ import (
 
 const (
 	LocalClientBrokerSecretName = "submariner-broker-secret"
-	submarinerBrokerClusterRole = "submariner-k8s-broker-cluster"
+	SubmarinerBrokerClusterRole = "submariner-k8s-broker-cluster"
 )
 
 func NewBrokerSA(submarinerBrokerSA string) *v1.ServiceAccount {
