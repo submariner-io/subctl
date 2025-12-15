@@ -25,7 +25,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/component"
@@ -41,74 +40,91 @@ import (
 )
 
 var (
-	deployflags       deploy.BrokerOptions
-	ipsecSubmFile     string
-	defaultComponents = []string{component.ServiceDiscovery, component.Connectivity}
+	defaultComponents      = []string{component.ServiceDiscovery, component.Connectivity}
+	DeployBroker           = deploy.Broker
+	ReadBrokerInfoFromFile = broker.ReadInfoFromFile
+	WriteBrokerInfoToFile  = broker.WriteInfoToFile
 )
 
-var deployRestConfigProducer = restconfig.NewProducer().
-	WithDefaultNamespace(constants.DefaultBrokerNamespace)
-
-// deployBroker represents the deployBroker command.
-var deployBroker = &cobra.Command{
-	Use:   "deploy-broker",
-	Short: "Deploys the broker",
-	Run: func(_ *cobra.Command, _ []string) {
-		exit.OnError(deployRestConfigProducer.RunOnSelectedContext(deployBrokerInContext, cli.NewReporter()))
-	},
+type DeployBrokerCommand struct {
+	cmd                *cobra.Command
+	flags              deploy.BrokerOptions
+	ipsecPSKFile       string
+	restConfigProducer *restconfig.Producer
 }
 
+// NewDeployBrokerCmd returns the deploy-broker command.
+func NewDeployBrokerCmd() *cobra.Command {
+	deployCmd := &DeployBrokerCommand{
+		restConfigProducer: restconfig.NewProducer().WithDefaultNamespace(constants.DefaultBrokerNamespace),
+	}
+
+	deployCmd.cmd = &cobra.Command{
+		Use:   "deploy-broker",
+		Short: "Deploys the broker",
+		Run: func(_ *cobra.Command, _ []string) {
+			exit.OnError(deployCmd.restConfigProducer.RunOnSelectedContext(deployCmd.deployBrokerInContext, cli.NewReporter()))
+		},
+	}
+
+	deployCmd.addFlags()
+	deployCmd.restConfigProducer.SetupFlags(deployCmd.cmd.Flags())
+	addHTTPProxyFlags(deployCmd.cmd.Flags(), &deployCmd.flags.HTTPProxyConfig)
+
+	return deployCmd.cmd
+}
+
+// deployBroker represents the deployBroker command.
+var deployBroker = NewDeployBrokerCmd()
+
 func init() {
-	addDeployBrokerFlags(deployBroker.Flags())
-	deployRestConfigProducer.SetupFlags(deployBroker.Flags())
-	addHTTPProxyFlags(deployBroker.Flags(), &deployflags.HTTPProxyConfig)
 	rootCmd.AddCommand(deployBroker)
 }
 
-func addDeployBrokerFlags(flags *pflag.FlagSet) {
-	flags.BoolVar(&deployflags.BrokerSpec.GlobalnetEnabled, "globalnet", false,
+func (c *DeployBrokerCommand) addFlags() {
+	c.cmd.Flags().BoolVar(&c.flags.BrokerSpec.GlobalnetEnabled, "globalnet", false,
 		"enable support for Overlapping CIDRs in connecting clusters (default disabled)")
-	flags.StringVar(&deployflags.BrokerSpec.GlobalnetCIDRRange, "globalnet-cidr-range",
+	c.cmd.Flags().StringVar(&c.flags.BrokerSpec.GlobalnetCIDRRange, "globalnet-cidr-range",
 		globalnet.DefaultGlobalnetCIDR, "GlobalCIDR supernet range for allocating GlobalCIDRs to each cluster")
-	flags.UintVar(&deployflags.BrokerSpec.DefaultGlobalnetClusterSize, "globalnet-cluster-size",
+	c.cmd.Flags().UintVar(&c.flags.BrokerSpec.DefaultGlobalnetClusterSize, "globalnet-cluster-size",
 		globalnet.DefaultGlobalnetClusterSize, "default cluster size for GlobalCIDR allocated to each cluster (amount of global IPs)")
 
-	flags.StringVar(&ipsecSubmFile, "ipsec-psk-from", "",
+	c.cmd.Flags().StringVar(&c.ipsecPSKFile, "ipsec-psk-from", "",
 		"import IPsec PSK from existing submariner broker file, like broker-info.subm")
 
-	flags.StringSliceVar(&deployflags.BrokerSpec.DefaultCustomDomains, "custom-domains", nil,
+	c.cmd.Flags().StringSliceVar(&c.flags.BrokerSpec.DefaultCustomDomains, "custom-domains", nil,
 		"list of domains to use for multicluster service discovery")
 
-	flags.StringSliceVar(&deployflags.BrokerSpec.Components, "components", defaultComponents,
+	c.cmd.Flags().StringSliceVar(&c.flags.BrokerSpec.Components, "components", defaultComponents,
 		"The components to be installed - any of "+strings.Join(deploy.ValidComponents, ","))
 
-	flags.StringVar(&deployflags.Repository, "repository", "", "image repository")
-	flags.StringVar(&deployflags.ImageVersion, "version", "", "image version")
+	c.cmd.Flags().StringVar(&c.flags.Repository, "repository", "", "image repository")
+	c.cmd.Flags().StringVar(&c.flags.ImageVersion, "version", "", "image version")
 
-	flags.BoolVar(&deployflags.OperatorDebug, "operator-debug", false, "enable operator debugging (verbose logging)")
+	c.cmd.Flags().BoolVar(&c.flags.OperatorDebug, "operator-debug", false, "enable operator debugging (verbose logging)")
 
-	flags.StringVar(&deployflags.BrokerURL, "broker-url", "",
+	c.cmd.Flags().StringVar(&c.flags.BrokerURL, "broker-url", "",
 		"broker API endpoint URL (stored in the broker information file, defaults to the context URL)")
-	flags.BoolVar(&deployflags.BrokerSpec.ClustersetIPEnabled, "enable-clusterset-ip", false,
+	c.cmd.Flags().BoolVar(&c.flags.BrokerSpec.ClustersetIPEnabled, "enable-clusterset-ip", false,
 		"set default support for use of clusterset IP for exported services in connecting clusters (default disabled)")
-	flags.StringVar(&deployflags.BrokerSpec.ClustersetIPCIDRRange, "clusterset-ip-cidr-range",
+	c.cmd.Flags().StringVar(&c.flags.BrokerSpec.ClustersetIPCIDRRange, "clusterset-ip-cidr-range",
 		clustersetip.DefaultCIDR, "Clusterset IP CIDR supernet range for allocating Clusterset IP CIDRs to each cluster")
 }
 
-func deployBrokerInContext(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-	deployflags.BrokerNamespace = namespace
+func (c *DeployBrokerCommand) deployBrokerInContext(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+	c.flags.BrokerNamespace = namespace
 
-	if err := deploy.Broker(&deployflags, clusterInfo.ClientProducer, status); err != nil {
-		return err //nolint:wrapcheck // No need to wrap errors here.
+	if err := DeployBroker(&c.flags, clusterInfo.ClientProducer, status); err != nil {
+		return err
 	}
 
 	ipsecPSK := []byte{}
 	var err error
 
-	if ipsecSubmFile != "" {
-		ipsecData, err := broker.ReadInfoFromFile(ipsecSubmFile)
+	if c.ipsecPSKFile != "" {
+		ipsecData, err := ReadBrokerInfoFromFile(c.ipsecPSKFile)
 		if err != nil {
-			return errors.Wrapf(err, "error importing IPsec PSK from file %q", ipsecSubmFile)
+			return errors.Wrapf(err, "error importing IPsec PSK from file %q", c.ipsecPSKFile)
 		}
 
 		ipsecPSK = ipsecData.IPSecPSK.Data["psk"]
@@ -121,7 +137,7 @@ func deployBrokerInContext(clusterInfo *cluster.Info, namespace string, status r
 		}
 	}
 
-	return broker.WriteInfoToFile( //nolint:wrapcheck // No need to wrap errors here.
-		clusterInfo.RestConfig, namespace, deployflags.BrokerURL, ipsecPSK,
-		set.New(deployflags.BrokerSpec.Components...), deployflags.BrokerSpec.DefaultCustomDomains, status)
+	return WriteBrokerInfoToFile(
+		clusterInfo.RestConfig, namespace, c.flags.BrokerURL, ipsecPSK,
+		set.New(c.flags.BrokerSpec.Components...), c.flags.BrokerSpec.DefaultCustomDomains, status)
 }

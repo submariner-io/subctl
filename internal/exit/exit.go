@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/submariner-io/admiral/pkg/log"
 	"github.com/submariner-io/subctl/pkg/version"
 )
 
@@ -29,7 +30,7 @@ import (
 func OnError(err error) {
 	if err != nil {
 		printVersion()
-		os.Exit(1)
+		log.Exit(1)
 	}
 }
 
@@ -37,7 +38,7 @@ func OnError(err error) {
 func WithMessage(message string) {
 	fmt.Fprintln(os.Stderr, message)
 	printVersion()
-	os.Exit(1)
+	log.Exit(1)
 }
 
 // OnErrorWithMessage will print the message and quit the program with an error code.
@@ -47,7 +48,7 @@ func OnErrorWithMessage(err error, message string) {
 		fmt.Fprintln(os.Stderr, "")
 		printVersion()
 		fmt.Fprintln(os.Stderr, "")
-		os.Exit(1)
+		log.Exit(1)
 	}
 }
 
