@@ -30,6 +30,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
+	"github.com/submariner-io/admiral/pkg/log"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/reporter/test"
 	"github.com/submariner-io/subctl/cmd/subctl"
@@ -50,6 +51,7 @@ const (
 )
 
 var (
+	ctx                = context.TODO()
 	brokerInfoFileName string
 	kubeConfigFileName string
 	brokerInfo         broker.Info
@@ -152,6 +154,7 @@ type testDriver struct {
 	args         []string
 	fakeProducer *client.DefaultProducer
 	status       *test.Tracker
+	exited       bool
 }
 
 func newTestDriver() *testDriver {
@@ -161,6 +164,11 @@ func newTestDriver() *testDriver {
 		t.args = []string{}
 		t.fakeProducer = clientfake.New()
 		t.status = &test.Tracker{Interface: cli.NewReporter()}
+		t.exited = false
+
+		log.Exit = func(_ int) {
+			t.exited = true
+		}
 
 		subctl.NewReporter = func() reporter.Interface {
 			return t.status
@@ -183,7 +191,7 @@ func newTestDriver() *testDriver {
 func (t *testDriver) setupNetworkDiscovery(clusterCIDR, serviceCIDR string) {
 	name := "kube-controller-manager"
 
-	err := t.fakeProducer.GeneralClient.Create(context.TODO(), &corev1.Pod{
+	err := t.fakeProducer.GeneralClient.Create(ctx, &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "default",
 			Name:      name,
@@ -205,7 +213,7 @@ func (t *testDriver) setupNetworkDiscovery(clusterCIDR, serviceCIDR string) {
 }
 
 func (t *testDriver) createGatewayNode() {
-	_, err := t.fakeProducer.KubeClient.CoreV1().Nodes().Create(context.TODO(), &corev1.Node{
+	_, err := t.fakeProducer.KubeClient.CoreV1().Nodes().Create(ctx, &corev1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "worker1",
 			Labels: map[string]string{constants.SubmarinerGatewayLabel: constants.TrueLabel},
@@ -216,7 +224,7 @@ func (t *testDriver) createGatewayNode() {
 
 func (t *testDriver) createNodes(names ...string) {
 	for _, name := range names {
-		_, err := t.fakeProducer.KubeClient.CoreV1().Nodes().Create(context.TODO(), &corev1.Node{
+		_, err := t.fakeProducer.KubeClient.CoreV1().Nodes().Create(ctx, &corev1.Node{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: name,
 			},
@@ -226,8 +234,22 @@ func (t *testDriver) createNodes(names ...string) {
 }
 
 func (t *testDriver) getNode(name string) *corev1.Node {
-	node, err := t.fakeProducer.KubeClient.CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
+	node, err := t.fakeProducer.KubeClient.CoreV1().Nodes().Get(ctx, name, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	return node
+}
+
+func (t *testDriver) assertCmdSuccess() {
+	Expect(t.cmd.Execute()).To(Succeed())
+	t.status.AssertFailureCount(0)
+	t.status.AssertWarningCount(0)
+	Expect(t.exited).To(BeFalse())
+}
+
+func (t *testDriver) assertCmdFailed(s ...string) {
+	Expect(t.cmd.Execute()).To(Succeed())
+	t.status.AssertFailureCount(1)
+	t.status.AssertFailureContainsStrings(s...)
+	Expect(t.exited).To(BeTrue())
 }

@@ -110,9 +110,7 @@ func testRunJoinCommand() {
 				return nil
 			}
 
-			Expect(t.cmd.Execute()).To(Succeed())
-			t.status.AssertFailureCount(0)
-			t.status.AssertWarningCount(0)
+			t.assertCmdSuccess()
 		})
 	})
 
@@ -181,9 +179,7 @@ func testRunJoinCommand() {
 				return nil
 			}
 
-			Expect(t.cmd.Execute()).To(Succeed())
-			t.status.AssertFailureCount(0)
-			t.status.AssertWarningCount(0)
+			t.assertCmdSuccess()
 		})
 	})
 
@@ -236,8 +232,7 @@ func testRunJoinCommand() {
 			})
 
 			It("should invoke join with the specified values", func() {
-				Expect(t.cmd.Execute()).To(Succeed())
-				t.status.AssertWarningCount(0)
+				t.assertCmdSuccess()
 			})
 		})
 
@@ -277,7 +272,7 @@ func testRunJoinCommand() {
 		})
 
 		It("should invoke join with the specified value", func() {
-			Expect(t.cmd.Execute()).To(Succeed())
+			t.assertCmdSuccess()
 		})
 
 		Context("but it's not valid", func() {
@@ -302,9 +297,8 @@ func testRunJoinCommand() {
 		})
 
 		It("should label it as a gateway", func() {
-			Expect(t.cmd.Execute()).To(Succeed())
+			t.assertCmdSuccess()
 			Expect(t.getNode("worker1").Labels).To(HaveKeyWithValue(constants.SubmarinerGatewayLabel, constants.TrueLabel))
-			t.status.AssertWarningCount(0)
 		})
 
 		Context("and the label-gateway flag is specified as false on the command line", func() {
@@ -313,9 +307,8 @@ func testRunJoinCommand() {
 			})
 
 			It("should not label it as a gateway", func() {
-				Expect(t.cmd.Execute()).To(Succeed())
+				t.assertCmdSuccess()
 				Expect(t.getNode("worker1").Labels).NotTo(HaveKeyWithValue(constants.SubmarinerGatewayLabel, constants.TrueLabel))
-				t.status.AssertWarningCount(0)
 			})
 		})
 	})
@@ -330,9 +323,8 @@ func testRunJoinCommand() {
 		})
 
 		It("should prompt for which node to label as a gateway", func() {
-			Expect(t.cmd.Execute()).To(Succeed())
+			t.assertCmdSuccess()
 			Expect(t.getNode(selectedNode).Labels).To(HaveKeyWithValue(constants.SubmarinerGatewayLabel, constants.TrueLabel))
-			t.status.AssertWarningCount(0)
 		})
 	})
 
