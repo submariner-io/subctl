@@ -42,6 +42,7 @@ type Config struct {
 	OcpMetadataFile string
 	CloudEntry      string
 	GWInstanceType  string
+	SubnetNames     []string
 }
 
 // RunOn runs the given function on RHOS, supplying it with a cloud instance connected to RHOS and a reporter that writes to CLI.
@@ -94,10 +95,11 @@ func RunOn(ctx context.Context, clusterInfo *cluster.Info, config *Config, statu
 	dynamicClient := clusterInfo.ClientProducer.ForDynamic()
 
 	cloudInfo := rhos.CloudInfo{
-		Client:    providerClient,
-		InfraID:   config.InfraID,
-		Region:    config.Region,
-		K8sClient: k8sClientSet,
+		Client:      providerClient,
+		InfraID:     config.InfraID,
+		Region:      config.Region,
+		SubnetNames: config.SubnetNames,
+		K8sClient:   k8sClientSet,
 	}
 	rhosCloud := rhos.NewCloud(cloudInfo)
 	msDeployer := ocp.NewK8sMachinesetDeployer(restMapper, dynamicClient)
