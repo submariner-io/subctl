@@ -38,7 +38,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/client-go/kubernetes"
 	k8snet "k8s.io/utils/net"
-	"k8s.io/utils/ptr"
 )
 
 type TargetPort int
@@ -356,8 +355,8 @@ func getTargetPort(submariner *v1alpha1.Submariner, endpoint *subv1.Endpoint, tg
 }
 
 func getLbNodePort(clusterInfo *cluster.Info, endpoint *subv1.Endpoint, tgtport TargetPort) (int32, error) {
-	usingLoadBalancer, _ := endpoint.Spec.GetBackendBool(subv1.UsingLoadBalancer, ptr.To(false))
-	if !*usingLoadBalancer {
+	usingLoadBalancer, _ := endpoint.Spec.GetBackendBool(subv1.UsingLoadBalancer, false)
+	if !usingLoadBalancer {
 		return 0, nil
 	}
 
