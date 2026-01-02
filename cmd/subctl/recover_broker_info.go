@@ -26,37 +26,50 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/broker"
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-var (
-	recoverRestConfigProducer = restconfig.NewProducer()
-	recoverBrokerURL          string
-)
-
-// recoverBrokerInfo represents the reconstruct command.
-var recoverBrokerInfo = &cobra.Command{
-	Use:   "recover-broker-info",
-	Short: "Recovers the broker-info.subm file from the installed Broker",
-	Run: func(_ *cobra.Command, _ []string) {
-		status := cli.NewReporter()
-
-		exit.OnError(recoverRestConfigProducer.RunOnSelectedContext(restconfig.IfConnectivityInstalled(recoverBrokerInfoFromSubm), status))
-	},
+type RecoverBrokerCommand struct {
+	cmd                *cobra.Command
+	brokerURL          string
+	restConfigProducer *restconfig.Producer
 }
 
-func init() {
-	recoverRestConfigProducer.SetupFlags(recoverBrokerInfo.Flags())
-	recoverBrokerInfo.Flags().StringVar(&recoverBrokerURL, "broker-url", "",
+var RecoverData = broker.RecoverData
+
+// NewRecoverBrokerInfoCmd returns the recover-broker-info command.
+func NewRecoverBrokerInfoCmd() *cobra.Command {
+	recoverCmd := &RecoverBrokerCommand{
+		restConfigProducer: restconfig.NewProducer(),
+	}
+
+	recoverCmd.cmd = &cobra.Command{
+		Use:   "recover-broker-info",
+		Short: "Recovers the broker-info.subm file from the installed Broker",
+		Run: func(_ *cobra.Command, _ []string) {
+			exit.OnError(recoverCmd.restConfigProducer.RunOnSelectedContext(restconfig.IfConnectivityInstalled(
+				recoverCmd.recoverBrokerInfo), NewReporter()))
+		},
+	}
+
+	recoverCmd.restConfigProducer.SetupFlags(recoverCmd.cmd.Flags())
+	recoverCmd.cmd.Flags().StringVar(&recoverCmd.brokerURL, "broker-url", "",
 		"broker API endpoint URL (stored in the broker information file, defaults to the context URL)")
+
+	return recoverCmd.cmd
+}
+
+// recoverBrokerInfo represents the reconstruct command.
+var recoverBrokerInfo = NewRecoverBrokerInfoCmd()
+
+func init() {
 	rootCmd.AddCommand(recoverBrokerInfo)
 }
 
-func recoverBrokerInfoFromSubm(submCluster *cluster.Info, _ string, status reporter.Interface) error {
+func (c *RecoverBrokerCommand) recoverBrokerInfo(submCluster *cluster.Info, _ string, status reporter.Interface) error {
 	brokerNamespace := submCluster.Submariner.Spec.BrokerK8sRemoteNamespace
 	brokerRestConfig := submCluster.RestConfig
 
@@ -88,6 +101,5 @@ func recoverBrokerInfoFromSubm(submCluster *cluster.Info, _ string, status repor
 		status.Success("Found Broker installed on a different cluster in namespace %s", brokerNamespace)
 	}
 
-	//nolint:wrapcheck // No need to wrap errors here.
-	return broker.RecoverData(submCluster, brokerObj, brokerNamespace, recoverBrokerURL, brokerRestConfig, status)
+	return status.Error(RecoverData(submCluster, brokerObj, brokerNamespace, c.brokerURL, brokerRestConfig, status), "")
 }
