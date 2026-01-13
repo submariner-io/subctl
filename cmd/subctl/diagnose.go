@@ -256,7 +256,7 @@ var allDiagnoseCommands = []restconfig.PerContextFn{
 func diagnoseAll(status reporter.Interface) error {
 	err := diagnoseRestConfigProducer.RunOnAllContexts(
 		func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-			diagnoseErrors := []error{}
+			diagnoseErrors := make([]error, 0, len(allDiagnoseCommands))
 
 			for _, command := range allDiagnoseCommands {
 				diagnoseErrors = append(diagnoseErrors, command(clusterInfo, namespace, status))

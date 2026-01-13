@@ -258,10 +258,11 @@ func askForGatewayNode(workerNodeNames []string) (string, error) {
 }
 
 func askForClusterID() (string, error) {
-	// Missing information
-	qs := []*survey.Question{}
+	answers := struct {
+		ClusterID string
+	}{}
 
-	qs = append(qs, &survey.Question{
+	err := survey.Ask([]*survey.Question{{
 		Name:   "clusterID",
 		Prompt: NewInputPrompt(&survey.Input{Message: "What is your cluster ID?"}),
 		Validate: func(val any) error {
@@ -272,13 +273,7 @@ func askForClusterID() (string, error) {
 
 			return cluster.IsValidID(str)
 		},
-	})
-
-	answers := struct {
-		ClusterID string
-	}{}
-
-	err := survey.Ask(qs, &answers)
+	}}, &answers)
 
 	return answers.ClusterID, err //nolint:wrapcheck // No need to wrap here
 }

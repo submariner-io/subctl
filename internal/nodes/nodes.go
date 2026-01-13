@@ -75,7 +75,7 @@ func GetAllWorkerNames(clientset kubernetes.Interface) ([]string, error) {
 }
 
 func getNodeNames(nodes *corev1.NodeList) []string {
-	names := []string{}
+	names := make([]string, 0, len(nodes.Items))
 	for i := range nodes.Items {
 		names = append(names, nodes.Items[i].GetName())
 	}

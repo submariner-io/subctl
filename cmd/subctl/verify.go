@@ -220,7 +220,7 @@ func extractDisruptiveVerifications(csv string) []string {
 }
 
 func getAllVerifyKeys() []string {
-	keys := []string{}
+	keys := make([]string, 0, len(verifyE2ESpecLabels)+len(verifyE2EDisruptiveSpecLabels))
 
 	for k := range verifyE2ESpecLabels {
 		keys = append(keys, k)
