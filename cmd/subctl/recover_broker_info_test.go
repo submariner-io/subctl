@@ -135,9 +135,7 @@ var _ = Describe("Recover Broker Info", func() {
 					fake.FailingGetInterceptor[*v1alpha1.Broker]()).Build()
 			})
 
-			It("should exit with an error", func() {
-				t.assertCmdFailed("mock", "error")
-			})
+			t.testCmdFailure("mock", "error")
 		})
 	})
 
@@ -161,9 +159,7 @@ var _ = Describe("Recover Broker Info", func() {
 					fake.FailingGetInterceptor[*v1alpha1.Broker]()).Build()
 			})
 
-			It("should exit with an error", func() {
-				t.assertCmdFailed("mock", "error")
-			})
+			t.testCmdFailure("mock", "error")
 		})
 
 		When("and is not found on the remote cluster", func() {
@@ -171,9 +167,7 @@ var _ = Describe("Recover Broker Info", func() {
 				Expect(brokerProducer.GeneralClient.Delete(ctx, brokerObj)).To(Succeed())
 			})
 
-			It("should exit with an error", func() {
-				t.assertCmdFailed("No Broker")
-			})
+			t.testCmdFailure("No Broker")
 		})
 	})
 
@@ -186,9 +180,7 @@ var _ = Describe("Recover Broker Info", func() {
 			}
 		})
 
-		It("should exit with an error", func() {
-			t.assertCmdFailed("recovery failed")
-		})
+		t.testCmdFailure("recovery failed")
 	})
 
 	When("the broker-url flag is specified", func() {

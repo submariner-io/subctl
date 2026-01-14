@@ -45,13 +45,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/version"
 	fakedisc "k8s.io/client-go/discovery/fake"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	k8stesting "k8s.io/client-go/testing"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
@@ -124,41 +122,6 @@ func newTestDriver() *testDriver {
 		broker.NewSubmarinerClientset = func(_ *rest.Config) (submclient.Interface, error) {
 			return fakesubmclient.NewClientset(), nil
 		}
-
-		t.fakeProducer.KubeClient.(*k8sfake.Clientset).PrependReactor("create", "deployments",
-			func(a k8stesting.Action) (bool, runtime.Object, error) {
-				d := a.(k8stesting.CreateAction).GetObject().(*appsv1.Deployment)
-				d.Status.Conditions = []appsv1.DeploymentCondition{
-					{
-						Type:   appsv1.DeploymentAvailable,
-						Status: corev1.ConditionTrue,
-					},
-				}
-
-				return false, nil, nil
-			})
-
-		t.fakeProducer.KubeClient.(*k8sfake.Clientset).PrependReactor("create", "secrets",
-			func(a k8stesting.Action) (bool, runtime.Object, error) {
-				s := a.(k8stesting.CreateAction).GetObject().(*corev1.Secret)
-				if s.Data == nil {
-					s.Data = map[string][]byte{}
-				}
-
-				if len(s.Data["token"]) == 0 {
-					if s.Name != "" {
-						s.Data["token"] = []byte(s.Name)
-					} else {
-						s.Data["token"] = []byte(s.GenerateName)
-					}
-				}
-
-				if len(s.Data["namespace"]) == 0 {
-					s.Data["namespace"] = []byte(a.GetNamespace())
-				}
-
-				return false, nil, nil
-			})
 	})
 
 	JustBeforeEach(func() {

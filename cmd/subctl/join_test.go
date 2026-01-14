@@ -70,10 +70,6 @@ func testRunJoinCommand() {
 			) error {
 				Expect(info).To(Equal(&brokerInfo))
 
-				Expect(clientProducer.ForKubernetes()).To(Equal(t.fakeProducer.KubeClient))
-				Expect(clientProducer.ForDynamic()).To(Equal(t.fakeProducer.DynamicClient))
-				Expect(clientProducer.ForGeneral()).To(Equal(t.fakeProducer.GeneralClient))
-
 				Expect(options.PreferredServer).To(BeFalse())
 				Expect(options.ForceUDPEncaps).To(BeFalse())
 				Expect(options.NATTraversal).To(BeTrue())

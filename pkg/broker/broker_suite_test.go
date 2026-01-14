@@ -28,15 +28,13 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter/test"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/pkg/broker"
+	clientfake "github.com/submariner-io/subctl/pkg/client/fake"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
-	corev1 "k8s.io/api/core/v1"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	k8stesting "k8s.io/client-go/testing"
 	controllerfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -66,28 +64,7 @@ func newTestDriver() *testDriver {
 		t.crdUpdater = crd.UpdaterFromControllerClient(controllerClient)
 		t.statusReporter = &test.Tracker{Interface: cli.NewReporter()}
 
-		// Add reactor to automatically generate tokens for secrets
-		t.kubeClient.(*k8sfake.Clientset).PrependReactor("create", "secrets",
-			func(a k8stesting.Action) (bool, runtime.Object, error) {
-				s := a.(k8stesting.CreateAction).GetObject().(*corev1.Secret)
-				if s.Data == nil {
-					s.Data = map[string][]byte{}
-				}
-
-				if len(s.Data["token"]) == 0 {
-					if s.Name != "" {
-						s.Data["token"] = []byte(s.Name + "-token")
-					} else {
-						s.Data["token"] = []byte(s.GenerateName + "-token")
-					}
-				}
-
-				if len(s.Data["namespace"]) == 0 {
-					s.Data["namespace"] = []byte(a.GetNamespace())
-				}
-
-				return false, nil, nil
-			})
+		clientfake.AddSecretTokenReactor(&t.kubeClient.(*k8sfake.Clientset).Fake)
 
 		broker.NewKubeClient = func(_ *rest.Config) (kubernetes.Interface, error) {
 			return t.kubeClient, nil
