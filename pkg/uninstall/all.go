@@ -47,6 +47,11 @@ import (
 
 const componentReadyTimeout = time.Minute * 2
 
+var (
+	MaxDeletionWait       = componentReadyTimeout + time.Second*30
+	DeletionCheckInterval = 2 * time.Second
+)
+
 func All(clients client.Producer, clusterName, submarinerNamespace string,
 	status reporter.Interface,
 ) error {
@@ -213,7 +218,7 @@ func ensureSubmarinerDeleted(clients client.Producer, clusterName, namespace str
 
 	err = ensureDeleted(clients, submariner, status)
 
-	return true, status.Error(err, "Error deleting Submariner resource %q", submariner.Name)
+	return true, err
 }
 
 func ensureServiceDiscoveryDeleted(clients client.Producer, clusterName, namespace string, status reporter.Interface) error {
@@ -242,23 +247,21 @@ func ensureServiceDiscoveryDeleted(clients client.Producer, clusterName, namespa
 
 	err = ensureDeleted(clients, serviceDiscovery, status)
 
-	return status.Error(err, "Error deleting ServiceDiscovery resource %q", serviceDiscovery.Name)
+	return err
 }
 
 func ensureDeleted(clients client.Producer, obj controller.Object, status reporter.Interface) error {
-	const maxWait = componentReadyTimeout + time.Second*30
-	const checkInterval = 2 * time.Second
-
 	awaitDeleted := func() error {
 		//nolint:wrapcheck // No need to wrap
-		return wait.PollUntilContextTimeout(context.Background(), checkInterval, maxWait, true, func(ctx context.Context) (bool, error) {
-			err := clients.ForGeneral().Delete(ctx, obj)
-			if apierrors.IsNotFound(err) {
-				return true, nil
-			}
+		return wait.PollUntilContextTimeout(context.Background(), DeletionCheckInterval, MaxDeletionWait, true,
+			func(ctx context.Context) (bool, error) {
+				err := clients.ForGeneral().Delete(ctx, obj)
+				if apierrors.IsNotFound(err) {
+					return true, nil
+				}
 
-			return false, err
-		})
+				return false, err
+			})
 	}
 
 	err := awaitDeleted()
