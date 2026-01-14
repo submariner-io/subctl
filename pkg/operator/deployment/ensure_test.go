@@ -27,15 +27,14 @@ import (
 	"github.com/submariner-io/admiral/pkg/fake"
 	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/subctl/internal/constants"
+	clientfake "github.com/submariner-io/subctl/pkg/client/fake"
 	"github.com/submariner-io/subctl/pkg/operator/deployment"
 	"golang.org/x/net/http/httpproxy"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
-	k8stesting "k8s.io/client-go/testing"
 )
 
 const (
@@ -56,26 +55,7 @@ var _ = Describe("Ensure", func() {
 	BeforeEach(func() {
 		kubeClient = k8sfake.NewClientset()
 
-		for _, verb := range []string{"create", "update"} {
-			kubeClient.Fake.PrependReactor(verb, "deployments",
-				func(a k8stesting.Action) (bool, runtime.Object, error) {
-					var d *appsv1.Deployment
-					if verb == "create" {
-						d = a.(k8stesting.CreateAction).GetObject().(*appsv1.Deployment)
-					} else {
-						d = a.(k8stesting.UpdateActionImpl).GetObject().(*appsv1.Deployment)
-					}
-
-					d.Status.Conditions = []appsv1.DeploymentCondition{
-						{
-							Type:   appsv1.DeploymentAvailable,
-							Status: corev1.ConditionTrue,
-						},
-					}
-
-					return false, nil, nil
-				})
-		}
+		clientfake.AddDeploymentAvailableReactor(&kubeClient.Fake)
 	})
 
 	assertDeployment := func() *appsv1.Deployment {

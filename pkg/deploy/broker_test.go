@@ -35,13 +35,10 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/discovery/clustersetip"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 	"golang.org/x/net/http/httpproxy"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
-	k8stesting "k8s.io/client-go/testing"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
 	controllerfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
@@ -242,19 +239,6 @@ func newBrokerTestDriver() *brokerTestDriver {
 				HTTPProxy: "http://my-proxy",
 			},
 		}
-
-		t.fakeProducer.KubeClient.(*k8sfake.Clientset).PrependReactor("create", "deployments",
-			func(a k8stesting.Action) (bool, runtime.Object, error) {
-				d := a.(k8stesting.CreateAction).GetObject().(*appsv1.Deployment)
-				d.Status.Conditions = []appsv1.DeploymentCondition{
-					{
-						Type:   appsv1.DeploymentAvailable,
-						Status: corev1.ConditionTrue,
-					},
-				}
-
-				return false, nil, nil
-			})
 	})
 
 	return t

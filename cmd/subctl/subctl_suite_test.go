@@ -30,6 +30,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
+	fakecommand "github.com/submariner-io/admiral/pkg/command/fake"
 	"github.com/submariner-io/admiral/pkg/log"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/reporter/test"
@@ -38,11 +39,16 @@ import (
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/broker"
+	"github.com/submariner-io/subctl/pkg/brokercr"
 	"github.com/submariner-io/subctl/pkg/client"
 	clientfake "github.com/submariner-io/subctl/pkg/client/fake"
+	"github.com/submariner-io/submariner-operator/api/v1alpha1"
+	"github.com/submariner-io/submariner-operator/pkg/names"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/clientcmd/api"
+	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -164,11 +170,18 @@ func setupPrompts(respValues map[string]any) {
 }
 
 type testDriver struct {
-	cmd          *cobra.Command
-	args         []string
-	fakeProducer *client.DefaultProducer
-	status       *test.Tracker
-	exited       bool
+	cmd                  *cobra.Command
+	args                 []string
+	fakeProducer         *client.DefaultProducer
+	status               *test.Tracker
+	exited               bool
+	cmdExecutor          *fakecommand.Executor
+	submarinerSpec       *v1alpha1.SubmarinerSpec
+	submariner           *v1alpha1.Submariner
+	serviceDiscoverySpec *v1alpha1.ServiceDiscoverySpec
+	serviceDiscovery     *v1alpha1.ServiceDiscovery
+	brokerSpec           *v1alpha1.BrokerSpec
+	broker               *v1alpha1.Broker
 }
 
 func newTestDriver() *testDriver {
@@ -179,6 +192,15 @@ func newTestDriver() *testDriver {
 		t.fakeProducer = clientfake.New()
 		t.status = &test.Tracker{Interface: cli.NewReporter()}
 		t.exited = false
+		t.cmdExecutor = fakecommand.New()
+		t.submarinerSpec = nil
+		t.submariner = nil
+		t.serviceDiscoverySpec = nil
+		t.serviceDiscovery = nil
+		t.brokerSpec = nil
+		t.broker = nil
+
+		clientfake.AddDeploymentAvailableReactor(&t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake)
 
 		log.Exit = func(_ int) {
 			t.exited = true
@@ -195,6 +217,42 @@ func newTestDriver() *testDriver {
 	})
 
 	JustBeforeEach(func() {
+		if t.submarinerSpec != nil {
+			t.submariner = &v1alpha1.Submariner{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      names.SubmarinerCrName,
+					Namespace: constants.OperatorNamespace,
+				},
+				Spec: *t.submarinerSpec,
+			}
+
+			Expect(t.fakeProducer.GeneralClient.Create(ctx, t.submariner)).To(Succeed())
+		}
+
+		if t.serviceDiscoverySpec != nil {
+			t.serviceDiscovery = &v1alpha1.ServiceDiscovery{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      names.ServiceDiscoveryCrName,
+					Namespace: constants.OperatorNamespace,
+				},
+				Spec: *t.serviceDiscoverySpec,
+			}
+
+			Expect(t.fakeProducer.GeneralClient.Create(ctx, t.serviceDiscovery)).To(Succeed())
+		}
+
+		if t.brokerSpec != nil {
+			t.broker = &v1alpha1.Broker{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      brokercr.Name,
+					Namespace: constants.DefaultBrokerNamespace,
+				},
+				Spec: *t.brokerSpec,
+			}
+
+			Expect(t.fakeProducer.GeneralClient.Create(ctx, t.broker)).To(Succeed())
+		}
+
 		Expect(t.cmd.Flags().Set("kubeconfig", kubeConfigFileName)).To(Succeed())
 		t.cmd.SetArgs(t.args)
 	})
@@ -236,8 +294,8 @@ func (t *testDriver) createGatewayNode() {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (t *testDriver) createNodes(names ...string) {
-	for _, name := range names {
+func (t *testDriver) createNodes(nodeNames ...string) {
+	for _, name := range nodeNames {
 		_, err := t.fakeProducer.KubeClient.CoreV1().Nodes().Create(ctx, &corev1.Node{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: name,
@@ -254,6 +312,36 @@ func (t *testDriver) getNode(name string) *corev1.Node {
 	return node
 }
 
+func (t *testDriver) getSubmariner() *v1alpha1.Submariner {
+	submariner := &v1alpha1.Submariner{}
+	Expect(t.fakeProducer.GeneralClient.Get(ctx, controllerClient.ObjectKey{
+		Namespace: constants.OperatorNamespace,
+		Name:      names.SubmarinerCrName,
+	}, submariner)).To(Succeed())
+
+	return submariner
+}
+
+func (t *testDriver) getServiceDiscovery() *v1alpha1.ServiceDiscovery {
+	sd := &v1alpha1.ServiceDiscovery{}
+	Expect(t.fakeProducer.GeneralClient.Get(ctx, controllerClient.ObjectKey{
+		Namespace: constants.OperatorNamespace,
+		Name:      names.ServiceDiscoveryCrName,
+	}, sd)).To(Succeed())
+
+	return sd
+}
+
+func (t *testDriver) getBroker() *v1alpha1.Broker {
+	b := &v1alpha1.Broker{}
+	Expect(t.fakeProducer.GeneralClient.Get(ctx, controllerClient.ObjectKey{
+		Namespace: constants.DefaultBrokerNamespace,
+		Name:      brokercr.Name,
+	}, b)).To(Succeed())
+
+	return b
+}
+
 func (t *testDriver) assertCmdSuccess() {
 	Expect(t.cmd.Execute()).To(Succeed())
 	t.status.AssertFailureCount(0)
@@ -266,4 +354,10 @@ func (t *testDriver) assertCmdFailed(s ...string) {
 	t.status.AssertFailureCount(1)
 	t.status.AssertFailureContainsStrings(s...)
 	Expect(t.exited).To(BeTrue())
+}
+
+func (t *testDriver) testCmdFailure(s ...string) {
+	It("should exit with an error", func() {
+		t.assertCmdFailed(s...)
+	})
 }

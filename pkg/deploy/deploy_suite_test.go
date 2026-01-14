@@ -36,10 +36,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
-	k8stesting "k8s.io/client-go/testing"
 )
 
 const (
@@ -75,29 +72,6 @@ func newTestDriver() *testDriver {
 	BeforeEach(func() {
 		t.fakeProducer = clientfake.New()
 		t.statusReporter = &test.Tracker{Interface: cli.NewReporter()}
-
-		// Add reactor to automatically generate tokens for secrets
-		t.fakeProducer.KubeClient.(*k8sfake.Clientset).PrependReactor("create", "secrets",
-			func(a k8stesting.Action) (bool, runtime.Object, error) {
-				s := a.(k8stesting.CreateAction).GetObject().(*v1.Secret)
-				if s.Data == nil {
-					s.Data = map[string][]byte{}
-				}
-
-				if len(s.Data["token"]) == 0 {
-					if s.Name != "" {
-						s.Data["token"] = []byte(s.Name)
-					} else {
-						s.Data["token"] = []byte(s.GenerateName)
-					}
-				}
-
-				if len(s.Data["namespace"]) == 0 {
-					s.Data["namespace"] = []byte(a.GetNamespace())
-				}
-
-				return false, nil, nil
-			})
 
 		t.brokerInfo = &broker.Info{
 			BrokerURL: "https://broker.example.com:8443",

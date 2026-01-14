@@ -31,14 +31,11 @@ import (
 	clientfake "github.com/submariner-io/subctl/pkg/client/fake"
 	"github.com/submariner-io/subctl/pkg/operator"
 	"golang.org/x/net/http/httpproxy"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
-	k8stesting "k8s.io/client-go/testing"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -57,18 +54,7 @@ var _ = Describe("Ensure", func() {
 	BeforeEach(func() {
 		fakeProducer = clientfake.New()
 
-		fakeProducer.KubeClient.(*k8sfake.Clientset).PrependReactor("create", "deployments",
-			func(a k8stesting.Action) (bool, runtime.Object, error) {
-				d := a.(k8stesting.CreateAction).GetObject().(*appsv1.Deployment)
-				d.Status.Conditions = []appsv1.DeploymentCondition{
-					{
-						Type:   appsv1.DeploymentAvailable,
-						Status: corev1.ConditionTrue,
-					},
-				}
-
-				return false, nil, nil
-			})
+		clientfake.AddDeploymentAvailableReactor(&fakeProducer.KubeClient.(*k8sfake.Clientset).Fake)
 	})
 
 	It("should create the operator components", func() {
