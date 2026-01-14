@@ -34,35 +34,48 @@ import (
 	"github.com/submariner-io/subctl/pkg/uninstall"
 )
 
-var uninstallOptions struct {
-	noPrompt bool
+var UninstallAll = uninstall.All
+
+type uninstallCommand struct {
+	noPrompt           bool
+	restConfigProducer *restconfig.Producer
 }
 
-var uninstallRestConfigProducer = restconfig.NewProducer().WithDefaultNamespace(constants.OperatorNamespace)
+// NewUninstallCmd returns the uninstall command.
+func NewUninstallCmd() *cobra.Command {
+	uninstallCmd := &uninstallCommand{
+		restConfigProducer: restconfig.NewProducer().WithDefaultNamespace(constants.OperatorNamespace),
+	}
 
-var uninstallCmd = &cobra.Command{
-	Use:   "uninstall",
-	Short: "Uninstall Submariner and its components",
-	Long:  "This command uninstalls Submariner and its components",
-	Run: func(_ *cobra.Command, _ []string) {
-		exit.OnError(uninstallRestConfigProducer.RunOnSelectedContext(uninstallInContext, cli.NewReporter()))
-	},
+	cmd := &cobra.Command{
+		Use:   "uninstall",
+		Short: "Uninstall Submariner and its components",
+		Long:  "This command uninstalls Submariner and its components",
+		Run: func(_ *cobra.Command, _ []string) {
+			exit.OnError(uninstallCmd.restConfigProducer.RunOnSelectedContext(uninstallCmd.uninstallInContext, cli.NewReporter()))
+		},
+	}
+
+	cmd.Flags().BoolVarP(&uninstallCmd.noPrompt, "yes", "y", false, "automatically answer yes to confirmation prompt")
+	uninstallCmd.restConfigProducer.SetupFlags(cmd.Flags())
+
+	return cmd
 }
+
+var uninstallCmdInstance = NewUninstallCmd()
 
 func init() {
-	uninstallCmd.Flags().BoolVarP(&uninstallOptions.noPrompt, "yes", "y", false, "automatically answer yes to confirmation prompt")
-	uninstallRestConfigProducer.SetupFlags(uninstallCmd.Flags())
-	rootCmd.AddCommand(uninstallCmd)
+	rootCmd.AddCommand(uninstallCmdInstance)
 }
 
-func uninstallInContext(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-	if !uninstallOptions.noPrompt {
+func (c *uninstallCommand) uninstallInContext(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+	if !c.noPrompt {
 		result := false
-		prompt := &survey.Confirm{
+		prompt := NewInputPrompt(&survey.Confirm{
 			Message: fmt.Sprintf(
 				"This will completely uninstall Submariner from the cluster %q. Are you sure you want to continue?",
 				clusterInfo.Name),
-		}
+		})
 
 		_ = survey.AskOne(prompt, &result)
 
@@ -71,6 +84,5 @@ func uninstallInContext(clusterInfo *cluster.Info, namespace string, status repo
 		}
 	}
 
-	return uninstall.All( //nolint:wrapcheck // No need to wrap errors here.
-		clusterInfo.ClientProducer, clusterInfo.Name, namespace, status)
+	return UninstallAll(clusterInfo.ClientProducer, clusterInfo.Name, namespace, status)
 }
