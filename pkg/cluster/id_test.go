@@ -19,8 +19,6 @@ limitations under the License.
 package cluster_test
 
 import (
-	"testing"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/submariner-io/subctl/pkg/cluster"
@@ -193,9 +191,4 @@ func testSanitizeID() {
 
 func expectSanitizeIDNoChange(id string) {
 	Expect(cluster.SanitizeID(id)).To(Equal(id))
-}
-
-func TestCluster(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Cluster suite")
 }
