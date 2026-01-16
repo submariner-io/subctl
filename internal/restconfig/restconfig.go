@@ -271,10 +271,7 @@ func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerCon
 		contextKubeConfig, ok := rcp.prefixedKubeConfigs[prefix]
 		if ok && contextKubeConfig != nil && *contextKubeConfig != "" {
 			loadingRules.ExplicitPath = *contextKubeConfig
-		}
-
-		// Has the user actually specified a value for the prefixed context?
-		if loadingRules.ExplicitPath == "" && areOverridesEmpty(clientConfig.overrides) {
+		} else if areOverridesEmpty(clientConfig.overrides) { // Has the user actually specified a value for the prefixed context?
 			return false, nil
 		}
 

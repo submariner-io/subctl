@@ -788,6 +788,19 @@ func testRunOnSelectedPrefixedContext() {
 			Expect(err).To(Succeed())
 			Expect(wasRun).To(BeFalse())
 		})
+
+		Context("and an explicit kubeconfig is specified", func() {
+			JustBeforeEach(func() {
+				Expect(t.flags.Set("kubeconfig", clientfake.CreateKubeConfigFile(t.clientConfig))).To(Succeed())
+			})
+
+			It("should return false", func() {
+				wasRun, err := t.producer.RunOnSelectedPrefixedContext(prefix, t.noopPerContext, reporter.Stdout())
+
+				Expect(err).To(Succeed())
+				Expect(wasRun).To(BeFalse())
+			})
+		})
 	})
 }
 
