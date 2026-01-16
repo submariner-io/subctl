@@ -56,17 +56,24 @@ type VerifyOptions struct {
 var RunVerify func(options VerifyOptions, fromClusterInfo, toClusterInfo, extraClusterInfo *cluster.Info,
 	namespace string, specLabels []string) error
 
-var verifyFlags VerifyOptions
+type verifyCommand struct {
+	cmd                *cobra.Command
+	flags              VerifyOptions
+	restConfigProducer *restconfig.Producer
+}
 
-var verifyRestConfigProducer = restconfig.NewProducer().
-	WithPrefixedContext("to").
-	WithPrefixedContext("extra").
-	WithDefaultNamespace(constants.OperatorNamespace)
+func NewVerifyCmd() *cobra.Command {
+	verifyCmd := &verifyCommand{
+		restConfigProducer: restconfig.NewProducer().
+			WithPrefixedContext("to").
+			WithPrefixedContext("extra").
+			WithDefaultNamespace(constants.OperatorNamespace),
+	}
 
-var verifyCmd = &cobra.Command{
-	Use:   "verify --context <kubeContext1> --tocontext <kubeContext2> [--extracontext <kubeContext3>]",
-	Short: "Run verifications between two clusters",
-	Long: `This command performs various tests to verify that a Submariner deployment between two clusters,
+	verifyCmd.cmd = &cobra.Command{
+		Use:   "verify --context <kubeContext1> --tocontext <kubeContext2> [--extracontext <kubeContext3>]",
+		Short: "Run verifications between two clusters",
+		Long: `This command performs various tests to verify that a Submariner deployment between two clusters,
 specified via the --context and --tocontext args, is functioning properly. Some Service Discovery tests require a third cluster,
 specified via the --extracontext arg, to verify additional functionality. If the third cluster is not specified,
 those tests are skipped. The verifications performed are controlled by the --only and --enable-disruptive flags.
@@ -79,61 +86,69 @@ disruptive verifications are skipped.
 The following verifications are deemed disruptive:
 
     ` + strings.Join(disruptiveVerificationNames(), "\n    "),
-	Args: checkVerifyArguments,
-	Run: func(cmd *cobra.Command, _ []string) {
-		exit.OnError(verifyRestConfigProducer.RunOnSelectedContext(
-			func(fromClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-				// Try to run using the "to" context
-				toContextPresent, err := verifyRestConfigProducer.RunOnSelectedPrefixedContext(
-					"to",
-					func(toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-						extraContextPresent, err := verifyRestConfigProducer.RunOnSelectedPrefixedContext(
-							"extra",
-							func(extraClusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
-								return RunVerify(verifyFlags, fromClusterInfo, toClusterInfo, extraClusterInfo, namespace,
-									determineSpecLabelsToVerify())
-							}, status)
-						if extraContextPresent {
-							return err //nolint:wrapcheck // No need to wrap errors here.
-						}
+		Args: verifyCmd.checkVerifyArguments,
+		Run: func(cmd *cobra.Command, _ []string) {
+			exit.OnError(verifyCmd.restConfigProducer.RunOnSelectedContext(
+				func(fromClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					// Try to run using the "to" context
+					toContextPresent, err := verifyCmd.restConfigProducer.RunOnSelectedPrefixedContext(
+						"to",
+						func(toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+							extraContextPresent, err := verifyCmd.restConfigProducer.RunOnSelectedPrefixedContext(
+								"extra",
+								func(extraClusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
+									return RunVerify(verifyCmd.flags, fromClusterInfo, toClusterInfo, extraClusterInfo, namespace,
+										verifyCmd.determineSpecLabelsToVerify())
+								}, status)
+							if extraContextPresent {
+								return err //nolint:wrapcheck // No need to wrap errors here.
+							}
 
-						return RunVerify(verifyFlags, fromClusterInfo, toClusterInfo, nil, namespace, determineSpecLabelsToVerify())
-					}, status)
+							return RunVerify(verifyCmd.flags, fromClusterInfo, toClusterInfo, nil, namespace,
+								verifyCmd.determineSpecLabelsToVerify())
+						}, status)
 
-				if toContextPresent {
-					return err //nolint:wrapcheck // No need to wrap errors here.
-				}
+					if toContextPresent {
+						return err //nolint:wrapcheck // No need to wrap errors here.
+					}
 
-				exit.WithMessage("This command requires two kube contexts corresponding to the two clusters to verify.\n" +
-					cmd.UsageString())
-				return nil
-			}, cli.NewReporter()))
-	},
+					exit.WithMessage("This command requires two kube contexts corresponding to the two clusters to verify.\n" +
+						cmd.UsageString())
+
+					return nil
+				}, cli.NewReporter()))
+		},
+	}
+
+	verifyCmd.restConfigProducer.SetupFlags(verifyCmd.cmd.Flags())
+	verifyCmd.addFlags()
+	addImageOverrideFlag(verifyCmd.cmd.PersistentFlags(), &imageOverrides)
+
+	return verifyCmd.cmd
 }
 
 func init() {
-	verifyRestConfigProducer.SetupFlags(verifyCmd.Flags())
-	addVerifyFlags(verifyCmd)
-	rootCmd.AddCommand(verifyCmd)
-
-	addImageOverrideFlag(verifyCmd.PersistentFlags(), &imageOverrides)
+	rootCmd.AddCommand(NewVerifyCmd())
 	framework.AddBeforeSuite(setupTestFrameworkBeforeSuite)
 }
 
-func addVerifyFlags(cmd *cobra.Command) {
-	cmd.Flags().BoolVar(&verifyFlags.VerboseConnectivityVerification, "verbose", false,
+func (c *verifyCommand) addFlags() {
+	c.cmd.Flags().BoolVar(&c.flags.VerboseConnectivityVerification, "verbose", false,
 		"produce verbose logs during connectivity verification")
-	cmd.Flags().UintVar(&verifyFlags.OperationTimeout, "operation-timeout", 240, "operation timeout for K8s API calls")
-	cmd.Flags().UintVar(&verifyFlags.ConnectionTimeout, "connection-timeout", 60, "timeout in seconds per connection attempt")
-	cmd.Flags().UintVar(&verifyFlags.ConnectionAttempts, "connection-attempts", 2, "maximum number of connection attempts")
-	cmd.Flags().StringVar(&verifyFlags.JunitReport, "junit-report", "", "XML report path and report name")
-	cmd.Flags().StringVar(&verifyFlags.VerifyOnly, "only", strings.Join(getAllVerifyKeys(), ","),
+	c.cmd.Flags().UintVar(&c.flags.OperationTimeout, "operation-timeout", DefaultOperationTimeout,
+		"operation timeout for K8s API calls")
+	c.cmd.Flags().UintVar(&c.flags.ConnectionTimeout, "connection-timeout", DefaultConnectionTimeout,
+		"timeout in seconds per connection attempt")
+	c.cmd.Flags().UintVar(&c.flags.ConnectionAttempts, "connection-attempts", DefaultConnectionAttempts,
+		"maximum number of connection attempts")
+	c.cmd.Flags().StringVar(&c.flags.JunitReport, "junit-report", "", "XML report path and report name")
+	c.cmd.Flags().StringVar(&c.flags.VerifyOnly, "only", strings.Join(getAllVerifyKeys(), ","),
 		"comma separated verifications to be performed")
-	cmd.Flags().BoolVar(&verifyFlags.DisruptiveTests, "disruptive-tests", false, "enable disruptive verifications like gateway-failover")
-	cmd.Flags().UintVar(&verifyFlags.PacketSize, "packet-size", 3000, "set packet size used in TCP connectivity tests")
-	cmd.Flags().BoolVar(&verifyFlags.SkipConnectorSrcIPCheck, "skip-src-ip-check", false,
+	c.cmd.Flags().BoolVar(&c.flags.DisruptiveTests, "disruptive-tests", false, "enable disruptive verifications like gateway-failover")
+	c.cmd.Flags().UintVar(&c.flags.PacketSize, "packet-size", 3000, "set packet size used in TCP connectivity tests")
+	c.cmd.Flags().BoolVar(&c.flags.SkipConnectorSrcIPCheck, "skip-src-ip-check", false,
 		"skip source IP verification for connector pod traffic")
-	cmd.Flags().BoolVar(&verifyFlags.SkipIntraClusterConnectivityTests,
+	c.cmd.Flags().BoolVar(&c.flags.SkipIntraClusterConnectivityTests,
 		"skip-intra-cluster-connectivity-tests", false,
 		"skip tests that verify intra-cluster connectivity")
 }
@@ -156,16 +171,16 @@ func isNonInteractive(err error) bool {
 	return false
 }
 
-func checkVerifyArguments(cmd *cobra.Command, args []string) error {
-	if verifyFlags.ConnectionAttempts < 1 {
+func (c *verifyCommand) checkVerifyArguments(cmd *cobra.Command, args []string) error {
+	if c.flags.ConnectionAttempts < 1 {
 		return errors.New("--connection-attempts must be >=1")
 	}
 
-	if verifyFlags.ConnectionTimeout < 20 {
+	if c.flags.ConnectionTimeout < 20 {
 		return errors.New("--connection-timeout must be >=20")
 	}
 
-	if _, _, err := getVerifySpecLabels(verifyFlags.VerifyOnly, true); err != nil {
+	if _, _, err := getVerifySpecLabels(c.flags.VerifyOnly, true); err != nil {
 		return err
 	}
 
@@ -274,13 +289,13 @@ func getVerifySpecLabels(csv string, includeDisruptive bool) ([]string, []string
 	return outputLabels, outputVerifications, nil
 }
 
-func determineSpecLabelsToVerify() []string {
-	disruptive := extractDisruptiveVerifications(verifyFlags.VerifyOnly)
-	if !verifyFlags.DisruptiveTests && len(disruptive) > 0 {
-		err := survey.AskOne(&survey.Confirm{
+func (c *verifyCommand) determineSpecLabelsToVerify() []string {
+	disruptive := extractDisruptiveVerifications(c.flags.VerifyOnly)
+	if !c.flags.DisruptiveTests && len(disruptive) > 0 {
+		err := survey.AskOne(NewInputPrompt(&survey.Confirm{
 			Message: fmt.Sprintf("You have specified disruptive verifications (%s). Are you sure you want to run them?",
 				strings.Join(disruptive, ",")),
-		}, &verifyFlags.DisruptiveTests)
+		}), &c.flags.DisruptiveTests)
 		if err != nil {
 			if isNonInteractive(err) {
 				fmt.Printf(`
@@ -292,7 +307,7 @@ prompt for confirmation therefore you must specify --enable-disruptive to run th
 		}
 	}
 
-	labels, verifications, err := getVerifySpecLabels(verifyFlags.VerifyOnly, verifyFlags.DisruptiveTests)
+	labels, verifications, err := getVerifySpecLabels(c.flags.VerifyOnly, c.flags.DisruptiveTests)
 	if err != nil {
 		exit.WithMessage(err.Error())
 	}

@@ -46,8 +46,10 @@ import (
 )
 
 const (
-	clusterName = "east"
-	brokerURL   = "https://broker-api-server"
+	clusterName    = "east"
+	remoteCluster  = "west"
+	remoteCluster2 = "north"
+	brokerURL      = "https://broker-api-server"
 )
 
 var (
@@ -101,6 +103,16 @@ var _ = BeforeSuite(func() {
 	}
 	clientConfig.CurrentContext = clusterName
 
+	clientConfig.Clusters[remoteCluster] = &api.Cluster{}
+	clientConfig.Contexts[remoteCluster] = &api.Context{
+		Cluster: remoteCluster,
+	}
+
+	clientConfig.Clusters[remoteCluster2] = &api.Cluster{}
+	clientConfig.Contexts[remoteCluster2] = &api.Context{
+		Cluster: remoteCluster2,
+	}
+
 	kubeConfigFileName = clientfake.CreateKubeConfigFile(clientConfig)
 })
 
@@ -133,6 +145,8 @@ func setupPrompts(respValues map[string]any) {
 		case *survey.Input:
 			msg = p.Message
 		case *survey.Select:
+			msg = p.Message
+		case *survey.Confirm:
 			msg = p.Message
 		}
 
