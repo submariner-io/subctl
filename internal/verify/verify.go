@@ -70,7 +70,7 @@ func runVerify(options subctl.VerifyOptions, fromClusterInfo, toClusterInfo, ext
 	suiteConfig.RandomSeed = 1
 	suiteConfig.LabelFilter = strings.Join(specLabels, "||")
 
-	if fromClusterInfo.Submariner.Spec.GlobalCIDR != "" {
+	if fromClusterInfo.Submariner != nil && fromClusterInfo.Submariner.Spec.GlobalCIDR != "" {
 		suiteConfig.LabelFilter = strings.ReplaceAll(suiteConfig.LabelFilter, "!"+submlabels.Globalnet, submlabels.Globalnet)
 	}
 

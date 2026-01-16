@@ -44,6 +44,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const (
+	DefaultOperationTimeout   uint = 240
+	DefaultConnectionTimeout  uint = 60
+	DefaultConnectionAttempts uint = 2
+)
+
 type suppressWarnings struct{}
 
 func (suppressWarnings) HandleWarningHeader(code int, agent, message string) {

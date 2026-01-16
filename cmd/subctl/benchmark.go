@@ -119,14 +119,12 @@ func runBenchmark(
 		intraCluster = true
 	}
 
-	framework.TestContext.OperationTimeout = verifyFlags.OperationTimeout
-	framework.TestContext.ConnectionTimeout = verifyFlags.ConnectionTimeout
-	framework.TestContext.ConnectionAttempts = verifyFlags.ConnectionAttempts
+	framework.TestContext.OperationTimeout = DefaultOperationTimeout
+	framework.TestContext.ConnectionTimeout = DefaultConnectionTimeout
+	framework.TestContext.ConnectionAttempts = DefaultConnectionAttempts
 	framework.TestContext.SubmarinerNamespace = constants.OperatorNamespace
 
 	_, reporterConfig := ginkgo.GinkgoConfiguration()
-	reporterConfig.Verbose = verifyFlags.VerboseConnectivityVerification
-	reporterConfig.JUnitReport = verifyFlags.JunitReport
 	framework.TestContext.ReporterConfig = &reporterConfig
 
 	return run(intraCluster, verbose)
