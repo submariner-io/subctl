@@ -253,7 +253,8 @@ func newTestDriver() *testDriver {
 			Expect(t.fakeProducer.GeneralClient.Create(ctx, t.broker)).To(Succeed())
 		}
 
-		Expect(t.cmd.Flags().Set("kubeconfig", kubeConfigFileName)).To(Succeed())
+		t.args = append(t.args, "--kubeconfig="+kubeConfigFileName, "--context="+clusterName)
+
 		t.cmd.SetArgs(t.args)
 	})
 

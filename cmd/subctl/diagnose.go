@@ -25,7 +25,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
 	"github.com/submariner-io/subctl/internal/restconfig"
@@ -34,49 +33,95 @@ import (
 )
 
 var (
-	diagnoseFirewallOptions diagnose.FirewallOptions
+	DiagnoseCNIConfig                        = diagnose.CNIConfig
+	DiagnoseConnections                      = diagnose.Connections
+	DiagnoseDeployments                      = diagnose.Deployments
+	DiagnoseGlobalnetConfig                  = diagnose.GlobalnetConfig
+	DiagnoseK8sVersion                       = diagnose.K8sVersion
+	DiagnoseKubeProxyMode                    = diagnose.KubeProxyMode
+	DiagnoseServiceDiscovery                 = diagnose.ServiceDiscovery
+	DiagnoseFirewallIntraVxLANConfig         = diagnose.FirewallIntraVxLANConfig
+	DiagnoseTunnelConfigAcrossClusters       = diagnose.TunnelConfigAcrossClusters
+	DiagnoseNatDiscoveryConfigAcrossClusters = diagnose.NatDiscoveryConfigAcrossClusters
+)
 
-	diagnoseRestConfigProducer = restconfig.NewProducer().WithDefaultNamespace(constants.OperatorNamespace).WithInClusterFlag()
+type diagnoseCommand struct {
+	firewallOptions                        diagnose.FirewallOptions
+	restConfigProducer                     *restconfig.Producer
+	firewallTunnelRestConfigProducer       *restconfig.Producer
+	firewallNatDiscoveryRestConfigProducer *restconfig.Producer
+}
 
-	diagnoseFirewallTunnelRestConfigProducer = restconfig.NewProducer().
-							WithDefaultNamespace(constants.OperatorNamespace).WithPrefixedContext("remote")
-	diagnoseFirewallNatDiscoveryRestConfigProducer = restconfig.NewProducer().
-							WithDefaultNamespace(constants.OperatorNamespace).WithPrefixedContext("remote")
+func NewDiagnoseCmd() *cobra.Command {
+	diagnoseCommand := &diagnoseCommand{
+		restConfigProducer: restconfig.NewProducer().WithDefaultNamespace(constants.OperatorNamespace).WithInClusterFlag(),
+		firewallTunnelRestConfigProducer: restconfig.NewProducer().
+			WithDefaultNamespace(constants.OperatorNamespace).WithPrefixedContext("remote"),
+		firewallNatDiscoveryRestConfigProducer: restconfig.NewProducer().
+			WithDefaultNamespace(constants.OperatorNamespace).WithPrefixedContext("remote"),
+	}
 
-	diagnoseCmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "diagnose",
 		Short: "Run diagnostic checks on the Submariner deployment and report any issues",
 		Long:  "This command runs various diagnostic checks on the Submariner deployment and reports any issues",
 	}
 
-	diagnoseCNICmd = &cobra.Command{
+	diagnoseCommand.restConfigProducer.SetupFlags(cmd.PersistentFlags())
+	diagnoseCommand.addDiagnoseSubCommands(cmd)
+
+	return cmd
+}
+
+func init() {
+	rootCmd.AddCommand(NewDiagnoseCmd())
+}
+
+func (c *diagnoseCommand) addDiagnoseSubCommands(toCmd *cobra.Command) {
+	diagnoseAllCmd := &cobra.Command{
+		Use:   "all",
+		Short: "Run all diagnostic checks (except those requiring two kubecontexts)",
+		Long:  "This command runs all diagnostic checks (except those requiring two kubecontexts) and reports any issues",
+		Args:  checkDiagnoseArguments,
+		Run: func(_ *cobra.Command, _ []string) {
+			exit.OnError(c.diagnoseAll(NewReporter()))
+		},
+	}
+	toCmd.AddCommand(diagnoseAllCmd)
+
+	c.addDiagnoseFWConfigFlags(diagnoseAllCmd)
+	addImageOverrideFlag(diagnoseAllCmd.Flags(), &imageOverrides)
+
+	diagnoseCNICmd := &cobra.Command{
 		Use:   "cni",
 		Short: "Check the CNI network plugin",
 		Long:  "This command checks if the detected CNI network plugin is supported by Submariner.",
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
-				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(diagnose.CNIConfig), cli.NewReporter()))
+				c.restConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(DiagnoseCNIConfig), NewReporter()))
 		},
 	}
+	toCmd.AddCommand(diagnoseCNICmd)
 
-	diagnoseConnectionsCmd = &cobra.Command{
+	diagnoseConnectionsCmd := &cobra.Command{
 		Use:   "connections",
 		Short: "Check the Gateway connections",
 		Long:  "This command checks that the Gateway connections to other clusters are all established",
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
-				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(diagnose.Connections), cli.NewReporter()))
+				c.restConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(DiagnoseConnections), NewReporter()))
 		},
 	}
+	toCmd.AddCommand(diagnoseConnectionsCmd)
 
-	diagnoseDeploymentCmd = &cobra.Command{
+	diagnoseDeploymentCmd := &cobra.Command{
 		Use:   "deployment",
 		Short: "Check the Submariner deployment",
 		Long:  "This command checks that the Submariner components are properly deployed and running with no overlapping CIDRs.",
 		Args:  checkDiagnoseArguments,
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
-				diagnoseRestConfigProducer.RunOnAllContexts(func(clusterInfo *cluster.Info, ns string, status reporter.Interface) error {
+				c.restConfigProducer.RunOnAllContexts(func(clusterInfo *cluster.Info, ns string, status reporter.Interface) error {
 					if clusterInfo.Submariner == nil && clusterInfo.ServiceDiscovery == nil {
 						status.Warning(constants.SubmarinerNotInstalled)
 
@@ -84,143 +129,118 @@ var (
 					}
 
 					return deployments(clusterInfo, ns, status)
-				}, cli.NewReporter()))
+				}, NewReporter()))
 		},
 	}
+	toCmd.AddCommand(diagnoseDeploymentCmd)
+	addImageOverrideFlag(diagnoseDeploymentCmd.Flags(), &imageOverrides)
 
-	diagnoseVersionCmd = &cobra.Command{
+	diagnoseVersionCmd := &cobra.Command{
 		Use:   "k8s-version",
 		Short: "Check the Kubernetes version",
 		Long:  "This command checks if Submariner can be deployed on the Kubernetes version.",
 		Run: func(_ *cobra.Command, _ []string) {
-			exit.OnError(diagnoseRestConfigProducer.RunOnAllContexts(diagnose.K8sVersion, cli.NewReporter()))
+			exit.OnError(c.restConfigProducer.RunOnAllContexts(DiagnoseK8sVersion, NewReporter()))
 		},
 	}
+	toCmd.AddCommand(diagnoseVersionCmd)
 
-	diagnoseKubeProxyModeCmd = &cobra.Command{
+	diagnoseKubeProxyModeCmd := &cobra.Command{
 		Use:   "kube-proxy-mode",
 		Short: "Check the kube-proxy mode",
 		Long:  "This command checks if the kube-proxy mode is supported by Submariner.",
 		Args:  checkDiagnoseArguments,
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(
-				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(kubeProxyMode), cli.NewReporter()))
+				c.restConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(kubeProxyMode), NewReporter()))
 		},
 	}
+	toCmd.AddCommand(diagnoseKubeProxyModeCmd)
 
-	diagnoseFirewallCmd = &cobra.Command{
+	addImageOverrideFlag(diagnoseKubeProxyModeCmd.Flags(), &imageOverrides)
+
+	diagnoseServiceDiscoveryCmd := &cobra.Command{
+		Use:   "service-discovery",
+		Short: "Check service discovery functionality",
+		Long:  "This command checks if service discovery is functioning properly.",
+		Run: func(_ *cobra.Command, _ []string) {
+			exit.OnError(c.restConfigProducer.RunOnAllContexts(restconfig.IfServiceDiscoveryInstalled(DiagnoseServiceDiscovery),
+				NewReporter()))
+		},
+	}
+	toCmd.AddCommand(diagnoseServiceDiscoveryCmd)
+
+	diagnoseFirewallCmd := &cobra.Command{
 		Use:   "firewall",
 		Short: "Check the firewall configuration",
 		Long:  "This command checks if the firewall is configured as per Submariner pre-requisites.",
 	}
+	toCmd.AddCommand(diagnoseFirewallCmd)
 
-	diagnoseFirewallVxLANCmd = &cobra.Command{
+	c.addDiagnoseFirewallSubCommands(diagnoseFirewallCmd)
+}
+
+func (c *diagnoseCommand) addDiagnoseFirewallSubCommands(diagnoseFirewallCmd *cobra.Command) {
+	diagnoseFirewallVxLANCmd := &cobra.Command{
 		Use:   "intra-cluster",
 		Short: "Check firewall access for intra-cluster Submariner VxLAN traffic",
 		Long:  "This command checks if the firewall configuration allows traffic over vx-submariner interface.",
 		Args:  checkFirewallArguments,
 		Run: func(_ *cobra.Command, _ []string) {
-			exit.OnError(
-				diagnoseRestConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(firewallIntraVxLANConfig), cli.NewReporter()))
+			exit.OnError(c.restConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(c.firewallIntraVxLANConfig),
+				NewReporter()))
 		},
 	}
+	diagnoseFirewallCmd.AddCommand(diagnoseFirewallVxLANCmd)
 
-	diagnoseFirewallTunnelCmd = &cobra.Command{
+	c.addDiagnoseFWConfigFlags(diagnoseFirewallVxLANCmd)
+	addImageOverrideFlag(diagnoseFirewallVxLANCmd.Flags(), &imageOverrides)
+
+	diagnoseFirewallTunnelCmd := &cobra.Command{
 		Use:   "inter-cluster --context <localcontext> --remotecontext <remotecontext>",
 		Short: "Check firewall access to setup tunnels between the Gateway node",
 		Long:  "This command checks if the firewall configuration allows tunnels to be configured on the Gateway nodes.",
 		Args:  checkFirewallArguments,
 		Run: func(_ *cobra.Command, _ []string) {
-			runLocalRemoteFirewallCommand(diagnoseFirewallTunnelRestConfigProducer, diagnose.TunnelConfigAcrossClusters)
+			c.runLocalRemoteFirewallCommand(c.firewallTunnelRestConfigProducer, DiagnoseTunnelConfigAcrossClusters)
 		},
 	}
+	diagnoseFirewallCmd.AddCommand(diagnoseFirewallTunnelCmd)
 
-	diagnoseFirewallNatDiscovery = &cobra.Command{
+	c.addDiagnoseFWConfigFlags(diagnoseFirewallTunnelCmd)
+	c.firewallTunnelRestConfigProducer.SetupFlags(diagnoseFirewallTunnelCmd.Flags())
+	addImageOverrideFlag(diagnoseFirewallTunnelCmd.Flags(), &imageOverrides)
+
+	diagnoseFirewallNatDiscovery := &cobra.Command{
 		Use:   "nat-discovery --context <localcontext> --remotecontext <remotecontext>",
 		Short: "Check firewall access for nat-discovery to function properly",
 		Long:  "This command checks if the firewall configuration allows nat-discovery between the configured Gateway nodes.",
 		Args:  checkFirewallArguments,
 		Run: func(_ *cobra.Command, _ []string) {
-			runLocalRemoteFirewallCommand(diagnoseFirewallNatDiscoveryRestConfigProducer, diagnose.NatDiscoveryConfigAcrossClusters)
+			c.runLocalRemoteFirewallCommand(c.firewallNatDiscoveryRestConfigProducer, DiagnoseNatDiscoveryConfigAcrossClusters)
 		},
 	}
-
-	diagnoseAllCmd = &cobra.Command{
-		Use:   "all",
-		Short: "Run all diagnostic checks (except those requiring two kubecontexts)",
-		Long:  "This command runs all diagnostic checks (except those requiring two kubecontexts) and reports any issues",
-		Args:  checkDiagnoseArguments,
-		Run: func(_ *cobra.Command, _ []string) {
-			exit.OnError(diagnoseAll(cli.NewReporter()))
-		},
-	}
-
-	diagnoseServiceDiscoveryCmd = &cobra.Command{
-		Use:   "service-discovery",
-		Short: "Check service discovery functionality",
-		Long:  "This command checks if service discovery is functioning properly.",
-		Run: func(_ *cobra.Command, _ []string) {
-			exit.OnError(
-				diagnoseRestConfigProducer.RunOnAllContexts(
-					restconfig.IfServiceDiscoveryInstalled(diagnose.ServiceDiscovery), cli.NewReporter()))
-		},
-	}
-)
-
-func init() {
-	diagnoseRestConfigProducer.SetupFlags(diagnoseCmd.PersistentFlags())
-	rootCmd.AddCommand(diagnoseCmd)
-
-	addDiagnoseSubCommands()
-	addDiagnoseFirewallSubCommands()
-}
-
-func addDiagnoseSubCommands() {
-	addDiagnoseFWConfigFlags(diagnoseAllCmd)
-	addImageOverrideFlag(diagnoseAllCmd.Flags(), &imageOverrides)
-
-	diagnoseCmd.AddCommand(diagnoseCNICmd)
-	diagnoseCmd.AddCommand(diagnoseConnectionsCmd)
-	addImageOverrideFlag(diagnoseDeploymentCmd.Flags(), &imageOverrides)
-	diagnoseCmd.AddCommand(diagnoseDeploymentCmd)
-	diagnoseCmd.AddCommand(diagnoseVersionCmd)
-	addImageOverrideFlag(diagnoseKubeProxyModeCmd.Flags(), &imageOverrides)
-	diagnoseCmd.AddCommand(diagnoseKubeProxyModeCmd)
-	diagnoseCmd.AddCommand(diagnoseAllCmd)
-	diagnoseCmd.AddCommand(diagnoseFirewallCmd)
-	diagnoseCmd.AddCommand(diagnoseServiceDiscoveryCmd)
-}
-
-func addDiagnoseFirewallSubCommands() {
-	addDiagnoseFWConfigFlags(diagnoseFirewallVxLANCmd)
-	diagnoseFirewallTunnelRestConfigProducer.SetupFlags(diagnoseFirewallTunnelCmd.Flags())
-	addDiagnoseFWConfigFlags(diagnoseFirewallTunnelCmd)
-	diagnoseFirewallNatDiscoveryRestConfigProducer.SetupFlags(diagnoseFirewallNatDiscovery.Flags())
-	addDiagnoseFWConfigFlags(diagnoseFirewallNatDiscovery)
-
-	addImageOverrideFlag(diagnoseFirewallVxLANCmd.Flags(), &imageOverrides)
-	addImageOverrideFlag(diagnoseFirewallTunnelCmd.Flags(), &imageOverrides)
-	addImageOverrideFlag(diagnoseFirewallNatDiscovery.Flags(), &imageOverrides)
-	diagnoseFirewallCmd.AddCommand(diagnoseFirewallVxLANCmd)
-	diagnoseFirewallCmd.AddCommand(diagnoseFirewallTunnelCmd)
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallNatDiscovery)
+
+	c.addDiagnoseFWConfigFlags(diagnoseFirewallNatDiscovery)
+	c.firewallNatDiscoveryRestConfigProducer.SetupFlags(diagnoseFirewallNatDiscovery.Flags())
+	addImageOverrideFlag(diagnoseFirewallNatDiscovery.Flags(), &imageOverrides)
 }
 
-func addDiagnoseFWConfigFlags(command *cobra.Command) {
-	command.Flags().UintVar(&diagnoseFirewallOptions.ValidationTimeout, "validation-timeout", 90,
+func (c *diagnoseCommand) addDiagnoseFWConfigFlags(command *cobra.Command) {
+	command.Flags().UintVar(&c.firewallOptions.ValidationTimeout, "validation-timeout", 90,
 		"time to run in seconds while validating the firewall")
-	command.Flags().BoolVar(&diagnoseFirewallOptions.VerboseOutput, "verbose", false,
+	command.Flags().BoolVar(&c.firewallOptions.VerboseOutput, "verbose", false,
 		"produce verbose output while validating the firewall")
 }
 
-func firewallIntraVxLANConfig(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-	diagnoseFirewallOptions.ImageOverrides = imageOverrides
+func (c *diagnoseCommand) firewallIntraVxLANConfig(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+	c.firewallOptions.ImageOverrides = imageOverrides
 
-	return diagnose.FirewallIntraVxLANConfig( //nolint:wrapcheck // No need to wrap errors here.
-		clusterInfo, namespace, diagnoseFirewallOptions, status)
+	return DiagnoseFirewallIntraVxLANConfig(clusterInfo, namespace, c.firewallOptions, status)
 }
 
-func checkDiagnoseArguments(cmd *cobra.Command, args []string) error {
+func checkDiagnoseArguments(_ *cobra.Command, _ []string) error {
 	return checkImageOverrides(imageOverrides)
 }
 
@@ -234,27 +254,27 @@ func checkFirewallArguments(cmd *cobra.Command, args []string) error {
 }
 
 func kubeProxyMode(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-	return diagnose.KubeProxyMode(clusterInfo, namespace, imageOverrides, status) //nolint:wrapcheck // No need to wrap error here
+	return DiagnoseKubeProxyMode(clusterInfo, namespace, imageOverrides, status)
 }
 
 func deployments(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-	return diagnose.Deployments(clusterInfo, namespace, imageOverrides, status) //nolint:wrapcheck // No need to wrap error here
+	return DiagnoseDeployments(clusterInfo, namespace, imageOverrides, status)
 }
 
-var allDiagnoseCommands = []restconfig.PerContextFn{
-	diagnose.K8sVersion,
-	deployments,
-	restconfig.IfConnectivityInstalled(
-		diagnose.CNIConfig,
-		diagnose.Connections,
-		kubeProxyMode,
-		firewallIntraVxLANConfig,
-		diagnose.GlobalnetConfig),
-	restconfig.IfServiceDiscoveryInstalled(diagnose.ServiceDiscovery),
-}
+func (c *diagnoseCommand) diagnoseAll(status reporter.Interface) error {
+	allDiagnoseCommands := []restconfig.PerContextFn{
+		DiagnoseK8sVersion,
+		deployments,
+		restconfig.IfConnectivityInstalled(
+			DiagnoseCNIConfig,
+			DiagnoseConnections,
+			kubeProxyMode,
+			c.firewallIntraVxLANConfig,
+			DiagnoseGlobalnetConfig),
+		restconfig.IfServiceDiscoveryInstalled(DiagnoseServiceDiscovery),
+	}
 
-func diagnoseAll(status reporter.Interface) error {
-	err := diagnoseRestConfigProducer.RunOnAllContexts(
+	err := c.restConfigProducer.RunOnAllContexts(
 		func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 			diagnoseErrors := make([]error, 0, len(allDiagnoseCommands))
 
@@ -273,21 +293,21 @@ func diagnoseAll(status reporter.Interface) error {
 	return err //nolint:wrapcheck // No need to wrap errors here.
 }
 
-func runLocalRemoteFirewallCommand(localRemoteRestConfigProducer *restconfig.Producer,
+func (c *diagnoseCommand) runLocalRemoteFirewallCommand(localRemoteRestConfigProducer *restconfig.Producer,
 	function func(
 		localClusterInfo, remoteClusterInfo *cluster.Info, namespace string, options diagnose.FirewallOptions, status reporter.Interface,
 	) error,
 ) {
-	status := cli.NewReporter()
+	status := NewReporter()
 
-	diagnoseFirewallOptions.ImageOverrides = imageOverrides
+	c.firewallOptions.ImageOverrides = imageOverrides
 
 	exit.OnErrorWithMessage(localRemoteRestConfigProducer.RunOnSelectedContext(
 		func(localClusterInfo *cluster.Info, localNamespace string, status reporter.Interface) error {
 			found, err := localRemoteRestConfigProducer.RunOnSelectedPrefixedContext(
 				"remote",
 				func(remoteClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return function(localClusterInfo, remoteClusterInfo, localNamespace, diagnoseFirewallOptions, status)
+					return function(localClusterInfo, remoteClusterInfo, localNamespace, c.firewallOptions, status)
 				}, status)
 			if err != nil {
 				return err //nolint:wrapcheck // No need to wrap errors here.
