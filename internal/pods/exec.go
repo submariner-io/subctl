@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/submariner-io/admiral/pkg/resource"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -37,7 +38,6 @@ func ExecOptionsFromPod(pod *v1.Pod) ExecOptions {
 		Namespace:          pod.Namespace,
 		PodName:            pod.Name,
 		ContainerName:      pod.Spec.Containers[0].Name,
-		Stdin:              nil,
 		CaptureStdout:      true,
 		CaptureStderr:      true,
 		PreserveWhitespace: false,
@@ -58,7 +58,6 @@ type ExecOptions struct {
 	Namespace     string
 	PodName       string
 	ContainerName string
-	Stdin         io.Reader
 	CaptureStdout bool
 	CaptureStderr bool
 	// If false, whitespace in std{err,out} will be removed.
@@ -81,7 +80,6 @@ func ExecWithOptions(ctx context.Context, config ExecConfig, options *ExecOption
 	req.VersionedParams(&v1.PodExecOptions{
 		Container: options.ContainerName,
 		Command:   options.Command,
-		Stdin:     options.Stdin != nil,
 		Stdout:    options.CaptureStdout,
 		Stderr:    options.CaptureStderr,
 		TTY:       tty,
@@ -93,7 +91,7 @@ func ExecWithOptions(ctx context.Context, config ExecConfig, options *ExecOption
 	}
 
 	var stdout, stderr bytes.Buffer
-	err = execute(ctx, "POST", req.URL(), config.RestConfig, options.Stdin, &stdout, &stderr, tty)
+	err = execute(ctx, "POST", req.URL(), config.RestConfig, &stdout, &stderr, tty)
 
 	if options.PreserveWhitespace {
 		return stdout.String(), stderr.String(), err
@@ -103,15 +101,14 @@ func ExecWithOptions(ctx context.Context, config ExecConfig, options *ExecOption
 }
 
 //nolint:wrapcheck // No need to wrap errors here.
-func execute(ctx context.Context, method string, link *url.URL, config *rest.Config, stdin io.Reader, stdout, stderr io.Writer, tty bool,
+func execute(ctx context.Context, method string, link *url.URL, config *rest.Config, stdout, stderr io.Writer, tty bool,
 ) error {
-	exec, err := remotecommand.NewSPDYExecutor(config, method, link)
+	exec, err := resource.NewSPDYExecutor(config, method, link)
 	if err != nil {
 		return err
 	}
 
 	return exec.StreamWithContext(ctx, remotecommand.StreamOptions{
-		Stdin:  stdin,
 		Stdout: stdout,
 		Stderr: stderr,
 		Tty:    tty,
