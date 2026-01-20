@@ -74,33 +74,6 @@ type Scheduled struct {
 	PodOutput string
 }
 
-func ScheduleAndAwaitCompletion(config *Config) (string, error) {
-	if config.Scheduling.ScheduleOn == InvalidScheduling {
-		config.Scheduling.ScheduleOn = GatewayNode
-	}
-
-	if config.Namespace == "" {
-		config.Namespace = constants.OperatorNamespace
-	}
-
-	if err := checkNSLabels(config); err != nil {
-		return "", err
-	}
-
-	np := &Scheduled{Config: config}
-	if err := np.schedule(); err != nil {
-		return "", err
-	}
-
-	defer np.Delete()
-
-	if err := np.AwaitCompletion(); err != nil {
-		return "", err
-	}
-
-	return np.PodOutput, nil
-}
-
 func Schedule(config *Config) (*Scheduled, error) {
 	if config.Scheduling.ScheduleOn == InvalidScheduling {
 		config.Scheduling.ScheduleOn = GatewayNode

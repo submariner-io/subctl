@@ -50,7 +50,7 @@ func KubeProxyMode(clusterInfo *cluster.Info, namespace string, imageOverrides [
 		return status.Error(err, "Error determining repository information")
 	}
 
-	podOutput, err := pods.ScheduleAndAwaitCompletion(&pods.Config{
+	scheduled, err := pods.Schedule(&pods.Config{
 		Name:                "query-iface-list",
 		ClientSet:           clusterInfo.ClientProducer.ForKubernetes(),
 		Scheduling:          scheduling,
@@ -62,7 +62,13 @@ func KubeProxyMode(clusterInfo *cluster.Info, namespace string, imageOverrides [
 		return status.Error(err, "Error spawning the network pod")
 	}
 
-	if !strings.Contains(podOutput, KubeProxyMissingInterface) && !strings.Contains(podOutput, KubeProxyNotEnabled) {
+	defer scheduled.Delete()
+
+	if err = scheduled.AwaitCompletion(); err != nil {
+		return status.Error(err, "Error waiting for the network pod to finish its execution")
+	}
+
+	if !strings.Contains(scheduled.PodOutput, KubeProxyMissingInterface) && !strings.Contains(scheduled.PodOutput, KubeProxyNotEnabled) {
 		return status.Error(errors.New("the cluster is deployed with kube-proxy ipvs mode which Submariner does not support"), "")
 	}
 
