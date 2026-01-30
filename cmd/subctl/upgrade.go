@@ -88,7 +88,7 @@ func init() {
 	rootCmd.AddCommand(NewUpgradeCmd())
 }
 
-func (c *upgradeCommand) upgrade(_ *cobra.Command, _ []string) {
+func (c *upgradeCommand) upgrade(cmd *cobra.Command, _ []string) {
 	status := NewReporter()
 
 	// Step 1: upgrade subctl to match the requested version
@@ -110,7 +110,9 @@ func (c *upgradeCommand) upgrade(_ *cobra.Command, _ []string) {
 		}
 	} else {
 		// Step 2b: this subctl is already the requested version, run it
-		exit.OnError(c.restConfigProducer.RunOnAllContexts(c.upgradeSubmariner, status))
+		exit.OnError(c.restConfigProducer.RunOnAllContexts(func(info *cluster.Info, namespace string, status reporter.Interface) error {
+			return c.upgradeSubmariner(cmd.Context(), info, namespace, status)
+		}, status))
 	}
 }
 
@@ -210,9 +212,7 @@ func retrieveLatestReleaseTag() (string, error) {
 	return "", goerrors.New("no tag name found in the latest release data")
 }
 
-func (c *upgradeCommand) upgradeSubmariner(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-	ctx := context.TODO()
-
+func (c *upgradeCommand) upgradeSubmariner(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	// We only expect users to specify a subctl version, if any ("--to-version"). In such scenarios,
 	// the versions are expected to align, so subctl vX installs the operator image tagged with vX,
 	// and that operator defaults to the appropriate Submariner version.

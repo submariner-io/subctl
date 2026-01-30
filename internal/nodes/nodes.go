@@ -36,13 +36,13 @@ import (
 )
 
 // LabelAsGateway labels the specified  node as a gateway.
-func LabelAsGateway(clientset kubernetes.Interface, nodeName string) error {
-	return addLabels(clientset, nodeName, map[string]string{constants.SubmarinerGatewayLabel: constants.TrueLabel})
+func LabelAsGateway(ctx context.Context, clientset kubernetes.Interface, nodeName string) error {
+	return addLabels(ctx, clientset, nodeName, map[string]string{constants.SubmarinerGatewayLabel: constants.TrueLabel})
 }
 
 // LabelAnyAsGateway labels any worker node as a gateway.
-func LabelAnyAsGateway(clientset kubernetes.Interface) (bool, error) {
-	workerNodes, err := GetAllWorkerNames(clientset)
+func LabelAnyAsGateway(ctx context.Context, clientset kubernetes.Interface) (bool, error) {
+	workerNodes, err := GetAllWorkerNames(ctx, clientset)
 	if err != nil {
 		return false, err
 	}
@@ -51,21 +51,19 @@ func LabelAnyAsGateway(clientset kubernetes.Interface) (bool, error) {
 		return false, nil
 	}
 
-	return true, LabelAsGateway(clientset, workerNodes[0])
+	return true, LabelAsGateway(ctx, clientset, workerNodes[0])
 }
 
 // GetAllWorkerNames returns all worker nodes.
-func GetAllWorkerNames(clientset kubernetes.Interface) ([]string, error) {
-	workerNodes, err := clientset.CoreV1().Nodes().List(
-		context.TODO(), metav1.ListOptions{LabelSelector: "node-role.kubernetes.io/worker"})
+func GetAllWorkerNames(ctx context.Context, clientset kubernetes.Interface) ([]string, error) {
+	workerNodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{LabelSelector: "node-role.kubernetes.io/worker"})
 	if err != nil {
 		return nil, errors.Wrap(err, "error listing Nodes")
 	}
 
 	if len(workerNodes.Items) == 0 {
 		// In some deployments (like KIND), worker nodes are not explicitly labelled. So list non-master nodes.
-		workerNodes, err = clientset.CoreV1().Nodes().List(
-			context.TODO(), metav1.ListOptions{LabelSelector: "!node-role.kubernetes.io/master"})
+		workerNodes, err = clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{LabelSelector: "!node-role.kubernetes.io/master"})
 		if err != nil {
 			return nil, errors.Wrap(err, "error listing Nodes")
 		}
@@ -84,10 +82,10 @@ func getNodeNames(nodes *corev1.NodeList) []string {
 }
 
 // ListGateways returns the names of all node labeled as a gateway.
-func ListGateways(clientset kubernetes.Interface) ([]string, error) {
+func ListGateways(ctx context.Context, clientset kubernetes.Interface) ([]string, error) {
 	selector := labels.SelectorFromSet(map[string]string{constants.SubmarinerGatewayLabel: constants.TrueLabel})
 
-	labeledNodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{LabelSelector: selector.String()})
+	labeledNodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		return nil, errors.Wrap(err, "error listing Nodes")
 	}
@@ -97,7 +95,7 @@ func ListGateways(clientset kubernetes.Interface) ([]string, error) {
 
 // this function was sourced from:
 // https://github.com/kubernetes/kubernetes/blob/a3ccea9d8743f2ff82e41b6c2af6dc2c41dc7b10/test/utils/density_utils.go#L36
-func addLabels(clientset kubernetes.Interface, nodeName string, labelsToAdd map[string]string) error {
+func addLabels(ctx context.Context, clientset kubernetes.Interface, nodeName string, labelsToAdd map[string]string) error {
 	tokens := make([]string, 0, len(labelsToAdd))
 	for k, v := range labelsToAdd {
 		tokens = append(tokens, fmt.Sprintf("%q:%q", k, v))
@@ -111,7 +109,7 @@ func addLabels(clientset kubernetes.Interface, nodeName string, labelsToAdd map[
 
 	var lastErr error
 	err := wait.ExponentialBackoff(nodeLabelBackoff, func() (bool, error) {
-		_, lastErr = clientset.CoreV1().Nodes().Patch(context.TODO(), nodeName, types.MergePatchType, []byte(patch), metav1.PatchOptions{})
+		_, lastErr = clientset.CoreV1().Nodes().Patch(ctx, nodeName, types.MergePatchType, []byte(patch), metav1.PatchOptions{})
 		if lastErr != nil {
 			if !k8serrors.IsConflict(lastErr) {
 				return false, lastErr //nolint:wrapcheck // No need to wrap here

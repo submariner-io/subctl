@@ -67,7 +67,7 @@ func NewJoinCmd() *cobra.Command {
 		Args: func(cmd *cobra.Command, args []string) error {
 			return joinCmd.checkArguments(args)
 		},
-		Run: func(_ *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) {
 			status := NewReporter()
 
 			brokerInfo, err := broker.ReadInfoFromFile(args[0])
@@ -81,7 +81,7 @@ func NewJoinCmd() *cobra.Command {
 
 			exit.OnError(joinCmd.restConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return joinCmd.joinInContext(brokerInfo, clusterInfo, status)
+					return joinCmd.joinInContext(cmd.Context(), brokerInfo, clusterInfo, status)
 				}, status))
 		},
 	}
@@ -174,16 +174,16 @@ func (c *JoinCommand) addFlags() {
 	)
 }
 
-func (c *JoinCommand) joinInContext(brokerInfo *broker.Info, clusterInfo *cluster.Info, status reporter.Interface) error {
+func (c *JoinCommand) joinInContext(ctx context.Context, brokerInfo *broker.Info, clusterInfo *cluster.Info, status reporter.Interface,
+) error {
 	c.determineClusterID(clusterInfo.Name, status)
 
-	ctx := context.TODO()
 	networkDetails := getNetworkDetails(ctx, clusterInfo.ClientProducer, status)
 	c.flags.ClusterCIDR = determineCIDR("Pod", c.flags.ClusterCIDR, networkDetails.PodCIDRs, status)
 	c.flags.ServiceCIDR = determineCIDR("Service", c.flags.ServiceCIDR, networkDetails.ServiceCIDRs, status)
 
 	if brokerInfo.IsConnectivityEnabled() && c.labelGateway {
-		possiblyLabelGateway(clusterInfo.ClientProducer.ForKubernetes(), status)
+		possiblyLabelGateway(ctx, clusterInfo.ClientProducer.ForKubernetes(), status)
 	}
 
 	if c.flags.CustomDomains == nil && brokerInfo.CustomDomains != nil {
@@ -193,11 +193,11 @@ func (c *JoinCommand) joinInContext(brokerInfo *broker.Info, clusterInfo *cluste
 	return JoinClusterToBroker(ctx, brokerInfo, &c.flags, clusterInfo.ClientProducer, status)
 }
 
-func possiblyLabelGateway(kubeClient kubernetes.Interface, status reporter.Interface) {
+func possiblyLabelGateway(ctx context.Context, kubeClient kubernetes.Interface, status reporter.Interface) {
 	status.Start("Retrieving the gateway nodes")
 	defer status.End()
 
-	gatewayNodes, err := nodes.ListGateways(kubeClient)
+	gatewayNodes, err := nodes.ListGateways(ctx, kubeClient)
 	exit.OnError(status.Error(err, "Error retrieving the gateway nodes"))
 
 	if len(gatewayNodes) > 0 {
@@ -213,7 +213,7 @@ func possiblyLabelGateway(kubeClient kubernetes.Interface, status reporter.Inter
 	// No Gateway nodes are present, get all worker nodes and ask user to select one of them as gateway node
 	status.Start("Retrieving all worker nodes")
 
-	workerNodes, err := nodes.GetAllWorkerNames(kubeClient)
+	workerNodes, err := nodes.GetAllWorkerNames(ctx, kubeClient)
 	exit.OnError(status.Error(err, "Error listing the worker nodes"))
 
 	status.End()
@@ -233,7 +233,7 @@ func possiblyLabelGateway(kubeClient kubernetes.Interface, status reporter.Inter
 
 	status.Start("Labeling node %q as a gateway", nodeToLabel)
 
-	err = nodes.LabelAsGateway(kubeClient, nodeToLabel)
+	err = nodes.LabelAsGateway(ctx, kubeClient, nodeToLabel)
 	exit.OnError(status.Error(err, "Error labeling node %q as a gateway", nodeToLabel))
 }
 
