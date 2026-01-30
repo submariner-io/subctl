@@ -49,9 +49,11 @@ func NewRecoverBrokerInfoCmd() *cobra.Command {
 	recoverCmd.cmd = &cobra.Command{
 		Use:   "recover-broker-info",
 		Short: "Recovers the broker-info.subm file from the installed Broker",
-		Run: func(_ *cobra.Command, _ []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			exit.OnError(recoverCmd.restConfigProducer.RunOnSelectedContext(restconfig.IfConnectivityInstalled(
-				recoverCmd.recoverBrokerInfo), NewReporter()))
+				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					return recoverCmd.recoverBrokerInfo(cmd.Context(), clusterInfo, namespace, status)
+				}), NewReporter()))
 		},
 	}
 
@@ -69,14 +71,15 @@ func init() {
 	rootCmd.AddCommand(recoverBrokerInfo)
 }
 
-func (c *RecoverBrokerCommand) recoverBrokerInfo(submCluster *cluster.Info, _ string, status reporter.Interface) error {
+func (c *RecoverBrokerCommand) recoverBrokerInfo(ctx context.Context, submCluster *cluster.Info, _ string, status reporter.Interface,
+) error {
 	brokerNamespace := submCluster.Submariner.Spec.BrokerK8sRemoteNamespace
 	brokerRestConfig := submCluster.RestConfig
 
 	status.Start("Checking if the Broker is installed on the Submariner cluster %q in namespace %q", submCluster.Name, brokerNamespace)
 	defer status.End()
 
-	brokerObj, found, err := getBroker(context.TODO(), brokerRestConfig, brokerNamespace)
+	brokerObj, found, err := getBroker(ctx, brokerRestConfig, brokerNamespace)
 	if err != nil {
 		return status.Error(err, "Error getting Broker")
 	}
@@ -89,7 +92,7 @@ func (c *RecoverBrokerCommand) recoverBrokerInfo(submCluster *cluster.Info, _ st
 			return status.Error(err, "Error getting the Broker's REST config")
 		}
 
-		brokerObj, found, err = getBroker(context.TODO(), brokerRestConfig, brokerNamespace)
+		brokerObj, found, err = getBroker(ctx, brokerRestConfig, brokerNamespace)
 		if err != nil {
 			return status.Error(err, "")
 		}

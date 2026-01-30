@@ -22,8 +22,6 @@ limitations under the License.
 package subctl
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
@@ -42,11 +40,10 @@ var (
 		Short:   "Prepare an OpenShift Azure cloud",
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on Azure cloud for Submariner installation.",
 		PreRunE: checkAzureFlags,
-		Run: func(_ *cobra.Command, _ []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return prepare.Azure(
-						context.TODO(), clusterInfo, &cloudOptions.ports, &azureConfig, cloudOptions.useLoadBalancer, status)
+					return prepare.Azure(cmd.Context(), clusterInfo, &cloudOptions.ports, &azureConfig, cloudOptions.useLoadBalancer, status)
 				}, cli.NewReporter()))
 		},
 	}
@@ -57,10 +54,10 @@ var (
 		Long: "This command cleans up an OpenShift installer-provisioned infrastructure (IPI) on " +
 			"Azure-based cloud after Submariner uninstallation.",
 		PreRunE: checkAzureFlags,
-		Run: func(_ *cobra.Command, _ []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return cleanup.Azure(context.TODO(), clusterInfo, &azureConfig, status)
+					return cleanup.Azure(cmd.Context(), clusterInfo, &azureConfig, status)
 				}, cli.NewReporter()))
 		},
 	}
