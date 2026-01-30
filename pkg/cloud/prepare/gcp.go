@@ -19,6 +19,8 @@ limitations under the License.
 package prepare
 
 import (
+	"context"
+
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
 	"github.com/submariner-io/subctl/internal/cli"
@@ -27,17 +29,19 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func GCP(clusterInfo *cluster.Info, ports *cloud.Ports, config *gcp.Config, useLoadBalancer bool, status reporter.Interface) error {
+func GCP(ctx context.Context,
+	clusterInfo *cluster.Info, ports *cloud.Ports, config *gcp.Config, useLoadBalancer bool, status reporter.Interface,
+) error {
 	defer status.End()
 
-	gwPorts, internalPorts, err := getPortConfig(clusterInfo.ClientProducer, ports, false)
+	gwPorts, internalPorts, err := getPortConfig(ctx, clusterInfo.ClientProducer, ports, false)
 	if err != nil {
 		return status.Error(err, "Failed to prepare the cloud")
 	}
 
 	//nolint:wrapcheck // No need to wrap errors here.
-	err = gcp.RunOn(clusterInfo, config, cli.NewReporter(),
-		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
+	err = gcp.RunOn(ctx, clusterInfo, config, cli.NewReporter(),
+		func(ctx context.Context, cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if config.Gateways > 0 {
 				gwInput := api.GatewayDeployInput{
 					PublicPorts:     gwPorts,
@@ -45,14 +49,14 @@ func GCP(clusterInfo *cluster.Info, ports *cloud.Ports, config *gcp.Config, useL
 					UseLoadBalancer: useLoadBalancer,
 				}
 
-				err := gwDeployer.Deploy(gwInput, status)
+				err := gwDeployer.Deploy(ctx, gwInput, status)
 				if err != nil {
 					return err
 				}
 			}
 
 			if len(internalPorts) > 0 {
-				return cloud.OpenPorts(internalPorts, status)
+				return cloud.OpenPorts(ctx, internalPorts, status)
 			}
 
 			return nil

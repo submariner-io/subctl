@@ -20,6 +20,8 @@ limitations under the License.
 package aws
 
 import (
+	"context"
+
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/util"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
@@ -45,8 +47,8 @@ type Config struct {
 
 // RunOn runs the given function on AWS, supplying it with a cloud instance connected to AWS and a reporter that writes to CLI.
 // The functions makes sure that infraID and region are specified, and extracts the credentials from a secret in order to connect to AWS.
-func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
-	function func(api.Cloud, api.GatewayDeployer, reporter.Interface) error,
+func RunOn(ctx context.Context, clusterInfo *cluster.Info, config *Config, status reporter.Interface,
+	function func(context.Context, api.Cloud, api.GatewayDeployer, reporter.Interface) error,
 ) error {
 	if config.OcpMetadataFile != "" {
 		var err error
@@ -80,6 +82,7 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 	}
 
 	awsCloud, err := aws.NewCloudFromSettings(
+		ctx,
 		config.CredentialsFile,
 		config.Profile,
 		config.InfraID,
@@ -105,7 +108,7 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 		return status.Error(err, "error creating the gateway deployer")
 	}
 
-	return function(awsCloud, gwDeployer, status)
+	return function(ctx, awsCloud, gwDeployer, status)
 }
 
 func readMetadataFile(fileName string) (string, string, error) {

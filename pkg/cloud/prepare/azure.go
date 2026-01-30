@@ -19,6 +19,8 @@ limitations under the License.
 package prepare
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
@@ -27,17 +29,19 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func Azure(clusterInfo *cluster.Info, ports *cloud.Ports, config *azure.Config, useLoadBalancer bool, status reporter.Interface) error {
+func Azure(ctx context.Context,
+	clusterInfo *cluster.Info, ports *cloud.Ports, config *azure.Config, useLoadBalancer bool, status reporter.Interface,
+) error {
 	defer status.End()
 	status.Start("Preparing Azure cloud for Submariner deployment")
 
-	gwPorts, internalPorts, err := getPortConfig(clusterInfo.ClientProducer, ports, false)
+	gwPorts, internalPorts, err := getPortConfig(ctx, clusterInfo.ClientProducer, ports, false)
 	if err != nil {
 		return status.Error(err, "Failed to prepare the cloud")
 	}
 
-	err = azure.RunOn(clusterInfo, config, status,
-		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
+	err = azure.RunOn(ctx, clusterInfo, config, status,
+		func(ctx context.Context, cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if config.Gateways > 0 {
 				gwInput := api.GatewayDeployInput{
 					PublicPorts:     gwPorts,
@@ -46,14 +50,14 @@ func Azure(clusterInfo *cluster.Info, ports *cloud.Ports, config *azure.Config, 
 					AirGapped:       config.AirGappedDeployment,
 				}
 
-				err := gwDeployer.Deploy(gwInput, status)
+				err := gwDeployer.Deploy(ctx, gwInput, status)
 				if err != nil {
 					return errors.WithMessage(err, "Deployment failed ")
 				}
 			}
 
 			if len(internalPorts) > 0 {
-				return cloud.OpenPorts(internalPorts, status)
+				return cloud.OpenPorts(ctx, internalPorts, status)
 			}
 
 			return nil

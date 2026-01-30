@@ -22,6 +22,8 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	cpaws "github.com/submariner-io/cloud-prepare/pkg/aws"
@@ -45,7 +47,7 @@ var (
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 					return prepare.AWS(
-						clusterInfo, &cloudOptions.ports, &awsConfig, cloudOptions.useLoadBalancer, status)
+						context.TODO(), clusterInfo, &cloudOptions.ports, &awsConfig, cloudOptions.useLoadBalancer, status)
 				}, cli.NewReporter()))
 		},
 	}
@@ -59,7 +61,7 @@ var (
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return cleanup.AWS(clusterInfo, &awsConfig, status)
+					return cleanup.AWS(context.TODO(), clusterInfo, &awsConfig, status)
 				}, cli.NewReporter()))
 		},
 	}

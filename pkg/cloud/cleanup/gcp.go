@@ -19,24 +19,26 @@ limitations under the License.
 package cleanup
 
 import (
+	"context"
+
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
 	"github.com/submariner-io/subctl/pkg/cloud/gcp"
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func GCP(clusterInfo *cluster.Info, config *gcp.Config, status reporter.Interface) error {
+func GCP(ctx context.Context, clusterInfo *cluster.Info, config *gcp.Config, status reporter.Interface) error {
 	defer status.End()
 
-	err := gcp.RunOn(clusterInfo, config, status,
+	err := gcp.RunOn(ctx, clusterInfo, config, status,
 		//nolint:wrapcheck // No need to wrap errors here
-		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
-			err := gwDeployer.Cleanup(status)
+		func(ctx context.Context, cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
+			err := gwDeployer.Cleanup(ctx, status)
 			if err != nil {
 				return err
 			}
 
-			return cloud.ClosePorts(status)
+			return cloud.ClosePorts(ctx, status)
 		})
 
 	return status.Error(err, "Failed to cleanup GCP cloud")

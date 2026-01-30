@@ -19,6 +19,8 @@ limitations under the License.
 package prepare
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
@@ -27,19 +29,21 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func RHOS(clusterInfo *cluster.Info, ports *cloud.Ports, config *rhos.Config, useLoadBalancer bool, status reporter.Interface) error {
+func RHOS(ctx context.Context,
+	clusterInfo *cluster.Info, ports *cloud.Ports, config *rhos.Config, useLoadBalancer bool, status reporter.Interface,
+) error {
 	defer status.End()
 
-	gwPorts, internalPorts, err := getPortConfig(clusterInfo.ClientProducer, ports, false)
+	gwPorts, internalPorts, err := getPortConfig(ctx, clusterInfo.ClientProducer, ports, false)
 	if err != nil {
 		return status.Error(err, "Failed to prepare the cloud")
 	}
 
 	//nolint:wrapcheck // No need to wrap errors here.
-	err = rhos.RunOn(clusterInfo, config, status,
-		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
+	err = rhos.RunOn(ctx, clusterInfo, config, status,
+		func(ctx context.Context, cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if len(internalPorts) > 0 {
-				err := cloud.OpenPorts(internalPorts, status)
+				err := cloud.OpenPorts(ctx, internalPorts, status)
 				if err != nil {
 					return err
 				}
@@ -52,7 +56,7 @@ func RHOS(clusterInfo *cluster.Info, ports *cloud.Ports, config *rhos.Config, us
 					UseLoadBalancer: useLoadBalancer,
 				}
 
-				return errors.Wrap(gwDeployer.Deploy(gwInput, status), "Deployment failed")
+				return errors.Wrap(gwDeployer.Deploy(ctx, gwInput, status), "Deployment failed")
 			}
 
 			return nil

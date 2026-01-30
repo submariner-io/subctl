@@ -22,6 +22,8 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
@@ -44,7 +46,7 @@ var (
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 					return prepare.Azure(
-						clusterInfo, &cloudOptions.ports, &azureConfig, cloudOptions.useLoadBalancer, status)
+						context.TODO(), clusterInfo, &cloudOptions.ports, &azureConfig, cloudOptions.useLoadBalancer, status)
 				}, cli.NewReporter()))
 		},
 	}
@@ -58,7 +60,7 @@ var (
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return cleanup.Azure(clusterInfo, &azureConfig, status)
+					return cleanup.Azure(context.TODO(), clusterInfo, &azureConfig, status)
 				}, cli.NewReporter()))
 		},
 	}

@@ -20,9 +20,10 @@ limitations under the License.
 package rhos
 
 import (
+	"context"
 	"os"
 
-	"github.com/gophercloud/utils/openstack/clientconfig"
+	"github.com/gophercloud/utils/v2/openstack/clientconfig"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/util"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
@@ -45,8 +46,8 @@ type Config struct {
 
 // RunOn runs the given function on RHOS, supplying it with a cloud instance connected to RHOS and a reporter that writes to CLI.
 // The functions makes sure that infraID and region are specified, and extracts the credentials from a secret in order to connect to RHOS.
-func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
-	function func(api.Cloud, api.GatewayDeployer, reporter.Interface) error,
+func RunOn(ctx context.Context, clusterInfo *cluster.Info, config *Config, status reporter.Interface,
+	function func(context.Context, api.Cloud, api.GatewayDeployer, reporter.Interface) error,
 ) error {
 	if config.OcpMetadataFile != "" {
 		var err error
@@ -75,7 +76,7 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 		Cloud: config.CloudEntry,
 	}
 
-	providerClient, err := clientconfig.AuthenticatedClient(opts)
+	providerClient, err := clientconfig.AuthenticatedClient(ctx, opts)
 	if err != nil {
 		return status.Error(err, "error initializing RHOS Client")
 	}
@@ -102,7 +103,7 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 	msDeployer := ocp.NewK8sMachinesetDeployer(restMapper, dynamicClient)
 	gwDeployer := rhos.NewOcpGatewayDeployer(cloudInfo, msDeployer, config.ProjectID, config.GWInstanceType, "", config.CloudEntry)
 
-	return function(rhosCloud, gwDeployer, status)
+	return function(ctx, rhosCloud, gwDeployer, status)
 }
 
 func readMetadataFile(fileName string) (string, string, error) {
