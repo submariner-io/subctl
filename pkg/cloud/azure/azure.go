@@ -19,6 +19,7 @@ limitations under the License.
 package azure
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 
@@ -44,8 +45,8 @@ type Config struct {
 	GWInstanceType      string
 }
 
-func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
-	function func(api.Cloud, api.GatewayDeployer, reporter.Interface) error,
+func RunOn(ctx context.Context, clusterInfo *cluster.Info, config *Config, status reporter.Interface,
+	function func(context.Context, api.Cloud, api.GatewayDeployer, reporter.Interface) error,
 ) error {
 	if config.OcpMetadataFile != "" {
 		var err error
@@ -110,7 +111,7 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 		return status.Error(err, "Failed to initialize a GatewayDeployer config")
 	}
 
-	return function(azureCloud, gwDeployer, status)
+	return function(ctx, azureCloud, gwDeployer, status)
 }
 
 func readMetadataFile(fileName string) (string, string, error) {

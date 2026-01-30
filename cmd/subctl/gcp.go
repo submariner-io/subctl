@@ -21,6 +21,7 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -46,7 +47,7 @@ var (
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 					return prepare.GCP(
-						clusterInfo, &cloudOptions.ports, &gcpConfig, cloudOptions.useLoadBalancer, status)
+						context.TODO(), clusterInfo, &cloudOptions.ports, &gcpConfig, cloudOptions.useLoadBalancer, status)
 				}, cli.NewReporter()))
 		},
 	}
@@ -59,7 +60,7 @@ var (
 		Run: func(_ *cobra.Command, _ []string) {
 			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
 				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return cleanup.GCP(clusterInfo, &gcpConfig, status)
+					return cleanup.GCP(context.TODO(), clusterInfo, &gcpConfig, status)
 				}, cli.NewReporter()))
 		},
 	}

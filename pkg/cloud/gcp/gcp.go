@@ -52,8 +52,8 @@ type Config struct {
 
 // RunOn runs the given function on GCP, supplying it with a cloud instance connected to GCP and a reporter that writes to CLI.
 // The functions makes sure that infraID and region are specified, and extracts the credentials from a secret in order to connect to GCP.
-func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
-	function func(api.Cloud, api.GatewayDeployer, reporter.Interface) error,
+func RunOn(ctx context.Context, clusterInfo *cluster.Info, config *Config, status reporter.Interface,
+	function func(context.Context, api.Cloud, api.GatewayDeployer, reporter.Interface) error,
 ) error {
 	var err error
 	if config.OcpMetadataFile != "" {
@@ -68,7 +68,7 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 
 	status.Start("Retrieving GCP credentials from your GCP configuration")
 
-	creds, err := getCredentials(config.CredentialsFile)
+	creds, err := getCredentials(ctx, config.CredentialsFile)
 	if err != nil {
 		return status.Error(err, "error retrieving GCP credentials")
 	}
@@ -82,7 +82,7 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 		option.WithUserAgent("open-cluster-management.io submarineraddon/v1"),
 	}
 
-	gcpClient, err := gcpClientIface.NewClient(config.ProjectID, options)
+	gcpClient, err := gcpClientIface.NewClient(ctx, config.ProjectID, options)
 	if err != nil {
 		return status.Error(err, "error initializing a GCP Client")
 	}
@@ -121,7 +121,7 @@ func RunOn(clusterInfo *cluster.Info, config *Config, status reporter.Interface,
 	// with certain images, the instance is not coming up. Needs to be investigated further.
 	gwDeployer := gcp.NewOcpGatewayDeployer(gcpCloudInfo, msDeployer, config.GWInstanceType, "", k8sClientSet)
 
-	return function(gcpCloud, gwDeployer, status)
+	return function(ctx, gcpCloud, gwDeployer, status)
 }
 
 func readMetadataFile(fileName string) (string, string, string, error) {
@@ -138,13 +138,13 @@ func readMetadataFile(fileName string) (string, string, string, error) {
 	return metadata.InfraID, metadata.GCP.Region, metadata.GCP.ProjectID, err //nolint:wrapcheck // No need to wrap here
 }
 
-func getCredentials(credentialsFile string) (*google.Credentials, error) {
+func getCredentials(ctx context.Context, credentialsFile string) (*google.Credentials, error) {
 	authJSON, err := os.ReadFile(credentialsFile)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error reading file %q", credentialsFile)
 	}
 
-	creds, err := google.CredentialsFromJSON(context.TODO(), authJSON, dnsv1.CloudPlatformScope)
+	creds, err := google.CredentialsFromJSON(ctx, authJSON, dnsv1.CloudPlatformScope)
 
 	return creds, errors.Wrapf(err, "error parsing credentials file")
 }

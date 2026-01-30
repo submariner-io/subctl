@@ -30,8 +30,8 @@ import (
 	"github.com/submariner-io/submariner/pkg/cni"
 )
 
-func getNetworkDetails(clientProducer client.Producer) (*network.ClusterNetwork, error) {
-	networkDetails, err := network.Discover(context.TODO(), clientProducer.ForGeneral(), constants.OperatorNamespace)
+func getNetworkDetails(ctx context.Context, clientProducer client.Producer) (*network.ClusterNetwork, error) {
+	networkDetails, err := network.Discover(ctx, clientProducer.ForGeneral(), constants.OperatorNamespace)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to discover network details")
 	} else if networkDetails == nil {
@@ -41,7 +41,7 @@ func getNetworkDetails(clientProducer client.Producer) (*network.ClusterNetwork,
 	return networkDetails, nil
 }
 
-func getPortConfig(clientProducer client.Producer, ports *cloud.Ports, useNumericESP bool,
+func getPortConfig(ctx context.Context, clientProducer client.Producer, ports *cloud.Ports, useNumericESP bool,
 ) ([]api.PortSpec, []api.PortSpec, error) {
 	gwPorts := []api.PortSpec{
 		{Port: ports.Natt, Protocol: "udp"},
@@ -65,7 +65,7 @@ func getPortConfig(clientProducer client.Producer, ports *cloud.Ports, useNumeri
 
 	internalPorts := []api.PortSpec{}
 
-	nwDetails, err := getNetworkDetails(clientProducer)
+	nwDetails, err := getNetworkDetails(ctx, clientProducer)
 	if err != nil {
 		return gwPorts, internalPorts, errors.Wrapf(err, "failed to discover the network details in the cluster")
 	}

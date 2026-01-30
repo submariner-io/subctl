@@ -19,6 +19,8 @@ limitations under the License.
 package prepare
 
 import (
+	"context"
+
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
 	"github.com/submariner-io/subctl/pkg/cloud"
@@ -26,11 +28,13 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func AWS(clusterInfo *cluster.Info, ports *cloud.Ports, config *aws.Config, useLoadBalancer bool, status reporter.Interface) error {
+func AWS(ctx context.Context,
+	clusterInfo *cluster.Info, ports *cloud.Ports, config *aws.Config, useLoadBalancer bool, status reporter.Interface,
+) error {
 	defer status.End()
 	status.Start("Preparing AWS cloud for Submariner deployment")
 
-	gwPorts, internalPorts, err := getPortConfig(clusterInfo.ClientProducer, ports, true)
+	gwPorts, internalPorts, err := getPortConfig(ctx, clusterInfo.ClientProducer, ports, true)
 	if err != nil {
 		return status.Error(err, "Failed to prepare the cloud")
 	}
@@ -41,8 +45,8 @@ func AWS(clusterInfo *cluster.Info, ports *cloud.Ports, config *aws.Config, useL
 	}
 
 	//nolint:wrapcheck // No need to wrap errors here.
-	err = aws.RunOn(clusterInfo, config, status,
-		func(cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
+	err = aws.RunOn(ctx, clusterInfo, config, status,
+		func(ctx context.Context, cloud api.Cloud, gwDeployer api.GatewayDeployer, status reporter.Interface) error {
 			if config.Gateways > 0 {
 				gwInput := api.GatewayDeployInput{
 					PublicPorts:     gwPorts,
@@ -50,14 +54,14 @@ func AWS(clusterInfo *cluster.Info, ports *cloud.Ports, config *aws.Config, useL
 					UseLoadBalancer: useLoadBalancer,
 				}
 
-				err := gwDeployer.Deploy(gwInput, status)
+				err := gwDeployer.Deploy(ctx, gwInput, status)
 				if err != nil {
 					return err
 				}
 			}
 
 			if len(internalPorts) > 0 {
-				return cloud.OpenPorts(internalPorts, status)
+				return cloud.OpenPorts(ctx, internalPorts, status)
 			}
 
 			return nil
