@@ -16,7 +16,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/submariner-io/admiral v0.23.0-m0.0.20260121163245-60a10fed6460
-	github.com/submariner-io/cloud-prepare v0.23.0-m0.0.20260129160645-97db67a82fd2
+	github.com/submariner-io/cloud-prepare v0.23.0-m0.0.20260130092216-f49c75d1111e
 	github.com/submariner-io/lighthouse v0.23.0-m0.0.20260121165312-f5e8dcf01040
 	github.com/submariner-io/shipyard v0.23.0-m0.0.20260121161247-366b31d697ca
 	github.com/submariner-io/submariner v0.23.0-m0.0.20260121172227-ff8a89937f36
