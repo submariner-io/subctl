@@ -26,17 +26,17 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
-	cpaws "github.com/submariner-io/cloud-prepare/pkg/aws"
+	"github.com/submariner-io/cloud-prepare/pkg/aws/client"
 	"github.com/submariner-io/subctl/internal/cli"
 	"github.com/submariner-io/subctl/internal/exit"
-	cloudaws "github.com/submariner-io/subctl/pkg/cloud/aws"
+	"github.com/submariner-io/subctl/pkg/cloud/aws"
 	"github.com/submariner-io/subctl/pkg/cloud/cleanup"
 	"github.com/submariner-io/subctl/pkg/cloud/prepare"
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
 var (
-	awsConfig cloudaws.Config
+	awsConfig aws.Config
 
 	awsPrepareCmd = &cobra.Command{
 		Use:     "aws",
@@ -73,8 +73,9 @@ func init() {
 		command.Flags().StringVar(&awsConfig.Region, regionFlag, "", "AWS region")
 		command.Flags().StringVar(&awsConfig.OcpMetadataFile, "ocp-metadata", "",
 			"OCP metadata.json file (or directory containing it) to read AWS infra ID and region from (Takes precedence over the flags)")
-		command.Flags().StringVar(&awsConfig.Profile, "profile", cpaws.DefaultProfile(), "AWS profile to use for credentials")
-		command.Flags().StringVar(&awsConfig.CredentialsFile, "credentials", cpaws.DefaultCredentialsFile(), "AWS credentials configuration file")
+		command.Flags().StringVar(&awsConfig.Profile, "profile", client.DefaultProfile(), "AWS profile to use for credentials")
+		command.Flags().StringVar(&awsConfig.CredentialsFile, "credentials", client.DefaultCredentialsFile(),
+			"AWS credentials configuration file")
 
 		command.Flags().StringVar(&awsConfig.ControlPlaneSecurityGroup, "control-plane-security-group", "",
 			"Custom AWS control plane security group name if the default is not used while provisioning")

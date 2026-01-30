@@ -26,6 +26,7 @@ import (
 	"github.com/submariner-io/admiral/pkg/util"
 	"github.com/submariner-io/cloud-prepare/pkg/api"
 	"github.com/submariner-io/cloud-prepare/pkg/aws"
+	"github.com/submariner-io/cloud-prepare/pkg/aws/client"
 	"github.com/submariner-io/cloud-prepare/pkg/ocp"
 	"github.com/submariner-io/subctl/pkg/cloud"
 	"github.com/submariner-io/subctl/pkg/cluster"
@@ -81,17 +82,13 @@ func RunOn(ctx context.Context, clusterInfo *cluster.Info, config *Config, statu
 		cloudOptions = append(cloudOptions, aws.WithPublicSubnetList(config.SubnetNames))
 	}
 
-	awsCloud, err := aws.NewCloudFromSettings(
-		ctx,
-		config.CredentialsFile,
-		config.Profile,
-		config.InfraID,
-		config.Region,
-		cloudOptions...,
-	)
+	awsClient, err := client.New(ctx, config.Region, client.WithConfigProfile(config.Profile),
+		client.WithCredentialsFile(config.CredentialsFile))
 	if err != nil {
-		return status.Error(err, "error creating cloud object from settings")
+		return status.Error(err, "error creating AWS client")
 	}
+
+	awsCloud := aws.NewCloud(awsClient, config.InfraID, config.Region, cloudOptions...)
 
 	status.End()
 
