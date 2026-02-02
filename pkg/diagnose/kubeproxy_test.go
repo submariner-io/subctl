@@ -39,8 +39,8 @@ var _ = Describe("KubeProxyMode", func() {
 			t.submariner.Status.NetworkPlugin = cni.OVNKubernetes
 		})
 
-		It("should succeed without checking kube-proxy mode", func() {
-			t.assertSuccess(t.run)
+		It("should succeed without checking kube-proxy mode", func(ctx SpecContext) {
+			t.assertSuccess(ctx, t.run)
 		})
 	})
 
@@ -106,6 +106,6 @@ type kubeProxyTestDriver struct {
 	*testDriver
 }
 
-func (t *kubeProxyTestDriver) run() error {
-	return diagnose.KubeProxyMode(newClusterInfo(context.TODO()), "", []string{}, t.statusTracker)
+func (t *kubeProxyTestDriver) run(ctx context.Context) error {
+	return diagnose.KubeProxyMode(ctx, newClusterInfo(ctx), "", []string{}, t.statusTracker)
 }

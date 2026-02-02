@@ -19,6 +19,7 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
 	goerrors "errors"
 	"fmt"
 
@@ -83,8 +84,8 @@ func (c *diagnoseCommand) addDiagnoseSubCommands(toCmd *cobra.Command) {
 		Short: "Run all diagnostic checks (except those requiring two kubecontexts)",
 		Long:  "This command runs all diagnostic checks (except those requiring two kubecontexts) and reports any issues",
 		Args:  checkDiagnoseArguments,
-		Run: func(_ *cobra.Command, _ []string) {
-			exit.OnError(c.diagnoseAll(NewReporter()))
+		Run: func(cmd *cobra.Command, _ []string) {
+			exit.OnError(c.diagnoseAll(cmd.Context(), NewReporter()))
 		},
 	}
 	toCmd.AddCommand(diagnoseAllCmd)
@@ -96,9 +97,9 @@ func (c *diagnoseCommand) addDiagnoseSubCommands(toCmd *cobra.Command) {
 		Use:   "cni",
 		Short: "Check the CNI network plugin",
 		Long:  "This command checks if the detected CNI network plugin is supported by Submariner.",
-		Run: func(_ *cobra.Command, _ []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			exit.OnError(
-				c.restConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(DiagnoseCNIConfig), NewReporter()))
+				c.restConfigProducer.RunOnAllContexts(cmd.Context(), restconfig.IfConnectivityInstalled(DiagnoseCNIConfig), NewReporter()))
 		},
 	}
 	toCmd.AddCommand(diagnoseCNICmd)
@@ -107,9 +108,10 @@ func (c *diagnoseCommand) addDiagnoseSubCommands(toCmd *cobra.Command) {
 		Use:   "connections",
 		Short: "Check the Gateway connections",
 		Long:  "This command checks that the Gateway connections to other clusters are all established",
-		Run: func(_ *cobra.Command, _ []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			exit.OnError(
-				c.restConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(DiagnoseConnections), NewReporter()))
+				c.restConfigProducer.RunOnAllContexts(cmd.Context(),
+					restconfig.IfConnectivityInstalled(DiagnoseConnections), NewReporter()))
 		},
 	}
 	toCmd.AddCommand(diagnoseConnectionsCmd)
@@ -119,17 +121,18 @@ func (c *diagnoseCommand) addDiagnoseSubCommands(toCmd *cobra.Command) {
 		Short: "Check the Submariner deployment",
 		Long:  "This command checks that the Submariner components are properly deployed and running with no overlapping CIDRs.",
 		Args:  checkDiagnoseArguments,
-		Run: func(_ *cobra.Command, _ []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			exit.OnError(
-				c.restConfigProducer.RunOnAllContexts(func(clusterInfo *cluster.Info, ns string, status reporter.Interface) error {
-					if clusterInfo.Submariner == nil && clusterInfo.ServiceDiscovery == nil {
-						status.Warning(constants.SubmarinerNotInstalled)
+				c.restConfigProducer.RunOnAllContexts(cmd.Context(),
+					func(ctx context.Context, clusterInfo *cluster.Info, ns string, status reporter.Interface) error {
+						if clusterInfo.Submariner == nil && clusterInfo.ServiceDiscovery == nil {
+							status.Warning(constants.SubmarinerNotInstalled)
 
-						return nil
-					}
+							return nil
+						}
 
-					return deployments(clusterInfo, ns, status)
-				}, NewReporter()))
+						return deployments(ctx, clusterInfo, ns, status)
+					}, NewReporter()))
 		},
 	}
 	toCmd.AddCommand(diagnoseDeploymentCmd)
@@ -139,8 +142,8 @@ func (c *diagnoseCommand) addDiagnoseSubCommands(toCmd *cobra.Command) {
 		Use:   "k8s-version",
 		Short: "Check the Kubernetes version",
 		Long:  "This command checks if Submariner can be deployed on the Kubernetes version.",
-		Run: func(_ *cobra.Command, _ []string) {
-			exit.OnError(c.restConfigProducer.RunOnAllContexts(DiagnoseK8sVersion, NewReporter()))
+		Run: func(cmd *cobra.Command, _ []string) {
+			exit.OnError(c.restConfigProducer.RunOnAllContexts(cmd.Context(), DiagnoseK8sVersion, NewReporter()))
 		},
 	}
 	toCmd.AddCommand(diagnoseVersionCmd)
@@ -150,9 +153,9 @@ func (c *diagnoseCommand) addDiagnoseSubCommands(toCmd *cobra.Command) {
 		Short: "Check the kube-proxy mode",
 		Long:  "This command checks if the kube-proxy mode is supported by Submariner.",
 		Args:  checkDiagnoseArguments,
-		Run: func(_ *cobra.Command, _ []string) {
+		Run: func(cmd *cobra.Command, _ []string) {
 			exit.OnError(
-				c.restConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(kubeProxyMode), NewReporter()))
+				c.restConfigProducer.RunOnAllContexts(cmd.Context(), restconfig.IfConnectivityInstalled(kubeProxyMode), NewReporter()))
 		},
 	}
 	toCmd.AddCommand(diagnoseKubeProxyModeCmd)
@@ -163,8 +166,8 @@ func (c *diagnoseCommand) addDiagnoseSubCommands(toCmd *cobra.Command) {
 		Use:   "service-discovery",
 		Short: "Check service discovery functionality",
 		Long:  "This command checks if service discovery is functioning properly.",
-		Run: func(_ *cobra.Command, _ []string) {
-			exit.OnError(c.restConfigProducer.RunOnAllContexts(restconfig.IfServiceDiscoveryInstalled(DiagnoseServiceDiscovery),
+		Run: func(cmd *cobra.Command, _ []string) {
+			exit.OnError(c.restConfigProducer.RunOnAllContexts(cmd.Context(), restconfig.IfServiceDiscoveryInstalled(DiagnoseServiceDiscovery),
 				NewReporter()))
 		},
 	}
@@ -186,8 +189,8 @@ func (c *diagnoseCommand) addDiagnoseFirewallSubCommands(diagnoseFirewallCmd *co
 		Short: "Check firewall access for intra-cluster Submariner VxLAN traffic",
 		Long:  "This command checks if the firewall configuration allows traffic over vx-submariner interface.",
 		Args:  checkFirewallArguments,
-		Run: func(_ *cobra.Command, _ []string) {
-			exit.OnError(c.restConfigProducer.RunOnAllContexts(restconfig.IfConnectivityInstalled(c.firewallIntraVxLANConfig),
+		Run: func(cmd *cobra.Command, _ []string) {
+			exit.OnError(c.restConfigProducer.RunOnAllContexts(cmd.Context(), restconfig.IfConnectivityInstalled(c.firewallIntraVxLANConfig),
 				NewReporter()))
 		},
 	}
@@ -201,8 +204,8 @@ func (c *diagnoseCommand) addDiagnoseFirewallSubCommands(diagnoseFirewallCmd *co
 		Short: "Check firewall access to setup tunnels between the Gateway node",
 		Long:  "This command checks if the firewall configuration allows tunnels to be configured on the Gateway nodes.",
 		Args:  checkFirewallArguments,
-		Run: func(_ *cobra.Command, _ []string) {
-			c.runLocalRemoteFirewallCommand(c.firewallTunnelRestConfigProducer, DiagnoseTunnelConfigAcrossClusters)
+		Run: func(cmd *cobra.Command, _ []string) {
+			c.runLocalRemoteFirewallCommand(cmd.Context(), c.firewallTunnelRestConfigProducer, DiagnoseTunnelConfigAcrossClusters)
 		},
 	}
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallTunnelCmd)
@@ -216,8 +219,8 @@ func (c *diagnoseCommand) addDiagnoseFirewallSubCommands(diagnoseFirewallCmd *co
 		Short: "Check firewall access for nat-discovery to function properly",
 		Long:  "This command checks if the firewall configuration allows nat-discovery between the configured Gateway nodes.",
 		Args:  checkFirewallArguments,
-		Run: func(_ *cobra.Command, _ []string) {
-			c.runLocalRemoteFirewallCommand(c.firewallNatDiscoveryRestConfigProducer, DiagnoseNatDiscoveryConfigAcrossClusters)
+		Run: func(cmd *cobra.Command, _ []string) {
+			c.runLocalRemoteFirewallCommand(cmd.Context(), c.firewallNatDiscoveryRestConfigProducer, DiagnoseNatDiscoveryConfigAcrossClusters)
 		},
 	}
 	diagnoseFirewallCmd.AddCommand(diagnoseFirewallNatDiscovery)
@@ -234,10 +237,12 @@ func (c *diagnoseCommand) addDiagnoseFWConfigFlags(command *cobra.Command) {
 		"produce verbose output while validating the firewall")
 }
 
-func (c *diagnoseCommand) firewallIntraVxLANConfig(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+func (c *diagnoseCommand) firewallIntraVxLANConfig(ctx context.Context, clusterInfo *cluster.Info, namespace string,
+	status reporter.Interface,
+) error {
 	c.firewallOptions.ImageOverrides = imageOverrides
 
-	return DiagnoseFirewallIntraVxLANConfig(clusterInfo, namespace, c.firewallOptions, status)
+	return DiagnoseFirewallIntraVxLANConfig(ctx, clusterInfo, namespace, c.firewallOptions, status)
 }
 
 func checkDiagnoseArguments(_ *cobra.Command, _ []string) error {
@@ -253,15 +258,15 @@ func checkFirewallArguments(cmd *cobra.Command, args []string) error {
 	return checkNoArguments(cmd, args)
 }
 
-func kubeProxyMode(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-	return DiagnoseKubeProxyMode(clusterInfo, namespace, imageOverrides, status)
+func kubeProxyMode(ctx context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+	return DiagnoseKubeProxyMode(ctx, clusterInfo, namespace, imageOverrides, status)
 }
 
-func deployments(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-	return DiagnoseDeployments(clusterInfo, namespace, imageOverrides, status)
+func deployments(ctx context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+	return DiagnoseDeployments(ctx, clusterInfo, namespace, imageOverrides, status)
 }
 
-func (c *diagnoseCommand) diagnoseAll(status reporter.Interface) error {
+func (c *diagnoseCommand) diagnoseAll(ctx context.Context, status reporter.Interface) error {
 	allDiagnoseCommands := []restconfig.PerContextFn{
 		DiagnoseK8sVersion,
 		deployments,
@@ -275,11 +280,12 @@ func (c *diagnoseCommand) diagnoseAll(status reporter.Interface) error {
 	}
 
 	err := c.restConfigProducer.RunOnAllContexts(
-		func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+		ctx,
+		func(ctx context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 			diagnoseErrors := make([]error, 0, len(allDiagnoseCommands))
 
 			for _, command := range allDiagnoseCommands {
-				diagnoseErrors = append(diagnoseErrors, command(clusterInfo, namespace, status))
+				diagnoseErrors = append(diagnoseErrors, command(ctx, clusterInfo, namespace, status))
 
 				fmt.Println()
 			}
@@ -293,9 +299,9 @@ func (c *diagnoseCommand) diagnoseAll(status reporter.Interface) error {
 	return err //nolint:wrapcheck // No need to wrap errors here.
 }
 
-func (c *diagnoseCommand) runLocalRemoteFirewallCommand(localRemoteRestConfigProducer *restconfig.Producer,
-	function func(
-		localClusterInfo, remoteClusterInfo *cluster.Info, namespace string, options diagnose.FirewallOptions, status reporter.Interface,
+func (c *diagnoseCommand) runLocalRemoteFirewallCommand(ctx context.Context, localRemoteRestConfigProducer *restconfig.Producer,
+	function func(ctx context.Context, localClusterInfo, remoteClusterInfo *cluster.Info, namespace string,
+		options diagnose.FirewallOptions, status reporter.Interface,
 	) error,
 ) {
 	status := NewReporter()
@@ -303,11 +309,13 @@ func (c *diagnoseCommand) runLocalRemoteFirewallCommand(localRemoteRestConfigPro
 	c.firewallOptions.ImageOverrides = imageOverrides
 
 	exit.OnErrorWithMessage(localRemoteRestConfigProducer.RunOnSelectedContext(
-		func(localClusterInfo *cluster.Info, localNamespace string, status reporter.Interface) error {
+		ctx,
+		func(ctx context.Context, localClusterInfo *cluster.Info, localNamespace string, status reporter.Interface) error {
 			found, err := localRemoteRestConfigProducer.RunOnSelectedPrefixedContext(
+				ctx,
 				"remote",
-				func(remoteClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return function(localClusterInfo, remoteClusterInfo, localNamespace, c.firewallOptions, status)
+				func(ctx context.Context, remoteClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+					return function(ctx, localClusterInfo, remoteClusterInfo, localNamespace, c.firewallOptions, status)
 				}, status)
 			if err != nil {
 				return err //nolint:wrapcheck // No need to wrap errors here.

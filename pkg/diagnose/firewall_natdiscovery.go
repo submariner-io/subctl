@@ -19,18 +19,19 @@ limitations under the License.
 package diagnose
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func NatDiscoveryConfigAcrossClusters(localClusterInfo, remoteClusterInfo *cluster.Info, namespace string, options FirewallOptions,
-	status reporter.Interface,
+func NatDiscoveryConfigAcrossClusters(ctx context.Context, localClusterInfo, remoteClusterInfo *cluster.Info, namespace string,
+	options FirewallOptions, status reporter.Interface,
 ) error {
 	message := fmt.Sprintf("Checking if nat-discovery port is opened on the gateway node of cluster %q", localClusterInfo.Name)
 
-	err := verifyConnectivity(localClusterInfo, remoteClusterInfo, namespace, options, status, NatDiscoveryPort, message)
+	err := verifyConnectivity(ctx, localClusterInfo, remoteClusterInfo, namespace, options, status, NatDiscoveryPort, message)
 	if err != nil {
 		status.Failure("Could not determine if nat-discovery port is allowed in the cluster %q", localClusterInfo.Name)
 	} else {

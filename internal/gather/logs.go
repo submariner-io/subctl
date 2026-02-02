@@ -31,9 +31,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-func gatherPodLogs(podLabelSelector string, info *Info, fromContainers ...string) {
+func gatherPodLogs(ctx context.Context, podLabelSelector string, info *Info, fromContainers ...string) {
 	err := func() error {
-		pods, err := findPods(info.ClientProducer.ForKubernetes(), podLabelSelector)
+		pods, err := findPods(ctx, info.ClientProducer.ForKubernetes(), podLabelSelector)
 		if err != nil {
 			return err
 		}
@@ -53,7 +53,7 @@ func gatherPodLogs(podLabelSelector string, info *Info, fromContainers ...string
 					logName = logName + "-" + container
 				}
 
-				info.Summary.PodLogs = append(info.Summary.PodLogs, outputPodLogs(&pods.Items[i], corev1.PodLogOptions{
+				info.Summary.PodLogs = append(info.Summary.PodLogs, outputPodLogs(ctx, &pods.Items[i], corev1.PodLogOptions{
 					Container: container,
 				}, logName, info))
 			}
@@ -77,7 +77,7 @@ func getContainerNames(containers []corev1.Container) []string {
 }
 
 //nolint:gocritic // hugeParam: podLogOptions - purposely passed by value.
-func outputPodLogs(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, logName string, info *Info) LogInfo {
+func outputPodLogs(ctx context.Context, pod *corev1.Pod, podLogOptions corev1.PodLogOptions, logName string, info *Info) LogInfo {
 	podLogInfo := LogInfo{
 		Namespace: pod.Namespace,
 		PodState:  pod.Status.Phase,
@@ -85,12 +85,12 @@ func outputPodLogs(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, logName 
 		NodeName:  pod.Spec.NodeName,
 	}
 
-	err := outputPreviousPodLog(pod, podLogOptions, logName, info, &podLogInfo)
+	err := outputPreviousPodLog(ctx, pod, podLogOptions, logName, info, &podLogInfo)
 	if err != nil {
 		info.Status.Failure("Error outputting previous log for pod %q: %v", pod.Name, err)
 	}
 
-	err = outputCurrentPodLog(pod, podLogOptions, logName, info, &podLogInfo)
+	err = outputCurrentPodLog(ctx, pod, podLogOptions, logName, info, &podLogInfo)
 	if err != nil {
 		info.Status.Failure("Error outputting current log for pod %q: %v", pod.Name, err)
 	}
@@ -138,8 +138,8 @@ func writeLogToFile(data, podName string, info *Info, fileExtension string) (str
 	return fileName, nil
 }
 
-func findPods(clientSet kubernetes.Interface, byLabelSelector string) (*corev1.PodList, error) {
-	pods, err := clientSet.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{LabelSelector: byLabelSelector})
+func findPods(ctx context.Context, clientSet kubernetes.Interface, byLabelSelector string) (*corev1.PodList, error) {
+	pods, err := clientSet.CoreV1().Pods("").List(ctx, metav1.ListOptions{LabelSelector: byLabelSelector})
 	if err != nil {
 		return nil, errors.WithMessage(err, "error listing pods")
 	}
@@ -148,10 +148,12 @@ func findPods(clientSet kubernetes.Interface, byLabelSelector string) (*corev1.P
 }
 
 //nolint:gocritic // hugeParam: podLogOptions - purposely passed by value.
-func outputPreviousPodLog(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, logName string, info *Info, podLogInfo *LogInfo) error {
+func outputPreviousPodLog(ctx context.Context, pod *corev1.Pod, podLogOptions corev1.PodLogOptions, logName string, info *Info,
+	podLogInfo *LogInfo,
+) error {
 	podLogOptions.Previous = true
 	logRequest := info.ClientProducer.ForKubernetes().CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOptions)
-	logStream, _ := logRequest.Stream(context.TODO())
+	logStream, _ := logRequest.Stream(ctx)
 
 	// TODO: Check for error other than "no previous pods found"
 
@@ -177,12 +179,14 @@ func outputPreviousPodLog(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, l
 }
 
 //nolint:gocritic // hugeParam: podLogOptions - purposely passed by value.
-func outputCurrentPodLog(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, logName string, info *Info, podLogInfo *LogInfo) error {
+func outputCurrentPodLog(ctx context.Context, pod *corev1.Pod, podLogOptions corev1.PodLogOptions, logName string, info *Info,
+	podLogInfo *LogInfo,
+) error {
 	// Running with Previous = false on the same pod
 	podLogOptions.Previous = false
 	logRequest := info.ClientProducer.ForKubernetes().CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &podLogOptions)
 
-	logStream, err := logRequest.Stream(context.TODO())
+	logStream, err := logRequest.Stream(ctx)
 	if err != nil {
 		return errors.WithMessage(err, "error opening log stream")
 	}
@@ -195,9 +199,9 @@ func outputCurrentPodLog(pod *corev1.Pod, podLogOptions corev1.PodLogOptions, lo
 	return err
 }
 
-func logPodInfo(info *Info, what, podLabelSelector string, process func(info *Info, pod *corev1.Pod)) {
+func logPodInfo(ctx context.Context, info *Info, what, podLabelSelector string, process func(context.Context, *Info, *corev1.Pod)) {
 	err := func() error {
-		pods, err := findPods(info.ClientProducer.ForKubernetes(), podLabelSelector)
+		pods, err := findPods(ctx, info.ClientProducer.ForKubernetes(), podLabelSelector)
 		if err != nil {
 			return err
 		}
@@ -205,7 +209,7 @@ func logPodInfo(info *Info, what, podLabelSelector string, process func(info *In
 		info.Status.Success("Gathering %s from %d pods matching label selector %q", what, len(pods.Items), podLabelSelector)
 
 		for i := range pods.Items {
-			process(info, &pods.Items[i])
+			process(ctx, info, &pods.Items[i])
 		}
 
 		return nil

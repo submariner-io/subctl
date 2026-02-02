@@ -19,6 +19,8 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -43,18 +45,18 @@ var (
 		Short: "Stop a Service from being exported to other clusters",
 		Long: "This command removes the ServiceExport resource with the given name which in turn stops the Service " +
 			"of the same name from being exported to other clusters",
-		Run: func(_ *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) {
 			err := validateUnexportArguments(args)
 			exit.OnErrorWithMessage(err, "Insufficient arguments")
 
-			exit.OnError(unexportRestConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+			exit.OnError(unexportRestConfigProducer.RunOnSelectedContext(cmd.Context(),
+				func(ctx context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 					mcsClient, err := mcsclient.NewForConfig(clusterInfo.RestConfig)
 					if err != nil {
 						return status.Error(err, "Error creating client")
 					}
 
-					return service.Unexport(mcsClient, namespace, args[0], status)
+					return service.Unexport(ctx, mcsClient, namespace, args[0], status)
 				}, cli.NewReporter()))
 		},
 	}

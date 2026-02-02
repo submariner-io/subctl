@@ -19,6 +19,7 @@ limitations under the License.
 package diagnose
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -31,28 +32,31 @@ const (
 	tcpSniffVxLANCommand = "tcpdump -ln -c 3 -i vx-submariner tcp and port 8080 and 'tcp[tcpflags] == tcp-syn'"
 )
 
-func FirewallIntraVxLANConfig(clusterInfo *cluster.Info, namespace string, options FirewallOptions, status reporter.Interface) error {
+func FirewallIntraVxLANConfig(ctx context.Context, clusterInfo *cluster.Info, namespace string, options FirewallOptions,
+	status reporter.Interface,
+) error {
 	mustHaveSubmariner(clusterInfo)
 
 	status.Start("Checking that firewall configuration allows intra-cluster VXLAN traffic")
 	defer status.End()
 
-	return runIfSingleNode(clusterInfo, status, func() error {
-		return checkFWConfig(clusterInfo, namespace, options, status)
+	return runIfSingleNode(ctx, clusterInfo, status, func(ctx context.Context) error {
+		return checkFWConfig(ctx, clusterInfo, namespace, options, status)
 	})
 }
 
-func checkFWConfig(clusterInfo *cluster.Info, namespace string, options FirewallOptions, status reporter.Interface) error {
+func checkFWConfig(ctx context.Context, clusterInfo *cluster.Info, namespace string, options FirewallOptions, status reporter.Interface,
+) error {
 	if clusterInfo.Submariner.Status.NetworkPlugin == cni.OVNKubernetes {
 		return nil
 	}
 
-	remoteEndpoint, err := clusterInfo.GetAnyRemoteEndpoint()
+	remoteEndpoint, err := clusterInfo.GetAnyRemoteEndpoint(ctx)
 	if err != nil {
 		return status.Error(err, "Unable to obtain a remote endpoint")
 	}
 
-	gwNodeName, err := getActiveGatewayNodeName(clusterInfo, status)
+	gwNodeName, err := getActiveGatewayNodeName(ctx, clusterInfo, status)
 	if err != nil {
 		return err
 	}
@@ -64,24 +68,24 @@ func checkFWConfig(clusterInfo *cluster.Info, namespace string, options Firewall
 		return status.Error(err, "Error determining repository information")
 	}
 
-	sPod, err := spawnSnifferPodOnNode(clusterInfo.ClientProducer.ForKubernetes(), gwNodeName, namespace, podCommand, repositoryInfo)
+	sPod, err := spawnSnifferPodOnNode(ctx, clusterInfo.ClientProducer.ForKubernetes(), gwNodeName, namespace, podCommand, repositoryInfo)
 	if err != nil {
 		return status.Error(err, "Error spawning the sniffer pod on the Gateway node %q", gwNodeName)
 	}
 
-	defer sPod.Delete()
+	defer sPod.Delete(context.Background()) //nolint:contextcheck // Ensure deletion if ctx is cancelled
 
 	remoteClusterIP := strings.Split(remoteEndpoint.Spec.Subnets[0], "/")[0]
 	podCommand = fmt.Sprintf("nc -w %d %s 8080", options.ValidationTimeout/2, remoteClusterIP)
 
-	cPod, err := spawnClientPodOnNonGatewayNode(clusterInfo.ClientProducer.ForKubernetes(), namespace, podCommand, repositoryInfo)
+	cPod, err := spawnClientPodOnNonGatewayNode(ctx, clusterInfo.ClientProducer.ForKubernetes(), namespace, podCommand, repositoryInfo)
 	if err != nil {
 		return status.Error(err, "Error spawning the client pod on non-Gateway node")
 	}
 
-	defer cPod.Delete()
+	defer cPod.Delete(context.Background()) //nolint:contextcheck // Ensure deletion if ctx is cancelled
 
-	err = awaitPodCompletion(cPod, sPod, status)
+	err = awaitPodCompletion(ctx, cPod, sPod, status)
 	if err != nil {
 		return err
 	}

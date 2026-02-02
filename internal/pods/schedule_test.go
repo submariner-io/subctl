@@ -50,7 +50,7 @@ func testSchedule() {
 
 	Context("with defaults", func() {
 		It("should create a pod to be scheduled on a gateway node", func(ctx SpecContext) {
-			scheduled, err := pods.Schedule(t.config)
+			scheduled, err := pods.Schedule(ctx, t.config)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(scheduled).NotTo(BeNil())
 
@@ -76,26 +76,26 @@ func testSchedule() {
 			t.config.Scheduling.ScheduleOn = pods.CustomNode
 		})
 
-		It("should create a pod for the specified NodeName", func() {
+		It("should create a pod for the specified NodeName", func(ctx SpecContext) {
 			t.config.Scheduling.NodeName = "test-node"
 
-			scheduled, err := pods.Schedule(t.config)
+			scheduled, err := pods.Schedule(ctx, t.config)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(scheduled).NotTo(BeNil())
 			Expect(scheduled.Pod.Spec.NodeName).To(Equal(t.config.Scheduling.NodeName))
 		})
 
-		It("should return an error when NodeName is missing", func() {
-			_, err := pods.Schedule(t.config)
+		It("should return an error when NodeName is missing", func(ctx SpecContext) {
+			_, err := pods.Schedule(ctx, t.config)
 			Expect(err).To(HaveOccurred())
 		})
 	})
 
 	Context("with HostNetworking", func() {
-		It("should create a pod with host network and security context", func() {
+		It("should create a pod with host network and security context", func(ctx SpecContext) {
 			t.config.Scheduling.Networking = pods.HostNetworking
 
-			scheduled, err := pods.Schedule(t.config)
+			scheduled, err := pods.Schedule(ctx, t.config)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(scheduled).NotTo(BeNil())
 			Expect(scheduled.Pod.Spec.HostNetwork).To(BeTrue())
@@ -131,7 +131,7 @@ func testSchedule() {
 		})
 
 		It("should create the pod in the namespace", func(ctx SpecContext) {
-			scheduled, err := pods.Schedule(t.config)
+			scheduled, err := pods.Schedule(ctx, t.config)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(scheduled).NotTo(BeNil())
 
@@ -144,18 +144,18 @@ func testSchedule() {
 				fake.FailOnAction(&t.k8sClient.Fake, "namespaces", "get", nil, false)
 			})
 
-			It("should return an error", func() {
-				_, err := pods.Schedule(t.config)
+			It("should return an error", func(ctx SpecContext) {
+				_, err := pods.Schedule(ctx, t.config)
 				Expect(err).To(HaveOccurred())
 			})
 		})
 	})
 
 	Context("with NonGatewayNode scheduling", func() {
-		It("should create a pod with non-gateway node affinity", func() {
+		It("should create a pod with non-gateway node affinity", func(ctx SpecContext) {
 			t.config.Scheduling.ScheduleOn = pods.NonGatewayNode
 
-			scheduled, err := pods.Schedule(t.config)
+			scheduled, err := pods.Schedule(ctx, t.config)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(scheduled).NotTo(BeNil())
 
@@ -169,7 +169,7 @@ func testSchedule() {
 		})
 
 		It("should return an error", func(ctx SpecContext) {
-			_, err := pods.Schedule(t.config)
+			_, err := pods.Schedule(ctx, t.config)
 			Expect(err).To(HaveOccurred())
 
 			list, err := t.k8sClient.CoreV1().Pods(t.config.Namespace).List(ctx, metav1.ListOptions{})
@@ -183,8 +183,8 @@ func testSchedule() {
 			t.podPhase = corev1.PodFailed
 		})
 
-		It("should return an error", func() {
-			_, err := pods.Schedule(t.config)
+		It("should return an error", func(ctx SpecContext) {
+			_, err := pods.Schedule(ctx, t.config)
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -194,8 +194,8 @@ func testSchedule() {
 			fake.FailOnAction(&t.k8sClient.Fake, "pods", "create", nil, false)
 		})
 
-		It("should return an error", func() {
-			_, err := pods.Schedule(t.config)
+		It("should return an error", func(ctx SpecContext) {
+			_, err := pods.Schedule(ctx, t.config)
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -210,8 +210,8 @@ func testAwaitCompletion() {
 				t.podPhase = phase
 			})
 
-			It("should capture the pod output and delete the pod", func() {
-				Expect(t.scheduled.AwaitCompletion()).To(Succeed())
+			It("should capture the pod output and delete the pod", func(ctx SpecContext) {
+				Expect(t.scheduled.AwaitCompletion(ctx)).To(Succeed())
 				Expect(t.scheduled.PodOutput).To(Equal(podTerminatedMsg))
 			})
 		},
@@ -224,8 +224,8 @@ func testAwaitCompletion() {
 			t.podPhase = corev1.PodRunning
 		})
 
-		It("should fail", func() {
-			Expect(t.scheduled.AwaitCompletion()).NotTo(Succeed())
+		It("should fail", func(ctx SpecContext) {
+			Expect(t.scheduled.AwaitCompletion(ctx)).NotTo(Succeed())
 		})
 	})
 }
@@ -234,7 +234,7 @@ func testDelete() {
 	t := newScheduledTestDriver()
 
 	It("should delete the pod", func(ctx SpecContext) {
-		t.scheduled.Delete()
+		t.scheduled.Delete(ctx)
 
 		_, err := t.k8sClient.CoreV1().Pods(t.scheduled.Pod.Namespace).Get(ctx, t.scheduled.Pod.Name, metav1.GetOptions{})
 		Expect(err).To(Satisfy(apierrors.IsNotFound))

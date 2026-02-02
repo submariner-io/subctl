@@ -58,14 +58,14 @@ var AllModules = set.New(component.Connectivity, component.ServiceDiscovery, com
 
 var AllTypes = set.New(Logs, Resources)
 
-var gatherFuncs = map[string]func(string, Info) bool{
+var gatherFuncs = map[string]func(context.Context, string, Info) bool{
 	component.Connectivity:     gatherConnectivity,
 	component.ServiceDiscovery: gatherDiscovery,
 	component.Broker:           gatherBroker,
 	component.Operator:         gatherOperator,
 }
 
-func Data(clusterInfo *cluster.Info, options Options) error {
+func Data(ctx context.Context, clusterInfo *cluster.Info, options Options) error {
 	var warningsBuf bytes.Buffer
 
 	rest.SetDefaultWarningHandler(rest.NewWarningWriter(&warningsBuf, rest.WarningWriterOptions{
@@ -82,7 +82,7 @@ func Data(clusterInfo *cluster.Info, options Options) error {
 		}
 	}
 
-	gatherDataByCluster(clusterInfo, options)
+	gatherDataByCluster(ctx, clusterInfo, options)
 
 	fmt.Printf("Files are stored under directory %q\n", options.Directory)
 
@@ -94,7 +94,7 @@ func Data(clusterInfo *cluster.Info, options Options) error {
 	return nil
 }
 
-func gatherDataByCluster(clusterInfo *cluster.Info, options Options) {
+func gatherDataByCluster(ctx context.Context, clusterInfo *cluster.Info, options Options) {
 	clusterName := clusterInfo.Name
 
 	fmt.Printf("Gathering information from cluster %q\n", clusterName)
@@ -111,16 +111,16 @@ func gatherDataByCluster(clusterInfo *cluster.Info, options Options) {
 		for _, dataType := range options.Types {
 			info.Status = cli.NewReporter()
 			info.Status.Start("Gathering %s %s", module, dataType)
-			gatherFuncs[module](dataType, info)
+			gatherFuncs[module](ctx, dataType, info)
 			info.Status.End()
 		}
 	}
 
-	gatherClusterSummary(&info)
+	gatherClusterSummary(ctx, &info)
 }
 
 //nolint:gocritic // hugeParam: info - purposely passed by value.
-func gatherConnectivity(dataType string, info Info) bool {
+func gatherConnectivity(ctx context.Context, dataType string, info Info) bool {
 	if info.Submariner == nil {
 		info.Status.Warning("The Submariner connectivity components are not installed")
 		return true
@@ -128,22 +128,22 @@ func gatherConnectivity(dataType string, info Info) bool {
 
 	switch dataType {
 	case Logs:
-		gatherGatewayPodLogs(&info)
-		gatherRouteAgentPodLogs(&info)
-		gatherMetricsProxyPodLogs(&info)
-		gatherGlobalnetPodLogs(&info)
-		gatherAddonPodLogs(&info)
+		gatherGatewayPodLogs(ctx, &info)
+		gatherRouteAgentPodLogs(ctx, &info)
+		gatherMetricsProxyPodLogs(ctx, &info)
+		gatherGlobalnetPodLogs(ctx, &info)
+		gatherAddonPodLogs(ctx, &info)
 	case Resources:
-		gatherCNIResources(&info, info.Submariner.Status.NetworkPlugin)
-		gatherCableDriverResources(&info, info.Submariner.Spec.CableDriver)
-		gatherOVNResources(&info, info.Submariner.Status.NetworkPlugin)
-		gatherEndpoints(&info, info.Submariner.Spec.Namespace)
-		gatherClusters(&info, info.Submariner.Spec.Namespace)
-		gatherGateways(&info, info.Submariner.Spec.Namespace)
-		gatherRouteAgents(&info, info.Submariner.Spec.Namespace)
-		gatherClusterGlobalEgressIPs(&info)
-		gatherGlobalEgressIPs(&info)
-		gatherGlobalIngressIPs(&info)
+		gatherCNIResources(ctx, &info, info.Submariner.Status.NetworkPlugin)
+		gatherCableDriverResources(ctx, &info, info.Submariner.Spec.CableDriver)
+		gatherOVNResources(ctx, &info, info.Submariner.Status.NetworkPlugin)
+		gatherEndpoints(ctx, &info, info.Submariner.Spec.Namespace)
+		gatherClusters(ctx, &info, info.Submariner.Spec.Namespace)
+		gatherGateways(ctx, &info, info.Submariner.Spec.Namespace)
+		gatherRouteAgents(ctx, &info, info.Submariner.Spec.Namespace)
+		gatherClusterGlobalEgressIPs(ctx, &info)
+		gatherGlobalEgressIPs(ctx, &info)
+		gatherGlobalIngressIPs(ctx, &info)
 	default:
 		return false
 	}
@@ -152,7 +152,7 @@ func gatherConnectivity(dataType string, info Info) bool {
 }
 
 //nolint:gocritic // hugeParam: info - purposely passed by value.
-func gatherDiscovery(dataType string, info Info) bool {
+func gatherDiscovery(ctx context.Context, dataType string, info Info) bool {
 	if info.ServiceDiscovery == nil {
 		info.Status.Warning("The Submariner service discovery components are not installed")
 		return true
@@ -160,15 +160,15 @@ func gatherDiscovery(dataType string, info Info) bool {
 
 	switch dataType {
 	case Logs:
-		gatherServiceDiscoveryPodLogs(&info)
-		gatherCoreDNSPodLogs(&info)
+		gatherServiceDiscoveryPodLogs(ctx, &info)
+		gatherCoreDNSPodLogs(ctx, &info)
 	case Resources:
-		gatherServiceExports(&info, corev1.NamespaceAll)
-		gatherServiceImports(&info, corev1.NamespaceAll)
-		gatherEndpointSlices(&info, corev1.NamespaceAll)
-		gatherConfigMapLighthouseDNS(&info, info.ServiceDiscovery.Namespace)
-		gatherConfigMapCoreDNS(&info)
-		gatherLabeledServices(&info, internalSvcLabel)
+		gatherServiceExports(ctx, &info, corev1.NamespaceAll)
+		gatherServiceImports(ctx, &info, corev1.NamespaceAll)
+		gatherEndpointSlices(ctx, &info, corev1.NamespaceAll)
+		gatherConfigMapLighthouseDNS(ctx, &info, info.ServiceDiscovery.Namespace)
+		gatherConfigMapCoreDNS(ctx, &info)
+		gatherLabeledServices(ctx, &info, internalSvcLabel)
 	default:
 		return false
 	}
@@ -177,7 +177,7 @@ func gatherDiscovery(dataType string, info Info) bool {
 }
 
 //nolint:gocritic // hugeParam: info - purposely passed by value.
-func gatherBroker(dataType string, info Info) bool {
+func gatherBroker(ctx context.Context, dataType string, info Info) bool {
 	switch dataType {
 	case Resources:
 		brokerRestConfig, brokerNamespace, err := restconfig.ForBroker(info.Submariner, info.ServiceDiscovery)
@@ -195,7 +195,7 @@ func gatherBroker(dataType string, info Info) bool {
 				return true
 			}
 		} else {
-			err = info.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
+			err = info.ClientProducer.ForGeneral().Get(ctx, controllerClient.ObjectKey{
 				Namespace: constants.OperatorNamespace,
 				Name:      brokercr.Name,
 			}, &v1alpha1.Broker{})
@@ -215,10 +215,10 @@ func gatherBroker(dataType string, info Info) bool {
 		info.ClusterName = "broker"
 
 		// The broker's ClusterRole used by member clusters only allows the below resources to be queried
-		gatherEndpoints(&info, brokerNamespace)
-		gatherClusters(&info, brokerNamespace)
-		gatherEndpointSlices(&info, brokerNamespace)
-		gatherServiceImports(&info, brokerNamespace)
+		gatherEndpoints(ctx, &info, brokerNamespace)
+		gatherClusters(ctx, &info, brokerNamespace)
+		gatherEndpointSlices(ctx, &info, brokerNamespace)
+		gatherServiceImports(ctx, &info, brokerNamespace)
 	default:
 		return false
 	}
@@ -227,21 +227,21 @@ func gatherBroker(dataType string, info Info) bool {
 }
 
 //nolint:gocritic // hugeParam: info - purposely passed by value.
-func gatherOperator(dataType string, info Info) bool {
+func gatherOperator(ctx context.Context, dataType string, info Info) bool {
 	switch dataType {
 	case Logs:
-		gatherSubmarinerOperatorPodLogs(&info)
+		gatherSubmarinerOperatorPodLogs(ctx, &info)
 	case Resources:
-		gatherSubmariners(&info, info.OperatorNamespace())
-		gatherServiceDiscoveries(&info, info.OperatorNamespace())
-		gatherSubmarinerOperatorDeployment(&info, info.OperatorNamespace())
-		gatherGatewayDaemonSet(&info, info.OperatorNamespace())
-		gatherMetricsPodDaemonSet(&info, info.OperatorNamespace())
-		gatherRouteAgentDaemonSet(&info, info.OperatorNamespace())
-		gatherGlobalnetDaemonSet(&info, info.OperatorNamespace())
-		gatherLighthouseAgentDeployment(&info, info.OperatorNamespace())
-		gatherLighthouseCoreDNSDeployment(&info, info.OperatorNamespace())
-		gatherGatewayLBService(&info, info.OperatorNamespace())
+		gatherSubmariners(ctx, &info, info.OperatorNamespace())
+		gatherServiceDiscoveries(ctx, &info, info.OperatorNamespace())
+		gatherSubmarinerOperatorDeployment(ctx, &info, info.OperatorNamespace())
+		gatherGatewayDaemonSet(ctx, &info, info.OperatorNamespace())
+		gatherMetricsPodDaemonSet(ctx, &info, info.OperatorNamespace())
+		gatherRouteAgentDaemonSet(ctx, &info, info.OperatorNamespace())
+		gatherGlobalnetDaemonSet(ctx, &info, info.OperatorNamespace())
+		gatherLighthouseAgentDeployment(ctx, &info, info.OperatorNamespace())
+		gatherLighthouseCoreDNSDeployment(ctx, &info, info.OperatorNamespace())
+		gatherGatewayLBService(ctx, &info, info.OperatorNamespace())
 	default:
 		return false
 	}

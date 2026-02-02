@@ -110,10 +110,10 @@ func (c *Info) GetGateways(ctx context.Context) ([]submarinerv1.Gateway, error) 
 	return gateways.Items, nil
 }
 
-func (c *Info) GetRouteAgents() ([]submarinerv1.RouteAgent, error) {
+func (c *Info) GetRouteAgents(ctx context.Context) ([]submarinerv1.RouteAgent, error) {
 	routeAgents := &submarinerv1.RouteAgentList{}
 
-	err := c.ClientProducer.ForGeneral().List(context.TODO(), routeAgents, controllerClient.InNamespace(constants.OperatorNamespace))
+	err := c.ClientProducer.ForGeneral().List(ctx, routeAgents, controllerClient.InNamespace(constants.OperatorNamespace))
 	if err != nil {
 		if resource.IsNotFoundErr(err) {
 			return []submarinerv1.RouteAgent{}, nil
@@ -125,9 +125,9 @@ func (c *Info) GetRouteAgents() ([]submarinerv1.RouteAgent, error) {
 	return routeAgents.Items, nil
 }
 
-func (c *Info) HasSingleNode() (bool, error) {
+func (c *Info) HasSingleNode(ctx context.Context) (bool, error) {
 	if c.nodeCount == -1 {
-		nodes, err := c.ClientProducer.ForKubernetes().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+		nodes, err := c.ClientProducer.ForKubernetes().CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return false, errors.Wrap(err, "error listing Nodes")
 		}
@@ -138,10 +138,10 @@ func (c *Info) HasSingleNode() (bool, error) {
 	return c.nodeCount == 1, nil
 }
 
-func (c *Info) GetLocalEndpoint() (*submarinerv1.Endpoint, error) {
+func (c *Info) GetLocalEndpoint(ctx context.Context) (*submarinerv1.Endpoint, error) {
 	endpoints := &submarinerv1.EndpointList{}
 
-	err := c.ClientProducer.ForGeneral().List(context.TODO(), endpoints, controllerClient.InNamespace(constants.OperatorNamespace))
+	err := c.ClientProducer.ForGeneral().List(ctx, endpoints, controllerClient.InNamespace(constants.OperatorNamespace))
 	if err != nil {
 		return nil, errors.Wrap(err, "error listing Endpoints")
 	}
@@ -158,10 +158,10 @@ func (c *Info) GetLocalEndpoint() (*submarinerv1.Endpoint, error) {
 	}, "local Endpoint")
 }
 
-func (c *Info) GetAnyRemoteEndpoint() (*submarinerv1.Endpoint, error) {
+func (c *Info) GetAnyRemoteEndpoint(ctx context.Context) (*submarinerv1.Endpoint, error) {
 	endpoints := &submarinerv1.EndpointList{}
 
-	err := c.ClientProducer.ForGeneral().List(context.TODO(), endpoints, controllerClient.InNamespace(constants.OperatorNamespace))
+	err := c.ClientProducer.ForGeneral().List(ctx, endpoints, controllerClient.InNamespace(constants.OperatorNamespace))
 	if err != nil {
 		return nil, errors.Wrap(err, "error listing Endpoints")
 	}
@@ -210,10 +210,10 @@ func (c *Info) OperatorNamespace() string {
 	return constants.OperatorNamespace
 }
 
-func (c *Info) GetClusters(namespace string) ([]submarinerv1.Cluster, error) {
+func (c *Info) GetClusters(ctx context.Context, namespace string) ([]submarinerv1.Cluster, error) {
 	clusters := &submarinerv1.ClusterList{}
 
-	err := c.ClientProducer.ForGeneral().List(context.TODO(), clusters, controllerClient.InNamespace(namespace))
+	err := c.ClientProducer.ForGeneral().List(ctx, clusters, controllerClient.InNamespace(namespace))
 	if err != nil {
 		return nil, errors.Wrap(err, "error retrieving Clusters")
 	}

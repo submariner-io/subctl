@@ -260,33 +260,33 @@ func newTestDriver() *testDriver {
 	return t
 }
 
-func (t *testDriver) testFailure(run func() error, msgs ...string) {
-	It("should fail", func() {
-		t.assertFailure(run, msgs...)
+func (t *testDriver) testFailure(run func(context.Context) error, msgs ...string) {
+	It("should fail", func(ctx SpecContext) {
+		t.assertFailure(ctx, run, msgs...)
 	})
 }
 
-func (t *testDriver) assertFailure(run func() error, msgs ...string) {
-	Expect(run()).NotTo(Succeed())
+func (t *testDriver) assertFailure(ctx context.Context, run func(context.Context) error, msgs ...string) {
+	Expect(run(ctx)).NotTo(Succeed())
 	t.statusTracker.AssertFailureContainsStrings(msgs...)
 }
 
-func (t *testDriver) testSuccess(run func() error) {
-	It("should succeed", func() {
-		t.assertSuccess(run)
+func (t *testDriver) testSuccess(run func(context.Context) error) {
+	It("should succeed", func(ctx SpecContext) {
+		t.assertSuccess(ctx, run)
 	})
 }
 
-func (t *testDriver) assertSuccess(run func() error) {
-	Expect(run()).To(Succeed())
+func (t *testDriver) assertSuccess(ctx context.Context, run func(context.Context) error) {
+	Expect(run(ctx)).To(Succeed())
 
 	t.statusTracker.AssertFailureCount(0)
 	t.statusTracker.AssertWarningCount(0)
 }
 
-func (t *testDriver) testSuccessWithWarning(run func() error, msgs ...string) {
-	It("should succeed but emit a warning", func() {
-		Expect(run()).To(Succeed())
+func (t *testDriver) testSuccessWithWarning(run func(context.Context) error, msgs ...string) {
+	It("should succeed but emit a warning", func(ctx SpecContext) {
+		Expect(run(ctx)).To(Succeed())
 
 		t.statusTracker.AssertFailureCount(0)
 		t.statusTracker.AssertWarningCount(1)
@@ -294,7 +294,7 @@ func (t *testDriver) testSuccessWithWarning(run func() error, msgs ...string) {
 	})
 }
 
-func (t *testDriver) testImageRepositoryInfoFailure(before func(), run func() error) {
+func (t *testDriver) testImageRepositoryInfoFailure(before func(), run func(context.Context) error) {
 	When("image repository information cannot be determined", func() {
 		JustBeforeEach(func() {
 			before()

@@ -19,6 +19,7 @@ limitations under the License.
 package diagnose_test
 
 import (
+	"context"
 	"errors"
 	"slices"
 	"strings"
@@ -218,42 +219,42 @@ func (t *firewallTestDriver) setupPodOutput(podOutput string) *string {
 	return &podCmd
 }
 
-func (t *firewallTestDriver) testPortConnectivitySuccess(run func() error, podOutput string, verifyCmd func(string)) {
+func (t *firewallTestDriver) testPortConnectivitySuccess(run func(context.Context) error, podOutput string, verifyCmd func(string)) {
 	var podCmd *string
 
 	JustBeforeEach(func() {
 		podCmd = t.setupPodOutput(podOutput)
 	})
 
-	It("should successfully run the connectivity check", func() {
-		t.assertSuccess(run)
+	It("should successfully run the connectivity check", func(ctx SpecContext) {
+		t.assertSuccess(ctx, run)
 		verifyCmd(*podCmd)
 	})
 }
 
-func (t *firewallTestDriver) testPortConnectivityFailure(run func() error, podOutput string, msgs ...string) {
+func (t *firewallTestDriver) testPortConnectivityFailure(run func(context.Context) error, podOutput string, msgs ...string) {
 	JustBeforeEach(func() {
 		t.setupPodOutput(podOutput)
 	})
 
-	Specify("the connectivity check should fail", func() {
-		t.assertFailure(run, msgs...)
+	Specify("the connectivity check should fail", func(ctx SpecContext) {
+		t.assertFailure(ctx, run, msgs...)
 	})
 }
 
-func (t *firewallTestDriver) testFirewallCheckOnSingleNode(run func() error) {
+func (t *firewallTestDriver) testFirewallCheckOnSingleNode(run func(context.Context) error) {
 	When("the remote cluster is single-node", func() {
 		BeforeEach(func() {
 			t.workerNodeName = ""
 		})
 
-		It("should skip the check and succeed", func() {
-			t.assertSuccess(run)
+		It("should skip the check and succeed", func(ctx SpecContext) {
+			t.assertSuccess(ctx, run)
 		})
 	})
 }
 
-func (t *firewallTestDriver) testPodCreationFailure(run func() error) {
+func (t *firewallTestDriver) testPodCreationFailure(run func(context.Context) error) {
 	When("pod creation fails", func() {
 		podError := errors.New("fake pod creation error")
 
@@ -265,7 +266,7 @@ func (t *firewallTestDriver) testPodCreationFailure(run func() error) {
 	})
 }
 
-func (t *firewallTestDriver) testIncompletePod(run func() error) {
+func (t *firewallTestDriver) testIncompletePod(run func(context.Context) error) {
 	When("a pod doesn't complete", func() {
 		JustBeforeEach(func() {
 			t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake.PrependReactor("create", "pods",
@@ -284,7 +285,7 @@ func (t *firewallTestDriver) testIncompletePod(run func() error) {
 	})
 }
 
-func (t *firewallTestDriver) testActiveGatewayPodErrors(run func() error) {
+func (t *firewallTestDriver) testActiveGatewayPodErrors(run func(context.Context) error) {
 	When("there is no active Gateway pod", func() {
 		BeforeEach(func() {
 			t.localGatewayPod.Labels[diagnose.GatewayHAStatusLabel] = string(submarinerv1.HAStatusPassive)
@@ -302,7 +303,7 @@ func (t *firewallTestDriver) testActiveGatewayPodErrors(run func() error) {
 	})
 }
 
-func (t *firewallTestDriver) testImageRepositoryFailure(run func() error) {
+func (t *firewallTestDriver) testImageRepositoryFailure(run func(context.Context) error) {
 	t.testImageRepositoryInfoFailure(func() {
 		t.options.ImageOverrides = []string{"invalid:image:override"}
 	}, run)

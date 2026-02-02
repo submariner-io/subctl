@@ -74,7 +74,7 @@ type Scheduled struct {
 	PodOutput string
 }
 
-func Schedule(config *Config) (*Scheduled, error) {
+func Schedule(ctx context.Context, config *Config) (*Scheduled, error) {
 	if config.Scheduling.ScheduleOn == InvalidScheduling {
 		config.Scheduling.ScheduleOn = GatewayNode
 	}
@@ -83,19 +83,19 @@ func Schedule(config *Config) (*Scheduled, error) {
 		config.Namespace = constants.OperatorNamespace
 	}
 
-	if err := checkNSLabels(config); err != nil {
+	if err := checkNSLabels(ctx, config); err != nil {
 		return nil, err
 	}
 
 	np := &Scheduled{Config: config}
-	if err := np.schedule(); err != nil {
+	if err := np.schedule(ctx); err != nil {
 		return nil, err
 	}
 
 	return np, nil
 }
 
-func (np *Scheduled) schedule() error {
+func (np *Scheduled) schedule(ctx context.Context) error {
 	if np.Config.Scheduling.ScheduleOn == CustomNode && np.Config.Scheduling.NodeName == "" {
 		return errors.New("CustomNode is specified for scheduling, but nodeName is missing")
 	}
@@ -150,32 +150,32 @@ func (np *Scheduled) schedule() error {
 
 	var err error
 
-	np.Pod, err = pc.Create(context.TODO(), &networkPod, metav1.CreateOptions{})
+	np.Pod, err = pc.Create(ctx, &networkPod, metav1.CreateOptions{})
 	if err != nil {
 		return errors.Wrap(err, "error creating Pod")
 	}
 
-	err = np.awaitUntilScheduled()
+	err = np.awaitUntilScheduled(ctx)
 	if err != nil {
-		np.Delete()
+		np.Delete(ctx)
 		return err
 	}
 
 	return nil
 }
 
-func (np *Scheduled) Delete() {
+func (np *Scheduled) Delete(ctx context.Context) {
 	pc := np.Config.ClientSet.CoreV1().Pods(np.Config.Namespace)
-	_ = pc.Delete(context.TODO(), np.Pod.Name, metav1.DeleteOptions{})
+	_ = pc.Delete(ctx, np.Pod.Name, metav1.DeleteOptions{})
 }
 
 //nolint:wrapcheck // No need to wrap errors here.
-func (np *Scheduled) awaitUntilScheduled() error {
+func (np *Scheduled) awaitUntilScheduled(ctx context.Context) error {
 	pods := np.Config.ClientSet.CoreV1().Pods(np.Config.Namespace)
 
 	pod, errmsg, err := framework.AwaitResultOrError("await pod ready",
 		func() (any, error) {
-			return pods.Get(context.TODO(), np.Pod.Name, metav1.GetOptions{})
+			return pods.Get(ctx, np.Pod.Name, metav1.GetOptions{})
 		}, func(result any) (bool, string, error) {
 			pod := result.(*v1.Pod)
 			if pod.Status.Phase != v1.PodRunning && pod.Status.Phase != v1.PodSucceeded {
@@ -203,12 +203,12 @@ func (np *Scheduled) awaitUntilScheduled() error {
 	return nil
 }
 
-func (np *Scheduled) AwaitCompletion() error {
+func (np *Scheduled) AwaitCompletion(ctx context.Context) error {
 	pods := np.Config.ClientSet.CoreV1().Pods(np.Config.Namespace)
 
 	_, errorMsg, err := framework.AwaitResultOrError(
 		fmt.Sprintf("await pod %q finished", np.Pod.Name), func() (any, error) {
-			return pods.Get(context.TODO(), np.Pod.Name, metav1.GetOptions{})
+			return pods.Get(ctx, np.Pod.Name, metav1.GetOptions{})
 		}, func(result any) (bool, string, error) {
 			np.Pod = result.(*v1.Pod)
 
@@ -271,7 +271,7 @@ func addNodeSelectorTerm(nodeSelTerms []v1.NodeSelectorTerm, label string,
 	}})
 }
 
-func checkNSLabels(config *Config) error {
+func checkNSLabels(ctx context.Context, config *Config) error {
 	if config.Namespace == constants.OperatorNamespace {
 		// The default operator namespace has the proper pod security set up via OCP SCC so no need to check for a
 		// pod-security label. Also this avoids a warning with OCP 4.10.x which doesn't automatically set the pod-security
@@ -279,7 +279,7 @@ func checkNSLabels(config *Config) error {
 		return nil
 	}
 
-	ns, err := config.ClientSet.CoreV1().Namespaces().Get(context.TODO(), config.Namespace, metav1.GetOptions{})
+	ns, err := config.ClientSet.CoreV1().Namespaces().Get(ctx, config.Namespace, metav1.GetOptions{})
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("error fetching %s namespace", config.Namespace))
 	}

@@ -19,6 +19,7 @@ limitations under the License.
 package show
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -36,15 +37,15 @@ var showAllSubmarinerFunctions = []restconfig.PerContextFn{
 	Versions,
 }
 
-func All(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+func All(ctx context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 	allErrors := []error{}
 
-	allErrors = append(allErrors, Brokers(clusterInfo, namespace, status))
+	allErrors = append(allErrors, Brokers(ctx, clusterInfo, namespace, status))
 
 	fmt.Println()
 
 	if clusterInfo.Submariner == nil {
-		allErrors = append(allErrors, Versions(clusterInfo, namespace, status))
+		allErrors = append(allErrors, Versions(ctx, clusterInfo, namespace, status))
 
 		fmt.Println()
 
@@ -54,7 +55,7 @@ func All(clusterInfo *cluster.Info, namespace string, status reporter.Interface)
 	}
 
 	for _, function := range showAllSubmarinerFunctions {
-		allErrors = append(allErrors, function(clusterInfo, namespace, status))
+		allErrors = append(allErrors, function(ctx, clusterInfo, namespace, status))
 
 		fmt.Println()
 	}

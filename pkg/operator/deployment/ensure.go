@@ -112,8 +112,8 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace, ima
 	return created, errors.Wrap(err, "error awaiting Deployment ready")
 }
 
-func GetPodLabelSelector(kubeClient kubernetes.Interface, namespace string) (string, error) {
-	dep, err := kubeClient.AppsV1().Deployments(namespace).Get(context.TODO(), names.OperatorComponent, metav1.GetOptions{})
+func GetPodLabelSelector(ctx context.Context, kubeClient kubernetes.Interface, namespace string) (string, error) {
+	dep, err := kubeClient.AppsV1().Deployments(namespace).Get(ctx, names.OperatorComponent, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		return "", nil
 	}

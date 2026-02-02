@@ -19,6 +19,8 @@ limitations under the License.
 package gather
 
 import (
+	"context"
+
 	lhconstants "github.com/submariner-io/lighthouse/pkg/constants"
 	"github.com/submariner-io/subctl/internal/gvr"
 	corev1 "k8s.io/api/core/v1"
@@ -36,41 +38,41 @@ const (
 	internalSvcLabel          = "submariner.io/exportedServiceRef"
 )
 
-func gatherServiceDiscoveryPodLogs(info *Info) {
-	gatherPodLogs(lighthouseComponentsLabel, info)
+func gatherServiceDiscoveryPodLogs(ctx context.Context, info *Info) {
+	gatherPodLogs(ctx, lighthouseComponentsLabel, info)
 }
 
-func gatherCoreDNSPodLogs(info *Info) {
-	if isCoreDNSTypeOcp(info) {
-		gatherPodLogs(ocpCoreDNSPodLabel, info, "dns")
+func gatherCoreDNSPodLogs(ctx context.Context, info *Info) {
+	if isCoreDNSTypeOcp(ctx, info) {
+		gatherPodLogs(ctx, ocpCoreDNSPodLabel, info, "dns")
 	} else {
-		gatherPodLogs(k8sCoreDNSPodLabel, info)
+		gatherPodLogs(ctx, k8sCoreDNSPodLabel, info)
 	}
 }
 
-func gatherServiceExports(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports"), namespace, metav1.ListOptions{})
+func gatherServiceExports(ctx context.Context, info *Info, namespace string) {
+	ResourcesToYAMLFile(ctx, info, gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports"), namespace, metav1.ListOptions{})
 }
 
-func gatherServiceImports(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceimports"), namespace, metav1.ListOptions{})
+func gatherServiceImports(ctx context.Context, info *Info, namespace string) {
+	ResourcesToYAMLFile(ctx, info, gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceimports"), namespace, metav1.ListOptions{})
 }
 
-func gatherEndpointSlices(info *Info, namespace string) {
+func gatherEndpointSlices(ctx context.Context, info *Info, namespace string) {
 	labelMap := map[string]string{
 		discoveryv1.LabelManagedBy: lhconstants.LabelValueManagedBy,
 	}
 	labelSelector := labels.Set(labelMap).String()
 
-	ResourcesToYAMLFile(info, discoveryv1.SchemeGroupVersion.WithResource("endpointslices"), namespace,
+	ResourcesToYAMLFile(ctx, info, discoveryv1.SchemeGroupVersion.WithResource("endpointslices"), namespace,
 		metav1.ListOptions{LabelSelector: labelSelector})
 }
 
-func gatherConfigMapCoreDNS(info *Info) {
+func gatherConfigMapCoreDNS(ctx context.Context, info *Info) {
 	namespace := "kube-system"
 	name := "coredns"
 
-	if isCoreDNSTypeOcp(info) {
+	if isCoreDNSTypeOcp(ctx, info) {
 		namespace = "openshift-dns"
 		name = "dns-default"
 	}
@@ -81,7 +83,7 @@ func gatherConfigMapCoreDNS(info *Info) {
 
 	fieldSelector := fields.Set(fieldMap).String()
 
-	gatherConfigMaps(info, namespace, metav1.ListOptions{FieldSelector: fieldSelector})
+	gatherConfigMaps(ctx, info, namespace, metav1.ListOptions{FieldSelector: fieldSelector})
 
 	// Gather custom configname for AKS type deployments
 	if info.ServiceDiscovery.Spec.CoreDNSCustomConfig != nil {
@@ -97,21 +99,21 @@ func gatherConfigMapCoreDNS(info *Info) {
 
 		fieldSelector := fields.Set(fieldMap).String()
 
-		gatherConfigMaps(info, namespace, metav1.ListOptions{FieldSelector: fieldSelector})
+		gatherConfigMaps(ctx, info, namespace, metav1.ListOptions{FieldSelector: fieldSelector})
 	}
 }
 
 // gatherLabeledServices gathers a service based on the label provided.
-func gatherLabeledServices(info *Info, label string) {
-	ResourcesToYAMLFile(info, corev1.SchemeGroupVersion.WithResource("services"), corev1.NamespaceAll,
+func gatherLabeledServices(ctx context.Context, info *Info, label string) {
+	ResourcesToYAMLFile(ctx, info, corev1.SchemeGroupVersion.WithResource("services"), corev1.NamespaceAll,
 		metav1.ListOptions{LabelSelector: label})
 }
 
-func gatherConfigMapLighthouseDNS(info *Info, namespace string) {
-	gatherConfigMaps(info, namespace, metav1.ListOptions{LabelSelector: lighthouseComponentsLabel})
+func gatherConfigMapLighthouseDNS(ctx context.Context, info *Info, namespace string) {
+	gatherConfigMaps(ctx, info, namespace, metav1.ListOptions{LabelSelector: lighthouseComponentsLabel})
 }
 
-func isCoreDNSTypeOcp(info *Info) bool {
-	pods, err := findPods(info.ClientProducer.ForKubernetes(), ocpCoreDNSPodLabel)
+func isCoreDNSTypeOcp(ctx context.Context, info *Info) bool {
+	pods, err := findPods(ctx, info.ClientProducer.ForKubernetes(), ocpCoreDNSPodLabel)
 	return err == nil && len(pods.Items) > 0
 }

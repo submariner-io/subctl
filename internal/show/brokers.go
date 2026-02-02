@@ -30,11 +30,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func Brokers(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+func Brokers(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Detecting broker(s)")
 
 	brokerList := &v1alpha1.BrokerList{}
-	err := clusterInfo.ClientProducer.ForGeneral().List(context.TODO(), brokerList, client.InNamespace(metav1.NamespaceAll))
+	err := clusterInfo.ClientProducer.ForGeneral().List(ctx, brokerList, client.InNamespace(metav1.NamespaceAll))
 
 	if err != nil && !resource.IsNotFoundErr(err) {
 		return status.Error(err, "Error retrieving brokers")

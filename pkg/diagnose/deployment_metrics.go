@@ -19,6 +19,7 @@ limitations under the License.
 package diagnose
 
 import (
+	"context"
 	goerrors "errors"
 	"strings"
 
@@ -33,18 +34,18 @@ const (
 	gnCurlMetricsCommand = curlCmd + " submariner-globalnet-metrics.submariner-operator.svc.cluster.local:8081/metrics"
 )
 
-func checkMetricsConfig(clusterInfo *cluster.Info, imageOverrides []string, status reporter.Interface) error {
+func checkMetricsConfig(ctx context.Context, clusterInfo *cluster.Info, imageOverrides []string, status reporter.Interface) error {
 	if clusterInfo.Submariner == nil {
 		return nil
 	}
 
 	metricsErrors := []error{}
-	if err := checkComponentMetrics(clusterInfo, imageOverrides, "gateway", gwCurlMetricsCommand, status); err != nil {
+	if err := checkComponentMetrics(ctx, clusterInfo, imageOverrides, "gateway", gwCurlMetricsCommand, status); err != nil {
 		metricsErrors = append(metricsErrors, err)
 	}
 
 	if clusterInfo.Submariner.Spec.GlobalCIDR != "" {
-		if err := checkComponentMetrics(clusterInfo, imageOverrides, "globalnet", gnCurlMetricsCommand, status); err != nil {
+		if err := checkComponentMetrics(ctx, clusterInfo, imageOverrides, "globalnet", gnCurlMetricsCommand, status); err != nil {
 			metricsErrors = append(metricsErrors, err)
 		}
 	}
@@ -52,25 +53,27 @@ func checkMetricsConfig(clusterInfo *cluster.Info, imageOverrides []string, stat
 	return goerrors.Join(metricsErrors...)
 }
 
-func checkComponentMetrics(clusterInfo *cluster.Info, imageOverrides []string, component, command string, status reporter.Interface) error {
+func checkComponentMetrics(ctx context.Context, clusterInfo *cluster.Info, imageOverrides []string, component, command string,
+	status reporter.Interface,
+) error {
 	status.Start("Checking that %s metrics are accessible from non-gateway nodes", component)
 	defer status.End()
 
-	return runIfSingleNode(clusterInfo, status, func() error {
+	return runIfSingleNode(ctx, clusterInfo, status, func(ctx context.Context) error {
 		repositoryInfo, err := clusterInfo.GetImageRepositoryInfo(imageOverrides...)
 		if err != nil {
 			return status.Error(err, "Error determining repository information")
 		}
 
-		cPod, err := spawnClientPodOnNonGatewayNode(clusterInfo.ClientProducer.ForKubernetes(),
+		cPod, err := spawnClientPodOnNonGatewayNode(ctx, clusterInfo.ClientProducer.ForKubernetes(),
 			clusterInfo.Submariner.Namespace, command, repositoryInfo)
 		if err != nil {
 			return status.Error(err, "Error spawning the client pod on non-Gateway node")
 		}
 
-		defer cPod.Delete()
+		defer cPod.Delete(ctx)
 
-		if err = cPod.AwaitCompletion(); err != nil {
+		if err = cPod.AwaitCompletion(ctx); err != nil {
 			return status.Error(err, "Error waiting for the client pod to finish its execution")
 		}
 

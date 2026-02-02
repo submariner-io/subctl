@@ -19,18 +19,19 @@ limitations under the License.
 package diagnose
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/cluster"
 )
 
-func TunnelConfigAcrossClusters(localClusterInfo, remoteClusterInfo *cluster.Info, namespace string, options FirewallOptions,
-	status reporter.Interface,
+func TunnelConfigAcrossClusters(ctx context.Context, localClusterInfo, remoteClusterInfo *cluster.Info, namespace string,
+	options FirewallOptions, status reporter.Interface,
 ) error {
 	message := fmt.Sprintf("Checking if tunnels can be setup on the gateway node of cluster %q", localClusterInfo.Name)
 
-	err := verifyConnectivity(localClusterInfo, remoteClusterInfo, namespace, options, status, TunnelPort, message)
+	err := verifyConnectivity(ctx, localClusterInfo, remoteClusterInfo, namespace, options, status, TunnelPort, message)
 	if err != nil {
 		status.Failure("Could not determine if Tunnels can be established on the gateway node of cluster %q", localClusterInfo.Name)
 	} else {

@@ -79,9 +79,9 @@ func NewJoinCmd() *cobra.Command {
 				brokerInfo.BrokerURL = joinCmd.flags.BrokerURL
 			}
 
-			exit.OnError(joinCmd.restConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return joinCmd.joinInContext(cmd.Context(), brokerInfo, clusterInfo, status)
+			exit.OnError(joinCmd.restConfigProducer.RunOnSelectedContext(cmd.Context(),
+				func(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+					return joinCmd.joinInContext(ctx, brokerInfo, clusterInfo, status)
 				}, status))
 		},
 	}

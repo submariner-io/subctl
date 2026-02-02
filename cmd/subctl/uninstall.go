@@ -21,6 +21,7 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -51,8 +52,8 @@ func NewUninstallCmd() *cobra.Command {
 		Use:   "uninstall",
 		Short: "Uninstall Submariner and its components",
 		Long:  "This command uninstalls Submariner and its components",
-		Run: func(_ *cobra.Command, _ []string) {
-			exit.OnError(uninstallCmd.restConfigProducer.RunOnSelectedContext(uninstallCmd.uninstallInContext, cli.NewReporter()))
+		Run: func(cmd *cobra.Command, _ []string) {
+			exit.OnError(uninstallCmd.restConfigProducer.RunOnSelectedContext(cmd.Context(), uninstallCmd.uninstallInContext, cli.NewReporter()))
 		},
 	}
 
@@ -68,7 +69,9 @@ func init() {
 	rootCmd.AddCommand(uninstallCmdInstance)
 }
 
-func (c *uninstallCommand) uninstallInContext(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+func (c *uninstallCommand) uninstallInContext(ctx context.Context, clusterInfo *cluster.Info, namespace string,
+	status reporter.Interface,
+) error {
 	if !c.noPrompt {
 		result := false
 		prompt := NewInputPrompt(&survey.Confirm{
@@ -84,5 +87,5 @@ func (c *uninstallCommand) uninstallInContext(clusterInfo *cluster.Info, namespa
 		}
 	}
 
-	return UninstallAll(clusterInfo.ClientProducer, clusterInfo.Name, namespace, status)
+	return UninstallAll(ctx, clusterInfo.ClientProducer, clusterInfo.Name, namespace, status)
 }

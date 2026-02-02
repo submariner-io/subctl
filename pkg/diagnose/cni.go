@@ -57,7 +57,7 @@ var CalicoGVR = schema.GroupVersionResource{
 	Resource: "ippools",
 }
 
-func CNIConfig(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+func CNIConfig(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	mustHaveSubmariner(clusterInfo)
 
 	status.Start("Checking Submariner support for the CNI network plugin")
@@ -92,13 +92,13 @@ func CNIConfig(clusterInfo *cluster.Info, _ string, status reporter.Interface) e
 	}
 
 	if strings.EqualFold(clusterInfo.Submariner.Status.NetworkPlugin, cni.OVNKubernetes) {
-		return checkOVNVersion(context.TODO(), clusterInfo, status)
+		return checkOVNVersion(ctx, clusterInfo, status)
 	}
 
-	return checkCalicoIPPoolsIfCalicoCNI(clusterInfo, status)
+	return checkCalicoIPPoolsIfCalicoCNI(ctx, clusterInfo, status)
 }
 
-func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface) error {
+func checkCalicoIPPoolsIfCalicoCNI(ctx context.Context, info *cluster.Info, status reporter.Interface) error {
 	if !strings.EqualFold(info.Submariner.Status.NetworkPlugin, cni.Calico) {
 		return nil
 	}
@@ -106,7 +106,7 @@ func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface
 	status.Start("Calico CNI detected, checking if the Submariner IPPool pre-requisites are configured")
 	defer status.End()
 
-	gateways, err := info.GetGateways(context.TODO())
+	gateways, err := info.GetGateways(ctx)
 	if err != nil {
 		return status.Error(err, "Error retrieving Gateways")
 	}
@@ -117,7 +117,7 @@ func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface
 
 	client := info.ClientProducer.ForDynamic().Resource(CalicoGVR)
 
-	ippoolList, err := client.List(context.TODO(), metav1.ListOptions{})
+	ippoolList, err := client.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return status.Error(err, "Error obtaining IPPools")
 	}

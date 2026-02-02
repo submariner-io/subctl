@@ -19,6 +19,7 @@ limitations under the License.
 package diagnose
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -34,7 +35,8 @@ const (
 	KubeProxyNotEnabled       = "Device \"kube-ipvs0\" does not exist"
 )
 
-func KubeProxyMode(clusterInfo *cluster.Info, namespace string, imageOverrides []string, status reporter.Interface) error {
+func KubeProxyMode(ctx context.Context, clusterInfo *cluster.Info, namespace string, imageOverrides []string, status reporter.Interface,
+) error {
 	status.Start("Checking Submariner support for the kube-proxy mode")
 	defer status.End()
 
@@ -50,7 +52,7 @@ func KubeProxyMode(clusterInfo *cluster.Info, namespace string, imageOverrides [
 		return status.Error(err, "Error determining repository information")
 	}
 
-	scheduled, err := pods.Schedule(&pods.Config{
+	scheduled, err := pods.Schedule(ctx, &pods.Config{
 		Name:                "query-iface-list",
 		ClientSet:           clusterInfo.ClientProducer.ForKubernetes(),
 		Scheduling:          scheduling,
@@ -62,9 +64,9 @@ func KubeProxyMode(clusterInfo *cluster.Info, namespace string, imageOverrides [
 		return status.Error(err, "Error spawning the network pod")
 	}
 
-	defer scheduled.Delete()
+	defer scheduled.Delete(ctx)
 
-	if err = scheduled.AwaitCompletion(); err != nil {
+	if err = scheduled.AwaitCompletion(ctx); err != nil {
 		return status.Error(err, "Error waiting for the network pod to finish its execution")
 	}
 
