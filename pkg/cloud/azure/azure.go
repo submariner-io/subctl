@@ -106,10 +106,7 @@ func RunOn(ctx context.Context, clusterInfo *cluster.Info, config *Config, statu
 
 	status.End()
 
-	gwDeployer, err := azure.NewOcpGatewayDeployer(cloudInfo, azureCloud, msDeployer, config.GWInstanceType)
-	if err != nil {
-		return status.Error(err, "Failed to initialize a GatewayDeployer config")
-	}
+	gwDeployer := azure.NewOcpGatewayDeployer(cloudInfo, msDeployer, config.GWInstanceType)
 
 	return function(ctx, azureCloud, gwDeployer, status)
 }
