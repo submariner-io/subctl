@@ -30,7 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func StartThroughputTests(intraCluster, verbose bool) error {
+func StartThroughputTests(ctx context.Context, intraCluster, verbose bool) error {
 	var f *framework.Framework
 
 	if verbose {
@@ -63,14 +63,14 @@ func StartThroughputTests(intraCluster, verbose bool) error {
 		clusterBName := framework.TestContext.ClusterIDs[framework.ClusterB]
 		fmt.Printf("Performing throughput tests from Gateway pod on cluster %q to Gateway pod on cluster %q\n",
 			clusterAName, clusterBName)
-		runThroughputTest(f, testParams, verbose)
+		runThroughputTest(ctx, f, testParams, verbose)
 
 		testParams.ServerPodScheduling = framework.NonGatewayNode
 		testParams.ClientPodScheduling = framework.NonGatewayNode
 
 		fmt.Printf("Performing throughput tests from Non-Gateway pod on cluster %q to Non-Gateway pod on cluster %q\n",
 			clusterAName, clusterBName)
-		runThroughputTest(f, testParams, verbose)
+		runThroughputTest(ctx, f, testParams, verbose)
 	} else {
 		testIntraClusterParams := benchmarkTestParams{
 			ClientCluster:       framework.ClusterA,
@@ -80,7 +80,7 @@ func StartThroughputTests(intraCluster, verbose bool) error {
 		}
 
 		fmt.Printf("Performing throughput tests from Non-Gateway pod to Gateway pod on cluster %q\n", clusterAName)
-		runThroughputTest(f, testIntraClusterParams, verbose)
+		runThroughputTest(ctx, f, testIntraClusterParams, verbose)
 	}
 
 	return nil
@@ -105,7 +105,7 @@ func cleanupFramework(f *framework.Framework) {
 	framework.RunCleanupActions()
 }
 
-func runThroughputTest(f *framework.Framework, testParams benchmarkTestParams, verbose bool) {
+func runThroughputTest(ctx context.Context, f *framework.Framework, testParams benchmarkTestParams, verbose bool) {
 	clientClusterName := framework.TestContext.ClusterIDs[testParams.ClientCluster]
 	serverClusterName := framework.TestContext.ClusterIDs[testParams.ServerCluster]
 	var connectionTimeout uint = 10
@@ -124,7 +124,8 @@ func runThroughputTest(f *framework.Framework, testParams benchmarkTestParams, v
 	})
 
 	podsClusterB := framework.KubeClients[testParams.ServerCluster].CoreV1().Pods(f.Namespace)
-	p1, _ := podsClusterB.Get(context.TODO(), nettestServerPod.Pod.Name, metav1.GetOptions{})
+	p1, err := podsClusterB.Get(ctx, nettestServerPod.Pod.Name, metav1.GetOptions{})
+	framework.ExpectNoError(err)
 
 	framework.By(fmt.Sprintf("Nettest Server Pod %q was created on node %q", nettestServerPod.Pod.Name, nettestServerPod.Pod.Spec.NodeName))
 
