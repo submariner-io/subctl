@@ -87,7 +87,7 @@ func checkBenchmarkArguments(cmd *cobra.Command, args []string) error {
 	return checkNoArguments(cmd, args)
 }
 
-func buildBenchmarkRunner(run func(intraCluster, verbose bool) error) func(command *cobra.Command, args []string) {
+func buildBenchmarkRunner(run func(ctx context.Context, intraCluster, verbose bool) error) func(command *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, _ []string) {
 		exit.OnError(benchmarkRestConfigProducer.RunOnSelectedContext(cmd.Context(),
 			func(ctx context.Context, fromClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
@@ -95,21 +95,22 @@ func buildBenchmarkRunner(run func(intraCluster, verbose bool) error) func(comma
 				toContextPresent, err := benchmarkRestConfigProducer.RunOnSelectedPrefixedContext(
 					ctx,
 					"to",
-					func(_ context.Context, toClusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
-						return runBenchmark(run, fromClusterInfo, toClusterInfo, verbose)
+					func(ctx context.Context, toClusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
+						return runBenchmark(ctx, run, fromClusterInfo, toClusterInfo, verbose)
 					}, status)
 
 				if toContextPresent {
 					return err //nolint:wrapcheck // No need to wrap errors here.
 				}
 
-				return runBenchmark(run, fromClusterInfo, nil, verbose)
+				return runBenchmark(ctx, run, fromClusterInfo, nil, verbose)
 			}, cli.NewReporter()))
 	}
 }
 
-func runBenchmark(
-	run func(intraCluster, verbose bool) error, fromClusterInfo, toClusterInfo *cluster.Info, verbose bool,
+func runBenchmark(ctx context.Context,
+	run func(ctx context.Context, intraCluster, verbose bool) error,
+	fromClusterInfo, toClusterInfo *cluster.Info, verbose bool,
 ) error {
 	framework.RestConfigs = []*rest.Config{fromClusterInfo.RestConfig}
 	framework.TestContext.ClusterIDs = []string{fromClusterInfo.Name}
@@ -130,5 +131,5 @@ func runBenchmark(
 	_, reporterConfig := ginkgo.GinkgoConfiguration()
 	framework.TestContext.ReporterConfig = &reporterConfig
 
-	return run(intraCluster, verbose)
+	return run(ctx, intraCluster, verbose)
 }

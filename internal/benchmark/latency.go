@@ -35,7 +35,7 @@ type benchmarkTestParams struct {
 	ClientPodScheduling framework.NetworkPodScheduling
 }
 
-func StartLatencyTests(intraCluster, verbose bool) error {
+func StartLatencyTests(ctx context.Context, intraCluster, verbose bool) error {
 	var f *framework.Framework
 
 	if verbose {
@@ -75,14 +75,14 @@ func StartLatencyTests(intraCluster, verbose bool) error {
 
 		fmt.Printf("Performing latency tests from Gateway pod on cluster %q to Gateway pod on cluster %q\n",
 			clusterAName, clusterBName)
-		runLatencyTest(f, latencyTestParams, verbose)
+		runLatencyTest(ctx, f, latencyTestParams, verbose)
 
 		latencyTestParams.ServerPodScheduling = framework.NonGatewayNode
 		latencyTestParams.ClientPodScheduling = framework.NonGatewayNode
 
 		fmt.Printf("Performing latency tests from Non-Gateway pod on cluster %q to Non-Gateway pod on cluster %q\n",
 			clusterAName, clusterBName)
-		runLatencyTest(f, latencyTestParams, verbose)
+		runLatencyTest(ctx, f, latencyTestParams, verbose)
 	} else {
 		latencyTestIntraClusterParams := benchmarkTestParams{
 			ClientCluster:       framework.ClusterA,
@@ -92,13 +92,13 @@ func StartLatencyTests(intraCluster, verbose bool) error {
 		}
 
 		fmt.Printf("Performing latency tests from Non-Gateway pod to Gateway pod on cluster %q\n", clusterAName)
-		runLatencyTest(f, latencyTestIntraClusterParams, verbose)
+		runLatencyTest(ctx, f, latencyTestIntraClusterParams, verbose)
 	}
 
 	return nil
 }
 
-func runLatencyTest(f *framework.Framework, testParams benchmarkTestParams, verbose bool) {
+func runLatencyTest(ctx context.Context, f *framework.Framework, testParams benchmarkTestParams, verbose bool) {
 	clusterAName := framework.TestContext.ClusterIDs[testParams.ClientCluster]
 	clusterBName := framework.TestContext.ClusterIDs[testParams.ServerCluster]
 	var connectionTimeout uint = 5
@@ -115,7 +115,9 @@ func runLatencyTest(f *framework.Framework, testParams benchmarkTestParams, verb
 	})
 
 	podsClusterB := framework.KubeClients[testParams.ServerCluster].CoreV1().Pods(f.Namespace)
-	p1, _ := podsClusterB.Get(context.TODO(), nettestServerPod.Pod.Name, metav1.GetOptions{})
+	p1, err := podsClusterB.Get(ctx, nettestServerPod.Pod.Name, metav1.GetOptions{})
+	framework.ExpectNoError(err)
+
 	framework.By(fmt.Sprintf("Nettest Server Pod %q was created on node %q", nettestServerPod.Pod.Name, nettestServerPod.Pod.Spec.NodeName))
 
 	remoteIP := p1.Status.PodIP
