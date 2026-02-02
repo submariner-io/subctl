@@ -19,7 +19,6 @@ limitations under the License.
 package apply_test
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -36,8 +35,6 @@ import (
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 )
-
-var ctx = context.TODO()
 
 const (
 	saTemplate = `apiVersion: v1
@@ -106,7 +103,7 @@ var _ = Describe("EmbeddedYAMLs", func() {
 	})
 
 	When("no resources exist", func() {
-		It("should create them and return true", func() {
+		It("should create them and return true", func(ctx SpecContext) {
 			created, err := apply.EmbeddedYAMLs(ctx, client, constants.OperatorNamespace, embeddedYAMLs)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(created).To(BeTrue())
@@ -125,7 +122,7 @@ var _ = Describe("EmbeddedYAMLs", func() {
 	})
 
 	When("some resources already exist", func() {
-		It("should aggregate the returned flag correctly", func() {
+		It("should aggregate the returned flag correctly", func(ctx SpecContext) {
 			createdCount := 0
 
 			client.PrependReactor("create", "*", func(action k8stesting.Action) (bool, runtime.Object, error) {
@@ -142,12 +139,12 @@ var _ = Describe("EmbeddedYAMLs", func() {
 	})
 
 	When("the resources already exist", func() {
-		BeforeEach(func() {
+		BeforeEach(func(ctx SpecContext) {
 			_, err := apply.EmbeddedYAMLs(ctx, client, constants.OperatorNamespace, embeddedYAMLs)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("should succeed and return false", func() {
+		It("should succeed and return false", func(ctx SpecContext) {
 			created, err := apply.EmbeddedYAMLs(ctx, client, constants.OperatorNamespace, embeddedYAMLs)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(created).To(BeFalse())
@@ -160,7 +157,7 @@ var _ = Describe("EmbeddedYAMLs", func() {
 				fake.FailOnAction(&client.Fake, strings.ToLower(resource)+"s", "create", nil, false)
 			})
 
-			It("should return an error", func() {
+			It("should return an error", func(ctx SpecContext) {
 				_, err := apply.EmbeddedYAMLs(ctx, client, constants.OperatorNamespace, embeddedYAMLs)
 				Expect(err).To(HaveOccurred())
 			})

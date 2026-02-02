@@ -42,8 +42,6 @@ const (
 	remoteCluster = "remote-cluster"
 )
 
-var ctx = context.TODO()
-
 var _ = BeforeSuite(func() {
 	Expect(v1alpha1.AddToScheme(scheme.Scheme)).To(Succeed())
 	Expect(apiextensionsv1.AddToScheme(scheme.Scheme)).To(Succeed())
@@ -92,7 +90,7 @@ func newTestDriver() *testDriver {
 		}
 	})
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		if t.submariner != nil {
 			Expect(t.clients.ForGeneral().Create(ctx, t.submariner)).To(Succeed())
 		}
@@ -105,15 +103,15 @@ func newTestDriver() *testDriver {
 	return t
 }
 
-func (t *testDriver) newInfo() *cluster.Info {
-	info, err := cluster.NewInfo(localCluster, nil)
+func (t *testDriver) newInfo(ctx context.Context) *cluster.Info {
+	info, err := cluster.NewInfo(ctx, localCluster, nil)
 	Expect(err).NotTo(HaveOccurred())
 
 	return info
 }
 
-func (t *testDriver) createNode(name string) {
-	_, err := t.newInfo().ClientProducer.ForKubernetes().CoreV1().Nodes().Create(ctx, &corev1.Node{
+func (t *testDriver) createNode(ctx context.Context, name string) {
+	_, err := t.newInfo(ctx).ClientProducer.ForKubernetes().CoreV1().Nodes().Create(ctx, &corev1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
@@ -121,7 +119,7 @@ func (t *testDriver) createNode(name string) {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (t *testDriver) createEndpoint(clusterID string) {
+func (t *testDriver) createEndpoint(ctx context.Context, clusterID string) {
 	Expect(t.clients.ForGeneral().Create(ctx, &submarinerv1.Endpoint{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID,

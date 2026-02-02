@@ -404,5 +404,5 @@ func (t *deploymentTestDriver) testMultipleNodes() {
 }
 
 func (t *deploymentTestDriver) run() error {
-	return diagnose.Deployments(newClusterInfo(), "", t.imageOverrides, t.statusTracker)
+	return diagnose.Deployments(newClusterInfo(context.TODO()), "", t.imageOverrides, t.statusTracker)
 }

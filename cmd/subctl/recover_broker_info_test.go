@@ -118,7 +118,7 @@ var _ = Describe("Recover Broker Info", func() {
 		}
 	})
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		Expect(t.fakeProducer.GeneralClient.Create(ctx, submarinerObj)).To(Succeed())
 		Expect(t.fakeProducer.GeneralClient.Create(ctx, brokerObj.DeepCopy())).To(Succeed())
 	})
@@ -140,7 +140,7 @@ var _ = Describe("Recover Broker Info", func() {
 	})
 
 	When("the Broker is not found on the same cluster as Submariner", func() {
-		JustBeforeEach(func() {
+		JustBeforeEach(func(ctx SpecContext) {
 			Expect(t.fakeProducer.GeneralClient.Delete(ctx, brokerObj)).To(Succeed())
 			Expect(brokerProducer.GeneralClient.Create(ctx, brokerObj.DeepCopy())).To(Succeed())
 		})
@@ -163,7 +163,7 @@ var _ = Describe("Recover Broker Info", func() {
 		})
 
 		When("and is not found on the remote cluster", func() {
-			JustBeforeEach(func() {
+			JustBeforeEach(func(ctx SpecContext) {
 				Expect(brokerProducer.GeneralClient.Delete(ctx, brokerObj)).To(Succeed())
 			})
 

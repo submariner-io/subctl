@@ -19,6 +19,7 @@ limitations under the License.
 package show
 
 import (
+	"context"
 	"errors"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -30,7 +31,7 @@ import (
 func Endpoints(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Showing Endpoints")
 
-	gateways, err := clusterInfo.GetGateways()
+	gateways, err := clusterInfo.GetGateways(context.TODO())
 	if err != nil {
 		return status.Error(err, "Error retrieving gateways")
 	}

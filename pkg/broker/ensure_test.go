@@ -53,7 +53,7 @@ var _ = Describe("", func() {
 func testEnsure() {
 	t := newTestDriver()
 
-	It("should create the broker resources", func() {
+	It("should create the broker resources", func(ctx SpecContext) {
 		Expect(broker.Ensure(ctx, t.crdUpdater, t.kubeClient, []string{}, false, testBrokerNamespace)).To(Succeed())
 
 		_, err := t.kubeClient.CoreV1().Namespaces().Get(ctx, testBrokerNamespace, metav1.GetOptions{})
@@ -86,7 +86,7 @@ func testEnsure() {
 	})
 
 	Context("with CRD creation requested", func() {
-		It("should create the CRDs", func() {
+		It("should create the CRDs", func(ctx SpecContext) {
 			Expect(broker.Ensure(ctx, t.crdUpdater, t.kubeClient,
 				[]string{component.Connectivity, component.ServiceDiscovery, component.Globalnet}, true, testBrokerNamespace)).To(Succeed())
 
@@ -98,7 +98,7 @@ func testEnsure() {
 		})
 
 		Context("and Globalnet component is specified without ServiceDiscovery", func() {
-			It("should create the Globalnet and ServiceDiscovery CRDs", func() {
+			It("should create the Globalnet and ServiceDiscovery CRDs", func(ctx SpecContext) {
 				Expect(broker.Ensure(ctx, t.crdUpdater, t.kubeClient,
 					[]string{component.Connectivity, component.Globalnet}, true, testBrokerNamespace)).To(Succeed())
 
@@ -116,7 +116,7 @@ func testEnsure() {
 			fake.FailOnAction(&t.kubeClient.(*k8sfake.Clientset).Fake, "namespaces", "create", nil, false)
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			Expect(broker.Ensure(ctx, t.crdUpdater, t.kubeClient, []string{component.Connectivity}, false, testBrokerNamespace)).
 				NotTo(Succeed())
 		})
@@ -135,7 +135,7 @@ func testEnsure() {
 					}).Build())
 			})
 
-			It("should return an error", func() {
+			It("should return an error", func(ctx SpecContext) {
 				Expect(broker.Ensure(ctx, t.crdUpdater, t.kubeClient, []string{comp}, true, testBrokerNamespace)).NotTo(Succeed())
 			})
 		},
@@ -150,7 +150,7 @@ func testEnsure() {
 				errors.New("mock SA creation error"), false)
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			Expect(broker.Ensure(ctx, t.crdUpdater, t.kubeClient, []string{component.Connectivity}, false, testBrokerNamespace)).
 				NotTo(Succeed())
 		})
@@ -162,7 +162,7 @@ func testEnsure() {
 				errors.New("mock role creation error"), false)
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			Expect(broker.Ensure(ctx, t.crdUpdater, t.kubeClient, []string{component.Connectivity}, false, testBrokerNamespace)).
 				NotTo(Succeed())
 		})
@@ -172,7 +172,7 @@ func testEnsure() {
 func testCreateSAForCluster() {
 	t := newTestDriver()
 
-	It("should create the ServiceAccount and RoleBinding", func() {
+	It("should create the ServiceAccount and RoleBinding", func(ctx SpecContext) {
 		secret, err := broker.CreateSAForCluster(ctx, t.kubeClient, testClusterID, testBrokerNamespace)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(secret).NotTo(BeNil())
@@ -191,7 +191,7 @@ func testCreateSAForCluster() {
 	})
 
 	When("the ServiceAccount already exists", func() {
-		It("should succeed", func() {
+		It("should succeed", func(ctx SpecContext) {
 			_, err := broker.CreateSAForCluster(ctx, t.kubeClient, testClusterID, testBrokerNamespace)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -206,7 +206,7 @@ func testCreateSAForCluster() {
 				errors.New("mock SA creation error"), false)
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			_, err := broker.CreateSAForCluster(ctx, t.kubeClient, testClusterID, testBrokerNamespace)
 			Expect(err).To(HaveOccurred())
 		})
@@ -218,7 +218,7 @@ func testCreateSAForCluster() {
 				errors.New("mock role binding creation error"), false)
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			_, err := broker.CreateSAForCluster(ctx, t.kubeClient, testClusterID, testBrokerNamespace)
 			Expect(err).To(HaveOccurred())
 		})
@@ -230,7 +230,7 @@ func testCreateSAForCluster() {
 				errors.New("mock secret creation error"), false)
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			_, err := broker.CreateSAForCluster(ctx, t.kubeClient, testClusterID, testBrokerNamespace)
 			Expect(err).To(HaveOccurred())
 		})

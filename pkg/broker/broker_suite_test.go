@@ -19,7 +19,6 @@ limitations under the License.
 package broker_test
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -37,8 +36,6 @@ import (
 	"k8s.io/client-go/rest"
 	controllerfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
-
-var ctx = context.TODO()
 
 var _ = BeforeSuite(func() {
 	Expect(apiextensions.AddToScheme(scheme.Scheme)).To(Succeed())

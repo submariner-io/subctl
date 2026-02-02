@@ -53,7 +53,7 @@ const (
 var _ = Describe("Broker", func() {
 	t := newBrokerTestDriver()
 
-	It("should successfully deploy the operator and the Broker resource", func() {
+	It("should successfully deploy the operator and the Broker resource", func(ctx SpecContext) {
 		t.assertSuccess()
 
 		deployment, err := t.fakeProducer.KubeClient.AppsV1().Deployments(constants.OperatorNamespace).Get(
@@ -71,7 +71,7 @@ var _ = Describe("Broker", func() {
 		_, err = t.fakeProducer.KubeClient.CoreV1().Namespaces().Get(ctx, testBrokerNamespace, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
-		t.assertBrokerResource()
+		t.assertBrokerResource(ctx)
 
 		ginfo, _, err := globalnet.GetGlobalNetworks(ctx, t.fakeProducer.ForGeneral(), testBrokerNamespace)
 		Expect(err).NotTo(HaveOccurred())
@@ -87,9 +87,9 @@ var _ = Describe("Broker", func() {
 			t.options.BrokerSpec.Components = []string{component.Connectivity}
 		})
 
-		It("should deploy the Broker resource correctly", func() {
+		It("should deploy the Broker resource correctly", func(ctx SpecContext) {
 			t.assertSuccess()
-			t.assertBrokerResource()
+			t.assertBrokerResource(ctx)
 		})
 	})
 
@@ -117,7 +117,7 @@ var _ = Describe("Broker", func() {
 		})
 
 		Context("with a valid globalnet configuration", func() {
-			It("should create the globalnet ConfigMap correctly", func() {
+			It("should create the globalnet ConfigMap correctly", func(ctx SpecContext) {
 				t.assertSuccess()
 
 				info, _, err := globalnet.GetGlobalNetworks(ctx, t.fakeProducer.ForGeneral(), testBrokerNamespace)
@@ -169,7 +169,7 @@ var _ = Describe("Broker", func() {
 		})
 
 		Context("with a valid clusterset IP configuration", func() {
-			It("should create the clusterset IP ConfigMap correctly", func() {
+			It("should create the clusterset IP ConfigMap correctly", func(ctx SpecContext) {
 				t.assertSuccess()
 
 				info, _, err := clustersetip.GetClustersetIPNetworks(ctx, t.fakeProducer.ForGeneral(), testBrokerNamespace)
@@ -261,7 +261,7 @@ func (t *brokerTestDriver) testFailure(msgs ...string) {
 	})
 }
 
-func (t *brokerTestDriver) assertBrokerResource() {
+func (t *brokerTestDriver) assertBrokerResource(ctx context.Context) {
 	broker := &v1alpha1.Broker{}
 	Expect(t.fakeProducer.ForGeneral().Get(ctx, ctrlClient.ObjectKey{
 		Name:      brokercr.Name,

@@ -59,7 +59,6 @@ const (
 )
 
 var (
-	ctx                = context.TODO()
 	brokerInfoFileName string
 	kubeConfigFileName string
 	brokerInfo         broker.Info
@@ -216,7 +215,7 @@ func newTestDriver() *testDriver {
 		}
 	})
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		if t.submarinerSpec != nil {
 			t.submariner = &v1alpha1.Submariner{
 				ObjectMeta: metav1.ObjectMeta{
@@ -261,7 +260,7 @@ func newTestDriver() *testDriver {
 	return t
 }
 
-func (t *testDriver) setupNetworkDiscovery(clusterCIDR, serviceCIDR string) {
+func (t *testDriver) setupNetworkDiscovery(ctx context.Context, clusterCIDR, serviceCIDR string) {
 	name := "kube-controller-manager"
 
 	err := t.fakeProducer.GeneralClient.Create(ctx, &corev1.Pod{
@@ -285,7 +284,7 @@ func (t *testDriver) setupNetworkDiscovery(clusterCIDR, serviceCIDR string) {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (t *testDriver) createGatewayNode() {
+func (t *testDriver) createGatewayNode(ctx context.Context) {
 	_, err := t.fakeProducer.KubeClient.CoreV1().Nodes().Create(ctx, &corev1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "worker1",
@@ -295,7 +294,7 @@ func (t *testDriver) createGatewayNode() {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (t *testDriver) createNodes(nodeNames ...string) {
+func (t *testDriver) createNodes(ctx context.Context, nodeNames ...string) {
 	for _, name := range nodeNames {
 		_, err := t.fakeProducer.KubeClient.CoreV1().Nodes().Create(ctx, &corev1.Node{
 			ObjectMeta: metav1.ObjectMeta{
@@ -306,14 +305,14 @@ func (t *testDriver) createNodes(nodeNames ...string) {
 	}
 }
 
-func (t *testDriver) getNode(name string) *corev1.Node {
+func (t *testDriver) getNode(ctx context.Context, name string) *corev1.Node {
 	node, err := t.fakeProducer.KubeClient.CoreV1().Nodes().Get(ctx, name, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	return node
 }
 
-func (t *testDriver) getSubmariner() *v1alpha1.Submariner {
+func (t *testDriver) getSubmariner(ctx context.Context) *v1alpha1.Submariner {
 	submariner := &v1alpha1.Submariner{}
 	Expect(t.fakeProducer.GeneralClient.Get(ctx, controllerClient.ObjectKey{
 		Namespace: constants.OperatorNamespace,
@@ -323,7 +322,7 @@ func (t *testDriver) getSubmariner() *v1alpha1.Submariner {
 	return submariner
 }
 
-func (t *testDriver) getServiceDiscovery() *v1alpha1.ServiceDiscovery {
+func (t *testDriver) getServiceDiscovery(ctx context.Context) *v1alpha1.ServiceDiscovery {
 	sd := &v1alpha1.ServiceDiscovery{}
 	Expect(t.fakeProducer.GeneralClient.Get(ctx, controllerClient.ObjectKey{
 		Namespace: constants.OperatorNamespace,
@@ -333,7 +332,7 @@ func (t *testDriver) getServiceDiscovery() *v1alpha1.ServiceDiscovery {
 	return sd
 }
 
-func (t *testDriver) getBroker() *v1alpha1.Broker {
+func (t *testDriver) getBroker(ctx context.Context) *v1alpha1.Broker {
 	b := &v1alpha1.Broker{}
 	Expect(t.fakeProducer.GeneralClient.Get(ctx, controllerClient.ObjectKey{
 		Namespace: constants.DefaultBrokerNamespace,

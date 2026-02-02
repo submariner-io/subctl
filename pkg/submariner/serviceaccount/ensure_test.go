@@ -39,8 +39,6 @@ func TestServiceAccount(t *testing.T) {
 	RunSpecs(t, "Submariner ServiceAccount Suite")
 }
 
-var ctx = context.TODO()
-
 var _ = Describe("Ensure", func() {
 	var client *k8sfake.Clientset
 
@@ -49,16 +47,16 @@ var _ = Describe("Ensure", func() {
 	})
 
 	When("no resources exist", func() {
-		It("should create them and return true", func() {
+		It("should create them and return true", func(ctx SpecContext) {
 			created, err := serviceaccount.Ensure(ctx, client, constants.OperatorNamespace)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(created).To(BeTrue())
 
-			assertServiceAccountsCreated(client)
-			assertClusterRolesCreated(client)
-			assertClusterRoleBindingsCreated(client)
-			assertRolesCreated(client)
-			assertRoleBindingsCreated(client)
+			assertServiceAccountsCreated(ctx, client)
+			assertClusterRolesCreated(ctx, client)
+			assertClusterRoleBindingsCreated(ctx, client)
+			assertRolesCreated(ctx, client)
+			assertRoleBindingsCreated(ctx, client)
 
 			created, err = serviceaccount.Ensure(ctx, client, constants.OperatorNamespace)
 			Expect(err).NotTo(HaveOccurred())
@@ -76,7 +74,7 @@ var _ = Describe("Ensure", func() {
 			})
 		})
 
-		It("should aggregate the returned flag correctly", func() {
+		It("should aggregate the returned flag correctly", func(ctx SpecContext) {
 			created, err := serviceaccount.Ensure(ctx, client, constants.OperatorNamespace)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(created).To(BeTrue()) // Should be true if any resource was created
@@ -84,12 +82,12 @@ var _ = Describe("Ensure", func() {
 	})
 
 	When("the resources already exist", func() {
-		BeforeEach(func() {
+		BeforeEach(func(ctx SpecContext) {
 			_, err := serviceaccount.Ensure(ctx, client, constants.OperatorNamespace)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("should succeed and return false", func() {
+		It("should succeed and return false", func(ctx SpecContext) {
 			created, err := serviceaccount.Ensure(ctx, client, constants.OperatorNamespace)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(created).To(BeFalse())
@@ -101,14 +99,14 @@ var _ = Describe("Ensure", func() {
 			fake.FailOnAction(&client.Fake, "roles", "create", nil, false)
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			_, err := serviceaccount.Ensure(ctx, client, constants.OperatorNamespace)
 			Expect(err).To(HaveOccurred())
 		})
 	})
 })
 
-func assertServiceAccountsCreated(client *k8sfake.Clientset) {
+func assertServiceAccountsCreated(ctx context.Context, client *k8sfake.Clientset) {
 	for _, name := range []string{
 		names.GatewayComponent,
 		names.RouteAgentComponent,
@@ -120,7 +118,7 @@ func assertServiceAccountsCreated(client *k8sfake.Clientset) {
 	}
 }
 
-func assertClusterRolesCreated(client *k8sfake.Clientset) {
+func assertClusterRolesCreated(ctx context.Context, client *k8sfake.Clientset) {
 	for _, name := range []string{
 		names.GatewayComponent,
 		names.RouteAgentComponent,
@@ -132,7 +130,7 @@ func assertClusterRolesCreated(client *k8sfake.Clientset) {
 	}
 }
 
-func assertClusterRoleBindingsCreated(client *k8sfake.Clientset) {
+func assertClusterRoleBindingsCreated(ctx context.Context, client *k8sfake.Clientset) {
 	for _, name := range []string{
 		names.GatewayComponent,
 		names.RouteAgentComponent,
@@ -144,7 +142,7 @@ func assertClusterRoleBindingsCreated(client *k8sfake.Clientset) {
 	}
 }
 
-func assertRolesCreated(client *k8sfake.Clientset) {
+func assertRolesCreated(ctx context.Context, client *k8sfake.Clientset) {
 	for _, name := range []string{
 		names.GatewayComponent,
 		names.RouteAgentComponent,
@@ -157,7 +155,7 @@ func assertRolesCreated(client *k8sfake.Clientset) {
 	}
 }
 
-func assertRoleBindingsCreated(client *k8sfake.Clientset) {
+func assertRoleBindingsCreated(ctx context.Context, client *k8sfake.Clientset) {
 	for _, name := range []string{
 		names.GatewayComponent,
 		names.RouteAgentComponent,

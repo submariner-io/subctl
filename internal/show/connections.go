@@ -19,6 +19,7 @@ limitations under the License.
 package show
 
 import (
+	"context"
 	"errors"
 	"net"
 
@@ -32,7 +33,7 @@ import (
 func Connections(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Showing Connections")
 
-	gateways, err := clusterInfo.GetGateways()
+	gateways, err := clusterInfo.GetGateways(context.TODO())
 	if err != nil {
 		return status.Error(err, "Error retrieving gateways")
 	}

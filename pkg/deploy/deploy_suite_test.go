@@ -19,7 +19,6 @@ limitations under the License.
 package deploy_test
 
 import (
-	"context"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -44,8 +43,6 @@ const (
 	testRepository      = "quay.io/submariner"
 	testImageVersion    = "devel"
 )
-
-var ctx = context.TODO()
 
 var _ = BeforeSuite(func() {
 	Expect(operatorv1alpha1.AddToScheme(scheme.Scheme)).To(Succeed())

@@ -49,7 +49,7 @@ func testSchedule() {
 	t := newScheduleTestDriver()
 
 	Context("with defaults", func() {
-		It("should create a pod to be scheduled on a gateway node", func() {
+		It("should create a pod to be scheduled on a gateway node", func(ctx SpecContext) {
 			scheduled, err := pods.Schedule(t.config)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(scheduled).NotTo(BeNil())
@@ -115,7 +115,7 @@ func testSchedule() {
 	})
 
 	Context("with a custom namespace", func() {
-		BeforeEach(func() {
+		BeforeEach(func(ctx SpecContext) {
 			ns := &corev1.Namespace{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "custom-namespace",
@@ -130,7 +130,7 @@ func testSchedule() {
 			t.config.Namespace = ns.Name
 		})
 
-		It("should create the pod in the namespace", func() {
+		It("should create the pod in the namespace", func(ctx SpecContext) {
 			scheduled, err := pods.Schedule(t.config)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(scheduled).NotTo(BeNil())
@@ -168,7 +168,7 @@ func testSchedule() {
 			t.podPhase = corev1.PodPending
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			_, err := pods.Schedule(t.config)
 			Expect(err).To(HaveOccurred())
 
@@ -233,7 +233,7 @@ func testAwaitCompletion() {
 func testDelete() {
 	t := newScheduledTestDriver()
 
-	It("should delete the pod", func() {
+	It("should delete the pod", func(ctx SpecContext) {
 		t.scheduled.Delete()
 
 		_, err := t.k8sClient.CoreV1().Pods(t.scheduled.Pod.Namespace).Get(ctx, t.scheduled.Pod.Name, metav1.GetOptions{})
@@ -302,7 +302,7 @@ func newScheduledTestDriver() *scheduledTestDriver {
 		t.podPhase = corev1.PodSucceeded
 	})
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		t.scheduled = &pods.Scheduled{
 			Config: t.config,
 			Pod: &corev1.Pod{

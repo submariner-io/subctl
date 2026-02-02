@@ -106,7 +106,7 @@ func checkCalicoIPPoolsIfCalicoCNI(info *cluster.Info, status reporter.Interface
 	status.Start("Calico CNI detected, checking if the Submariner IPPool pre-requisites are configured")
 	defer status.End()
 
-	gateways, err := info.GetGateways()
+	gateways, err := info.GetGateways(context.TODO())
 	if err != nil {
 		return status.Error(err, "Error retrieving Gateways")
 	}

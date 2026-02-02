@@ -19,6 +19,7 @@ limitations under the License.
 package diagnose_test
 
 import (
+	"context"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -331,5 +332,5 @@ func newServiceDiscoveryTestDriver() *serviceDiscoveryTestDriver {
 }
 
 func (t *serviceDiscoveryTestDriver) run() error {
-	return diagnose.ServiceDiscovery(newClusterInfo(), "", t.statusTracker)
+	return diagnose.ServiceDiscovery(newClusterInfo(context.TODO()), "", t.statusTracker)
 }

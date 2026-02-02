@@ -19,6 +19,7 @@ limitations under the License.
 package diagnose
 
 import (
+	"context"
 	"errors"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -39,7 +40,7 @@ func CheckGatewayConnections(clusterInfo *cluster.Info, status reporter.Interfac
 	status.Start("Checking gateway connections")
 	defer status.End()
 
-	gateways, err := clusterInfo.GetGateways()
+	gateways, err := clusterInfo.GetGateways(context.TODO())
 	if err != nil {
 		return status.Error(err, "Error retrieving gateways")
 	}

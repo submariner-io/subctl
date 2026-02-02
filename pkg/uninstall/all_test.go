@@ -46,13 +46,13 @@ var _ = Describe("All", func() {
 		Expect(uninstall.All(t.clients, testClusterName, testSubmarinerNS, t.statusReporter)).To(Succeed())
 	}
 
-	It("should uninstall all Submariner components", func() {
+	It("should uninstall all Submariner components", func(ctx SpecContext) {
 		assertUninstallSuccess()
-		t.assertComponentsDeleted()
+		t.assertComponentsDeleted(ctx)
 	})
 
 	When("only ServiceDiscovery is installed", func() {
-		BeforeEach(func() {
+		BeforeEach(func(ctx SpecContext) {
 			t.submariner = nil
 
 			Expect(t.clients.ForGeneral().Create(ctx, &operatorv1alpha1.ServiceDiscovery{
@@ -63,7 +63,7 @@ var _ = Describe("All", func() {
 			})).To(Succeed())
 		})
 
-		It("should delete the ServiceDiscovery resource", func() {
+		It("should delete the ServiceDiscovery resource", func(ctx SpecContext) {
 			assertUninstallSuccess()
 
 			// Verify ServiceDiscovery resource is deleted
@@ -73,7 +73,7 @@ var _ = Describe("All", func() {
 			}, &operatorv1alpha1.ServiceDiscovery{})
 			Expect(apierrors.IsNotFound(err)).To(BeTrue())
 
-			t.assertComponentsDeleted()
+			t.assertComponentsDeleted(ctx)
 		})
 	})
 
@@ -82,14 +82,14 @@ var _ = Describe("All", func() {
 			t.submariner = nil
 		})
 
-		It("should uninstall all remaining Submariner components", func() {
+		It("should uninstall all remaining Submariner components", func(ctx SpecContext) {
 			assertUninstallSuccess()
-			t.assertComponentsDeleted()
+			t.assertComponentsDeleted(ctx)
 		})
 	})
 
 	When("the broker is in use by other clusters", func() {
-		BeforeEach(func() {
+		BeforeEach(func(ctx SpecContext) {
 			Expect(t.clients.ForGeneral().Create(ctx, &submarinerv1.Endpoint{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "remote-endpoint",
@@ -118,7 +118,7 @@ var _ = Describe("All", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("should not delete broker and operator resources", func() {
+		It("should not delete broker and operator resources", func(ctx SpecContext) {
 			assertUninstallSuccess()
 
 			// Verify broker namespace still exists
@@ -154,9 +154,9 @@ var _ = Describe("All", func() {
 			t.broker = nil
 		})
 
-		It("should uninstall all Submariner components", func() {
+		It("should uninstall all Submariner components", func(ctx SpecContext) {
 			assertUninstallSuccess()
-			t.assertComponentsDeleted()
+			t.assertComponentsDeleted(ctx)
 		})
 	})
 
@@ -166,15 +166,15 @@ var _ = Describe("All", func() {
 		})
 
 		Context("and the operator deployment does not exist", func() {
-			It("should log a warning and eventually delete it", func() {
+			It("should log a warning and eventually delete it", func(ctx SpecContext) {
 				assertUninstallSuccess()
-				t.assertComponentsDeleted()
+				t.assertComponentsDeleted(ctx)
 				t.statusReporter.AssertWarningContainsStrings("deployment does not exist")
 			})
 		})
 
 		Context("and the operator deployment exists", func() {
-			BeforeEach(func() {
+			BeforeEach(func(ctx SpecContext) {
 				_, err := t.clients.ForKubernetes().AppsV1().Deployments(testSubmarinerNS).Create(ctx, &appsv1.Deployment{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: names.OperatorComponent,
@@ -191,28 +191,28 @@ var _ = Describe("All", func() {
 			})
 
 			Context("but no pod exists", func() {
-				It("should log a warning and eventually delete it", func() {
+				It("should log a warning and eventually delete it", func(ctx SpecContext) {
 					assertUninstallSuccess()
-					t.assertComponentsDeleted()
+					t.assertComponentsDeleted(ctx)
 					t.statusReporter.AssertWarningContainsStrings("pod does not exist")
 				})
 			})
 
 			Context("and the pod is not running", func() {
-				BeforeEach(func() {
-					t.createOperatorPod(corev1.PodSucceeded)
+				BeforeEach(func(ctx SpecContext) {
+					t.createOperatorPod(ctx, corev1.PodSucceeded)
 				})
 
-				It("should log a warning and eventually delete it", func() {
+				It("should log a warning and eventually delete it", func(ctx SpecContext) {
 					assertUninstallSuccess()
-					t.assertComponentsDeleted()
+					t.assertComponentsDeleted(ctx)
 					t.statusReporter.AssertWarningContainsStrings("pod is not running")
 				})
 			})
 
 			Context("and the pod is running", func() {
-				BeforeEach(func() {
-					t.createOperatorPod(corev1.PodRunning)
+				BeforeEach(func(ctx SpecContext) {
+					t.createOperatorPod(ctx, corev1.PodRunning)
 				})
 
 				It("should fail", func() {

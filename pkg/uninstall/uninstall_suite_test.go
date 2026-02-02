@@ -54,8 +54,6 @@ const (
 	otherLabel       = "other-label"
 )
 
-var ctx = context.TODO()
-
 var _ = BeforeSuite(func() {
 	Expect(operatorv1alpha1.AddToScheme(scheme.Scheme)).To(Succeed())
 	Expect(submarinerv1.AddToScheme(scheme.Scheme)).To(Succeed())
@@ -113,7 +111,7 @@ func newTestDriver() *testDriver {
 		}
 	})
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		if t.submarinerNS != nil {
 			_, err := t.clients.ForKubernetes().CoreV1().Namespaces().Create(ctx, t.submarinerNS, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
@@ -176,7 +174,7 @@ func newTestDriver() *testDriver {
 	return t
 }
 
-func (t *testDriver) createOperatorPod(phase corev1.PodPhase) {
+func (t *testDriver) createOperatorPod(ctx context.Context, phase corev1.PodPhase) {
 	_, err := t.clients.ForKubernetes().CoreV1().Pods(testSubmarinerNS).Create(ctx, &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   "operator-pod",
@@ -189,7 +187,7 @@ func (t *testDriver) createOperatorPod(phase corev1.PodPhase) {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (t *testDriver) assertComponentsDeleted() {
+func (t *testDriver) assertComponentsDeleted(ctx context.Context) {
 	// Verify Submariner resource is deleted
 	if t.submariner != nil {
 		err := t.clients.ForGeneral().Get(ctx, controllerclient.ObjectKey{

@@ -19,15 +19,12 @@ limitations under the License.
 package pods_test
 
 import (
-	"context"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
 )
-
-var ctx = context.TODO()
 
 var _ = BeforeSuite(func() {
 	framework.TestContext.OperationTimeout = 1

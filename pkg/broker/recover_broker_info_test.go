@@ -79,7 +79,7 @@ var _ = Describe("RecoverData", func() {
 		brokerRestConfig = &rest.Config{}
 	})
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		_, err := t.kubeClient.CoreV1().Secrets(testBrokerNamespace).Create(ctx, newTokenSecret(), metav1.CreateOptions{})
 		Expect(err).NotTo(HaveOccurred())
 	})

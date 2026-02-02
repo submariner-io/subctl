@@ -19,6 +19,7 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -118,7 +119,7 @@ func addHTTPProxyFlags(flags *pflag.FlagSet, config *httpproxy.Config) {
 }
 
 func setupTestFrameworkBeforeSuite() {
-	clusterInfo, err := cluster.NewInfo(framework.TestContext.ClusterIDs[framework.ClusterA],
+	clusterInfo, err := cluster.NewInfo(context.TODO(), framework.TestContext.ClusterIDs[framework.ClusterA],
 		framework.RestConfigs[framework.ClusterA])
 	exit.OnErrorWithMessage(err, "Error initializing the cluster information")
 

@@ -51,8 +51,8 @@ func testNewInfo() {
 	t := newTestDriver()
 
 	When("the Submariner and ServiceDiscovery resources exist", func() {
-		It("should succeed", func() {
-			info, err := cluster.NewInfo(localCluster, nil)
+		It("should succeed", func(ctx SpecContext) {
+			info, err := cluster.NewInfo(ctx, localCluster, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(info).NotTo(BeNil())
 			Expect(info.Submariner).To(Equal(t.submariner))
@@ -66,8 +66,8 @@ func testNewInfo() {
 			t.serviceDisc = nil
 		})
 
-		It("should succeed", func() {
-			info, err := cluster.NewInfo(localCluster, nil)
+		It("should succeed", func(ctx SpecContext) {
+			info, err := cluster.NewInfo(ctx, localCluster, nil)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(info).NotTo(BeNil())
 			Expect(info.Submariner).To(BeNil())
@@ -81,8 +81,8 @@ func testNewInfo() {
 				fake.FailingGetInterceptor[*v1alpha1.Submariner]()).Build()
 		})
 
-		It("should return an error", func() {
-			_, err := cluster.NewInfo(localCluster, nil)
+		It("should return an error", func(ctx SpecContext) {
+			_, err := cluster.NewInfo(ctx, localCluster, nil)
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -93,8 +93,8 @@ func testNewInfo() {
 				fake.FailingGetInterceptor[*v1alpha1.ServiceDiscovery]()).Build()
 		})
 
-		It("should return an error", func() {
-			_, err := cluster.NewInfo(localCluster, nil)
+		It("should return an error", func(ctx SpecContext) {
+			_, err := cluster.NewInfo(ctx, localCluster, nil)
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -105,8 +105,8 @@ func testNewInfo() {
 				fake.FailingListInterceptor[*submarinerv1.GatewayList]()).Build()
 		})
 
-		It("should return an error", func() {
-			_, err := cluster.NewInfo(localCluster, nil)
+		It("should return an error", func(ctx SpecContext) {
+			_, err := cluster.NewInfo(ctx, localCluster, nil)
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -116,7 +116,7 @@ func testGetGateways() {
 	t := newTestDriver()
 
 	When("gateways exist", func() {
-		BeforeEach(func() {
+		BeforeEach(func(ctx SpecContext) {
 			Expect(t.clients.ForGeneral().Create(ctx, &submarinerv1.Gateway{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "gateway1",
@@ -132,16 +132,16 @@ func testGetGateways() {
 			})).To(Succeed())
 		})
 
-		It("should return all gateways", func() {
-			gateways, err := t.newInfo().GetGateways()
+		It("should return all gateways", func(ctx SpecContext) {
+			gateways, err := t.newInfo(ctx).GetGateways(ctx)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(gateways).To(HaveLen(2))
 		})
 	})
 
 	When("no gateways exist", func() {
-		It("should return an empty list", func() {
-			gateways, err := t.newInfo().GetGateways()
+		It("should return an empty list", func(ctx SpecContext) {
+			gateways, err := t.newInfo(ctx).GetGateways(ctx)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(gateways).To(BeEmpty())
 		})
@@ -152,7 +152,7 @@ func testGetRouteAgents() {
 	t := newTestDriver()
 
 	When("route agents exist", func() {
-		BeforeEach(func() {
+		BeforeEach(func(ctx SpecContext) {
 			Expect(t.clients.ForGeneral().Create(ctx, &submarinerv1.RouteAgent{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "node1",
@@ -168,16 +168,16 @@ func testGetRouteAgents() {
 			})).To(Succeed())
 		})
 
-		It("should return all route agents", func() {
-			routeAgents, err := t.newInfo().GetRouteAgents()
+		It("should return all route agents", func(ctx SpecContext) {
+			routeAgents, err := t.newInfo(ctx).GetRouteAgents()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(routeAgents).To(HaveLen(2))
 		})
 	})
 
 	When("no route agents exist", func() {
-		It("should return empty list", func() {
-			routeAgents, err := t.newInfo().GetRouteAgents()
+		It("should return empty list", func(ctx SpecContext) {
+			routeAgents, err := t.newInfo(ctx).GetRouteAgents()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(routeAgents).To(BeEmpty())
 		})
@@ -189,8 +189,8 @@ func testGetRouteAgents() {
 				fake.FailingListInterceptor[*submarinerv1.RouteAgentList]()).Build()
 		})
 
-		It("should return an error", func() {
-			_, err := t.newInfo().GetRouteAgents()
+		It("should return an error", func(ctx SpecContext) {
+			_, err := t.newInfo(ctx).GetRouteAgents()
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -200,33 +200,33 @@ func testHasSingleNode() {
 	t := newTestDriver()
 
 	When("the cluster has a single node", func() {
-		BeforeEach(func() {
-			t.createNode("node1")
+		BeforeEach(func(ctx SpecContext) {
+			t.createNode(ctx, "node1")
 		})
 
-		It("should return true", func() {
-			hasSingleNode, err := t.newInfo().HasSingleNode()
+		It("should return true", func(ctx SpecContext) {
+			hasSingleNode, err := t.newInfo(ctx).HasSingleNode()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(hasSingleNode).To(BeTrue())
 		})
 	})
 
 	When("cluster has multiple nodes", func() {
-		BeforeEach(func() {
-			t.createNode("node1")
-			t.createNode("node2")
+		BeforeEach(func(ctx SpecContext) {
+			t.createNode(ctx, "node1")
+			t.createNode(ctx, "node2")
 		})
 
-		It("should return false", func() {
-			hasSingleNode, err := t.newInfo().HasSingleNode()
+		It("should return false", func(ctx SpecContext) {
+			hasSingleNode, err := t.newInfo(ctx).HasSingleNode()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(hasSingleNode).To(BeFalse())
 		})
 	})
 
 	When("cluster has no nodes", func() {
-		It("should return false", func() {
-			hasSingleNode, err := t.newInfo().HasSingleNode()
+		It("should return false", func(ctx SpecContext) {
+			hasSingleNode, err := t.newInfo(ctx).HasSingleNode()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(hasSingleNode).To(BeFalse())
 		})
@@ -237,8 +237,8 @@ func testHasSingleNode() {
 			fake.FailOnAction(&t.clients.ForKubernetes().(*k8sfake.Clientset).Fake, "nodes", "list", nil, false)
 		})
 
-		It("should return an error", func() {
-			_, err := t.newInfo().HasSingleNode()
+		It("should return an error", func(ctx SpecContext) {
+			_, err := t.newInfo(ctx).HasSingleNode()
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -248,13 +248,13 @@ func testGetLocalEndpoint() {
 	t := newTestDriver()
 
 	When("a local endpoint exists", func() {
-		BeforeEach(func() {
-			t.createEndpoint(localCluster)
-			t.createEndpoint(remoteCluster)
+		BeforeEach(func(ctx SpecContext) {
+			t.createEndpoint(ctx, localCluster)
+			t.createEndpoint(ctx, remoteCluster)
 		})
 
-		It("should return the local endpoint", func() {
-			endpoint, err := t.newInfo().GetLocalEndpoint()
+		It("should return the local endpoint", func(ctx SpecContext) {
+			endpoint, err := t.newInfo(ctx).GetLocalEndpoint()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(endpoint).NotTo(BeNil())
 			Expect(endpoint.Spec.ClusterID).To(Equal(localCluster))
@@ -262,19 +262,19 @@ func testGetLocalEndpoint() {
 	})
 
 	When("a local endpoint does not exist", func() {
-		BeforeEach(func() {
-			t.createEndpoint(remoteCluster)
+		BeforeEach(func(ctx SpecContext) {
+			t.createEndpoint(ctx, remoteCluster)
 		})
 
-		It("should return not found error", func() {
-			_, err := t.newInfo().GetLocalEndpoint()
+		It("should return not found error", func(ctx SpecContext) {
+			_, err := t.newInfo(ctx).GetLocalEndpoint()
 			Expect(apierrors.IsNotFound(err)).To(BeTrue())
 		})
 	})
 
 	When("no endpoints exist", func() {
-		It("should return not found error", func() {
-			_, err := t.newInfo().GetLocalEndpoint()
+		It("should return not found error", func(ctx SpecContext) {
+			_, err := t.newInfo(ctx).GetLocalEndpoint()
 			Expect(apierrors.IsNotFound(err)).To(BeTrue())
 		})
 	})
@@ -285,8 +285,8 @@ func testGetLocalEndpoint() {
 				fake.FailingListInterceptor[*submarinerv1.EndpointList]()).Build()
 		})
 
-		It("should return an error", func() {
-			_, err := t.newInfo().GetLocalEndpoint()
+		It("should return an error", func(ctx SpecContext) {
+			_, err := t.newInfo(ctx).GetLocalEndpoint()
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -296,25 +296,25 @@ func testGetAnyRemoteEndpoint() {
 	t := newTestDriver()
 
 	When("remote endpoints exist", func() {
-		BeforeEach(func() {
-			t.createEndpoint(localCluster)
-			t.createEndpoint(remoteCluster)
+		BeforeEach(func(ctx SpecContext) {
+			t.createEndpoint(ctx, localCluster)
+			t.createEndpoint(ctx, remoteCluster)
 		})
 
-		It("should return a remote endpoint", func() {
-			endpoint, err := t.newInfo().GetAnyRemoteEndpoint()
+		It("should return a remote endpoint", func(ctx SpecContext) {
+			endpoint, err := t.newInfo(ctx).GetAnyRemoteEndpoint()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(endpoint.Spec.ClusterID).To(Equal(remoteCluster))
 		})
 	})
 
 	When("no remote endpoints exist", func() {
-		BeforeEach(func() {
-			t.createEndpoint(localCluster)
+		BeforeEach(func(ctx SpecContext) {
+			t.createEndpoint(ctx, localCluster)
 		})
 
-		It("should return not found error", func() {
-			_, err := t.newInfo().GetAnyRemoteEndpoint()
+		It("should return not found error", func(ctx SpecContext) {
+			_, err := t.newInfo(ctx).GetAnyRemoteEndpoint()
 			Expect(apierrors.IsNotFound(err)).To(BeTrue())
 		})
 	})
@@ -325,8 +325,8 @@ func testGetAnyRemoteEndpoint() {
 				fake.FailingListInterceptor[*submarinerv1.EndpointList]()).Build()
 		})
 
-		It("should return an error", func() {
-			_, err := t.newInfo().GetAnyRemoteEndpoint()
+		It("should return an error", func(ctx SpecContext) {
+			_, err := t.newInfo(ctx).GetAnyRemoteEndpoint()
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -343,8 +343,8 @@ func testGetImageRepositoryInfo() {
 			}
 		})
 
-		It("should return repository info from the Submariner spec", func() {
-			repoInfo, err := t.newInfo().GetImageRepositoryInfo()
+		It("should return repository info from the Submariner spec", func(ctx SpecContext) {
+			repoInfo, err := t.newInfo(ctx).GetImageRepositoryInfo()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(repoInfo).NotTo(BeNil())
 			Expect(repoInfo.Name).To(Equal(t.submariner.Spec.Repository))
@@ -352,9 +352,9 @@ func testGetImageRepositoryInfo() {
 			Expect(repoInfo.Overrides).To(Equal(t.submariner.Spec.ImageOverrides))
 		})
 
-		It("should merge local overrides with the Submariner spec overrides", func() {
+		It("should merge local overrides with the Submariner spec overrides", func(ctx SpecContext) {
 			overrideImage := "custom-routeagent:2.0.0"
-			repoInfo, err := t.newInfo().GetImageRepositoryInfo(names.RouteAgentComponent + "=" + overrideImage)
+			repoInfo, err := t.newInfo(ctx).GetImageRepositoryInfo(names.RouteAgentComponent + "=" + overrideImage)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(repoInfo).NotTo(BeNil())
 			Expect(repoInfo.Overrides).To(HaveKeyWithValue(names.GatewayComponent,
@@ -362,8 +362,8 @@ func testGetImageRepositoryInfo() {
 			Expect(repoInfo.Overrides).To(HaveKeyWithValue(names.RouteAgentComponent, overrideImage))
 		})
 
-		It("should return an error for an invalid local override format", func() {
-			_, err := t.newInfo().GetImageRepositoryInfo("invalid-format")
+		It("should return an error for an invalid local override format", func(ctx SpecContext) {
+			_, err := t.newInfo(ctx).GetImageRepositoryInfo("invalid-format")
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -373,8 +373,8 @@ func testGetImageRepositoryInfo() {
 			t.submariner = nil
 		})
 
-		It("should return default repository info", func() {
-			repoInfo, err := t.newInfo().GetImageRepositoryInfo()
+		It("should return default repository info", func(ctx SpecContext) {
+			repoInfo, err := t.newInfo(ctx).GetImageRepositoryInfo()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(repoInfo).NotTo(BeNil())
 			Expect(repoInfo.Name).To(Equal(v1alpha1.DefaultRepo))
@@ -382,9 +382,9 @@ func testGetImageRepositoryInfo() {
 			Expect(repoInfo.Overrides).To(BeEmpty())
 		})
 
-		It("should return local overrides", func() {
+		It("should return local overrides", func(ctx SpecContext) {
 			overrideImage := "custom-gateway:latest"
-			repoInfo, err := t.newInfo().GetImageRepositoryInfo(names.GatewayComponent + "=" + overrideImage)
+			repoInfo, err := t.newInfo(ctx).GetImageRepositoryInfo(names.GatewayComponent + "=" + overrideImage)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(repoInfo).NotTo(BeNil())
 			Expect(repoInfo.Name).To(Equal(v1alpha1.DefaultRepo))
@@ -392,8 +392,8 @@ func testGetImageRepositoryInfo() {
 			Expect(repoInfo.Overrides).To(HaveKeyWithValue(names.GatewayComponent, overrideImage))
 		})
 
-		It("should return an error for invalid local override format", func() {
-			_, err := t.newInfo().GetImageRepositoryInfo("invalid-format")
+		It("should return an error for invalid local override format", func(ctx SpecContext) {
+			_, err := t.newInfo(ctx).GetImageRepositoryInfo("invalid-format")
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -403,8 +403,8 @@ func testOperatorNamespace() {
 	t := newTestDriver()
 
 	When("the Submariner resource exists", func() {
-		It("should return its namespace", func() {
-			Expect(t.newInfo().OperatorNamespace()).To(Equal(t.submariner.Namespace))
+		It("should return its namespace", func(ctx SpecContext) {
+			Expect(t.newInfo(ctx).OperatorNamespace()).To(Equal(t.submariner.Namespace))
 		})
 	})
 
@@ -413,8 +413,8 @@ func testOperatorNamespace() {
 			t.submariner = nil
 		})
 
-		It("should return its namespace", func() {
-			Expect(t.newInfo().OperatorNamespace()).To(Equal(t.serviceDisc.Namespace))
+		It("should return its namespace", func(ctx SpecContext) {
+			Expect(t.newInfo(ctx).OperatorNamespace()).To(Equal(t.serviceDisc.Namespace))
 		})
 	})
 
@@ -424,8 +424,8 @@ func testOperatorNamespace() {
 			t.serviceDisc = nil
 		})
 
-		It("should return default operator namespace", func() {
-			Expect(t.newInfo().OperatorNamespace()).To(Equal(constants.OperatorNamespace))
+		It("should return default operator namespace", func(ctx SpecContext) {
+			Expect(t.newInfo(ctx).OperatorNamespace()).To(Equal(constants.OperatorNamespace))
 		})
 	})
 }
@@ -434,7 +434,7 @@ func testGetClusters() {
 	t := newTestDriver()
 
 	When("clusters exist", func() {
-		BeforeEach(func() {
+		BeforeEach(func(ctx SpecContext) {
 			Expect(t.clients.ForGeneral().Create(ctx, &submarinerv1.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "cluster1",
@@ -450,16 +450,16 @@ func testGetClusters() {
 			})).To(Succeed())
 		})
 
-		It("should return all clusters", func() {
-			clusters, err := t.newInfo().GetClusters(constants.OperatorNamespace)
+		It("should return all clusters", func(ctx SpecContext) {
+			clusters, err := t.newInfo(ctx).GetClusters(constants.OperatorNamespace)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(clusters).To(HaveLen(2))
 		})
 	})
 
 	When("no clusters exist", func() {
-		It("should return an empty list", func() {
-			clusters, err := t.newInfo().GetClusters(constants.OperatorNamespace)
+		It("should return an empty list", func(ctx SpecContext) {
+			clusters, err := t.newInfo(ctx).GetClusters(constants.OperatorNamespace)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(clusters).To(BeEmpty())
 		})
@@ -471,8 +471,8 @@ func testGetClusters() {
 				fake.FailingListInterceptor[*submarinerv1.ClusterList]()).Build()
 		})
 
-		It("should return an error", func() {
-			_, err := t.newInfo().GetClusters(constants.OperatorNamespace)
+		It("should return an error", func(ctx SpecContext) {
+			_, err := t.newInfo(ctx).GetClusters(constants.OperatorNamespace)
 			Expect(err).To(HaveOccurred())
 		})
 	})

@@ -39,8 +39,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 )
 
-var ctx = context.TODO()
-
 var _ = BeforeSuite(func() {
 	Expect(submariner.AddToScheme(scheme.Scheme)).To(Succeed())
 })
@@ -73,7 +71,7 @@ var _ = Describe("Ensure", func() {
 	})
 
 	When("the Broker doesn't exist", func() {
-		It("should create it", func() {
+		It("should create it", func(ctx SpecContext) {
 			Expect(brokercr.Ensure(ctx, client, constants.DefaultBrokerNamespace, brokerSpec)).To(Succeed())
 
 			broker := &submariner.Broker{}
@@ -97,7 +95,7 @@ var _ = Describe("Ensure", func() {
 			})
 		})
 
-		JustBeforeEach(func() {
+		JustBeforeEach(func(ctx SpecContext) {
 			existingBroker := &submariner.Broker{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      brokerKey.Name,
@@ -114,7 +112,7 @@ var _ = Describe("Ensure", func() {
 			existingUID = existingBroker.UID
 		})
 
-		It("should replace it with a new resource", func() {
+		It("should replace it with a new resource", func(ctx SpecContext) {
 			Expect(brokercr.Ensure(ctx, client, constants.DefaultBrokerNamespace, brokerSpec)).To(Succeed())
 
 			broker := &submariner.Broker{}
@@ -133,7 +131,7 @@ var _ = Describe("Ensure", func() {
 			})
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			Expect(brokercr.Ensure(ctx, client, constants.DefaultBrokerNamespace, brokerSpec)).NotTo(Succeed())
 		})
 	})
