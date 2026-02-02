@@ -35,7 +35,7 @@ func IsTerminal(w io.Writer) bool {
 
 // IsSmartTerminal returns true if the writer w is a terminal AND
 // we think that the terminal is smart enough to use VT escape codes etc.
-func IsSmartTerminal(w io.Writer) bool {
+var IsSmartTerminal = func(w io.Writer) bool {
 	if !IsTerminal(w) {
 		return false
 	}

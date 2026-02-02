@@ -55,7 +55,10 @@ type status struct {
 }
 
 func NewReporter() reporter.Interface {
-	var writer io.Writer = os.Stderr
+	return NewReporterWithWriter(os.Stderr)
+}
+
+func NewReporterWithWriter(writer io.Writer) reporter.Interface {
 	if env.IsSmartTerminal(writer) {
 		writer = NewSpinner(writer)
 	}
