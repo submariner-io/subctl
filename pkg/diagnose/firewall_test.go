@@ -140,13 +140,13 @@ func newFirewallTestDriver() *firewallTestDriver {
 		}
 	})
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		var err error
 
-		t.localClusterInfo, err = cluster.NewInfo(localCluster, &rest.Config{})
+		t.localClusterInfo, err = cluster.NewInfo(ctx, localCluster, &rest.Config{})
 		Expect(err).NotTo(HaveOccurred())
 
-		t.remoteClusterInfo, err = cluster.NewInfo(remoteCluster, &rest.Config{})
+		t.remoteClusterInfo, err = cluster.NewInfo(ctx, remoteCluster, &rest.Config{})
 		Expect(err).NotTo(HaveOccurred())
 
 		t.remoteClusterInfo.Submariner.Status.ClusterID = remoteCluster

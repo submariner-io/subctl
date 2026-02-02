@@ -138,7 +138,7 @@ func getActiveGatewayNodeName(clusterInfo *cluster.Info, status reporter.Interfa
 }
 
 func getGatewayIP(clusterInfo *cluster.Info, localClusterID string) (string, error) {
-	gateways, err := clusterInfo.GetGateways()
+	gateways, err := clusterInfo.GetGateways(context.TODO())
 	if err != nil {
 		return "", errors.Wrapf(err, "Error retrieving gateways from cluster %q", clusterInfo.Name)
 	}

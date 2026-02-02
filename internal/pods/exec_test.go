@@ -86,7 +86,7 @@ var _ = Describe("ExecWithOptions", func() {
 	})
 
 	Context("with defaults", func() {
-		It("should return stdout and stderr with whitespace trimmed", func() {
+		It("should return stdout and stderr with whitespace trimmed", func(ctx SpecContext) {
 			stdout, stderr, err := pods.ExecWithOptions(ctx, config, &execOptions)
 
 			Expect(err).NotTo(HaveOccurred())
@@ -101,7 +101,7 @@ var _ = Describe("ExecWithOptions", func() {
 			execOptions.PreserveWhitespace = true
 		})
 
-		It("should preserve whitespace in stdout and stderr", func() {
+		It("should preserve whitespace in stdout and stderr", func(ctx SpecContext) {
 			stdout, stderr, err := pods.ExecWithOptions(ctx, config, &execOptions)
 
 			Expect(err).NotTo(HaveOccurred())
@@ -116,7 +116,7 @@ var _ = Describe("ExecWithOptions", func() {
 			execOptions.CaptureStderr = false
 		})
 
-		It("should set the request query parameters appropriately", func() {
+		It("should set the request query parameters appropriately", func(ctx SpecContext) {
 			_, _, err := pods.ExecWithOptions(ctx, config, &execOptions)
 
 			Expect(err).NotTo(HaveOccurred())
@@ -130,7 +130,7 @@ var _ = Describe("ExecWithOptions", func() {
 			fake.SetSPDYExecutor("", "", errors.New("executor error"))
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			_, _, err := pods.ExecWithOptions(ctx, config, &execOptions)
 			Expect(err).To(HaveOccurred())
 		})

@@ -21,6 +21,7 @@ limitations under the License.
 package subctl_test
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -47,16 +48,16 @@ import (
 var _ = Describe("Upgrade", func() {
 	t := newUpgradeTestDriver()
 
-	It("should upgrade installed components", func() {
+	It("should upgrade installed components", func(ctx SpecContext) {
 		t.assertCmdSuccess()
-		Expect(t.getSubmariner().UID).NotTo(Equal(t.submariner.UID))
-		t.assertOperatorDeploymentUpgraded(version.Version)
+		Expect(t.getSubmariner(ctx).UID).NotTo(Equal(t.submariner.UID))
+		t.assertOperatorDeploymentUpgraded(ctx, version.Version)
 	})
 
 	When("the broker secret is stale", func() {
 		var staleSecret *corev1.Secret
 
-		BeforeEach(func() {
+		BeforeEach(func(ctx SpecContext) {
 			secretName := "broker-secret-stale"
 
 			var err error
@@ -77,7 +78,7 @@ var _ = Describe("Upgrade", func() {
 			t.submarinerSpec.BrokerK8sSecret = staleSecret.Name
 		})
 
-		It("should migrate it", func() {
+		It("should migrate it", func(ctx SpecContext) {
 			t.assertCmdSuccess()
 
 			migrated, err := t.fakeProducer.ForKubernetes().CoreV1().Secrets(constants.OperatorNamespace).Get(
@@ -105,10 +106,10 @@ var _ = Describe("Upgrade", func() {
 			t.serviceDiscoverySpec = &v1alpha1.ServiceDiscoverySpec{}
 		})
 
-		It("should upgrade it", func() {
+		It("should upgrade it", func(ctx SpecContext) {
 			t.assertCmdSuccess()
-			Expect(t.getServiceDiscovery().UID).NotTo(Equal(t.serviceDiscovery.UID))
-			t.assertOperatorDeploymentUpgraded(version.Version)
+			Expect(t.getServiceDiscovery(ctx).UID).NotTo(Equal(t.serviceDiscovery.UID))
+			t.assertOperatorDeploymentUpgraded(ctx, version.Version)
 		})
 	})
 
@@ -117,10 +118,10 @@ var _ = Describe("Upgrade", func() {
 			t.brokerSpec = &v1alpha1.BrokerSpec{}
 		})
 
-		It("should upgrade it", func() {
+		It("should upgrade it", func(ctx SpecContext) {
 			t.assertCmdSuccess()
-			Expect(t.getBroker().UID).NotTo(Equal(t.broker.UID))
-			t.assertOperatorDeploymentUpgraded(version.Version)
+			Expect(t.getBroker(ctx).UID).NotTo(Equal(t.broker.UID))
+			t.assertOperatorDeploymentUpgraded(ctx, version.Version)
 		})
 	})
 
@@ -156,10 +157,10 @@ var _ = Describe("Upgrade", func() {
 				t.args = []string{"--to-version=" + toVersion}
 			})
 
-			It("should upgrade installed components but not subctl", func() {
+			It("should upgrade installed components but not subctl", func(ctx SpecContext) {
 				t.assertCmdSuccess()
 				t.cmdExecutor.EnsureNoCommand(nil)
-				t.assertOperatorDeploymentUpgraded(toVersion)
+				t.assertOperatorDeploymentUpgraded(ctx, toVersion)
 			})
 		})
 	})
@@ -236,7 +237,7 @@ func newUpgradeTestDriver() *upgradeTestDriver {
 		}
 	})
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		server := httptest.NewServer(t.httpHandler)
 
 		DeferCleanup(func() {
@@ -255,7 +256,7 @@ func newUpgradeTestDriver() *upgradeTestDriver {
 	return t
 }
 
-func (t *upgradeTestDriver) assertOperatorDeploymentUpgraded(toVersion string) {
+func (t *upgradeTestDriver) assertOperatorDeploymentUpgraded(ctx context.Context, toVersion string) {
 	deployment, err := t.fakeProducer.ForKubernetes().AppsV1().Deployments(constants.OperatorNamespace).Get(
 		ctx, names.OperatorComponent, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())

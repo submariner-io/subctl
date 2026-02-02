@@ -19,6 +19,8 @@ limitations under the License.
 package diagnose_test
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/submariner-io/admiral/pkg/fake"
 	"github.com/submariner-io/subctl/pkg/diagnose"
@@ -105,5 +107,5 @@ type kubeProxyTestDriver struct {
 }
 
 func (t *kubeProxyTestDriver) run() error {
-	return diagnose.KubeProxyMode(newClusterInfo(), "", []string{}, t.statusTracker)
+	return diagnose.KubeProxyMode(newClusterInfo(context.TODO()), "", []string{}, t.statusTracker)
 }

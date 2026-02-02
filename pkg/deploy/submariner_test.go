@@ -78,13 +78,13 @@ func testSubmariner() {
 		}
 	})
 
-	runDepoy := func() error {
+	runDepoy := func(ctx context.Context) error {
 		return deploy.Submariner(ctx, t.fakeProducer, options, t.brokerInfo, t.brokerSecret, netconfig,
 			t.clustersetConfig, t.repositoryInfo, t.statusReporter)
 	}
 
-	expectDeploySuccess := func() *operatorv1alpha1.SubmarinerSpec {
-		Expect(runDepoy()).To(Succeed())
+	expectDeploySuccess := func(ctx context.Context) *operatorv1alpha1.SubmarinerSpec {
+		Expect(runDepoy(ctx)).To(Succeed())
 
 		submarinerCR := &operatorv1alpha1.Submariner{}
 		Expect(t.fakeProducer.ForGeneral().Get(ctx, ctrlClient.ObjectKey{
@@ -98,13 +98,13 @@ func testSubmariner() {
 		return &submarinerCR.Spec
 	}
 
-	expectDeployFailure := func() {
-		Expect(runDepoy()).NotTo(Succeed())
+	expectDeployFailure := func(ctx context.Context) {
+		Expect(runDepoy(ctx)).NotTo(Succeed())
 		t.statusReporter.AssertHasFailure()
 	}
 
-	It("should successfully deploy the Submariner resource", func() {
-		spec := expectDeploySuccess()
+	It("should successfully deploy the Submariner resource", func(ctx SpecContext) {
+		spec := expectDeploySuccess(ctx)
 		Expect(spec.Repository).To(Equal(t.repositoryInfo.Name))
 		Expect(spec.Version).To(Equal(t.repositoryInfo.Version))
 		Expect(spec.CeIPSecNATTPort).To(Equal(options.NATTPort))
@@ -143,8 +143,8 @@ func testSubmariner() {
 			netconfig.GlobalCIDR = "242.0.0.0/8"
 		})
 
-		It("should set the GlobalCIDR field", func() {
-			Expect(expectDeploySuccess().GlobalCIDR).To(Equal(netconfig.GlobalCIDR))
+		It("should set the GlobalCIDR field", func(ctx SpecContext) {
+			Expect(expectDeploySuccess(ctx).GlobalCIDR).To(Equal(netconfig.GlobalCIDR))
 		})
 	})
 
@@ -153,8 +153,8 @@ func testSubmariner() {
 			options.CoreDNSCustomConfigMap = "test-namespace/test-configmap"
 		})
 
-		It("should set the CoreDNSCustomConfig field", func() {
-			Expect(expectDeploySuccess().CoreDNSCustomConfig).To(Equal(&operatorv1alpha1.CoreDNSCustomConfig{
+		It("should set the CoreDNSCustomConfig field", func(ctx SpecContext) {
+			Expect(expectDeploySuccess(ctx).CoreDNSCustomConfig).To(Equal(&operatorv1alpha1.CoreDNSCustomConfig{
 				ConfigMapName: "test-configmap",
 				Namespace:     "test-namespace",
 			}))
@@ -166,8 +166,8 @@ func testSubmariner() {
 			options.CustomDomains = []string{"custom.domain"}
 		})
 
-		It("should not set the CustomDomains field", func() {
-			Expect(expectDeploySuccess().CustomDomains).To(Equal(options.CustomDomains))
+		It("should not set the CustomDomains field", func(ctx SpecContext) {
+			Expect(expectDeploySuccess(ctx).CustomDomains).To(Equal(options.CustomDomains))
 		})
 	})
 
@@ -176,8 +176,8 @@ func testSubmariner() {
 			t.brokerInfo.Components = []string{component.Connectivity}
 		})
 
-		It("should set ServiceDiscoveryEnabled to false", func() {
-			Expect(expectDeploySuccess().ServiceDiscoveryEnabled).To(BeFalse())
+		It("should set ServiceDiscoveryEnabled to false", func(ctx SpecContext) {
+			Expect(expectDeploySuccess(ctx).ServiceDiscoveryEnabled).To(BeFalse())
 		})
 	})
 
@@ -186,8 +186,8 @@ func testSubmariner() {
 			fake.FailOnAction(&t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake, "secrets", "create", nil, false)
 		})
 
-		It("should return an error", func() {
-			expectDeployFailure()
+		It("should return an error", func(ctx SpecContext) {
+			expectDeployFailure(ctx)
 		})
 	})
 
@@ -200,8 +200,8 @@ func testSubmariner() {
 			}).Build()
 		})
 
-		It("should return an error", func() {
-			expectDeployFailure()
+		It("should return an error", func(ctx SpecContext) {
+			expectDeployFailure(ctx)
 		})
 	})
 }

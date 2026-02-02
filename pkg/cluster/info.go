@@ -49,7 +49,7 @@ type Info struct {
 	nodeCount        int
 }
 
-func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
+func NewInfo(ctx context.Context, clusterName string, config *rest.Config) (*Info, error) {
 	info := &Info{
 		Name:       clusterName,
 		RestConfig: config,
@@ -65,7 +65,7 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 
 	submariner := &v1alpha1.Submariner{}
 
-	err = info.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
+	err = info.ClientProducer.ForGeneral().Get(ctx, controllerClient.ObjectKey{
 		Namespace: constants.OperatorNamespace,
 		Name:      opnames.SubmarinerCrName,
 	}, submariner)
@@ -77,7 +77,7 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 
 	serviceDiscovery := &v1alpha1.ServiceDiscovery{}
 
-	err = info.ClientProducer.ForGeneral().Get(context.TODO(), controllerClient.ObjectKey{
+	err = info.ClientProducer.ForGeneral().Get(ctx, controllerClient.ObjectKey{
 		Namespace: constants.OperatorNamespace,
 		Name:      opnames.ServiceDiscoveryCrName,
 	}, serviceDiscovery)
@@ -87,7 +87,7 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 		return nil, errors.Wrap(err, "error retrieving ServiceDiscovery")
 	}
 
-	_, err = info.GetGateways()
+	_, err = info.GetGateways(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "error retrieving Gateways")
 	}
@@ -95,10 +95,10 @@ func NewInfo(clusterName string, config *rest.Config) (*Info, error) {
 	return info, nil
 }
 
-func (c *Info) GetGateways() ([]submarinerv1.Gateway, error) {
+func (c *Info) GetGateways(ctx context.Context) ([]submarinerv1.Gateway, error) {
 	gateways := &submarinerv1.GatewayList{}
 
-	err := c.ClientProducer.ForGeneral().List(context.TODO(), gateways, controllerClient.InNamespace(constants.OperatorNamespace))
+	err := c.ClientProducer.ForGeneral().List(ctx, gateways, controllerClient.InNamespace(constants.OperatorNamespace))
 	if err != nil {
 		if resource.IsNotFoundErr(err) {
 			return []submarinerv1.Gateway{}, nil

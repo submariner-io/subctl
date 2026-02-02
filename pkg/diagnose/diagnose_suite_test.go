@@ -304,8 +304,8 @@ func (t *testDriver) testImageRepositoryInfoFailure(before func(), run func() er
 	})
 }
 
-func newClusterInfo() *cluster.Info {
-	info, err := cluster.NewInfo(localCluster, &rest.Config{})
+func newClusterInfo(ctx context.Context) *cluster.Info {
+	info, err := cluster.NewInfo(ctx, localCluster, &rest.Config{})
 	Expect(err).NotTo(HaveOccurred())
 
 	return info

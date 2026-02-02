@@ -59,9 +59,9 @@ func testRunJoinCommand() {
 	})
 
 	When("with no user input", func() {
-		BeforeEach(func() {
-			t.setupNetworkDiscovery(clusterCIDR, serviceCIDR)
-			t.createGatewayNode()
+		BeforeEach(func(ctx SpecContext) {
+			t.setupNetworkDiscovery(ctx, clusterCIDR, serviceCIDR)
+			t.createGatewayNode(ctx)
 		})
 
 		It("should invoke join with the defaults", func() {
@@ -113,9 +113,9 @@ func testRunJoinCommand() {
 	When("various flags are specified on the command line", func() {
 		otherBrokerURL := "http://other-broker"
 
-		BeforeEach(func() {
-			t.setupNetworkDiscovery(clusterCIDR, serviceCIDR)
-			t.createGatewayNode()
+		BeforeEach(func(ctx SpecContext) {
+			t.setupNetworkDiscovery(ctx, clusterCIDR, serviceCIDR)
+			t.createGatewayNode(ctx)
 
 			t.args = append(t.args, "--preferred-server", "--force-udp-encaps", "--natt=false",
 				"--ignore-requirements", "--globalnet=false", "--ipsec-debug", "--pod-debug", "--operator-debug",
@@ -180,8 +180,8 @@ func testRunJoinCommand() {
 	})
 
 	When("the network details aren't discovered", func() {
-		BeforeEach(func() {
-			t.createGatewayNode()
+		BeforeEach(func(ctx SpecContext) {
+			t.createGatewayNode(ctx)
 			setupPrompts(map[string]any{"Pod CIDR": clusterCIDR, "Service CIDR": serviceCIDR})
 		})
 
@@ -201,8 +201,8 @@ func testRunJoinCommand() {
 	})
 
 	When("the cluster and service CIDRs are specified on the command line", func() {
-		BeforeEach(func() {
-			t.createGatewayNode()
+		BeforeEach(func(ctx SpecContext) {
+			t.createGatewayNode(ctx)
 
 			t.args = append(t.args, "--clustercidr="+clusterCIDR, "--servicecidr="+serviceCIDR)
 
@@ -223,8 +223,8 @@ func testRunJoinCommand() {
 		})
 
 		Context("and they match the discovered network details", func() {
-			BeforeEach(func() {
-				t.setupNetworkDiscovery(clusterCIDR, serviceCIDR)
+			BeforeEach(func(ctx SpecContext) {
+				t.setupNetworkDiscovery(ctx, clusterCIDR, serviceCIDR)
 			})
 
 			It("should invoke join with the specified values", func() {
@@ -233,8 +233,8 @@ func testRunJoinCommand() {
 		})
 
 		Context("and they don't match the discovered network details", func() {
-			BeforeEach(func() {
-				t.setupNetworkDiscovery("10.20.30.40/32", "11.20.30.40/32")
+			BeforeEach(func(ctx SpecContext) {
+				t.setupNetworkDiscovery(ctx, "10.20.30.40/32", "11.20.30.40/32")
 			})
 
 			It("should emit a warning and invoke join with the specified values", func() {
@@ -249,9 +249,9 @@ func testRunJoinCommand() {
 	When("the cluster ID is specified on the command line", func() {
 		var clusterID string
 
-		BeforeEach(func() {
-			t.createGatewayNode()
-			t.setupNetworkDiscovery(clusterCIDR, serviceCIDR)
+		BeforeEach(func(ctx SpecContext) {
+			t.createGatewayNode(ctx)
+			t.setupNetworkDiscovery(ctx, clusterCIDR, serviceCIDR)
 
 			clusterID = "north-america"
 			t.args = append(t.args, "--clusterid="+clusterID)
@@ -287,14 +287,14 @@ func testRunJoinCommand() {
 	})
 
 	When("there's one worker node", func() {
-		BeforeEach(func() {
-			t.setupNetworkDiscovery(clusterCIDR, serviceCIDR)
-			t.createNodes("worker1")
+		BeforeEach(func(ctx SpecContext) {
+			t.setupNetworkDiscovery(ctx, clusterCIDR, serviceCIDR)
+			t.createNodes(ctx, "worker1")
 		})
 
-		It("should label it as a gateway", func() {
+		It("should label it as a gateway", func(ctx SpecContext) {
 			t.assertCmdSuccess()
-			Expect(t.getNode("worker1").Labels).To(HaveKeyWithValue(constants.SubmarinerGatewayLabel, constants.TrueLabel))
+			Expect(t.getNode(ctx, "worker1").Labels).To(HaveKeyWithValue(constants.SubmarinerGatewayLabel, constants.TrueLabel))
 		})
 
 		Context("and the label-gateway flag is specified as false on the command line", func() {
@@ -302,9 +302,9 @@ func testRunJoinCommand() {
 				t.args = append(t.args, "--label-gateway=false")
 			})
 
-			It("should not label it as a gateway", func() {
+			It("should not label it as a gateway", func(ctx SpecContext) {
 				t.assertCmdSuccess()
-				Expect(t.getNode("worker1").Labels).NotTo(HaveKeyWithValue(constants.SubmarinerGatewayLabel, constants.TrueLabel))
+				Expect(t.getNode(ctx, "worker1").Labels).NotTo(HaveKeyWithValue(constants.SubmarinerGatewayLabel, constants.TrueLabel))
 			})
 		})
 	})
@@ -312,21 +312,21 @@ func testRunJoinCommand() {
 	When("there's multiple worker nodes", func() {
 		selectedNode := "worker2"
 
-		BeforeEach(func() {
-			t.setupNetworkDiscovery(clusterCIDR, serviceCIDR)
-			t.createNodes("worker1", selectedNode)
+		BeforeEach(func(ctx SpecContext) {
+			t.setupNetworkDiscovery(ctx, clusterCIDR, serviceCIDR)
+			t.createNodes(ctx, "worker1", selectedNode)
 			setupPrompts(map[string]any{"gateway": selectedNode})
 		})
 
-		It("should prompt for which node to label as a gateway", func() {
+		It("should prompt for which node to label as a gateway", func(ctx SpecContext) {
 			t.assertCmdSuccess()
-			Expect(t.getNode(selectedNode).Labels).To(HaveKeyWithValue(constants.SubmarinerGatewayLabel, constants.TrueLabel))
+			Expect(t.getNode(ctx, selectedNode).Labels).To(HaveKeyWithValue(constants.SubmarinerGatewayLabel, constants.TrueLabel))
 		})
 	})
 
 	When("there's no worker nodes", func() {
-		BeforeEach(func() {
-			t.setupNetworkDiscovery(clusterCIDR, serviceCIDR)
+		BeforeEach(func(ctx SpecContext) {
+			t.setupNetworkDiscovery(ctx, clusterCIDR, serviceCIDR)
 		})
 
 		It("should emit a warning", func() {

@@ -19,6 +19,7 @@ limitations under the License.
 package restconfig
 
 import (
+	"context"
 	goerrors "errors"
 	"fmt"
 	"strings"
@@ -236,7 +237,7 @@ func createClusterInfo(clientConfig clientcmd.ClientConfig, overrides *clientcmd
 		return nil, err
 	}
 
-	return cluster.NewInfo(restConfig.ClusterName, restConfig.Config) //nolint:wrapcheck // No need to wrap
+	return cluster.NewInfo(context.TODO(), restConfig.ClusterName, restConfig.Config) //nolint:wrapcheck // No need to wrap
 }
 
 func (rcp *Producer) runInCluster(function PerContextFn, status reporter.Interface) error {
@@ -246,7 +247,7 @@ func (rcp *Producer) runInCluster(function PerContextFn, status reporter.Interfa
 	}
 
 	// In-cluster configurations don't give a cluster name, use "in-cluster"
-	clusterInfo, err := cluster.NewInfo(InCluster, restConfig)
+	clusterInfo, err := cluster.NewInfo(context.TODO(), InCluster, restConfig)
 	if err != nil {
 		return status.Error(err, "error building the cluster.Info for the in-cluster configuration")
 	}

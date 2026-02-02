@@ -19,6 +19,8 @@ limitations under the License.
 package diagnose_test
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/submariner-io/subctl/pkg/diagnose"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
@@ -28,7 +30,7 @@ var _ = Describe("CheckGatewayConnections", func() {
 	t := newTestDriver()
 
 	run := func() error {
-		return diagnose.CheckGatewayConnections(newClusterInfo(), t.statusTracker)
+		return diagnose.CheckGatewayConnections(newClusterInfo(context.TODO()), t.statusTracker)
 	}
 
 	When("all connections are established", func() {
@@ -95,7 +97,7 @@ var _ = Describe("CheckRouteAgentConnections", func() {
 	t := newTestDriver()
 
 	run := func() error {
-		return diagnose.CheckRouteAgentConnections(newClusterInfo(), t.statusTracker)
+		return diagnose.CheckRouteAgentConnections(newClusterInfo(context.TODO()), t.statusTracker)
 	}
 
 	When("all connections are established", func() {
@@ -171,7 +173,7 @@ var _ = Describe("Connections", func() {
 	t := newTestDriver()
 
 	run := func() error {
-		return diagnose.Connections(newClusterInfo(), "", t.statusTracker)
+		return diagnose.Connections(newClusterInfo(context.TODO()), "", t.statusTracker)
 	}
 
 	When("all connections are established", func() {

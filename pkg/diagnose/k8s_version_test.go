@@ -19,6 +19,7 @@ limitations under the License.
 package diagnose_test
 
 import (
+	"context"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -82,7 +83,7 @@ func newK8sVersionTestDriver() *k8sVersionTestDriver {
 }
 
 func (t *k8sVersionTestDriver) run() error {
-	return diagnose.K8sVersion(newClusterInfo(), "", t.statusTracker)
+	return diagnose.K8sVersion(newClusterInfo(context.TODO()), "", t.statusTracker)
 }
 
 func (t *k8sVersionTestDriver) setK8sVersion(minor string) {

@@ -87,9 +87,9 @@ var _ = Describe("CNIConfig", func() {
 			t.submariner = nil
 		})
 
-		It("should panic", func() {
+		It("should panic", func(ctx SpecContext) {
 			Expect(func() {
-				_ = diagnose.CNIConfig(newClusterInfo(), "", t.statusTracker)
+				_ = diagnose.CNIConfig(newClusterInfo(ctx), "", t.statusTracker)
 			}).To(Panic())
 		})
 	})
@@ -321,5 +321,5 @@ func (t *cniTestDriver) createOVNPod(version, containerName string) {
 }
 
 func (t *cniTestDriver) run() error {
-	return diagnose.CNIConfig(newClusterInfo(), "", t.statusTracker)
+	return diagnose.CNIConfig(newClusterInfo(context.TODO()), "", t.statusTracker)
 }

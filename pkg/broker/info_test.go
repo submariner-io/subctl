@@ -19,6 +19,7 @@ limitations under the License.
 package broker_test
 
 import (
+	"context"
 	"crypto/x509"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -70,7 +71,7 @@ func testGetBrokerAdministratorConfig() {
 		}
 	})
 
-	assertGetBrokerAdministratorConfigSuccess := func(insecure bool) *rest.Config {
+	assertGetBrokerAdministratorConfigSuccess := func(ctx context.Context, insecure bool) *rest.Config {
 		config, err := info.GetBrokerAdministratorConfig(ctx, insecure)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(config).NotTo(BeNil())
@@ -82,16 +83,16 @@ func testGetBrokerAdministratorConfig() {
 	}
 
 	When("insecure is true", func() {
-		It("should return a config with insecure TLS", func() {
-			config := assertGetBrokerAdministratorConfigSuccess(true)
+		It("should return a config with insecure TLS", func(ctx SpecContext) {
+			config := assertGetBrokerAdministratorConfigSuccess(ctx, true)
 			Expect(config.TLSClientConfig.CAData).To(BeNil())
 		})
 	})
 
 	When("insecure is false", func() {
 		Context("and the connection succeeds without CA data", func() {
-			It("should return a config without CA data", func() {
-				config := assertGetBrokerAdministratorConfigSuccess(false)
+			It("should return a config without CA data", func(ctx SpecContext) {
+				config := assertGetBrokerAdministratorConfigSuccess(ctx, false)
 				Expect(config.TLSClientConfig.CAData).To(BeNil())
 			})
 		})
@@ -109,8 +110,8 @@ func testGetBrokerAdministratorConfig() {
 				}
 			})
 
-			It("should retry with CA data", func() {
-				config := assertGetBrokerAdministratorConfigSuccess(false)
+			It("should retry with CA data", func(ctx SpecContext) {
+				config := assertGetBrokerAdministratorConfigSuccess(ctx, false)
 				Expect(config.TLSClientConfig.CAData).To(Equal(caCert))
 			})
 		})
@@ -124,8 +125,8 @@ func testGetBrokerAdministratorConfig() {
 			}, ""), false)
 		})
 
-		It("should treat it as success", func() {
-			assertGetBrokerAdministratorConfigSuccess(false)
+		It("should treat it as success", func(ctx SpecContext) {
+			assertGetBrokerAdministratorConfigSuccess(ctx, false)
 		})
 	})
 
@@ -134,7 +135,7 @@ func testGetBrokerAdministratorConfig() {
 			fake.FailOnAction(&submarinerClient.Fake, "clusters", "list", nil, false)
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			_, err := info.GetBrokerAdministratorConfig(ctx, false)
 			Expect(err).To(HaveOccurred())
 		})

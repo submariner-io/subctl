@@ -56,7 +56,7 @@ func testWriteInfoToFile() {
 		tokenSecret = newTokenSecret()
 	})
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		if tokenSecret != nil {
 			_, err := t.kubeClient.CoreV1().Secrets(testBrokerNamespace).Create(ctx, tokenSecret, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())

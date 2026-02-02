@@ -19,6 +19,8 @@ limitations under the License.
 package diagnose_test
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/submariner-io/admiral/pkg/fake"
 	"github.com/submariner-io/admiral/pkg/syncer/test"
@@ -380,7 +382,7 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 }
 
 func (t *globalnetTestDriver) run() error {
-	return diagnose.GlobalnetConfig(newClusterInfo(), "", t.statusTracker)
+	return diagnose.GlobalnetConfig(newClusterInfo(context.TODO()), "", t.statusTracker)
 }
 
 func (t *globalnetTestDriver) testMismatchedAllocatedIPs(before func()) {

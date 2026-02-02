@@ -51,13 +51,13 @@ var _ = Describe("ServiceDiscovery", func() {
 		}
 	})
 
-	runDepoy := func() error {
+	runDepoy := func(ctx context.Context) error {
 		return deploy.ServiceDiscovery(ctx, t.fakeProducer, options, t.brokerInfo, t.brokerSecret,
 			t.clustersetConfig, t.repositoryInfo, t.statusReporter)
 	}
 
-	expectServiceDiscoverySuccess := func() *operatorv1alpha1.ServiceDiscoverySpec {
-		Expect(runDepoy()).To(Succeed())
+	expectServiceDiscoverySuccess := func(ctx context.Context) *operatorv1alpha1.ServiceDiscoverySpec {
+		Expect(runDepoy(ctx)).To(Succeed())
 
 		serviceDiscoveryCR := &operatorv1alpha1.ServiceDiscovery{}
 		Expect(t.fakeProducer.ForGeneral().Get(ctx, ctrlClient.ObjectKey{
@@ -71,8 +71,8 @@ var _ = Describe("ServiceDiscovery", func() {
 		return &serviceDiscoveryCR.Spec
 	}
 
-	It("should successfully deploy the ServiceDiscovery resource", func() {
-		spec := expectServiceDiscoverySuccess()
+	It("should successfully deploy the ServiceDiscovery resource", func(ctx SpecContext) {
+		spec := expectServiceDiscoverySuccess(ctx)
 		Expect(spec.Repository).To(Equal(options.Repository))
 		Expect(spec.Version).To(Equal(options.ImageVersion))
 		Expect(spec.BrokerK8sCA).To(Equal(base64.StdEncoding.EncodeToString(t.brokerSecret.Data["ca.crt"])))
@@ -96,8 +96,8 @@ var _ = Describe("ServiceDiscovery", func() {
 			options.CoreDNSCustomConfigMap = "test-namespace/test-configmap"
 		})
 
-		It("should set the CoreDNSCustomConfig field", func() {
-			Expect(expectServiceDiscoverySuccess().CoreDNSCustomConfig).To(Equal(&operatorv1alpha1.CoreDNSCustomConfig{
+		It("should set the CoreDNSCustomConfig field", func(ctx SpecContext) {
+			Expect(expectServiceDiscoverySuccess(ctx).CoreDNSCustomConfig).To(Equal(&operatorv1alpha1.CoreDNSCustomConfig{
 				ConfigMapName: "test-configmap",
 				Namespace:     "test-namespace",
 			}))
@@ -109,8 +109,8 @@ var _ = Describe("ServiceDiscovery", func() {
 			options.CustomDomains = []string{"custom.domain"}
 		})
 
-		It("should set the CustomDomains field", func() {
-			Expect(expectServiceDiscoverySuccess().CustomDomains).To(Equal(options.CustomDomains))
+		It("should set the CustomDomains field", func(ctx SpecContext) {
+			Expect(expectServiceDiscoverySuccess(ctx).CustomDomains).To(Equal(options.CustomDomains))
 		})
 	})
 
@@ -123,8 +123,8 @@ var _ = Describe("ServiceDiscovery", func() {
 			}).Build()
 		})
 
-		It("should return an error", func() {
-			Expect(runDepoy()).NotTo(Succeed())
+		It("should return an error", func(ctx SpecContext) {
+			Expect(runDepoy(ctx)).NotTo(Succeed())
 			t.statusReporter.AssertHasFailure()
 		})
 	})
