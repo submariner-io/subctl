@@ -40,9 +40,7 @@ import (
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
-func ServiceDiscovery(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-	ctx := context.TODO()
-
+func ServiceDiscovery(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Checking that services have been exported/imported properly")
 	defer status.End()
 

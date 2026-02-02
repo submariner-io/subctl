@@ -19,6 +19,7 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -88,15 +89,15 @@ The following verifications are deemed disruptive:
     ` + strings.Join(disruptiveVerificationNames(), "\n    "),
 		Args: verifyCmd.checkVerifyArguments,
 		Run: func(cmd *cobra.Command, _ []string) {
-			exit.OnError(verifyCmd.restConfigProducer.RunOnSelectedContext(
-				func(fromClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+			exit.OnError(verifyCmd.restConfigProducer.RunOnSelectedContext(cmd.Context(),
+				func(ctx context.Context, fromClusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 					// Try to run using the "to" context
-					toContextPresent, err := verifyCmd.restConfigProducer.RunOnSelectedPrefixedContext(
+					toContextPresent, err := verifyCmd.restConfigProducer.RunOnSelectedPrefixedContext(ctx,
 						"to",
-						func(toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-							extraContextPresent, err := verifyCmd.restConfigProducer.RunOnSelectedPrefixedContext(
+						func(ctx context.Context, toClusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+							extraContextPresent, err := verifyCmd.restConfigProducer.RunOnSelectedPrefixedContext(ctx,
 								"extra",
-								func(extraClusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
+								func(ctx context.Context, extraClusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
 									return RunVerify(verifyCmd.flags, fromClusterInfo, toClusterInfo, extraClusterInfo, namespace,
 										verifyCmd.determineSpecLabelsToVerify())
 								}, status)

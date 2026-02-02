@@ -37,9 +37,11 @@ import (
 var fileNameRegexp = regexp.MustCompile(`[<>:"/\|?*]`)
 
 //nolint:gocritic // hugeParam: listOptions - match K8s API.
-func ResourcesToYAMLFile(info *Info, ofType schema.GroupVersionResource, namespace string, listOptions metav1.ListOptions) {
+func ResourcesToYAMLFile(ctx context.Context, info *Info, ofType schema.GroupVersionResource, namespace string,
+	listOptions metav1.ListOptions,
+) {
 	err := func() error {
-		list, err := info.ClientProducer.ForDynamic().Resource(ofType).Namespace(namespace).List(context.TODO(), listOptions)
+		list, err := info.ClientProducer.ForDynamic().Resource(ofType).Namespace(namespace).List(ctx, listOptions)
 		if err != nil {
 			return errors.WithMessagef(err, "error listing %q", ofType.Resource)
 		}
@@ -95,25 +97,25 @@ func ResourcesToYAMLFile(info *Info, ofType schema.GroupVersionResource, namespa
 }
 
 //nolint:gocritic // hugeParam: listOptions - match K8s API.
-func gatherDaemonSet(info *Info, namespace string, listOptions metav1.ListOptions) {
-	ResourcesToYAMLFile(info, appsv1.SchemeGroupVersion.WithResource("daemonsets"), namespace, listOptions)
-	ResourcesToYAMLFile(info, corev1.SchemeGroupVersion.WithResource("pods"), namespace, listOptions)
+func gatherDaemonSet(ctx context.Context, info *Info, namespace string, listOptions metav1.ListOptions) {
+	ResourcesToYAMLFile(ctx, info, appsv1.SchemeGroupVersion.WithResource("daemonsets"), namespace, listOptions)
+	ResourcesToYAMLFile(ctx, info, corev1.SchemeGroupVersion.WithResource("pods"), namespace, listOptions)
 }
 
 //nolint:gocritic // hugeParam: listOptions - match K8s API.
-func gatherDeployment(info *Info, namespace string, listOptions metav1.ListOptions) {
-	ResourcesToYAMLFile(info, appsv1.SchemeGroupVersion.WithResource("deployments"), namespace, listOptions)
-	ResourcesToYAMLFile(info, corev1.SchemeGroupVersion.WithResource("pods"), namespace, listOptions)
+func gatherDeployment(ctx context.Context, info *Info, namespace string, listOptions metav1.ListOptions) {
+	ResourcesToYAMLFile(ctx, info, appsv1.SchemeGroupVersion.WithResource("deployments"), namespace, listOptions)
+	ResourcesToYAMLFile(ctx, info, corev1.SchemeGroupVersion.WithResource("pods"), namespace, listOptions)
 }
 
 //nolint:gocritic // hugeParam: listOptions - match K8s API.
-func gatherConfigMaps(info *Info, namespace string, listOptions metav1.ListOptions) {
-	ResourcesToYAMLFile(info, corev1.SchemeGroupVersion.WithResource("configmaps"), namespace, listOptions)
+func gatherConfigMaps(ctx context.Context, info *Info, namespace string, listOptions metav1.ListOptions) {
+	ResourcesToYAMLFile(ctx, info, corev1.SchemeGroupVersion.WithResource("configmaps"), namespace, listOptions)
 }
 
 //nolint:gocritic // hugeParam: listOptions - match K8s API.
-func gatherService(info *Info, namespace string, listOptions metav1.ListOptions) {
-	ResourcesToYAMLFile(info, corev1.SchemeGroupVersion.WithResource("services"), namespace, listOptions)
+func gatherService(ctx context.Context, info *Info, namespace string, listOptions metav1.ListOptions) {
+	ResourcesToYAMLFile(ctx, info, corev1.SchemeGroupVersion.WithResource("services"), namespace, listOptions)
 }
 
 func scrubSensitiveData(info *Info, dataString string) string {

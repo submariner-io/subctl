@@ -22,6 +22,8 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/cloud-prepare/pkg/aws/client"
@@ -42,9 +44,10 @@ var (
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on AWS cloud for Submariner installation.",
 		PreRunE: checkAWSFlags,
 		Run: func(cmd *cobra.Command, _ []string) {
-			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return prepare.AWS(cmd.Context(), clusterInfo, &cloudOptions.ports, &awsConfig, cloudOptions.useLoadBalancer, status)
+			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(cmd.Context(),
+				func(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+					return prepare.AWS(
+						ctx, clusterInfo, &cloudOptions.ports, &awsConfig, cloudOptions.useLoadBalancer, status)
 				}, cli.NewReporter()))
 		},
 	}
@@ -56,9 +59,9 @@ var (
 			"AWS-based cloud after Submariner uninstallation.",
 		PreRunE: checkAWSFlags,
 		Run: func(cmd *cobra.Command, _ []string) {
-			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return cleanup.AWS(cmd.Context(), clusterInfo, &awsConfig, status)
+			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(cmd.Context(),
+				func(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+					return cleanup.AWS(ctx, clusterInfo, &awsConfig, status)
 				}, cli.NewReporter()))
 		},
 	}

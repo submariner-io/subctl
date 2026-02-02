@@ -40,17 +40,17 @@ import (
 //go:embed layout.gohtml
 var layout string
 
-func gatherClusterSummary(info *Info) {
-	dataGathered := getClusterInfo(info)
+func gatherClusterSummary(ctx context.Context, info *Info) {
+	dataGathered := getClusterInfo(ctx, info)
 	file := createFile(info.DirName)
 	writeToHTML(file, &dataGathered)
 }
 
-func getClusterInfo(info *Info) data {
+func getClusterInfo(ctx context.Context, info *Info) data {
 	versions := getVersions(info)
-	config := getClusterConfig(info)
+	config := getClusterConfig(ctx, info)
 
-	nConfig, err := getNodeConfig(info)
+	nConfig, err := getNodeConfig(ctx, info)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -67,18 +67,18 @@ func getClusterInfo(info *Info) data {
 	return d
 }
 
-func getClusterConfig(info *Info) clusterConfig {
-	gwNodes, err := getGWNodes(info)
+func getClusterConfig(ctx context.Context, info *Info) clusterConfig {
+	gwNodes, err := getGWNodes(ctx, info)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	mNodes, err := getMasterNodes(info)
+	mNodes, err := getMasterNodes(ctx, info)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	allNodes, err := listNodes(info, metav1.ListOptions{})
+	allNodes, err := listNodes(ctx, info, metav1.ListOptions{})
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -129,8 +129,8 @@ func getVersions(info *Info) version {
 	return Versions
 }
 
-func getSpecificNode(info *Info, selector string) (map[string]types.UID, error) {
-	nodes, err := listNodes(info, metav1.ListOptions{LabelSelector: selector})
+func getSpecificNode(ctx context.Context, info *Info, selector string) (map[string]types.UID, error) {
+	nodes, err := listNodes(ctx, info, metav1.ListOptions{LabelSelector: selector})
 	if err != nil {
 		return nil, err
 	}
@@ -143,10 +143,10 @@ func getSpecificNode(info *Info, selector string) (map[string]types.UID, error) 
 	return node, nil
 }
 
-func getGWNodes(info *Info) (map[string]types.UID, error) {
+func getGWNodes(ctx context.Context, info *Info) (map[string]types.UID, error) {
 	selector := labels.SelectorFromSet(labels.Set(map[string]string{"submariner.io/gateway": "true"}))
 
-	nodes, err := getSpecificNode(info, selector.String())
+	nodes, err := getSpecificNode(ctx, info, selector.String())
 	if err != nil {
 		return nil, err
 	}
@@ -154,10 +154,10 @@ func getGWNodes(info *Info) (map[string]types.UID, error) {
 	return nodes, nil
 }
 
-func getMasterNodes(info *Info) (map[string]types.UID, error) {
+func getMasterNodes(ctx context.Context, info *Info) (map[string]types.UID, error) {
 	selector := "node-role.kubernetes.io/master="
 
-	nodes, err := getSpecificNode(info, selector)
+	nodes, err := getSpecificNode(ctx, info, selector)
 	if err != nil {
 		return nil, err
 	}
@@ -165,8 +165,8 @@ func getMasterNodes(info *Info) (map[string]types.UID, error) {
 	return nodes, nil
 }
 
-func getNodeConfig(info *Info) ([]nodeConfig, error) {
-	nodes, err := listNodes(info, metav1.ListOptions{})
+func getNodeConfig(ctx context.Context, info *Info) ([]nodeConfig, error) {
+	nodes, err := listNodes(ctx, info, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -214,8 +214,8 @@ func getFormattedIP(ipAddrList, ipaddr string) string {
 }
 
 //nolint:gocritic // hugeParam: listOptions - match K8s API.
-func listNodes(info *Info, listOptions metav1.ListOptions) (*v1.NodeList, error) {
-	nodes, err := info.ClientProducer.ForKubernetes().CoreV1().Nodes().List(context.TODO(), listOptions)
+func listNodes(ctx context.Context, info *Info, listOptions metav1.ListOptions) (*v1.NodeList, error) {
+	nodes, err := info.ClientProducer.ForKubernetes().CoreV1().Nodes().List(ctx, listOptions)
 	if err != nil {
 		return nil, errors.Wrap(err, "error listing Nodes")
 	}

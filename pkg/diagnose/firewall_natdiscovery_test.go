@@ -19,6 +19,7 @@ limitations under the License.
 package diagnose_test
 
 import (
+	"context"
 	"slices"
 	"strconv"
 
@@ -138,8 +139,8 @@ type natFirewallTestDriver struct {
 	*firewallTestDriver
 }
 
-func (t *natFirewallTestDriver) run() error {
-	return diagnose.NatDiscoveryConfigAcrossClusters(t.localClusterInfo, t.remoteClusterInfo,
+func (t *natFirewallTestDriver) run(ctx context.Context) error {
+	return diagnose.NatDiscoveryConfigAcrossClusters(ctx, t.localClusterInfo, t.remoteClusterInfo,
 		constants.OperatorNamespace, t.options, t.statusTracker)
 }
 

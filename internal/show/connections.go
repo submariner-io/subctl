@@ -30,10 +30,10 @@ import (
 	k8snet "k8s.io/utils/net"
 )
 
-func Connections(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+func Connections(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Showing Connections")
 
-	gateways, err := clusterInfo.GetGateways(context.TODO())
+	gateways, err := clusterInfo.GetGateways(ctx)
 	if err != nil {
 		return status.Error(err, "Error retrieving gateways")
 	}

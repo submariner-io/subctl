@@ -95,80 +95,80 @@ var networkPluginCNIType = map[string]string{
 	"unknown":         typeUnknown,
 }
 
-func gatherCNIResources(info *Info, networkPlugin string) {
-	logPodInfo(info, "CNI data", routeagentPodLabel, func(info *Info, pod *v1.Pod) {
-		logSystemCmds(info, pod)
+func gatherCNIResources(ctx context.Context, info *Info, networkPlugin string) {
+	logPodInfo(ctx, info, "CNI data", routeagentPodLabel, func(ctx context.Context, info *Info, pod *v1.Pod) {
+		logSystemCmds(ctx, info, pod)
 
 		switch networkPluginCNIType[networkPlugin] {
 		case typeIPTables, typeOvn:
-			logIPTablesCmds(info, pod)
+			logIPTablesCmds(ctx, info, pod)
 		case typeUnknown:
 			info.Status.Failure("Unsupported CNI Type")
 		}
 	})
 
-	logCNIGatewayNodeResources(info)
+	logCNIGatewayNodeResources(ctx, info)
 }
 
-func logCNIGatewayNodeResources(info *Info) {
-	logPodInfo(info, "CNI data", gatewayPodLabel, logIPGatewayCmds)
+func logCNIGatewayNodeResources(ctx context.Context, info *Info) {
+	logPodInfo(ctx, info, "CNI data", gatewayPodLabel, logIPGatewayCmds)
 }
 
-func logSystemCmds(info *Info, pod *v1.Pod) {
+func logSystemCmds(ctx context.Context, info *Info, pod *v1.Pod) {
 	for name, cmd := range systemCmds {
-		logCmdOutput(info, pod, cmd, name, false)
+		logCmdOutput(ctx, info, pod, cmd, name, false)
 	}
 }
 
-func logIPGatewayCmds(info *Info, pod *v1.Pod) {
+func logIPGatewayCmds(ctx context.Context, info *Info, pod *v1.Pod) {
 	for name, cmd := range ipGatewayCmds {
-		logCmdOutput(info, pod, cmd, name, true)
+		logCmdOutput(ctx, info, pod, cmd, name, true)
 	}
 }
 
-func logIPTablesCmds(info *Info, pod *v1.Pod) {
+func logIPTablesCmds(ctx context.Context, info *Info, pod *v1.Pod) {
 	for name, cmd := range ipTablesCmds {
-		logCmdOutput(info, pod, cmd, name, false)
+		logCmdOutput(ctx, info, pod, cmd, name, false)
 	}
 }
 
-func gatherOVNResources(info *Info, networkPlugin string) {
+func gatherOVNResources(ctx context.Context, info *Info, networkPlugin string) {
 	if networkPluginCNIType[networkPlugin] != typeOvn {
 		return
 	}
 
-	ovnKubePods := getOVNCmdsPod(info)
+	ovnKubePods := getOVNCmdsPod(ctx, info)
 	for i := range ovnKubePods {
 		info.Status.Success("Gathering OVN data from OVN kube pod %q", ovnKubePods[i].Name)
 
 		for name, command := range ovnCmds {
-			logCmdOutput(info, &ovnKubePods[i], command, name, false)
+			logCmdOutput(ctx, info, &ovnKubePods[i], command, name, false)
 		}
 	}
 
-	gatherGatewayRoutes(info)
-	gatherNonGatewayRoutes(info)
+	gatherGatewayRoutes(ctx, info)
+	gatherNonGatewayRoutes(ctx, info)
 }
 
-func getOVNCmdsPod(info *Info) []v1.Pod {
+func getOVNCmdsPod(ctx context.Context, info *Info) []v1.Pod {
 	/*
 			We use three different labels for different OVNKubernetes deployments
 		      * ovnMasterPodLabelOCP     - Non IC OpenShift
 		      * ovnMasterPodLabelGeneric - Non IC upstreamovn-kubernetes
 		      * ovnKubePodLabel          - IC Deployments, same for upstream and OpenShift
 	*/
-	ovnCmdPods, _ := findPods(info.ClientProducer.ForKubernetes(), ovnMasterPodLabelOCP)
+	ovnCmdPods, _ := findPods(ctx, info.ClientProducer.ForKubernetes(), ovnMasterPodLabelOCP)
 
 	if len(ovnCmdPods.Items) > 0 {
 		return []v1.Pod{ovnCmdPods.Items[0]}
 	}
 
-	ovnCmdPods, _ = findPods(info.ClientProducer.ForKubernetes(), ovnMasterPodLabelGeneric)
+	ovnCmdPods, _ = findPods(ctx, info.ClientProducer.ForKubernetes(), ovnMasterPodLabelGeneric)
 	if len(ovnCmdPods.Items) > 0 {
 		return []v1.Pod{ovnCmdPods.Items[0]}
 	}
 
-	ovnCmdPods, err := findPods(info.ClientProducer.ForKubernetes(), ovnKubePodLabel)
+	ovnCmdPods, err := findPods(ctx, info.ClientProducer.ForKubernetes(), ovnKubePodLabel)
 	if len(ovnCmdPods.Items) > 0 {
 		// TODO: Optimize this code to run OVN commands one node per zone instead of all nodes
 		return ovnCmdPods.Items
@@ -183,32 +183,32 @@ func getOVNCmdsPod(info *Info) []v1.Pod {
 	return nil
 }
 
-func gatherCableDriverResources(info *Info, cableDriver string) {
-	logPodInfo(info, "cable driver data", gatewayPodLabel, func(info *Info, pod *v1.Pod) {
+func gatherCableDriverResources(ctx context.Context, info *Info, cableDriver string) {
+	logPodInfo(ctx, info, "cable driver data", gatewayPodLabel, func(ctx context.Context, info *Info, pod *v1.Pod) {
 		if cableDriver == libreswan || cableDriver == "" { // If none specified, use libreswan as default
-			logLibreswanCmds(info, pod)
+			logLibreswanCmds(ctx, info, pod)
 		}
 
 		if cableDriver == vxlan {
-			logVxlanCmds(info, pod)
+			logVxlanCmds(ctx, info, pod)
 		}
 	})
 }
 
-func logLibreswanCmds(info *Info, pod *v1.Pod) {
+func logLibreswanCmds(ctx context.Context, info *Info, pod *v1.Pod) {
 	for name, cmd := range libreswanCmds {
-		logCmdOutput(info, pod, cmd, name, true)
+		logCmdOutput(ctx, info, pod, cmd, name, true)
 	}
 }
 
-func logVxlanCmds(info *Info, pod *v1.Pod) {
+func logVxlanCmds(ctx context.Context, info *Info, pod *v1.Pod) {
 	for name, cmd := range vxlanCmds {
-		logCmdOutput(info, pod, cmd, name, true)
+		logCmdOutput(ctx, info, pod, cmd, name, true)
 	}
 }
 
 //nolint:wrapcheck // No need to wrap errors here.
-func execCmdInBash(info *Info, pod *v1.Pod, cmd string) (string, string, error) {
+func execCmdInBash(ctx context.Context, info *Info, pod *v1.Pod, cmd string) (string, string, error) {
 	execOptions := pods.ExecOptionsFromPod(pod)
 	execConfig := pods.ExecConfig{
 		RestConfig: info.RestConfig,
@@ -217,11 +217,11 @@ func execCmdInBash(info *Info, pod *v1.Pod, cmd string) (string, string, error) 
 
 	execOptions.Command = []string{"/bin/bash", "-c", cmd}
 
-	return pods.ExecWithOptions(context.TODO(), execConfig, &execOptions)
+	return pods.ExecWithOptions(ctx, execConfig, &execOptions)
 }
 
-func logCmdOutput(info *Info, pod *v1.Pod, cmd, cmdName string, ignoreError bool) {
-	stdOut, _, err := execCmdInBash(info, pod, cmd)
+func logCmdOutput(ctx context.Context, info *Info, pod *v1.Pod, cmd, cmdName string, ignoreError bool) {
+	stdOut, _, err := execCmdInBash(ctx, info, pod, cmd)
 	if err != nil && !ignoreError {
 		info.Status.Failure("Error running %q on pod %q: %v", cmd, pod.Name, err)
 

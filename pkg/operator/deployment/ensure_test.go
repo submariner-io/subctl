@@ -194,7 +194,7 @@ var _ = Describe("GetPodLabelSelector", func() {
 	})
 
 	When("the deployment exists", func() {
-		It("should return the label selector", func() {
+		It("should return the label selector", func(ctx SpecContext) {
 			dep := &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      names.OperatorComponent,
@@ -215,7 +215,7 @@ var _ = Describe("GetPodLabelSelector", func() {
 			_, err := kubeClient.AppsV1().Deployments(constants.OperatorNamespace).Create(context.TODO(), dep, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			selectorStr, err := deployment.GetPodLabelSelector(kubeClient, constants.OperatorNamespace)
+			selectorStr, err := deployment.GetPodLabelSelector(ctx, kubeClient, constants.OperatorNamespace)
 			Expect(err).NotTo(HaveOccurred())
 
 			selector, err := labels.Parse(selectorStr)
@@ -225,8 +225,8 @@ var _ = Describe("GetPodLabelSelector", func() {
 	})
 
 	When("the deployment doesn't exist", func() {
-		It("should return empty string", func() {
-			selector, err := deployment.GetPodLabelSelector(kubeClient, constants.OperatorNamespace)
+		It("should return empty string", func(ctx SpecContext) {
+			selector, err := deployment.GetPodLabelSelector(ctx, kubeClient, constants.OperatorNamespace)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(selector).To(BeEmpty())
 		})
@@ -237,8 +237,8 @@ var _ = Describe("GetPodLabelSelector", func() {
 			fake.FailOnAction(&kubeClient.Fake, "deployments", "get", nil, false)
 		})
 
-		It("should return an error", func() {
-			_, err := deployment.GetPodLabelSelector(kubeClient, constants.OperatorNamespace)
+		It("should return an error", func(ctx SpecContext) {
+			_, err := deployment.GetPodLabelSelector(ctx, kubeClient, constants.OperatorNamespace)
 			Expect(err).To(HaveOccurred())
 		})
 	})

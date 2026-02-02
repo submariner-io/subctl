@@ -19,6 +19,7 @@ limitations under the License.
 package diagnose_test
 
 import (
+	"context"
 	"strconv"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -74,8 +75,8 @@ type tunnelFirewallTestDriver struct {
 	*firewallTestDriver
 }
 
-func (t *tunnelFirewallTestDriver) run() error {
-	return diagnose.TunnelConfigAcrossClusters(t.localClusterInfo, t.remoteClusterInfo,
+func (t *tunnelFirewallTestDriver) run(ctx context.Context) error {
+	return diagnose.TunnelConfigAcrossClusters(ctx, t.localClusterInfo, t.remoteClusterInfo,
 		constants.OperatorNamespace, t.options, t.statusTracker)
 }
 

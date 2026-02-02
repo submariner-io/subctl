@@ -148,19 +148,20 @@ func testRunOnSelectedContext() {
 		t.expectedProcessed = 1
 	})
 
-	It("should run on the current context", func() {
+	It("should run on the current context", func(ctx SpecContext) {
 		specifiedStatus := reporter.Stdout()
 
-		err := t.producer.RunOnSelectedContext(func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-			t.actualProcessed++
+		err := t.producer.RunOnSelectedContext(ctx,
+			func(_ context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+				t.actualProcessed++
 
-			Expect(clusterInfo.Name).To(Equal(cluster1Name))
-			Expect(namespace).To(Equal(corev1.NamespaceDefault))
-			Expect(clusterInfo.Submariner).ToNot(BeNil())
-			Expect(status).To(Equal(specifiedStatus))
+				Expect(clusterInfo.Name).To(Equal(cluster1Name))
+				Expect(namespace).To(Equal(corev1.NamespaceDefault))
+				Expect(clusterInfo.Submariner).ToNot(BeNil())
+				Expect(status).To(Equal(specifiedStatus))
 
-			return nil
-		}, specifiedStatus)
+				return nil
+			}, specifiedStatus)
 
 		Expect(err).To(Succeed())
 	})
@@ -170,14 +171,15 @@ func testRunOnSelectedContext() {
 			t.clientConfig.Contexts[t.clientConfig.CurrentContext].Namespace = "context-ns"
 		})
 
-		It("should use the configured namespace", func() {
-			err := t.producer.RunOnSelectedContext(func(_ *cluster.Info, namespace string, _ reporter.Interface) error {
-				t.actualProcessed++
+		It("should use the configured namespace", func(ctx SpecContext) {
+			err := t.producer.RunOnSelectedContext(ctx,
+				func(_ context.Context, _ *cluster.Info, namespace string, _ reporter.Interface) error {
+					t.actualProcessed++
 
-				Expect(namespace).To(Equal(t.clientConfig.Contexts[t.clientConfig.CurrentContext].Namespace))
+					Expect(namespace).To(Equal(t.clientConfig.Contexts[t.clientConfig.CurrentContext].Namespace))
 
-				return nil
-			}, reporter.Stdout())
+					return nil
+				}, reporter.Stdout())
 			Expect(err).To(Succeed())
 		})
 	})
@@ -187,16 +189,17 @@ func testRunOnSelectedContext() {
 			t.producer.WithNamespace()
 		})
 
-		It("should use the specified namespace", func() {
+		It("should use the specified namespace", func(ctx SpecContext) {
 			Expect(t.flags.Set(clientcmd.FlagNamespace, specifiedNS)).To(Succeed())
 
-			err := t.producer.RunOnSelectedContext(func(_ *cluster.Info, namespace string, _ reporter.Interface) error {
-				t.actualProcessed++
+			err := t.producer.RunOnSelectedContext(ctx,
+				func(_ context.Context, _ *cluster.Info, namespace string, _ reporter.Interface) error {
+					t.actualProcessed++
 
-				Expect(namespace).To(Equal(specifiedNS))
+					Expect(namespace).To(Equal(specifiedNS))
 
-				return nil
-			}, reporter.Stdout())
+					return nil
+				}, reporter.Stdout())
 
 			Expect(err).To(Succeed())
 		})
@@ -207,14 +210,15 @@ func testRunOnSelectedContext() {
 			t.producer.WithDefaultNamespace(defaultNS)
 		})
 
-		It("should use the default namespace", func() {
-			err := t.producer.RunOnSelectedContext(func(_ *cluster.Info, namespace string, _ reporter.Interface) error {
-				t.actualProcessed++
+		It("should use the default namespace", func(ctx SpecContext) {
+			err := t.producer.RunOnSelectedContext(ctx,
+				func(_ context.Context, _ *cluster.Info, namespace string, _ reporter.Interface) error {
+					t.actualProcessed++
 
-				Expect(namespace).To(Equal(defaultNS))
+					Expect(namespace).To(Equal(defaultNS))
 
-				return nil
-			}, reporter.Stdout())
+					return nil
+				}, reporter.Stdout())
 			Expect(err).To(Succeed())
 		})
 	})
@@ -233,8 +237,8 @@ func testRunOnSelectedContext() {
 			t.expectedProcessed = 0
 		})
 
-		It("should return an error", func() {
-			err := t.producer.RunOnSelectedContext(t.noopPerContext, reporter.Stdout())
+		It("should return an error", func(ctx SpecContext) {
+			err := t.producer.RunOnSelectedContext(ctx, t.noopPerContext, reporter.Stdout())
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -248,8 +252,8 @@ func testRunOnSelectedContext() {
 			Expect(t.flags.Set(restconfig.InCluster, "true")).To(Succeed())
 		})
 
-		It("should use the in-cluster config", func() {
-			err := t.producer.RunOnSelectedContext(func(info *cluster.Info, namespace string, _ reporter.Interface) error {
+		It("should use the in-cluster config", func(ctx SpecContext) {
+			err := t.producer.RunOnSelectedContext(ctx, func(_ context.Context, info *cluster.Info, namespace string, _ reporter.Interface) error {
 				t.actualProcessed++
 
 				Expect(info.Name).To(Equal(restconfig.InCluster))
@@ -266,10 +270,10 @@ func testRunOnSelectedContext() {
 				t.producer.WithNamespace()
 			})
 
-			It("should use the specified namespace", func() {
+			It("should use the specified namespace", func(ctx SpecContext) {
 				Expect(t.flags.Set(clientcmd.FlagNamespace, specifiedNS)).To(Succeed())
 
-				err := t.producer.RunOnSelectedContext(func(info *cluster.Info, namespace string, _ reporter.Interface) error {
+				err := t.producer.RunOnSelectedContext(ctx, func(_ context.Context, info *cluster.Info, namespace string, _ reporter.Interface) error {
 					t.actualProcessed++
 
 					Expect(info.Name).To(Equal(restconfig.InCluster))
@@ -289,8 +293,8 @@ func testRunOnSelectedContext() {
 			t.expectedProcessed = 0
 		})
 
-		It("should return an error", func() {
-			err := t.producer.RunOnSelectedContext(t.noopPerContext, reporter.Stdout())
+		It("should return an error", func(ctx SpecContext) {
+			err := t.producer.RunOnSelectedContext(ctx, t.noopPerContext, reporter.Stdout())
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -316,11 +320,11 @@ func testRunOnSelectedContexts() {
 		Expect(t.flags.Set("contexts", strings.Join(specifiedContexts, ","))).To(Succeed())
 	})
 
-	It("should run on the specified contexts", func() {
+	It("should run on the specified contexts", func(ctx SpecContext) {
 		specifiedStatus := reporter.Stdout()
 
-		wasRun, err := t.producer.RunOnSelectedContexts(
-			func(clusterInfos []*cluster.Info, namespaces []string, status reporter.Interface) error {
+		wasRun, err := t.producer.RunOnSelectedContexts(ctx,
+			func(_ context.Context, clusterInfos []*cluster.Info, namespaces []string, status reporter.Interface) error {
 				t.actualProcessed++
 
 				actualContexts := make([]string, len(clusterInfos))
@@ -353,15 +357,16 @@ func testRunOnSelectedContexts() {
 			}
 		})
 
-		It("should use the configured namespaces", func() {
-			_, err := t.producer.RunOnSelectedContexts(func(_ []*cluster.Info, namespaces []string, _ reporter.Interface) error {
-				t.actualProcessed++
+		It("should use the configured namespaces", func(ctx SpecContext) {
+			_, err := t.producer.RunOnSelectedContexts(ctx,
+				func(_ context.Context, _ []*cluster.Info, namespaces []string, _ reporter.Interface) error {
+					t.actualProcessed++
 
-				sort.Strings(namespaces)
-				Expect(configuredNamespaces).To(Equal(namespaces))
+					sort.Strings(namespaces)
+					Expect(configuredNamespaces).To(Equal(namespaces))
 
-				return nil
-			}, reporter.Stdout())
+					return nil
+				}, reporter.Stdout())
 
 			Expect(err).To(Succeed())
 		})
@@ -372,18 +377,19 @@ func testRunOnSelectedContexts() {
 			t.producer.WithNamespace()
 		})
 
-		It("should use the specified namespace", func() {
+		It("should use the specified namespace", func(ctx SpecContext) {
 			Expect(t.flags.Set(clientcmd.FlagNamespace, specifiedNS)).To(Succeed())
 
-			_, err := t.producer.RunOnSelectedContexts(func(_ []*cluster.Info, namespaces []string, _ reporter.Interface) error {
-				t.actualProcessed++
+			_, err := t.producer.RunOnSelectedContexts(ctx,
+				func(_ context.Context, _ []*cluster.Info, namespaces []string, _ reporter.Interface) error {
+					t.actualProcessed++
 
-				for _, ns := range namespaces {
-					Expect(ns).To(Equal(specifiedNS))
-				}
+					for _, ns := range namespaces {
+						Expect(ns).To(Equal(specifiedNS))
+					}
 
-				return nil
-			}, reporter.Stdout())
+					return nil
+				}, reporter.Stdout())
 
 			Expect(err).To(Succeed())
 		})
@@ -394,16 +400,17 @@ func testRunOnSelectedContexts() {
 			t.producer.WithDefaultNamespace(defaultNS)
 		})
 
-		It("should use the default namespace", func() {
-			_, err := t.producer.RunOnSelectedContexts(func(_ []*cluster.Info, namespaces []string, _ reporter.Interface) error {
-				t.actualProcessed++
+		It("should use the default namespace", func(ctx SpecContext) {
+			_, err := t.producer.RunOnSelectedContexts(ctx,
+				func(_ context.Context, _ []*cluster.Info, namespaces []string, _ reporter.Interface) error {
+					t.actualProcessed++
 
-				for _, ns := range namespaces {
-					Expect(ns).To(Equal(defaultNS))
-				}
+					for _, ns := range namespaces {
+						Expect(ns).To(Equal(defaultNS))
+					}
 
-				return nil
-			}, reporter.Stdout())
+					return nil
+				}, reporter.Stdout())
 
 			Expect(err).To(Succeed())
 		})
@@ -418,17 +425,18 @@ func testRunOnSelectedContexts() {
 			Expect(t.flags.Set(restconfig.InCluster, "true")).To(Succeed())
 		})
 
-		It("should use the in-cluster config", func() {
+		It("should use the in-cluster config", func(ctx SpecContext) {
 			Expect(t.flags.Set(restconfig.InCluster, "true")).To(Succeed())
 
-			_, err := t.producer.RunOnSelectedContexts(func(clusterInfos []*cluster.Info, _ []string, _ reporter.Interface) error {
-				t.actualProcessed++
+			_, err := t.producer.RunOnSelectedContexts(ctx,
+				func(_ context.Context, clusterInfos []*cluster.Info, _ []string, _ reporter.Interface) error {
+					t.actualProcessed++
 
-				Expect(clusterInfos).To(HaveLen(1))
-				Expect(clusterInfos[0].Name).To(Equal(restconfig.InCluster))
+					Expect(clusterInfos).To(HaveLen(1))
+					Expect(clusterInfos[0].Name).To(Equal(restconfig.InCluster))
 
-				return nil
-			}, reporter.Stdout())
+					return nil
+				}, reporter.Stdout())
 
 			Expect(err).To(Succeed())
 		})
@@ -438,11 +446,11 @@ func testRunOnSelectedContexts() {
 				t.producer.WithNamespace()
 			})
 
-			It("should use the specified namespace", func() {
+			It("should use the specified namespace", func(ctx SpecContext) {
 				Expect(t.flags.Set(clientcmd.FlagNamespace, specifiedNS)).To(Succeed())
 
-				_, err := t.producer.RunOnSelectedContexts(
-					func(clusterInfos []*cluster.Info, namespaces []string, _ reporter.Interface) error {
+				_, err := t.producer.RunOnSelectedContexts(ctx,
+					func(_ context.Context, clusterInfos []*cluster.Info, namespaces []string, _ reporter.Interface) error {
 						t.actualProcessed++
 
 						Expect(clusterInfos).To(HaveLen(1))
@@ -463,11 +471,12 @@ func testRunOnSelectedContexts() {
 			t.expectedProcessed = 0
 		})
 
-		It("should return true", func() {
-			_, err := t.producer.RunOnSelectedContexts(func(_ []*cluster.Info, _ []string, _ reporter.Interface) error {
-				t.actualProcessed++
-				return nil
-			}, reporter.Stdout())
+		It("should return true", func(ctx SpecContext) {
+			_, err := t.producer.RunOnSelectedContexts(ctx,
+				func(_ context.Context, _ []*cluster.Info, _ []string, _ reporter.Interface) error {
+					t.actualProcessed++
+					return nil
+				}, reporter.Stdout())
 
 			Expect(err).To(Succeed())
 		})
@@ -477,23 +486,24 @@ func testRunOnSelectedContexts() {
 func testRunOnAllContexts() {
 	t := newTestDriver()
 
-	It("should run on the configured contexts", func() {
+	It("should run on the configured contexts", func(ctx SpecContext) {
 		t.expectedProcessed = len(t.clientConfig.Contexts)
 
 		specifiedStatus := reporter.Stdout()
 
 		actualContexts := []string{}
 
-		err := t.producer.RunOnAllContexts(func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-			t.actualProcessed++
+		err := t.producer.RunOnAllContexts(ctx,
+			func(_ context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+				t.actualProcessed++
 
-			Expect(status).To(Equal(specifiedStatus))
-			Expect(namespace).To(Equal(corev1.NamespaceDefault))
+				Expect(status).To(Equal(specifiedStatus))
+				Expect(namespace).To(Equal(corev1.NamespaceDefault))
 
-			actualContexts = append(actualContexts, clusterInfo.Name)
+				actualContexts = append(actualContexts, clusterInfo.Name)
 
-			return nil
-		}, specifiedStatus)
+				return nil
+			}, specifiedStatus)
 
 		Expect(err).To(Succeed())
 
@@ -502,19 +512,20 @@ func testRunOnAllContexts() {
 	})
 
 	When("a single context is specified", func() {
-		It("should run on the specified context", func() {
+		It("should run on the specified context", func(ctx SpecContext) {
 			Expect(t.flags.Set(clientcmd.FlagContext, cluster3Name)).To(Succeed())
 
 			t.expectedProcessed = 1
 
-			err := t.producer.RunOnAllContexts(func(clusterInfo *cluster.Info, namespace string, _ reporter.Interface) error {
-				t.actualProcessed++
+			err := t.producer.RunOnAllContexts(ctx,
+				func(_ context.Context, clusterInfo *cluster.Info, namespace string, _ reporter.Interface) error {
+					t.actualProcessed++
 
-				Expect(clusterInfo.Name).To(Equal(cluster3Name))
-				Expect(namespace).To(Equal(corev1.NamespaceDefault))
+					Expect(clusterInfo.Name).To(Equal(cluster3Name))
+					Expect(namespace).To(Equal(corev1.NamespaceDefault))
 
-				return nil
-			}, reporter.Stdout())
+					return nil
+				}, reporter.Stdout())
 
 			Expect(err).To(Succeed())
 		})
@@ -525,18 +536,19 @@ func testRunOnAllContexts() {
 			t.producer.WithContextsFlag()
 		})
 
-		It("should run on the specified contexts", func() {
+		It("should run on the specified contexts", func(ctx SpecContext) {
 			Expect(t.flags.Set("contexts", cluster1Name+","+cluster3Name)).To(Succeed())
 
 			actualContexts := []string{}
 
-			err := t.producer.RunOnAllContexts(func(clusterInfo *cluster.Info, namespace string, _ reporter.Interface) error {
-				Expect(namespace).To(Equal(corev1.NamespaceDefault))
+			err := t.producer.RunOnAllContexts(ctx,
+				func(_ context.Context, clusterInfo *cluster.Info, namespace string, _ reporter.Interface) error {
+					Expect(namespace).To(Equal(corev1.NamespaceDefault))
 
-				actualContexts = append(actualContexts, clusterInfo.Name)
+					actualContexts = append(actualContexts, clusterInfo.Name)
 
-				return nil
-			}, reporter.Stdout())
+					return nil
+				}, reporter.Stdout())
 
 			Expect(err).To(Succeed())
 
@@ -545,10 +557,10 @@ func testRunOnAllContexts() {
 		})
 
 		Context("and one isn't valid", func() {
-			It("should return an error", func() {
+			It("should return an error", func(ctx SpecContext) {
 				Expect(t.flags.Set("contexts", "non-existent")).To(Succeed())
 
-				err := t.producer.RunOnAllContexts(func(_ *cluster.Info, _ string, _ reporter.Interface) error {
+				err := t.producer.RunOnAllContexts(ctx, func(_ context.Context, _ *cluster.Info, _ string, _ reporter.Interface) error {
 					return nil
 				}, reporter.Stdout())
 
@@ -567,10 +579,10 @@ func testRunOnAllContexts() {
 			}
 		})
 
-		It("should de-duplicate via the associated users", func() {
+		It("should de-duplicate via the associated users", func(ctx SpecContext) {
 			actualContexts := []string{}
 
-			err := t.producer.RunOnAllContexts(func(clusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
+			err := t.producer.RunOnAllContexts(ctx, func(_ context.Context, clusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
 				t.actualProcessed++
 
 				actualContexts = append(actualContexts, clusterInfo.Name)
@@ -589,8 +601,8 @@ func testRunOnAllContexts() {
 			t.clientConfig.Contexts = map[string]*api.Context{}
 		})
 
-		It("should return an error", func() {
-			err := t.producer.RunOnAllContexts(func(_ *cluster.Info, _ string, _ reporter.Interface) error {
+		It("should return an error", func(ctx SpecContext) {
+			err := t.producer.RunOnAllContexts(ctx, func(_ context.Context, _ *cluster.Info, _ string, _ reporter.Interface) error {
 				return nil
 			}, reporter.Stdout())
 
@@ -608,8 +620,8 @@ func testRunOnAllContexts() {
 			Expect(t.flags.Set(restconfig.InCluster, "true")).To(Succeed())
 		})
 
-		It("should use the in-cluster config", func() {
-			err := t.producer.RunOnAllContexts(func(info *cluster.Info, namespace string, _ reporter.Interface) error {
+		It("should use the in-cluster config", func(ctx SpecContext) {
+			err := t.producer.RunOnAllContexts(ctx, func(_ context.Context, info *cluster.Info, namespace string, _ reporter.Interface) error {
 				t.actualProcessed++
 
 				Expect(info.Name).To(Equal(restconfig.InCluster))
@@ -626,10 +638,10 @@ func testRunOnAllContexts() {
 				t.producer.WithNamespace()
 			})
 
-			It("should use the specified namespace", func() {
+			It("should use the specified namespace", func(ctx SpecContext) {
 				Expect(t.flags.Set(clientcmd.FlagNamespace, specifiedNS)).To(Succeed())
 
-				err := t.producer.RunOnAllContexts(func(info *cluster.Info, namespace string, _ reporter.Interface) error {
+				err := t.producer.RunOnAllContexts(ctx, func(_ context.Context, info *cluster.Info, namespace string, _ reporter.Interface) error {
 					t.actualProcessed++
 
 					Expect(info.Name).To(Equal(restconfig.InCluster))
@@ -658,11 +670,11 @@ func testRunOnSelectedPrefixedContext() {
 		Expect(t.flags.Set(prefix+"context", cluster1Name)).To(Succeed())
 	})
 
-	It("should run on the specified prefix context", func() {
+	It("should run on the specified prefix context", func(ctx SpecContext) {
 		specifiedStatus := reporter.Stdout()
 
-		wasRun, err := t.producer.RunOnSelectedPrefixedContext(prefix,
-			func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+		wasRun, err := t.producer.RunOnSelectedPrefixedContext(ctx, prefix,
+			func(_ context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 				t.actualProcessed++
 
 				Expect(clusterInfo.Name).To(Equal(cluster1Name))
@@ -683,12 +695,12 @@ func testRunOnSelectedPrefixedContext() {
 			t.producer.WithPrefixedNamespace(prefix, defaultPrefixNS)
 		})
 
-		It("should use the specified prefix namespace", func() {
+		It("should use the specified prefix namespace", func(ctx SpecContext) {
 			prefixNS := "prefix-ns"
 			Expect(t.flags.Set(prefix+clientcmd.FlagNamespace, prefixNS)).To(Succeed())
 
-			wasRun, err := t.producer.RunOnSelectedPrefixedContext(prefix,
-				func(clusterInfo *cluster.Info, namespace string, _ reporter.Interface) error {
+			wasRun, err := t.producer.RunOnSelectedPrefixedContext(ctx, prefix,
+				func(_ context.Context, clusterInfo *cluster.Info, namespace string, _ reporter.Interface) error {
 					t.actualProcessed++
 
 					Expect(clusterInfo.Name).To(Equal(cluster1Name))
@@ -702,9 +714,9 @@ func testRunOnSelectedPrefixedContext() {
 		})
 
 		Context("and no prefix namespace is specified", func() {
-			It("should use the default prefix namespace", func() {
-				wasRun, err := t.producer.RunOnSelectedPrefixedContext(prefix,
-					func(clusterInfo *cluster.Info, namespace string, _ reporter.Interface) error {
+			It("should use the default prefix namespace", func(ctx SpecContext) {
+				wasRun, err := t.producer.RunOnSelectedPrefixedContext(ctx, prefix,
+					func(_ context.Context, clusterInfo *cluster.Info, namespace string, _ reporter.Interface) error {
 						t.actualProcessed++
 
 						Expect(clusterInfo.Name).To(Equal(cluster1Name))
@@ -724,9 +736,9 @@ func testRunOnSelectedPrefixedContext() {
 			t.producer.WithDefaultNamespace(defaultNS)
 		})
 
-		It("should use the default namespace", func() {
-			wasRun, err := t.producer.RunOnSelectedPrefixedContext(prefix,
-				func(clusterInfo *cluster.Info, namespace string, _ reporter.Interface) error {
+		It("should use the default namespace", func(ctx SpecContext) {
+			wasRun, err := t.producer.RunOnSelectedPrefixedContext(ctx, prefix,
+				func(_ context.Context, clusterInfo *cluster.Info, namespace string, _ reporter.Interface) error {
 					t.actualProcessed++
 
 					Expect(clusterInfo.Name).To(Equal(cluster1Name))
@@ -760,9 +772,9 @@ func testRunOnSelectedPrefixedContext() {
 			Expect(t.flags.Set(prefix+"config", prefixConfigFile)).To(Succeed())
 		})
 
-		It("should use the prefixed kube config", func() {
-			wasRun, err := t.producer.RunOnSelectedPrefixedContext(prefix,
-				func(clusterInfo *cluster.Info, namespace string, _ reporter.Interface) error {
+		It("should use the prefixed kube config", func(ctx SpecContext) {
+			wasRun, err := t.producer.RunOnSelectedPrefixedContext(ctx, prefix,
+				func(_ context.Context, clusterInfo *cluster.Info, namespace string, _ reporter.Interface) error {
 					t.actualProcessed++
 
 					Expect(clusterInfo.Name).To(Equal(prefixClusterName))
@@ -782,8 +794,8 @@ func testRunOnSelectedPrefixedContext() {
 			t.expectedProcessed = 0
 		})
 
-		It("should return false", func() {
-			wasRun, err := t.producer.RunOnSelectedPrefixedContext(prefix, t.noopPerContext, reporter.Stdout())
+		It("should return false", func(ctx SpecContext) {
+			wasRun, err := t.producer.RunOnSelectedPrefixedContext(ctx, prefix, t.noopPerContext, reporter.Stdout())
 
 			Expect(err).To(Succeed())
 			Expect(wasRun).To(BeFalse())
@@ -794,8 +806,8 @@ func testRunOnSelectedPrefixedContext() {
 				Expect(t.flags.Set("kubeconfig", clientfake.CreateKubeConfigFile(t.clientConfig))).To(Succeed())
 			})
 
-			It("should return false", func() {
-				wasRun, err := t.producer.RunOnSelectedPrefixedContext(prefix, t.noopPerContext, reporter.Stdout())
+			It("should return false", func(ctx SpecContext) {
+				wasRun, err := t.producer.RunOnSelectedPrefixedContext(ctx, prefix, t.noopPerContext, reporter.Stdout())
 
 				Expect(err).To(Succeed())
 				Expect(wasRun).To(BeFalse())
@@ -812,12 +824,12 @@ func testIfConnectivityInstalled() {
 	})
 
 	When("the Submariner resource is present", func() {
-		It("should run the context function", func() {
+		It("should run the context function", func(ctx SpecContext) {
 			t.expectedProcessed = 1
 			specifiedStatus := reporter.Stdout()
 
-			err := t.producer.RunOnSelectedContext(restconfig.IfConnectivityInstalled(
-				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+			err := t.producer.RunOnSelectedContext(ctx, restconfig.IfConnectivityInstalled(
+				func(_ context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 					t.actualProcessed++
 
 					Expect(clusterInfo.Name).To(Equal(cluster1Name))
@@ -836,9 +848,9 @@ func testIfConnectivityInstalled() {
 			t.submariner = nil
 		})
 
-		It("should not run the context function", func() {
-			err := t.producer.RunOnSelectedContext(restconfig.IfConnectivityInstalled(
-				func(_ *cluster.Info, _ string, _ reporter.Interface) error {
+		It("should not run the context function", func(ctx SpecContext) {
+			err := t.producer.RunOnSelectedContext(ctx, restconfig.IfConnectivityInstalled(
+				func(_ context.Context, _ *cluster.Info, _ string, _ reporter.Interface) error {
 					t.actualProcessed++
 					return nil
 				}), reporter.Stdout())
@@ -865,12 +877,12 @@ func testIfServiceDiscoveryInstalled() {
 			})).To(Succeed())
 		})
 
-		It("should run the context function", func() {
+		It("should run the context function", func(ctx SpecContext) {
 			t.expectedProcessed = 1
 			specifiedStatus := reporter.Stdout()
 
-			err := t.producer.RunOnSelectedContext(restconfig.IfServiceDiscoveryInstalled(
-				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+			err := t.producer.RunOnSelectedContext(ctx, restconfig.IfServiceDiscoveryInstalled(
+				func(_ context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 					t.actualProcessed++
 
 					Expect(clusterInfo.Name).To(Equal(cluster1Name))
@@ -885,9 +897,9 @@ func testIfServiceDiscoveryInstalled() {
 	})
 
 	When("the ServiceDiscovery resource is not present", func() {
-		It("should not run the context function", func() {
-			err := t.producer.RunOnSelectedContext(restconfig.IfServiceDiscoveryInstalled(
-				func(_ *cluster.Info, _ string, _ reporter.Interface) error {
+		It("should not run the context function", func(ctx SpecContext) {
+			err := t.producer.RunOnSelectedContext(ctx, restconfig.IfServiceDiscoveryInstalled(
+				func(_ context.Context, _ *cluster.Info, _ string, _ reporter.Interface) error {
 					t.actualProcessed++
 					return nil
 				}), reporter.Stdout())
@@ -1025,7 +1037,7 @@ func newTestDriver() *testDriver {
 	return t
 }
 
-func (t *testDriver) noopPerContext(_ *cluster.Info, _ string, _ reporter.Interface) error {
+func (t *testDriver) noopPerContext(_ context.Context, _ *cluster.Info, _ string, _ reporter.Interface) error {
 	t.actualProcessed++
 	return nil
 }

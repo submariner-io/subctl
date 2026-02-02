@@ -238,9 +238,9 @@ func newDeploymentTestDriver() *deploymentTestDriver {
 
 func (t *deploymentTestDriver) testMissingDaemonset(name string) {
 	Context(fmt.Sprintf("and the %q daemonset doesn't exist", name), func() {
-		JustBeforeEach(func() {
+		JustBeforeEach(func(ctx SpecContext) {
 			Expect(t.fakeProducer.KubeClient.AppsV1().DaemonSets(constants.OperatorNamespace).Delete(
-				context.Background(), name, metav1.DeleteOptions{})).To(Succeed())
+				ctx, name, metav1.DeleteOptions{})).To(Succeed())
 		})
 
 		t.testFailure(t.run, "Daemonset", "not found")
@@ -259,9 +259,9 @@ func (t *deploymentTestDriver) testUnhealthyDaemonset(name string) {
 
 func (t *deploymentTestDriver) testMissingDeployment(name string) {
 	Context(fmt.Sprintf("and the %q deployment doesn't exist", name), func() {
-		JustBeforeEach(func() {
+		JustBeforeEach(func(ctx SpecContext) {
 			Expect(t.fakeProducer.KubeClient.AppsV1().Deployments(constants.OperatorNamespace).Delete(
-				context.Background(), name, metav1.DeleteOptions{})).To(Succeed())
+				ctx, name, metav1.DeleteOptions{})).To(Succeed())
 		})
 
 		t.testFailure(t.run, "Deployment", "not found")
@@ -336,8 +336,8 @@ func (t *deploymentTestDriver) testMultipleNodes() {
 			})
 	})
 
-	It("should check for gateway metrics accessibility", func() {
-		t.assertSuccess(t.run)
+	It("should check for gateway metrics accessibility", func(ctx SpecContext) {
+		t.assertSuccess(ctx, t.run)
 
 		Expect(podsCreated).To(ContainElement(Satisfy(func(pod *corev1.Pod) bool {
 			return len(pod.Spec.Containers) > 0 && slices.ContainsFunc(pod.Spec.Containers[0].Env, func(envVar corev1.EnvVar) bool {
@@ -387,8 +387,8 @@ func (t *deploymentTestDriver) testMultipleNodes() {
 			t.ensureDaemonSet(names.GlobalnetComponent, 1, 1)
 		})
 
-		It("should check for globalnet metrics accessibility", func() {
-			t.assertSuccess(t.run)
+		It("should check for globalnet metrics accessibility", func(ctx SpecContext) {
+			t.assertSuccess(ctx, t.run)
 
 			Expect(podsCreated).To(ContainElement(Satisfy(func(pod *corev1.Pod) bool {
 				return len(pod.Spec.Containers) > 0 && slices.ContainsFunc(pod.Spec.Containers[0].Env, func(envVar corev1.EnvVar) bool {
@@ -403,6 +403,6 @@ func (t *deploymentTestDriver) testMultipleNodes() {
 	}, t.run)
 }
 
-func (t *deploymentTestDriver) run() error {
-	return diagnose.Deployments(newClusterInfo(context.TODO()), "", t.imageOverrides, t.statusTracker)
+func (t *deploymentTestDriver) run(ctx context.Context) error {
+	return diagnose.Deployments(ctx, newClusterInfo(ctx), "", t.imageOverrides, t.statusTracker)
 }

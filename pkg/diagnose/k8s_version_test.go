@@ -82,8 +82,8 @@ func newK8sVersionTestDriver() *k8sVersionTestDriver {
 	return t
 }
 
-func (t *k8sVersionTestDriver) run() error {
-	return diagnose.K8sVersion(newClusterInfo(context.TODO()), "", t.statusTracker)
+func (t *k8sVersionTestDriver) run(ctx context.Context) error {
+	return diagnose.K8sVersion(ctx, newClusterInfo(ctx), "", t.statusTracker)
 }
 
 func (t *k8sVersionTestDriver) setK8sVersion(minor string) {

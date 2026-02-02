@@ -183,14 +183,14 @@ func (rcp *Producer) setupContextFlags(
 	}
 }
 
-type AllContextFn func(clusterInfos []*cluster.Info, namespaces []string, status reporter.Interface) error
+type AllContextFn func(ctx context.Context, clusterInfos []*cluster.Info, namespaces []string, status reporter.Interface) error
 
-type PerContextFn func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error
+type PerContextFn func(ctx context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error
 
 // RunOnSelectedContext runs the given function on the selected context.
-func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter.Interface) error {
+func (rcp *Producer) RunOnSelectedContext(ctx context.Context, function PerContextFn, status reporter.Interface) error {
 	if rcp.inCluster {
-		return rcp.runInCluster(function, status)
+		return rcp.runInCluster(ctx, function, status)
 	}
 
 	if rcp.defaultClientConfig == nil {
@@ -201,7 +201,7 @@ func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		rcp.defaultClientConfig.loadingRules, rcp.defaultClientConfig.overrides)
 
-	clusterInfo, err := createClusterInfo(clientConfig, rcp.defaultClientConfig.overrides)
+	clusterInfo, err := createClusterInfo(ctx, clientConfig, rcp.defaultClientConfig.overrides)
 	if err != nil {
 		return status.Error(err, "error building the cluster.Info for the default configuration")
 	}
@@ -228,26 +228,27 @@ func (rcp *Producer) RunOnSelectedContext(function PerContextFn, status reporter
 		namespace = *rcp.defaultNamespace
 	}
 
-	return function(clusterInfo, namespace, status)
+	return function(ctx, clusterInfo, namespace, status)
 }
 
-func createClusterInfo(clientConfig clientcmd.ClientConfig, overrides *clientcmd.ConfigOverrides) (*cluster.Info, error) {
+func createClusterInfo(ctx context.Context, clientConfig clientcmd.ClientConfig, overrides *clientcmd.ConfigOverrides,
+) (*cluster.Info, error) {
 	restConfig, err := getRestConfigFromConfig(clientConfig, overrides)
 	if err != nil {
 		return nil, err
 	}
 
-	return cluster.NewInfo(context.TODO(), restConfig.ClusterName, restConfig.Config) //nolint:wrapcheck // No need to wrap
+	return cluster.NewInfo(ctx, restConfig.ClusterName, restConfig.Config) //nolint:wrapcheck // No need to wrap
 }
 
-func (rcp *Producer) runInCluster(function PerContextFn, status reporter.Interface) error {
+func (rcp *Producer) runInCluster(ctx context.Context, function PerContextFn, status reporter.Interface) error {
 	restConfig, err := GetInClusterConfig()
 	if err != nil {
 		return status.Error(err, "error retrieving the in-cluster configuration")
 	}
 
 	// In-cluster configurations don't give a cluster name, use "in-cluster"
-	clusterInfo, err := cluster.NewInfo(context.TODO(), InCluster, restConfig)
+	clusterInfo, err := cluster.NewInfo(ctx, InCluster, restConfig)
 	if err != nil {
 		return status.Error(err, "error building the cluster.Info for the in-cluster configuration")
 	}
@@ -258,12 +259,13 @@ func (rcp *Producer) runInCluster(function PerContextFn, status reporter.Interfa
 		namespace = rcp.defaultClientConfig.overrides.Context.Namespace
 	}
 
-	return function(clusterInfo, namespace, status)
+	return function(ctx, clusterInfo, namespace, status)
 }
 
 // RunOnSelectedPrefixedContext runs the given function on the selected prefixed context.
 // Returns true if there was a selected prefix context, false otherwise.
-func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerContextFn, status reporter.Interface) (bool, error) {
+func (rcp *Producer) RunOnSelectedPrefixedContext(ctx context.Context, prefix string, function PerContextFn, status reporter.Interface,
+) (bool, error) {
 	clientConfig, ok := rcp.prefixedClientConfigs[prefix]
 	if ok {
 		loadingRules := clientConfig.loadingRules
@@ -278,7 +280,7 @@ func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerCon
 
 		contextClientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, clientConfig.overrides)
 
-		clusterInfo, err := createClusterInfo(contextClientConfig, clientConfig.overrides)
+		clusterInfo, err := createClusterInfo(ctx, contextClientConfig, clientConfig.overrides)
 		if err != nil {
 			return true, status.Error(err, "error building the cluster.Info for the configuration for prefix %s", prefix)
 		}
@@ -296,7 +298,7 @@ func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerCon
 			}
 		}
 
-		return true, function(clusterInfo, namespace, status)
+		return true, function(ctx, clusterInfo, namespace, status)
 	}
 
 	return false, nil
@@ -305,11 +307,12 @@ func (rcp *Producer) RunOnSelectedPrefixedContext(prefix string, function PerCon
 // RunOnSelectedContexts runs the given function on all selected contexts, passing them simultaneously.
 // This specifically handles the "--contexts" (plural) flag.
 // Returns true if there was at least one selected context, false otherwise.
-func (rcp *Producer) RunOnSelectedContexts(function AllContextFn, status reporter.Interface) (bool, error) {
+func (rcp *Producer) RunOnSelectedContexts(ctx context.Context, function AllContextFn, status reporter.Interface) (bool, error) {
 	if rcp.inCluster {
-		return true, rcp.runInCluster(func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-			return function([]*cluster.Info{clusterInfo}, []string{namespace}, status)
-		}, status)
+		return true,
+			rcp.runInCluster(ctx, func(ctx context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+				return function(ctx, []*cluster.Info{clusterInfo}, []string{namespace}, status)
+			}, status)
 	}
 
 	if rcp.defaultClientConfig != nil {
@@ -323,7 +326,7 @@ func (rcp *Producer) RunOnSelectedContexts(function AllContextFn, status reporte
 				clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 					rcp.defaultClientConfig.loadingRules, rcp.defaultClientConfig.overrides)
 
-				clusterInfo, err := createClusterInfo(clientConfig, rcp.defaultClientConfig.overrides)
+				clusterInfo, err := createClusterInfo(ctx, clientConfig, rcp.defaultClientConfig.overrides)
 				if err != nil {
 					return true, status.Error(err, "error building the cluster.Info for context %s", contextName)
 				}
@@ -342,7 +345,7 @@ func (rcp *Producer) RunOnSelectedContexts(function AllContextFn, status reporte
 				namespaces = append(namespaces, namespace)
 			}
 
-			return true, function(clusterInfos, namespaces, status)
+			return true, function(ctx, clusterInfos, namespaces, status)
 		}
 	}
 
@@ -353,9 +356,9 @@ func (rcp *Producer) RunOnSelectedContexts(function AllContextFn, status reporte
 // If the user has explicitly selected one or more contexts, only those contexts are used.
 // All appropriate contexts are processed, and any errors are aggregated.
 // Returns an error if no contexts are found.
-func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Interface) error {
+func (rcp *Producer) RunOnAllContexts(ctx context.Context, function PerContextFn, status reporter.Interface) error {
 	if rcp.inCluster {
-		return rcp.runInCluster(function, status)
+		return rcp.runInCluster(ctx, function, status)
 	}
 
 	if rcp.defaultClientConfig == nil {
@@ -365,7 +368,7 @@ func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Int
 
 	if rcp.defaultClientConfig.overrides.CurrentContext != "" {
 		// The user has explicitly chosen a context, use that only
-		return rcp.RunOnSelectedContext(function, status)
+		return rcp.RunOnSelectedContext(ctx, function, status)
 	}
 
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
@@ -391,7 +394,7 @@ func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Int
 				continue
 			}
 
-			contextErrors = append(contextErrors, rcp.overrideContextAndRun(chosenContext.Cluster, contextName, function, status))
+			contextErrors = append(contextErrors, rcp.overrideContextAndRun(ctx, chosenContext.Cluster, contextName, function, status))
 		}
 	} else {
 		// Loop over all accessible contexts and de-duplicate by cluster name. If there's multiple contexts for a cluster, bias towards the
@@ -409,7 +412,7 @@ func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Int
 
 		for cluster, contextNames := range contextsByCluster {
 			if len(contextNames) == 1 {
-				contextErrors = append(contextErrors, rcp.overrideContextAndRun(cluster, contextNames[0], function, status))
+				contextErrors = append(contextErrors, rcp.overrideContextAndRun(ctx, cluster, contextNames[0], function, status))
 				continue
 			}
 
@@ -427,7 +430,7 @@ func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Int
 				" associated user account does not have sufficient privileges, please re-run the command with the suitable context.\n",
 				cluster, strings.Join(contextNames, "\n    "), selectedContextName)
 
-			contextErrors = append(contextErrors, rcp.overrideContextAndRun(cluster, selectedContextName, function, status))
+			contextErrors = append(contextErrors, rcp.overrideContextAndRun(ctx, cluster, selectedContextName, function, status))
 		}
 	}
 
@@ -438,14 +441,16 @@ func (rcp *Producer) RunOnAllContexts(function PerContextFn, status reporter.Int
 	return goerrors.Join(contextErrors...)
 }
 
-func (rcp *Producer) overrideContextAndRun(clusterName, contextName string, function PerContextFn, status reporter.Interface) error {
+func (rcp *Producer) overrideContextAndRun(ctx context.Context, clusterName, contextName string, function PerContextFn,
+	status reporter.Interface,
+) error {
 	fmt.Printf("Cluster %q\n", clusterName)
 
 	defer fmt.Println()
 
 	rcp.defaultClientConfig.overrides.CurrentContext = contextName
 
-	return rcp.RunOnSelectedContext(function, status)
+	return rcp.RunOnSelectedContext(ctx, function, status)
 }
 
 func ForBroker(submariner *v1alpha1.Submariner, serviceDisc *v1alpha1.ServiceDiscovery) (*rest.Config, string, error) {
@@ -527,7 +532,7 @@ func checkVersionMismatch(submVersion string) error {
 }
 
 func IfConnectivityInstalled(functions ...PerContextFn) PerContextFn {
-	return func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+	return func(ctx context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 		if clusterInfo.Submariner == nil {
 			status.Warning(constants.ConnectivityNotInstalled)
 
@@ -537,7 +542,7 @@ func IfConnectivityInstalled(functions ...PerContextFn) PerContextFn {
 		aggregateErrors := []error{}
 
 		for _, function := range functions {
-			aggregateErrors = append(aggregateErrors, function(clusterInfo, namespace, status))
+			aggregateErrors = append(aggregateErrors, function(ctx, clusterInfo, namespace, status))
 		}
 
 		return goerrors.Join(aggregateErrors...)
@@ -545,7 +550,7 @@ func IfConnectivityInstalled(functions ...PerContextFn) PerContextFn {
 }
 
 func IfServiceDiscoveryInstalled(functions ...PerContextFn) PerContextFn {
-	return func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+	return func(ctx context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
 		if clusterInfo.ServiceDiscovery == nil {
 			status.Warning(constants.ServiceDiscoveryNotInstalled)
 
@@ -555,7 +560,7 @@ func IfServiceDiscoveryInstalled(functions ...PerContextFn) PerContextFn {
 		aggregateErrors := []error{}
 
 		for _, function := range functions {
-			aggregateErrors = append(aggregateErrors, function(clusterInfo, namespace, status))
+			aggregateErrors = append(aggregateErrors, function(ctx, clusterInfo, namespace, status))
 		}
 
 		return goerrors.Join(aggregateErrors...)

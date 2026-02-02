@@ -22,6 +22,8 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/cli"
@@ -41,9 +43,10 @@ var (
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on RHOS cloud for Submariner installation.",
 		PreRunE: checkRHOSFlags,
 		Run: func(cmd *cobra.Command, _ []string) {
-			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return prepare.RHOS(cmd.Context(), clusterInfo, &cloudOptions.ports, &rhosConfig, cloudOptions.useLoadBalancer, status)
+			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(cmd.Context(),
+				func(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+					return prepare.RHOS(
+						ctx, clusterInfo, &cloudOptions.ports, &rhosConfig, cloudOptions.useLoadBalancer, status)
 				}, cli.NewReporter()))
 		},
 	}
@@ -55,9 +58,9 @@ var (
 			" cloud after Submariner uninstallation.",
 		PreRunE: checkRHOSFlags,
 		Run: func(cmd *cobra.Command, _ []string) {
-			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return cleanup.RHOS(cmd.Context(), clusterInfo, &rhosConfig, status)
+			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(cmd.Context(),
+				func(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+					return cleanup.RHOS(ctx, clusterInfo, &rhosConfig, status)
 				}, cli.NewReporter()))
 		},
 	}

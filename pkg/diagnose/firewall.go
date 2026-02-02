@@ -70,25 +70,25 @@ type FirewallOptions struct {
 	VerboseOutput     bool
 }
 
-func spawnClientPodOnNonGatewayNode(client kubernetes.Interface, namespace, podCommand string,
+func spawnClientPodOnNonGatewayNode(ctx context.Context, client kubernetes.Interface, namespace, podCommand string,
 	imageRepInfo *image.RepositoryInfo,
 ) (*pods.Scheduled, error) {
 	scheduling := pods.Scheduling{ScheduleOn: pods.NonGatewayNode, Networking: pods.PodNetworking}
 
-	return spawnPod(client, scheduling, "validate-client", namespace, podCommand, imageRepInfo)
+	return spawnPod(ctx, client, scheduling, "validate-client", namespace, podCommand, imageRepInfo)
 }
 
-func spawnClientPodOnNonGatewayNodeWithHostNet(client kubernetes.Interface, namespace, podCommand string,
+func spawnClientPodOnNonGatewayNodeWithHostNet(ctx context.Context, client kubernetes.Interface, namespace, podCommand string,
 	imageRepInfo *image.RepositoryInfo,
 ) (*pods.Scheduled, error) {
 	scheduling := pods.Scheduling{ScheduleOn: pods.NonGatewayNode, Networking: pods.HostNetworking}
-	return spawnPod(client, scheduling, "validate-client", namespace, podCommand, imageRepInfo)
+	return spawnPod(ctx, client, scheduling, "validate-client", namespace, podCommand, imageRepInfo)
 }
 
-func spawnPod(client kubernetes.Interface, scheduling pods.Scheduling, podName, namespace,
+func spawnPod(ctx context.Context, client kubernetes.Interface, scheduling pods.Scheduling, podName, namespace,
 	podCommand string, imageRepInfo *image.RepositoryInfo,
 ) (*pods.Scheduled, error) {
-	pod, err := pods.Schedule(&pods.Config{
+	pod, err := pods.Schedule(ctx, &pods.Config{
 		Name:                podName,
 		ClientSet:           client,
 		Scheduling:          scheduling,
@@ -103,7 +103,7 @@ func spawnPod(client kubernetes.Interface, scheduling pods.Scheduling, podName, 
 	return pod, nil
 }
 
-func spawnSnifferPodOnNode(client kubernetes.Interface, nodeName, namespace, podCommand string,
+func spawnSnifferPodOnNode(ctx context.Context, client kubernetes.Interface, nodeName, namespace, podCommand string,
 	imageRepInfo *image.RepositoryInfo,
 ) (*pods.Scheduled, error) {
 	scheduling := pods.Scheduling{
@@ -111,11 +111,11 @@ func spawnSnifferPodOnNode(client kubernetes.Interface, nodeName, namespace, pod
 		Networking: pods.HostNetworking,
 	}
 
-	return spawnPod(client, scheduling, "validate-sniffer", namespace, podCommand, imageRepInfo)
+	return spawnPod(ctx, client, scheduling, "validate-sniffer", namespace, podCommand, imageRepInfo)
 }
 
-func getActiveGatewayNodeName(clusterInfo *cluster.Info, status reporter.Interface) (string, error) {
-	gwPods, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Pods(constants.OperatorNamespace).List(context.TODO(),
+func getActiveGatewayNodeName(ctx context.Context, clusterInfo *cluster.Info, status reporter.Interface) (string, error) {
+	gwPods, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Pods(constants.OperatorNamespace).List(ctx,
 		metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("app=%s,%s=%s", names.GatewayComponent, GatewayHAStatusLabel, string(subv1.HAStatusActive)),
 		})
@@ -137,8 +137,8 @@ func getActiveGatewayNodeName(clusterInfo *cluster.Info, status reporter.Interfa
 		clusterInfo.Name), "")
 }
 
-func getGatewayIP(clusterInfo *cluster.Info, localClusterID string) (string, error) {
-	gateways, err := clusterInfo.GetGateways(context.TODO())
+func getGatewayIP(ctx context.Context, clusterInfo *cluster.Info, localClusterID string) (string, error) {
+	gateways, err := clusterInfo.GetGateways(ctx)
 	if err != nil {
 		return "", errors.Wrapf(err, "Error retrieving gateways from cluster %q", clusterInfo.Name)
 	}
@@ -170,8 +170,8 @@ func getGatewayIP(clusterInfo *cluster.Info, localClusterID string) (string, err
 	return "", fmt.Errorf("the gateway on cluster %q does not have an active connection to cluster %q", clusterInfo.Name, localClusterID)
 }
 
-func runIfSingleNode(clusterInfo *cluster.Info, status reporter.Interface, run func() error) error {
-	singleNode, err := clusterInfo.HasSingleNode()
+func runIfSingleNode(ctx context.Context, clusterInfo *cluster.Info, status reporter.Interface, run func(context.Context) error) error {
+	singleNode, err := clusterInfo.HasSingleNode(ctx)
 	if err != nil {
 		return status.Error(err, "error determining whether the cluster has a single node")
 	}
@@ -181,10 +181,10 @@ func runIfSingleNode(clusterInfo *cluster.Info, status reporter.Interface, run f
 		return nil
 	}
 
-	return run()
+	return run(ctx)
 }
 
-func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, namespace string, options FirewallOptions,
+func verifyConnectivity(ctx context.Context, localClusterInfo, remoteClusterInfo *cluster.Info, namespace string, options FirewallOptions,
 	status reporter.Interface, targetPort TargetPort, message string,
 ) error {
 	mustHaveSubmariner(localClusterInfo)
@@ -193,13 +193,13 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 	status.Start(message)
 	defer status.End()
 
-	return runIfSingleNode(remoteClusterInfo, status, func() error {
-		localEndpoint, err := localClusterInfo.GetLocalEndpoint()
+	return runIfSingleNode(ctx, remoteClusterInfo, status, func(ctx context.Context) error {
+		localEndpoint, err := localClusterInfo.GetLocalEndpoint(ctx)
 		if err != nil {
 			return status.Error(err, "Unable to obtain the local endpoint")
 		}
 
-		gwNodeName, err := getActiveGatewayNodeName(localClusterInfo, status)
+		gwNodeName, err := getActiveGatewayNodeName(ctx, localClusterInfo, status)
 		if err != nil {
 			return err
 		}
@@ -209,7 +209,7 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 			return status.Error(err, "Could not determine the target port")
 		}
 
-		portFilter, err := getPortFilter(destPort, localClusterInfo, localEndpoint, targetPort, status)
+		portFilter, err := getPortFilter(ctx, destPort, localClusterInfo, localEndpoint, targetPort, status)
 		if err != nil {
 			return err
 		}
@@ -226,14 +226,15 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 			return status.Error(err, "Error determining repository information")
 		}
 
-		sPod, err := spawnSnifferPodOnNode(localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, namespace, podCommand, repositoryInfo)
+		sPod, err := spawnSnifferPodOnNode(ctx, localClusterInfo.ClientProducer.ForKubernetes(), gwNodeName, namespace, podCommand,
+			repositoryInfo)
 		if err != nil {
 			return status.Error(err, "Error spawning the sniffer pod on the Gateway node %q", gwNodeName)
 		}
 
-		defer sPod.Delete()
+		defer sPod.Delete(ctx)
 
-		gatewayPodIP, err := getGatewayIP(remoteClusterInfo, localClusterInfo.Submariner.Status.ClusterID)
+		gatewayPodIP, err := getGatewayIP(ctx, remoteClusterInfo, localClusterInfo.Submariner.Status.ClusterID)
 		if err != nil {
 			return status.Error(err, "Error retrieving the gateway IP of cluster %q", localClusterInfo.Name)
 		}
@@ -243,15 +244,15 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 
 		// Spawn the pod on the nonGateway node. If we spawn the pod on Gateway node, the tunnel process can
 		// sometimes drop the udp traffic from client pod until the tunnels are properly setup.
-		cPod, err := spawnClientPodOnNonGatewayNodeWithHostNet(remoteClusterInfo.ClientProducer.ForKubernetes(), namespace,
+		cPod, err := spawnClientPodOnNonGatewayNodeWithHostNet(ctx, remoteClusterInfo.ClientProducer.ForKubernetes(), namespace,
 			podCommand, repositoryInfo)
 		if err != nil {
 			return status.Error(err, "Error spawning the client pod on non-Gateway node of cluster %q", remoteClusterInfo.Name)
 		}
 
-		defer cPod.Delete()
+		defer cPod.Delete(ctx)
 
-		err = awaitPodCompletion(cPod, sPod, status)
+		err = awaitPodCompletion(ctx, cPod, sPod, status)
 		if err != nil {
 			return err
 		}
@@ -269,12 +270,12 @@ func verifyConnectivity(localClusterInfo, remoteClusterInfo *cluster.Info, names
 	})
 }
 
-func awaitPodCompletion(cPod, sPod *pods.Scheduled, status reporter.Interface) error {
-	if err := cPod.AwaitCompletion(); err != nil {
+func awaitPodCompletion(ctx context.Context, cPod, sPod *pods.Scheduled, status reporter.Interface) error {
+	if err := cPod.AwaitCompletion(ctx); err != nil {
 		return status.Error(err, "Error waiting for the client pod to finish its execution")
 	}
 
-	if err := sPod.AwaitCompletion(); err != nil {
+	if err := sPod.AwaitCompletion(ctx); err != nil {
 		return status.Error(err, "Error waiting for the sniffer pod to finish its execution")
 	}
 
@@ -299,11 +300,12 @@ func validateOutput(sPod *pods.Scheduled, clientMessage, hostname string, destPo
 	return nil
 }
 
-func getPortFilter(destPort int32, clusterInfo *cluster.Info, endpoint *subv1.Endpoint, targetPort TargetPort, status reporter.Interface,
+func getPortFilter(ctx context.Context, destPort int32, clusterInfo *cluster.Info, endpoint *subv1.Endpoint, targetPort TargetPort,
+	status reporter.Interface,
 ) (string, error) {
 	portFilter := fmt.Sprintf("dst port %d", destPort)
 
-	lbNodePort, err := getLbNodePort(clusterInfo, endpoint, targetPort)
+	lbNodePort, err := getLbNodePort(ctx, clusterInfo, endpoint, targetPort)
 	if err != nil {
 		return "", status.Error(err, "Could not determine LB node port")
 	}
@@ -354,7 +356,7 @@ func getTargetPort(submariner *v1alpha1.Submariner, endpoint *subv1.Endpoint, tg
 	}
 }
 
-func getLbNodePort(clusterInfo *cluster.Info, endpoint *subv1.Endpoint, tgtport TargetPort) (int32, error) {
+func getLbNodePort(ctx context.Context, clusterInfo *cluster.Info, endpoint *subv1.Endpoint, tgtport TargetPort) (int32, error) {
 	usingLoadBalancer, _ := endpoint.Spec.GetBackendBool(subv1.UsingLoadBalancer, false)
 	if !usingLoadBalancer {
 		return 0, nil
@@ -366,7 +368,7 @@ func getLbNodePort(clusterInfo *cluster.Info, endpoint *subv1.Endpoint, tgtport 
 	}
 
 	svc, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Services(endpoint.GetNamespace()).Get(
-		context.TODO(), LoadBalancerName, metav1.GetOptions{})
+		ctx, LoadBalancerName, metav1.GetOptions{})
 	if err == nil {
 		for _, port := range svc.Spec.Ports {
 			if port.Name == portName {

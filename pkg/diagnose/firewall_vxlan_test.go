@@ -19,6 +19,8 @@ limitations under the License.
 package diagnose_test
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/submariner-io/subctl/internal/constants"
@@ -44,8 +46,8 @@ var _ = Describe("FirewallIntraVxLANConfig", func() {
 			t.localClusterInfo.Submariner.Status.NetworkPlugin = cni.OVNKubernetes
 		})
 
-		It("should skip the check and succeed", func() {
-			t.assertSuccess(t.run)
+		It("should skip the check and succeed", func(ctx SpecContext) {
+			t.assertSuccess(ctx, t.run)
 		})
 	})
 
@@ -107,8 +109,8 @@ func newVxLanFirewallTestDriver() *vxLanFirewallTestDriver {
 	return t
 }
 
-func (t *vxLanFirewallTestDriver) run() error {
-	return diagnose.FirewallIntraVxLANConfig(t.localClusterInfo, constants.OperatorNamespace, t.options, t.statusTracker)
+func (t *vxLanFirewallTestDriver) run(ctx context.Context) error {
+	return diagnose.FirewallIntraVxLANConfig(ctx, t.localClusterInfo, constants.OperatorNamespace, t.options, t.statusTracker)
 }
 
 func (t *vxLanFirewallTestDriver) testVxLANConnectivitySuccess(verifyCmd func(string)) {

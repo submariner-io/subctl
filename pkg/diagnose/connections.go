@@ -29,18 +29,18 @@ import (
 	k8snet "k8s.io/utils/net"
 )
 
-func Connections(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+func Connections(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	return errors.Join(
-		CheckGatewayConnections(clusterInfo, status),
-		CheckRouteAgentConnections(clusterInfo, status),
+		CheckGatewayConnections(ctx, clusterInfo, status),
+		CheckRouteAgentConnections(ctx, clusterInfo, status),
 	)
 }
 
-func CheckGatewayConnections(clusterInfo *cluster.Info, status reporter.Interface) error {
+func CheckGatewayConnections(ctx context.Context, clusterInfo *cluster.Info, status reporter.Interface) error {
 	status.Start("Checking gateway connections")
 	defer status.End()
 
-	gateways, err := clusterInfo.GetGateways(context.TODO())
+	gateways, err := clusterInfo.GetGateways(ctx)
 	if err != nil {
 		return status.Error(err, "Error retrieving gateways")
 	}
@@ -87,10 +87,10 @@ func CheckGatewayConnections(clusterInfo *cluster.Info, status reporter.Interfac
 	return nil
 }
 
-func CheckRouteAgentConnections(clusterInfo *cluster.Info, status reporter.Interface) error {
+func CheckRouteAgentConnections(ctx context.Context, clusterInfo *cluster.Info, status reporter.Interface) error {
 	status.Start("Retrieving route agent connections")
 
-	routeAgents, err := clusterInfo.GetRouteAgents()
+	routeAgents, err := clusterInfo.GetRouteAgents(ctx)
 	if err != nil {
 		return status.Error(err, "Error retrieving route agents")
 	}

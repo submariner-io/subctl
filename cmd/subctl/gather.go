@@ -19,6 +19,7 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -43,7 +44,7 @@ var gatherCmd = &cobra.Command{
 		"can be selected by component (%v) and type (%v). Default is to capture all data.",
 		strings.Join(gather.AllModules.UnsortedList(), ","), strings.Join(gather.AllTypes.UnsortedList(), ",")),
 	Args: checkNoArguments,
-	Run: func(_ *cobra.Command, _ []string) {
+	Run: func(cmd *cobra.Command, _ []string) {
 		if options.Directory == "" {
 			options.Directory = "submariner-" + time.Now().UTC().Format("20060102150405") // submariner-YYYYMMDDHHMMSS
 		}
@@ -53,9 +54,9 @@ var gatherCmd = &cobra.Command{
 
 		status := cli.NewReporter()
 
-		exit.OnError(gatherRestConfigProducer.RunOnAllContexts(
-			func(clusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
-				return gather.Data(clusterInfo, options)
+		exit.OnError(gatherRestConfigProducer.RunOnAllContexts(cmd.Context(),
+			func(ctx context.Context, clusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
+				return gather.Data(ctx, clusterInfo, options)
 			}, status))
 	},
 }

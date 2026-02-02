@@ -169,7 +169,7 @@ func testGetRouteAgents() {
 		})
 
 		It("should return all route agents", func(ctx SpecContext) {
-			routeAgents, err := t.newInfo(ctx).GetRouteAgents()
+			routeAgents, err := t.newInfo(ctx).GetRouteAgents(ctx)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(routeAgents).To(HaveLen(2))
 		})
@@ -177,7 +177,7 @@ func testGetRouteAgents() {
 
 	When("no route agents exist", func() {
 		It("should return empty list", func(ctx SpecContext) {
-			routeAgents, err := t.newInfo(ctx).GetRouteAgents()
+			routeAgents, err := t.newInfo(ctx).GetRouteAgents(ctx)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(routeAgents).To(BeEmpty())
 		})
@@ -190,7 +190,7 @@ func testGetRouteAgents() {
 		})
 
 		It("should return an error", func(ctx SpecContext) {
-			_, err := t.newInfo(ctx).GetRouteAgents()
+			_, err := t.newInfo(ctx).GetRouteAgents(ctx)
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -205,7 +205,7 @@ func testHasSingleNode() {
 		})
 
 		It("should return true", func(ctx SpecContext) {
-			hasSingleNode, err := t.newInfo(ctx).HasSingleNode()
+			hasSingleNode, err := t.newInfo(ctx).HasSingleNode(ctx)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(hasSingleNode).To(BeTrue())
 		})
@@ -218,7 +218,7 @@ func testHasSingleNode() {
 		})
 
 		It("should return false", func(ctx SpecContext) {
-			hasSingleNode, err := t.newInfo(ctx).HasSingleNode()
+			hasSingleNode, err := t.newInfo(ctx).HasSingleNode(ctx)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(hasSingleNode).To(BeFalse())
 		})
@@ -226,7 +226,7 @@ func testHasSingleNode() {
 
 	When("cluster has no nodes", func() {
 		It("should return false", func(ctx SpecContext) {
-			hasSingleNode, err := t.newInfo(ctx).HasSingleNode()
+			hasSingleNode, err := t.newInfo(ctx).HasSingleNode(ctx)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(hasSingleNode).To(BeFalse())
 		})
@@ -238,7 +238,7 @@ func testHasSingleNode() {
 		})
 
 		It("should return an error", func(ctx SpecContext) {
-			_, err := t.newInfo(ctx).HasSingleNode()
+			_, err := t.newInfo(ctx).HasSingleNode(ctx)
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -254,7 +254,7 @@ func testGetLocalEndpoint() {
 		})
 
 		It("should return the local endpoint", func(ctx SpecContext) {
-			endpoint, err := t.newInfo(ctx).GetLocalEndpoint()
+			endpoint, err := t.newInfo(ctx).GetLocalEndpoint(ctx)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(endpoint).NotTo(BeNil())
 			Expect(endpoint.Spec.ClusterID).To(Equal(localCluster))
@@ -267,14 +267,14 @@ func testGetLocalEndpoint() {
 		})
 
 		It("should return not found error", func(ctx SpecContext) {
-			_, err := t.newInfo(ctx).GetLocalEndpoint()
+			_, err := t.newInfo(ctx).GetLocalEndpoint(ctx)
 			Expect(apierrors.IsNotFound(err)).To(BeTrue())
 		})
 	})
 
 	When("no endpoints exist", func() {
 		It("should return not found error", func(ctx SpecContext) {
-			_, err := t.newInfo(ctx).GetLocalEndpoint()
+			_, err := t.newInfo(ctx).GetLocalEndpoint(ctx)
 			Expect(apierrors.IsNotFound(err)).To(BeTrue())
 		})
 	})
@@ -286,7 +286,7 @@ func testGetLocalEndpoint() {
 		})
 
 		It("should return an error", func(ctx SpecContext) {
-			_, err := t.newInfo(ctx).GetLocalEndpoint()
+			_, err := t.newInfo(ctx).GetLocalEndpoint(ctx)
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -302,7 +302,7 @@ func testGetAnyRemoteEndpoint() {
 		})
 
 		It("should return a remote endpoint", func(ctx SpecContext) {
-			endpoint, err := t.newInfo(ctx).GetAnyRemoteEndpoint()
+			endpoint, err := t.newInfo(ctx).GetAnyRemoteEndpoint(ctx)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(endpoint.Spec.ClusterID).To(Equal(remoteCluster))
 		})
@@ -314,7 +314,7 @@ func testGetAnyRemoteEndpoint() {
 		})
 
 		It("should return not found error", func(ctx SpecContext) {
-			_, err := t.newInfo(ctx).GetAnyRemoteEndpoint()
+			_, err := t.newInfo(ctx).GetAnyRemoteEndpoint(ctx)
 			Expect(apierrors.IsNotFound(err)).To(BeTrue())
 		})
 	})
@@ -326,7 +326,7 @@ func testGetAnyRemoteEndpoint() {
 		})
 
 		It("should return an error", func(ctx SpecContext) {
-			_, err := t.newInfo(ctx).GetAnyRemoteEndpoint()
+			_, err := t.newInfo(ctx).GetAnyRemoteEndpoint(ctx)
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -451,7 +451,7 @@ func testGetClusters() {
 		})
 
 		It("should return all clusters", func(ctx SpecContext) {
-			clusters, err := t.newInfo(ctx).GetClusters(constants.OperatorNamespace)
+			clusters, err := t.newInfo(ctx).GetClusters(ctx, constants.OperatorNamespace)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(clusters).To(HaveLen(2))
 		})
@@ -459,7 +459,7 @@ func testGetClusters() {
 
 	When("no clusters exist", func() {
 		It("should return an empty list", func(ctx SpecContext) {
-			clusters, err := t.newInfo(ctx).GetClusters(constants.OperatorNamespace)
+			clusters, err := t.newInfo(ctx).GetClusters(ctx, constants.OperatorNamespace)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(clusters).To(BeEmpty())
 		})
@@ -472,7 +472,7 @@ func testGetClusters() {
 		})
 
 		It("should return an error", func(ctx SpecContext) {
-			_, err := t.newInfo(ctx).GetClusters(constants.OperatorNamespace)
+			_, err := t.newInfo(ctx).GetClusters(ctx, constants.OperatorNamespace)
 			Expect(err).To(HaveOccurred())
 		})
 	})

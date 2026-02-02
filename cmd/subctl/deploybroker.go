@@ -21,6 +21,7 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -62,8 +63,8 @@ func NewDeployBrokerCmd() *cobra.Command {
 	deployCmd.cmd = &cobra.Command{
 		Use:   "deploy-broker",
 		Short: "Deploys the broker",
-		Run: func(_ *cobra.Command, _ []string) {
-			exit.OnError(deployCmd.restConfigProducer.RunOnSelectedContext(deployCmd.deployBrokerInContext, cli.NewReporter()))
+		Run: func(cmd *cobra.Command, _ []string) {
+			exit.OnError(deployCmd.restConfigProducer.RunOnSelectedContext(cmd.Context(), deployCmd.deployBrokerInContext, cli.NewReporter()))
 		},
 	}
 
@@ -111,7 +112,9 @@ func (c *DeployBrokerCommand) addFlags() {
 		clustersetip.DefaultCIDR, "Clusterset IP CIDR supernet range for allocating Clusterset IP CIDRs to each cluster")
 }
 
-func (c *DeployBrokerCommand) deployBrokerInContext(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+func (c *DeployBrokerCommand) deployBrokerInContext(ctx context.Context, clusterInfo *cluster.Info, namespace string,
+	status reporter.Interface,
+) error {
 	c.flags.BrokerNamespace = namespace
 
 	if err := DeployBroker(&c.flags, clusterInfo.ClientProducer, status); err != nil {

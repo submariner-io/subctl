@@ -19,13 +19,15 @@ limitations under the License.
 package diagnose
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/version"
 )
 
-func K8sVersion(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+func K8sVersion(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Checking Submariner support for the Kubernetes version")
 	defer status.End()
 

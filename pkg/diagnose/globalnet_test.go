@@ -381,8 +381,8 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 	})
 }
 
-func (t *globalnetTestDriver) run() error {
-	return diagnose.GlobalnetConfig(newClusterInfo(context.TODO()), "", t.statusTracker)
+func (t *globalnetTestDriver) run(ctx context.Context) error {
+	return diagnose.GlobalnetConfig(ctx, newClusterInfo(ctx), "", t.statusTracker)
 }
 
 func (t *globalnetTestDriver) testMismatchedAllocatedIPs(before func()) {

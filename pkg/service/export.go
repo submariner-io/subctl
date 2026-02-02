@@ -32,8 +32,10 @@ import (
 	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
-func Export(clientProducer client.Producer, serviceNamespace, svcName, useClustersetIP string, status reporter.Interface) error {
-	_, err := clientProducer.ForKubernetes().CoreV1().Services(serviceNamespace).Get(context.TODO(), svcName, metav1.GetOptions{})
+func Export(ctx context.Context, clientProducer client.Producer, serviceNamespace, svcName, useClustersetIP string,
+	status reporter.Interface,
+) error {
+	_, err := clientProducer.ForKubernetes().CoreV1().Services(serviceNamespace).Get(ctx, svcName, metav1.GetOptions{})
 	if err != nil {
 		return status.Error(err, "Unable to find the Service %q in namespace %q", svcName, serviceNamespace)
 	}
@@ -63,7 +65,7 @@ func Export(clientProducer client.Producer, serviceNamespace, svcName, useCluste
 	serviceExportGVR := gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports")
 
 	_, err = clientProducer.ForDynamic().Resource(serviceExportGVR).Namespace(serviceNamespace).
-		Create(context.TODO(), resourceServiceExport, metav1.CreateOptions{})
+		Create(ctx, resourceServiceExport, metav1.CreateOptions{})
 	if err != nil {
 		if k8serrors.IsAlreadyExists(err) {
 			status.Success("Service already exported")

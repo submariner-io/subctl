@@ -28,7 +28,7 @@ import (
 	"github.com/submariner-io/submariner-operator/pkg/discovery/network"
 )
 
-func Network(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+func Network(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Showing Network details")
 
 	var clusterNetwork *network.ClusterNetwork
@@ -47,7 +47,7 @@ func Network(clusterInfo *cluster.Info, _ string, status reporter.Interface) err
 	} else {
 		msg = "    Discovered network details"
 
-		clusterNetwork, err = network.Discover(context.TODO(), clusterInfo.ClientProducer.ForGeneral(), constants.OperatorNamespace)
+		clusterNetwork, err = network.Discover(ctx, clusterInfo.ClientProducer.ForGeneral(), constants.OperatorNamespace)
 		if err != nil {
 			return status.Error(err, "Error discovering network details for this cluster")
 		}

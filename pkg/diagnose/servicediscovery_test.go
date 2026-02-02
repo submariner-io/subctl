@@ -331,6 +331,6 @@ func newServiceDiscoveryTestDriver() *serviceDiscoveryTestDriver {
 	return &serviceDiscoveryTestDriver{testDriver: newTestDriver()}
 }
 
-func (t *serviceDiscoveryTestDriver) run() error {
-	return diagnose.ServiceDiscovery(newClusterInfo(context.TODO()), "", t.statusTracker)
+func (t *serviceDiscoveryTestDriver) run(ctx context.Context) error {
+	return diagnose.ServiceDiscovery(ctx, newClusterInfo(ctx), "", t.statusTracker)
 }

@@ -19,6 +19,8 @@ limitations under the License.
 package gather
 
 import (
+	"context"
+
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,58 +37,59 @@ const (
 	ovnKubePodLabel          = "app=ovnkube-node"
 )
 
-func gatherGatewayPodLogs(info *Info) {
-	gatherPodLogs(gatewayPodLabel, info)
+func gatherGatewayPodLogs(ctx context.Context, info *Info) {
+	gatherPodLogs(ctx, gatewayPodLabel, info)
 }
 
-func gatherMetricsProxyPodLogs(info *Info) {
-	gatherPodLogs(metricsProxyPodLabel, info)
+func gatherMetricsProxyPodLogs(ctx context.Context, info *Info) {
+	gatherPodLogs(ctx, metricsProxyPodLabel, info)
 }
 
-func gatherRouteAgentPodLogs(info *Info) {
-	gatherPodLogs(routeagentPodLabel, info)
+func gatherRouteAgentPodLogs(ctx context.Context, info *Info) {
+	gatherPodLogs(ctx, routeagentPodLabel, info)
 }
 
-func gatherGlobalnetPodLogs(info *Info) {
-	gatherPodLogs(globalnetPodLabel, info)
+func gatherGlobalnetPodLogs(ctx context.Context, info *Info) {
+	gatherPodLogs(ctx, globalnetPodLabel, info)
 }
 
-func gatherAddonPodLogs(info *Info) {
-	gatherPodLogs(addonPodLabel, info)
+func gatherAddonPodLogs(ctx context.Context, info *Info) {
+	gatherPodLogs(ctx, addonPodLabel, info)
 }
 
-func gatherEndpoints(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("endpoints"), namespace, v1.ListOptions{})
+func gatherEndpoints(ctx context.Context, info *Info, namespace string) {
+	ResourcesToYAMLFile(ctx, info, submarinerv1.SchemeGroupVersion.WithResource("endpoints"), namespace, v1.ListOptions{})
 }
 
-func gatherClusters(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("clusters"), namespace, v1.ListOptions{})
+func gatherClusters(ctx context.Context, info *Info, namespace string) {
+	ResourcesToYAMLFile(ctx, info, submarinerv1.SchemeGroupVersion.WithResource("clusters"), namespace, v1.ListOptions{})
 }
 
-func gatherGateways(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("gateways"), namespace, v1.ListOptions{})
+func gatherGateways(ctx context.Context, info *Info, namespace string) {
+	ResourcesToYAMLFile(ctx, info, submarinerv1.SchemeGroupVersion.WithResource("gateways"), namespace, v1.ListOptions{})
 }
 
-func gatherRouteAgents(info *Info, namespace string) {
-	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("routeagents"), namespace, v1.ListOptions{})
+func gatherRouteAgents(ctx context.Context, info *Info, namespace string) {
+	ResourcesToYAMLFile(ctx, info, submarinerv1.SchemeGroupVersion.WithResource("routeagents"), namespace, v1.ListOptions{})
 }
 
-func gatherClusterGlobalEgressIPs(info *Info) {
-	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("clusterglobalegressips"), corev1.NamespaceAll, v1.ListOptions{})
+func gatherClusterGlobalEgressIPs(ctx context.Context, info *Info) {
+	ResourcesToYAMLFile(ctx, info, submarinerv1.SchemeGroupVersion.WithResource("clusterglobalegressips"), corev1.NamespaceAll,
+		v1.ListOptions{})
 }
 
-func gatherGlobalEgressIPs(info *Info) {
-	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("globalegressips"), corev1.NamespaceAll, v1.ListOptions{})
+func gatherGlobalEgressIPs(ctx context.Context, info *Info) {
+	ResourcesToYAMLFile(ctx, info, submarinerv1.SchemeGroupVersion.WithResource("globalegressips"), corev1.NamespaceAll, v1.ListOptions{})
 }
 
-func gatherGlobalIngressIPs(info *Info) {
-	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("globalingressips"), corev1.NamespaceAll, v1.ListOptions{})
+func gatherGlobalIngressIPs(ctx context.Context, info *Info) {
+	ResourcesToYAMLFile(ctx, info, submarinerv1.SchemeGroupVersion.WithResource("globalingressips"), corev1.NamespaceAll, v1.ListOptions{})
 }
 
-func gatherGatewayRoutes(info *Info) {
-	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("gatewayroutes"), corev1.NamespaceAll, v1.ListOptions{})
+func gatherGatewayRoutes(ctx context.Context, info *Info) {
+	ResourcesToYAMLFile(ctx, info, submarinerv1.SchemeGroupVersion.WithResource("gatewayroutes"), corev1.NamespaceAll, v1.ListOptions{})
 }
 
-func gatherNonGatewayRoutes(info *Info) {
-	ResourcesToYAMLFile(info, submarinerv1.SchemeGroupVersion.WithResource("nongatewayroutes"), corev1.NamespaceAll, v1.ListOptions{})
+func gatherNonGatewayRoutes(ctx context.Context, info *Info) {
+	ResourcesToYAMLFile(ctx, info, submarinerv1.SchemeGroupVersion.WithResource("nongatewayroutes"), corev1.NamespaceAll, v1.ListOptions{})
 }

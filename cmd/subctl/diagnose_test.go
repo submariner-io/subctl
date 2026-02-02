@@ -19,6 +19,7 @@ limitations under the License.
 package subctl_test
 
 import (
+	"context"
 	"slices"
 	"strings"
 
@@ -104,7 +105,7 @@ type diagnoseTestDriver struct {
 func newDiagnoseTestDriver(commands ...string) *diagnoseTestDriver {
 	t := &diagnoseTestDriver{testDriver: newTestDriver()}
 
-	BeforeEach(func() {
+	BeforeEach(func(ctx SpecContext) {
 		t.cmd = subctl.NewDiagnoseCmd()
 		t.args = commands
 		t.imageOverrides = nil
@@ -125,41 +126,43 @@ func newDiagnoseTestDriver(commands ...string) *diagnoseTestDriver {
 		t.diagnoseTunnelConfigCalled = false
 		t.diagnoseNatDiscoveryCalled = false
 
-		subctl.DiagnoseCNIConfig = func(_ *cluster.Info, _ string, _ reporter.Interface) error {
+		subctl.DiagnoseCNIConfig = func(_ context.Context, _ *cluster.Info, _ string, _ reporter.Interface) error {
 			t.diagnoseCNICalled = true
 			return nil
 		}
 
-		subctl.DiagnoseConnections = func(_ *cluster.Info, _ string, _ reporter.Interface) error {
+		subctl.DiagnoseConnections = func(_ context.Context, _ *cluster.Info, _ string, _ reporter.Interface) error {
 			t.diagnoseConnections = true
 			return nil
 		}
 
-		subctl.DiagnoseDeployments = func(_ *cluster.Info, _ string, io []string, _ reporter.Interface) error {
+		subctl.DiagnoseDeployments = func(_ context.Context, _ *cluster.Info, _ string, io []string, _ reporter.Interface) error {
 			t.diagnoseDeploymentsCalled = true
 			t.imageOverrides = io
 
 			return nil
 		}
 
-		subctl.DiagnoseK8sVersion = func(_ *cluster.Info, _ string, _ reporter.Interface) error {
+		subctl.DiagnoseK8sVersion = func(_ context.Context, _ *cluster.Info, _ string, _ reporter.Interface) error {
 			t.diagnoseK8sVersionCalled = true
 			return nil
 		}
 
-		subctl.DiagnoseKubeProxyMode = func(_ *cluster.Info, _ string, io []string, _ reporter.Interface) error {
+		subctl.DiagnoseKubeProxyMode = func(_ context.Context, _ *cluster.Info, _ string, io []string, _ reporter.Interface) error {
 			t.diagnoseKubeProxyModeCalled = true
 			t.imageOverrides = io
 
 			return nil
 		}
 
-		subctl.DiagnoseServiceDiscovery = func(_ *cluster.Info, _ string, _ reporter.Interface) error {
+		subctl.DiagnoseServiceDiscovery = func(_ context.Context, _ *cluster.Info, _ string, _ reporter.Interface) error {
 			t.diagnoseServiceDiscoveryCalled = true
 			return nil
 		}
 
-		subctl.DiagnoseFirewallIntraVxLANConfig = func(_ *cluster.Info, _ string, fo diagnose.FirewallOptions, _ reporter.Interface) error {
+		subctl.DiagnoseFirewallIntraVxLANConfig = func(_ context.Context, _ *cluster.Info, _ string, fo diagnose.FirewallOptions,
+			_ reporter.Interface,
+		) error {
 			t.diagnoseFirewallIntraVxLANCalled = true
 			t.imageOverrides = fo.ImageOverrides
 			t.firewallOptions = &fo
@@ -167,8 +170,8 @@ func newDiagnoseTestDriver(commands ...string) *diagnoseTestDriver {
 			return nil
 		}
 
-		subctl.DiagnoseTunnelConfigAcrossClusters = func(local, remote *cluster.Info, ns string, fo diagnose.FirewallOptions,
-			_ reporter.Interface,
+		subctl.DiagnoseTunnelConfigAcrossClusters = func(_ context.Context, local, remote *cluster.Info, ns string,
+			fo diagnose.FirewallOptions, _ reporter.Interface,
 		) error {
 			Expect(local.Name).To(Equal(clusterName))
 			Expect(remote.Name).To(Equal(remoteCluster))
@@ -181,8 +184,8 @@ func newDiagnoseTestDriver(commands ...string) *diagnoseTestDriver {
 			return nil
 		}
 
-		subctl.DiagnoseNatDiscoveryConfigAcrossClusters = func(local, remote *cluster.Info, ns string, fo diagnose.FirewallOptions,
-			_ reporter.Interface,
+		subctl.DiagnoseNatDiscoveryConfigAcrossClusters = func(_ context.Context, local, remote *cluster.Info, ns string,
+			fo diagnose.FirewallOptions, _ reporter.Interface,
 		) error {
 			Expect(local.Name).To(Equal(clusterName))
 			Expect(remote.Name).To(Equal(remoteCluster))

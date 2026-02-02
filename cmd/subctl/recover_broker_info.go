@@ -50,10 +50,8 @@ func NewRecoverBrokerInfoCmd() *cobra.Command {
 		Use:   "recover-broker-info",
 		Short: "Recovers the broker-info.subm file from the installed Broker",
 		Run: func(cmd *cobra.Command, _ []string) {
-			exit.OnError(recoverCmd.restConfigProducer.RunOnSelectedContext(restconfig.IfConnectivityInstalled(
-				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-					return recoverCmd.recoverBrokerInfo(cmd.Context(), clusterInfo, namespace, status)
-				}), NewReporter()))
+			exit.OnError(recoverCmd.restConfigProducer.RunOnSelectedContext(cmd.Context(), restconfig.IfConnectivityInstalled(
+				recoverCmd.recoverBrokerInfo), NewReporter()))
 		},
 	}
 

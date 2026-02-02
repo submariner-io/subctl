@@ -21,6 +21,7 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -43,9 +44,10 @@ var (
 		Long:    "This command prepares an OpenShift installer-provisioned infrastructure (IPI) on GCP cloud for Submariner installation.",
 		PreRunE: checkGCPFlags,
 		Run: func(cmd *cobra.Command, _ []string) {
-			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return prepare.GCP(cmd.Context(), clusterInfo, &cloudOptions.ports, &gcpConfig, cloudOptions.useLoadBalancer, status)
+			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(cmd.Context(),
+				func(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+					return prepare.GCP(
+						ctx, clusterInfo, &cloudOptions.ports, &gcpConfig, cloudOptions.useLoadBalancer, status)
 				}, cli.NewReporter()))
 		},
 	}
@@ -56,9 +58,9 @@ var (
 		Long:    "This command cleans up an installer-provisioned infrastructure (IPI) on GCP-based cloud after Submariner uninstallation.",
 		PreRunE: checkGCPFlags,
 		Run: func(cmd *cobra.Command, _ []string) {
-			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
-					return cleanup.GCP(cmd.Context(), clusterInfo, &gcpConfig, status)
+			exit.OnError(cloudRestConfigProducer.RunOnSelectedContext(cmd.Context(),
+				func(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+					return cleanup.GCP(ctx, clusterInfo, &gcpConfig, status)
 				}, cli.NewReporter()))
 		},
 	}

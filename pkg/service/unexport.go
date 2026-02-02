@@ -27,8 +27,8 @@ import (
 	mcs "sigs.k8s.io/mcs-api/pkg/client/clientset/versioned/typed/apis/v1alpha1"
 )
 
-func Unexport(client *mcs.MulticlusterV1alpha1Client, namespace, svcName string, status reporter.Interface) error {
-	err := client.ServiceExports(namespace).Delete(context.TODO(), svcName, metav1.DeleteOptions{})
+func Unexport(ctx context.Context, client *mcs.MulticlusterV1alpha1Client, namespace, svcName string, status reporter.Interface) error {
+	err := client.ServiceExports(namespace).Delete(ctx, svcName, metav1.DeleteOptions{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return status.Error(err, "Service %s/%s was not previously exported", namespace, svcName)

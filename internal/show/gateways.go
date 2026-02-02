@@ -29,10 +29,10 @@ import (
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 )
 
-func Gateways(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+func Gateways(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Showing Gateways")
 
-	gateways, err := clusterInfo.GetGateways(context.TODO())
+	gateways, err := clusterInfo.GetGateways(ctx)
 	if err != nil {
 		return status.Error(err, "Error retrieving gateways")
 	}

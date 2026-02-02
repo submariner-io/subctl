@@ -48,21 +48,21 @@ var _ = Describe("Ensure", func() {
 	t := newTestDriver()
 
 	When("the ServiceAccount doesn't exist", func() {
-		It("should create it", func() {
-			created, err := serviceaccount.Ensure(context.Background(), t.client, namespace, &corev1.ServiceAccount{
+		It("should create it", func(ctx SpecContext) {
+			created, err := serviceaccount.Ensure(ctx, t.client, namespace, &corev1.ServiceAccount{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: saName,
 				},
 			})
 			Expect(err).To(Succeed())
-			actual := t.assertServiceAccount()
+			actual := t.assertServiceAccount(ctx)
 			Expect(created).To(Equal(actual))
 		})
 	})
 
 	When("an existing ServiceAccount contains a token Secret", func() {
-		BeforeEach(func() {
-			_, err := t.client.CoreV1().ServiceAccounts(namespace).Create(context.Background(), &corev1.ServiceAccount{
+		BeforeEach(func(ctx SpecContext) {
+			_, err := t.client.CoreV1().ServiceAccounts(namespace).Create(ctx, &corev1.ServiceAccount{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: saName,
 				},
@@ -73,8 +73,8 @@ var _ = Describe("Ensure", func() {
 			Expect(err).To(Succeed())
 		})
 
-		It("should remove it", func() {
-			updated, err := serviceaccount.Ensure(context.Background(), t.client, namespace, &corev1.ServiceAccount{
+		It("should remove it", func(ctx SpecContext) {
+			updated, err := serviceaccount.Ensure(ctx, t.client, namespace, &corev1.ServiceAccount{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: saName,
 				},
@@ -89,17 +89,17 @@ var _ = Describe("EnsureFromYAML", func() {
 	t := newTestDriver()
 
 	When("the ServiceAccount doesn't exist", func() {
-		It("should create it", func() {
-			created, err := serviceaccount.EnsureFromYAML(context.Background(), t.client, namespace, []byte(saYAML))
+		It("should create it", func(ctx SpecContext) {
+			created, err := serviceaccount.EnsureFromYAML(ctx, t.client, namespace, []byte(saYAML))
 			Expect(err).To(Succeed())
 			Expect(created).To(BeTrue())
-			t.assertServiceAccount()
+			t.assertServiceAccount(ctx)
 		})
 	})
 
 	When("the ServiceAccount already exists", func() {
-		BeforeEach(func() {
-			_, err := t.client.CoreV1().ServiceAccounts(namespace).Create(context.Background(), &corev1.ServiceAccount{
+		BeforeEach(func(ctx SpecContext) {
+			_, err := t.client.CoreV1().ServiceAccounts(namespace).Create(ctx, &corev1.ServiceAccount{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: saName,
 				},
@@ -107,11 +107,11 @@ var _ = Describe("EnsureFromYAML", func() {
 			Expect(err).To(Succeed())
 		})
 
-		It("should succeed", func() {
-			created, err := serviceaccount.EnsureFromYAML(context.Background(), t.client, namespace, []byte(saYAML))
+		It("should succeed", func(ctx SpecContext) {
+			created, err := serviceaccount.EnsureFromYAML(ctx, t.client, namespace, []byte(saYAML))
 			Expect(err).To(Succeed())
 			Expect(created).To(BeFalse())
-			t.assertServiceAccount()
+			t.assertServiceAccount(ctx)
 		})
 	})
 })
@@ -120,18 +120,18 @@ var _ = Describe("EnsureTokenSecret", func() {
 	t := newTestDriver()
 
 	When("the Secret doesn't exist", func() {
-		It("should create it", func() {
-			secret, err := serviceaccount.EnsureTokenSecret(context.Background(), t.client, namespace, saName)
+		It("should create it", func(ctx SpecContext) {
+			secret, err := serviceaccount.EnsureTokenSecret(ctx, t.client, namespace, saName)
 			Expect(err).To(Succeed())
 			Expect(secret.Type).To(Equal(corev1.SecretTypeServiceAccountToken))
 			Expect(secret.Annotations).To(HaveKeyWithValue(corev1.ServiceAccountNameKey, saName))
-			t.assertSecret(secret)
+			t.assertSecret(ctx, secret)
 		})
 	})
 
 	When("the Secret already exists", func() {
-		BeforeEach(func() {
-			_, err := t.client.CoreV1().Secrets(namespace).Create(context.Background(), &corev1.Secret{
+		BeforeEach(func(ctx SpecContext) {
+			_, err := t.client.CoreV1().Secrets(namespace).Create(ctx, &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        saName + "-token-abcde",
 					Annotations: map[string]string{corev1.ServiceAccountNameKey: saName},
@@ -141,10 +141,10 @@ var _ = Describe("EnsureTokenSecret", func() {
 			Expect(err).To(Succeed())
 		})
 
-		It("should succeed", func() {
-			secret, err := serviceaccount.EnsureTokenSecret(context.Background(), t.client, namespace, saName)
+		It("should succeed", func(ctx SpecContext) {
+			secret, err := serviceaccount.EnsureTokenSecret(ctx, t.client, namespace, saName)
 			Expect(err).To(Succeed())
-			t.assertSecret(secret)
+			t.assertSecret(ctx, secret)
 		})
 	})
 })
@@ -192,15 +192,15 @@ func newTestDriver() *testDriver {
 	return t
 }
 
-func (t *testDriver) assertServiceAccount() *corev1.ServiceAccount {
-	sa, err := t.client.CoreV1().ServiceAccounts(namespace).Get(context.Background(), saName, metav1.GetOptions{})
+func (t *testDriver) assertServiceAccount(ctx context.Context) *corev1.ServiceAccount {
+	sa, err := t.client.CoreV1().ServiceAccounts(namespace).Get(ctx, saName, metav1.GetOptions{})
 	Expect(err).To(Succeed())
 
 	return sa
 }
 
-func (t *testDriver) assertSecret(expected *corev1.Secret) {
-	list, err := t.client.CoreV1().Secrets(namespace).List(context.Background(), metav1.ListOptions{})
+func (t *testDriver) assertSecret(ctx context.Context, expected *corev1.Secret) {
+	list, err := t.client.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})
 	Expect(err).To(Succeed())
 
 	var found *corev1.Secret

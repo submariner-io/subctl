@@ -19,6 +19,8 @@ limitations under the License.
 package subctl
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -45,13 +47,14 @@ var (
 		Short: "Exports a Service to other clusters",
 		Long: "This command creates a ServiceExport resource with the given name which causes the Service of the same name to be accessible" +
 			" to other clusters",
-		Run: func(_ *cobra.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) {
 			err := validateArguments(args)
 			exit.OnErrorWithMessage(err, "Insufficient arguments")
 
 			exit.OnError(exportRestConfigProducer.RunOnSelectedContext(
-				func(clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
-					return service.Export(clusterInfo.ClientProducer, namespace, args[0], useClustersetIP, status)
+				cmd.Context(),
+				func(ctx context.Context, clusterInfo *cluster.Info, namespace string, status reporter.Interface) error {
+					return service.Export(ctx, clusterInfo.ClientProducer, namespace, args[0], useClustersetIP, status)
 				}, cli.NewReporter()))
 		},
 	}

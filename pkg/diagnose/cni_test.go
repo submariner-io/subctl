@@ -44,8 +44,8 @@ var _ = Describe("CNIConfig", func() {
 				t.submariner.Status.NetworkPlugin = plugin
 			})
 
-			Specify("network plugin should succeed", func() {
-				t.assertSuccess(t.run)
+			Specify("network plugin should succeed", func(ctx SpecContext) {
+				t.assertSuccess(ctx, t.run)
 			})
 		},
 		Entry("the Canal Flannel", cni.CanalFlannel),
@@ -89,7 +89,7 @@ var _ = Describe("CNIConfig", func() {
 
 		It("should panic", func(ctx SpecContext) {
 			Expect(func() {
-				_ = diagnose.CNIConfig(newClusterInfo(ctx), "", t.statusTracker)
+				_ = diagnose.CNIConfig(ctx, newClusterInfo(ctx), "", t.statusTracker)
 			}).To(Panic())
 		})
 	})
@@ -211,8 +211,8 @@ func (t *cniTestDriver) testCalicoCNIPlugin() {
 				t.createResource(other)
 			})
 
-			It("should ignore it and succeed", func() {
-				t.assertSuccess(t.run)
+			It("should ignore it and succeed", func(ctx SpecContext) {
+				t.assertSuccess(ctx, t.run)
 			})
 		})
 	})
@@ -320,6 +320,6 @@ func (t *cniTestDriver) createOVNPod(version, containerName string) {
 	fake.SetSPDYExecutor("DB Schema "+version, "", nil)
 }
 
-func (t *cniTestDriver) run() error {
-	return diagnose.CNIConfig(newClusterInfo(context.TODO()), "", t.statusTracker)
+func (t *cniTestDriver) run(ctx context.Context) error {
+	return diagnose.CNIConfig(ctx, newClusterInfo(ctx), "", t.statusTracker)
 }

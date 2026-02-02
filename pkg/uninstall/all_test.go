@@ -42,12 +42,12 @@ import (
 var _ = Describe("All", func() {
 	t := newTestDriver()
 
-	assertUninstallSuccess := func() {
-		Expect(uninstall.All(t.clients, testClusterName, testSubmarinerNS, t.statusReporter)).To(Succeed())
+	assertUninstallSuccess := func(ctx SpecContext) {
+		Expect(uninstall.All(ctx, t.clients, testClusterName, testSubmarinerNS, t.statusReporter)).To(Succeed())
 	}
 
 	It("should uninstall all Submariner components", func(ctx SpecContext) {
-		assertUninstallSuccess()
+		assertUninstallSuccess(ctx)
 		t.assertComponentsDeleted(ctx)
 	})
 
@@ -64,7 +64,7 @@ var _ = Describe("All", func() {
 		})
 
 		It("should delete the ServiceDiscovery resource", func(ctx SpecContext) {
-			assertUninstallSuccess()
+			assertUninstallSuccess(ctx)
 
 			// Verify ServiceDiscovery resource is deleted
 			err := t.clients.ForGeneral().Get(ctx, controllerclient.ObjectKey{
@@ -83,7 +83,7 @@ var _ = Describe("All", func() {
 		})
 
 		It("should uninstall all remaining Submariner components", func(ctx SpecContext) {
-			assertUninstallSuccess()
+			assertUninstallSuccess(ctx)
 			t.assertComponentsDeleted(ctx)
 		})
 	})
@@ -119,7 +119,7 @@ var _ = Describe("All", func() {
 		})
 
 		It("should not delete broker and operator resources", func(ctx SpecContext) {
-			assertUninstallSuccess()
+			assertUninstallSuccess(ctx)
 
 			// Verify broker namespace still exists
 			_, err := t.clients.ForKubernetes().CoreV1().Namespaces().Get(ctx, testBrokerNS, metav1.GetOptions{})
@@ -155,7 +155,7 @@ var _ = Describe("All", func() {
 		})
 
 		It("should uninstall all Submariner components", func(ctx SpecContext) {
-			assertUninstallSuccess()
+			assertUninstallSuccess(ctx)
 			t.assertComponentsDeleted(ctx)
 		})
 	})
@@ -167,7 +167,7 @@ var _ = Describe("All", func() {
 
 		Context("and the operator deployment does not exist", func() {
 			It("should log a warning and eventually delete it", func(ctx SpecContext) {
-				assertUninstallSuccess()
+				assertUninstallSuccess(ctx)
 				t.assertComponentsDeleted(ctx)
 				t.statusReporter.AssertWarningContainsStrings("deployment does not exist")
 			})
@@ -192,7 +192,7 @@ var _ = Describe("All", func() {
 
 			Context("but no pod exists", func() {
 				It("should log a warning and eventually delete it", func(ctx SpecContext) {
-					assertUninstallSuccess()
+					assertUninstallSuccess(ctx)
 					t.assertComponentsDeleted(ctx)
 					t.statusReporter.AssertWarningContainsStrings("pod does not exist")
 				})
@@ -204,7 +204,7 @@ var _ = Describe("All", func() {
 				})
 
 				It("should log a warning and eventually delete it", func(ctx SpecContext) {
-					assertUninstallSuccess()
+					assertUninstallSuccess(ctx)
 					t.assertComponentsDeleted(ctx)
 					t.statusReporter.AssertWarningContainsStrings("pod is not running")
 				})
@@ -215,8 +215,8 @@ var _ = Describe("All", func() {
 					t.createOperatorPod(ctx, corev1.PodRunning)
 				})
 
-				It("should fail", func() {
-					Expect(uninstall.All(t.clients, testClusterName, testSubmarinerNS, t.statusReporter)).NotTo(Succeed())
+				It("should fail", func(ctx SpecContext) {
+					Expect(uninstall.All(ctx, t.clients, testClusterName, testSubmarinerNS, t.statusReporter)).NotTo(Succeed())
 					t.statusReporter.AssertFailureContainsStrings("did not complete deletion")
 				})
 			})
@@ -228,8 +228,8 @@ var _ = Describe("All", func() {
 
 func testFailures(t *testDriver) {
 	testUninstallError := func() {
-		It("should return an error", func() {
-			Expect(uninstall.All(t.clients, testClusterName, testSubmarinerNS, t.statusReporter)).NotTo(Succeed())
+		It("should return an error", func(ctx SpecContext) {
+			Expect(uninstall.All(ctx, t.clients, testClusterName, testSubmarinerNS, t.statusReporter)).NotTo(Succeed())
 		})
 	}
 

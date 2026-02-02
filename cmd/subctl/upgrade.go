@@ -110,9 +110,7 @@ func (c *upgradeCommand) upgrade(cmd *cobra.Command, _ []string) {
 		}
 	} else {
 		// Step 2b: this subctl is already the requested version, run it
-		exit.OnError(c.restConfigProducer.RunOnAllContexts(func(info *cluster.Info, namespace string, status reporter.Interface) error {
-			return c.upgradeSubmariner(cmd.Context(), info, namespace, status)
-		}, status))
+		exit.OnError(c.restConfigProducer.RunOnAllContexts(cmd.Context(), c.upgradeSubmariner, status))
 	}
 }
 
@@ -313,9 +311,7 @@ func migrateBrokerSecret(ctx context.Context, kubeClient kubernetes.Interface, f
 	if err == nil {
 		// Already migrated
 		return broker.LocalClientBrokerSecretName, nil
-	}
-
-	if err != nil && !errors.IsNotFound(err) {
+	} else if !errors.IsNotFound(err) {
 		return "", status.Error(err, "Error retrieving Broker secret %q", broker.LocalClientBrokerSecretName)
 	}
 

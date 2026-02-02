@@ -29,8 +29,8 @@ import (
 var _ = Describe("CheckGatewayConnections", func() {
 	t := newTestDriver()
 
-	run := func() error {
-		return diagnose.CheckGatewayConnections(newClusterInfo(context.TODO()), t.statusTracker)
+	run := func(ctx context.Context) error {
+		return diagnose.CheckGatewayConnections(ctx, newClusterInfo(ctx), t.statusTracker)
 	}
 
 	When("all connections are established", func() {
@@ -96,8 +96,8 @@ var _ = Describe("CheckGatewayConnections", func() {
 var _ = Describe("CheckRouteAgentConnections", func() {
 	t := newTestDriver()
 
-	run := func() error {
-		return diagnose.CheckRouteAgentConnections(newClusterInfo(context.TODO()), t.statusTracker)
+	run := func(ctx context.Context) error {
+		return diagnose.CheckRouteAgentConnections(ctx, newClusterInfo(ctx), t.statusTracker)
 	}
 
 	When("all connections are established", func() {
@@ -172,8 +172,8 @@ var _ = Describe("CheckRouteAgentConnections", func() {
 var _ = Describe("Connections", func() {
 	t := newTestDriver()
 
-	run := func() error {
-		return diagnose.Connections(newClusterInfo(context.TODO()), "", t.statusTracker)
+	run := func(ctx context.Context) error {
+		return diagnose.Connections(ctx, newClusterInfo(ctx), "", t.statusTracker)
 	}
 
 	When("all connections are established", func() {

@@ -19,6 +19,7 @@ limitations under the License.
 package subctl_test
 
 import (
+	"context"
 	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -44,7 +45,7 @@ var _ = Describe("Uninstall", func() {
 		uninstallError = nil
 		expectedNamespace = constants.OperatorNamespace
 
-		subctl.UninstallAll = func(clientProducer client.Producer, localClusterName, namespace string,
+		subctl.UninstallAll = func(_ context.Context, clientProducer client.Producer, localClusterName, namespace string,
 			status reporter.Interface,
 		) error {
 			uninstallCalled = true

@@ -50,11 +50,11 @@ var componentCmd = map[string][]string{
 	names.MetricsProxyComponent:      {"cat", "/app/version"},
 }
 
-func printDaemonSetVersions(clusterInfo *cluster.Info, printer *table.Printer, components ...string) error {
+func printDaemonSetVersions(ctx context.Context, clusterInfo *cluster.Info, printer *table.Printer, components ...string) error {
 	daemonSets := clusterInfo.ClientProducer.ForKubernetes().AppsV1().DaemonSets(constants.OperatorNamespace)
 
 	for _, component := range components {
-		daemonSet, err := daemonSets.Get(context.TODO(), component, metav1.GetOptions{})
+		daemonSet, err := daemonSets.Get(ctx, component, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				continue
@@ -66,7 +66,7 @@ func printDaemonSetVersions(clusterInfo *cluster.Info, printer *table.Printer, c
 		// The name of the function is confusing, it just parses any image repo & version
 		version, repository := images.ParseOperatorImage(daemonSet.Spec.Template.Spec.Containers[0].Image)
 
-		runningVersion, arch, err := getVersionAndArchForComponent(clusterInfo, component,
+		runningVersion, arch, err := getVersionAndArchForComponent(ctx, clusterInfo, component,
 			labels.SelectorFromSet(daemonSet.Spec.Selector.MatchLabels))
 		if err != nil {
 			return errors.Wrapf(err, "error retrieving running version for %s", component)
@@ -78,11 +78,11 @@ func printDaemonSetVersions(clusterInfo *cluster.Info, printer *table.Printer, c
 	return nil
 }
 
-func printDeploymentVersions(clusterInfo *cluster.Info, printer *table.Printer, components ...string) error {
+func printDeploymentVersions(ctx context.Context, clusterInfo *cluster.Info, printer *table.Printer, components ...string) error {
 	deployments := clusterInfo.ClientProducer.ForKubernetes().AppsV1().Deployments(constants.OperatorNamespace)
 
 	for _, component := range components {
-		deployment, err := deployments.Get(context.TODO(), component, metav1.GetOptions{})
+		deployment, err := deployments.Get(ctx, component, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				continue
@@ -93,7 +93,7 @@ func printDeploymentVersions(clusterInfo *cluster.Info, printer *table.Printer, 
 
 		version, repository := images.ParseOperatorImage(deployment.Spec.Template.Spec.Containers[0].Image)
 
-		runningVersion, arch, err := getVersionAndArchForComponent(clusterInfo, component,
+		runningVersion, arch, err := getVersionAndArchForComponent(ctx, clusterInfo, component,
 			labels.SelectorFromSet(deployment.Spec.Selector.MatchLabels))
 		if err != nil {
 			return err
@@ -105,9 +105,10 @@ func printDeploymentVersions(clusterInfo *cluster.Info, printer *table.Printer, 
 	return nil
 }
 
-func getVersionAndArchForComponent(clusterInfo *cluster.Info, component string, labelSelector labels.Selector) (string, string, error) {
+func getVersionAndArchForComponent(ctx context.Context, clusterInfo *cluster.Info, component string, labelSelector labels.Selector,
+) (string, string, error) {
 	podsClient := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Pods(constants.OperatorNamespace)
-	podList, err := podsClient.List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector.String()})
+	podList, err := podsClient.List(ctx, metav1.ListOptions{LabelSelector: labelSelector.String()})
 
 	if err != nil || len(podList.Items) < 1 {
 		return "", "", errors.Wrapf(err, "failed to find pods for component %s", component)
@@ -117,17 +118,17 @@ func getVersionAndArchForComponent(clusterInfo *cluster.Info, component string, 
 	for i := range podList.Items {
 		pod := &podList.Items[i]
 
-		arch, err := getArchForPod(clusterInfo, pod)
+		arch, err := getArchForPod(ctx, clusterInfo, pod)
 		if err != nil {
 			return "", "", err
 		}
 
-		podVersion := getVersionFromPodBinary(pod, clusterInfo, component)
+		podVersion := getVersionFromPodBinary(ctx, pod, clusterInfo, component)
 		if podVersion != "" {
 			return podVersion, arch, nil
 		}
 
-		podVersion = getVersionFromPodLogs(pod, podsClient, component)
+		podVersion = getVersionFromPodLogs(ctx, pod, podsClient, component)
 		if podVersion != "" {
 			return podVersion, arch, nil
 		}
@@ -136,14 +137,14 @@ func getVersionAndArchForComponent(clusterInfo *cluster.Info, component string, 
 	return "Unavailable", "Unavailable", nil
 }
 
-func getArchForPod(clusterInfo *cluster.Info, pod *corev1.Pod) (string, error) {
+func getArchForPod(ctx context.Context, clusterInfo *cluster.Info, pod *corev1.Pod) (string, error) {
 	if pod.Spec.NodeName == "" {
 		return "", nil
 	}
 
 	nodesClient := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Nodes()
 
-	node, err := nodesClient.Get(context.TODO(), pod.Spec.NodeName, metav1.GetOptions{})
+	node, err := nodesClient.Get(ctx, pod.Spec.NodeName, metav1.GetOptions{})
 	if err != nil {
 		return "", errors.Wrapf(err, "error retrieving node %s", pod.Spec.NodeName)
 	}
@@ -153,7 +154,7 @@ func getArchForPod(clusterInfo *cluster.Info, pod *corev1.Pod) (string, error) {
 	return arch, nil
 }
 
-func getVersionFromPodBinary(pod *corev1.Pod, clusterInfo *cluster.Info, component string) string {
+func getVersionFromPodBinary(ctx context.Context, pod *corev1.Pod, clusterInfo *cluster.Info, component string) string {
 	execOptions := pods.ExecOptionsFromPod(pod)
 	execConfig := pods.ExecConfig{
 		RestConfig: clusterInfo.RestConfig,
@@ -162,7 +163,7 @@ func getVersionFromPodBinary(pod *corev1.Pod, clusterInfo *cluster.Info, compone
 
 	execOptions.Command = componentCmd[component]
 
-	outStr, errStr, err := pods.ExecWithOptions(context.TODO(), execConfig, &execOptions)
+	outStr, errStr, err := pods.ExecWithOptions(ctx, execConfig, &execOptions)
 	if err != nil {
 		return ""
 	}
@@ -180,12 +181,12 @@ func getVersionFromPodBinary(pod *corev1.Pod, clusterInfo *cluster.Info, compone
 	return result
 }
 
-func getVersionFromPodLogs(pod *corev1.Pod, podClient v1.PodInterface, component string) string {
+func getVersionFromPodLogs(ctx context.Context, pod *corev1.Pod, podClient v1.PodInterface, component string) string {
 	podLogOptions := corev1.PodLogOptions{
 		Container: pod.Spec.Containers[0].Name,
 	}
 	logRequest := podClient.GetLogs(pod.Name, &podLogOptions)
-	logStream, _ := logRequest.Stream(context.TODO())
+	logStream, _ := logRequest.Stream(ctx)
 
 	if logStream != nil {
 		logScanner := bufio.NewScanner(logStream)
@@ -203,7 +204,7 @@ func getVersionFromPodLogs(pod *corev1.Pod, podClient v1.PodInterface, component
 	return ""
 }
 
-func Versions(clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
+func Versions(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Showing versions")
 
 	printer := table.Printer{Columns: []table.Column{
@@ -214,13 +215,13 @@ func Versions(clusterInfo *cluster.Info, _ string, status reporter.Interface) er
 		{Name: "ARCH"},
 	}}
 
-	err := printDaemonSetVersions(clusterInfo, &printer, names.GatewayComponent, names.RouteAgentComponent, names.GlobalnetComponent,
+	err := printDaemonSetVersions(ctx, clusterInfo, &printer, names.GatewayComponent, names.RouteAgentComponent, names.GlobalnetComponent,
 		names.MetricsProxyComponent)
 	if err != nil {
 		return status.Error(err, "Error retrieving DaemonSet versions")
 	}
 
-	err = printDeploymentVersions(
+	err = printDeploymentVersions(ctx,
 		clusterInfo, &printer, names.OperatorComponent, names.ServiceDiscoveryComponent, names.LighthouseCoreDNSComponent)
 	if err != nil {
 		return status.Error(err, "Error retrieving Deployment versions")
