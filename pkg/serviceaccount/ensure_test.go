@@ -162,11 +162,11 @@ func newTestDriver() *testDriver {
 
 		_, informer := cache.NewInformerWithOptions(cache.InformerOptions{
 			ListerWatcher: cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
-				ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-					return t.client.CoreV1().Secrets(namespace).List(context.Background(), options)
+				ListWithContextFunc: func(ctx context.Context, options metav1.ListOptions) (runtime.Object, error) {
+					return t.client.CoreV1().Secrets(namespace).List(ctx, options)
 				},
-				WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-					return t.client.CoreV1().Secrets(namespace).Watch(context.Background(), options)
+				WatchFuncWithContext: func(ctx context.Context, options metav1.ListOptions) (watch.Interface, error) {
+					return t.client.CoreV1().Secrets(namespace).Watch(ctx, options)
 				},
 			}, t.client),
 			ObjectType: &corev1.Secret{},
