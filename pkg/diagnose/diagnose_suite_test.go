@@ -105,7 +105,7 @@ func (t *testDriver) createService(ctx context.Context, svc *corev1.Service) {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (t *testDriver) creatEndpointSlice(ctx context.Context, eps *discoveryv1.EndpointSlice) {
+func (t *testDriver) createEndpointSlice(ctx context.Context, eps *discoveryv1.EndpointSlice) {
 	_, err := t.fakeProducer.KubeClient.DiscoveryV1().EndpointSlices(eps.Namespace).Create(ctx, eps, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 }

@@ -121,7 +121,7 @@ func testExportedServices() {
 			t.createServiceExport(serviceExport)
 			t.createServiceImport(localServiceImport)
 			t.createServiceImport(aggregatedServiceImport)
-			t.creatEndpointSlice(ctx, endpointSlice)
+			t.createEndpointSlice(ctx, endpointSlice)
 		})
 
 		t.testSuccess(t.run)
@@ -177,7 +177,7 @@ func testExportedServices() {
 		Context("but no aggregate ServiceImport exists", func() {
 			BeforeEach(func(ctx SpecContext) {
 				t.createServiceImport(localServiceImport)
-				t.creatEndpointSlice(ctx, endpointSlice)
+				t.createEndpointSlice(ctx, endpointSlice)
 			})
 
 			t.testFailure(t.run, "ServiceImport", serviceName)
@@ -234,7 +234,7 @@ func testExportedServices() {
 			t.createServiceExport(serviceExport)
 			t.createServiceImport(localServiceImport)
 			t.createServiceImport(aggregatedServiceImport)
-			t.creatEndpointSlice(ctx, endpointSlice)
+			t.createEndpointSlice(ctx, endpointSlice)
 			fake.FailOnAction(&t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake, "endpointslices", "list", errFake, false)
 		})
 
