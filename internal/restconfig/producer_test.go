@@ -645,7 +645,7 @@ func testRunOnAllContexts() {
 					t.actualProcessed++
 
 					Expect(info.Name).To(Equal(restconfig.InCluster))
-					Expect(namespace).To(Equal(namespace))
+					Expect(namespace).To(Equal(specifiedNS))
 
 					return nil
 				}, reporter.Stdout())
