@@ -82,6 +82,8 @@ func init() {
 		"Number of gateways to deploy")
 	rhosPrepareCmd.Flags().StringVar(&rhosConfig.GWInstanceType, "gateway-instance", "PnTAE.CPU_4_Memory_8192_Disk_50",
 		"Type of gateway instance machine")
+	rhosPrepareCmd.Flags().StringSliceVar(&rhosConfig.SubnetNames, "subnet-names", []string{},
+		"Custom subnet names (comma-separated) for dual-stack or custom network configurations")
 
 	cloudPrepareCmd.AddCommand(rhosPrepareCmd)
 
