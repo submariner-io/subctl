@@ -48,8 +48,6 @@ func TestDeployment(t *testing.T) {
 }
 
 var _ = Describe("Ensure", func() {
-	ctx := context.TODO()
-
 	var kubeClient *k8sfake.Clientset
 
 	BeforeEach(func() {
@@ -58,7 +56,7 @@ var _ = Describe("Ensure", func() {
 		clientfake.AddDeploymentAvailableReactor(&kubeClient.Fake)
 	})
 
-	assertDeployment := func() *appsv1.Deployment {
+	assertDeployment := func(ctx context.Context) *appsv1.Deployment {
 		dep, err := kubeClient.AppsV1().Deployments(constants.OperatorNamespace).Get(ctx, names.OperatorComponent, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
@@ -66,12 +64,12 @@ var _ = Describe("Ensure", func() {
 	}
 
 	When("the deployment doesn't exist", func() {
-		It("should create it successfully", func() {
+		It("should create it successfully", func(ctx SpecContext) {
 			created, err := deployment.Ensure(ctx, kubeClient, constants.OperatorNamespace, testImage, false, &httpproxy.Config{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(created).To(BeTrue())
 
-			dep := assertDeployment()
+			dep := assertDeployment(ctx)
 			Expect(dep.Spec.Template.Spec.ServiceAccountName).To(Equal(names.OperatorComponent))
 			Expect(dep.Spec.Template.Spec.Containers[0].Image).To(Equal(testImage))
 			Expect(dep.Spec.Template.Spec.Containers[0].ImagePullPolicy).To(Equal(corev1.PullAlways))
@@ -102,23 +100,23 @@ var _ = Describe("Ensure", func() {
 	})
 
 	When("the debug flag is specified", func() {
-		It("should configure the deployment with debug args", func() {
+		It("should configure the deployment with debug args", func(ctx SpecContext) {
 			_, err := deployment.Ensure(ctx, kubeClient, constants.OperatorNamespace, testImage, true, &httpproxy.Config{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(assertDeployment().Spec.Template.Spec.Containers[0].Args).To(ContainElement("-v=3"))
+			Expect(assertDeployment(ctx).Spec.Template.Spec.Containers[0].Args).To(ContainElement("-v=3"))
 		})
 	})
 
 	When("the specified image is local", func() {
-		It("should use PullIfNotPresent in the deployment", func() {
+		It("should use PullIfNotPresent in the deployment", func(ctx SpecContext) {
 			_, err := deployment.Ensure(ctx, kubeClient, constants.OperatorNamespace, "submariner-operator:local", false, &httpproxy.Config{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(assertDeployment().Spec.Template.Spec.Containers[0].ImagePullPolicy).To(Equal(corev1.PullIfNotPresent))
+			Expect(assertDeployment(ctx).Spec.Template.Spec.Containers[0].ImagePullPolicy).To(Equal(corev1.PullIfNotPresent))
 		})
 	})
 
 	When("HTTP proxy config is specified", func() {
-		It("should use PullIfNotPresent in the deployment", func() {
+		It("should use PullIfNotPresent in the deployment", func(ctx SpecContext) {
 			proxyConfig := &httpproxy.Config{
 				HTTPProxy:  "http://proxy:8080",
 				HTTPSProxy: "https://proxy:8080",
@@ -128,7 +126,7 @@ var _ = Describe("Ensure", func() {
 			_, err := deployment.Ensure(ctx, kubeClient, constants.OperatorNamespace, testImage, false, proxyConfig)
 			Expect(err).NotTo(HaveOccurred())
 
-			envVars := assertDeployment().Spec.Template.Spec.Containers[0].Env
+			envVars := assertDeployment(ctx).Spec.Template.Spec.Containers[0].Env
 			Expect(envVars).To(ContainElement(corev1.EnvVar{
 				Name:  "HTTP_PROXY",
 				Value: proxyConfig.HTTPProxy,
@@ -145,7 +143,7 @@ var _ = Describe("Ensure", func() {
 	})
 
 	When("the deployment already exists", func() {
-		JustBeforeEach(func() {
+		JustBeforeEach(func(ctx SpecContext) {
 			_, err := kubeClient.AppsV1().Deployments(constants.OperatorNamespace).Create(ctx, &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: constants.OperatorNamespace,
@@ -166,11 +164,11 @@ var _ = Describe("Ensure", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("should update the deployment and return false", func() {
+		It("should update the deployment and return false", func(ctx SpecContext) {
 			created, err := deployment.Ensure(ctx, kubeClient, constants.OperatorNamespace, testImage, false, &httpproxy.Config{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(created).To(BeFalse())
-			Expect(assertDeployment().Spec.Template.Spec.Containers[0].Image).To(Equal(testImage))
+			Expect(assertDeployment(ctx).Spec.Template.Spec.Containers[0].Image).To(Equal(testImage))
 		})
 	})
 
@@ -179,7 +177,7 @@ var _ = Describe("Ensure", func() {
 			fake.FailOnAction(&kubeClient.Fake, "deployments", "create", nil, false)
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			_, err := deployment.Ensure(ctx, kubeClient, constants.OperatorNamespace, testImage, false, &httpproxy.Config{})
 			Expect(err).To(HaveOccurred())
 		})
@@ -212,7 +210,7 @@ var _ = Describe("GetPodLabelSelector", func() {
 				},
 			}
 
-			_, err := kubeClient.AppsV1().Deployments(constants.OperatorNamespace).Create(context.TODO(), dep, metav1.CreateOptions{})
+			_, err := kubeClient.AppsV1().Deployments(constants.OperatorNamespace).Create(ctx, dep, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			selectorStr, err := deployment.GetPodLabelSelector(ctx, kubeClient, constants.OperatorNamespace)

@@ -77,8 +77,8 @@ var _ = Describe("Deployments", func() {
 	})
 
 	When("there's no active gateway pod", func() {
-		JustBeforeEach(func() {
-			Expect(util.MustUpdate(context.TODO(), resource.ForPod(t.fakeProducer.KubeClient, constants.OperatorNamespace),
+		JustBeforeEach(func(ctx SpecContext) {
+			Expect(util.MustUpdate(ctx, resource.ForPod(t.fakeProducer.KubeClient, constants.OperatorNamespace),
 				&corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: names.GatewayComponent}}, func(existing *corev1.Pod) (*corev1.Pod, error) {
 					existing.Labels[diagnose.GatewayHAStatusLabel] = string(submarinerv1.HAStatusPassive)
 					return existing, nil
@@ -89,8 +89,8 @@ var _ = Describe("Deployments", func() {
 	})
 
 	When("there's no gateway pod", func() {
-		JustBeforeEach(func() {
-			Expect(t.fakeProducer.KubeClient.CoreV1().Pods(constants.OperatorNamespace).Delete(context.TODO(),
+		JustBeforeEach(func(ctx SpecContext) {
+			Expect(t.fakeProducer.KubeClient.CoreV1().Pods(constants.OperatorNamespace).Delete(ctx,
 				names.GatewayComponent, metav1.DeleteOptions{})).To(Succeed())
 		})
 

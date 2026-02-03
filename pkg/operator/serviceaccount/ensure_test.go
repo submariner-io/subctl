@@ -19,7 +19,6 @@ limitations under the License.
 package serviceaccount_test
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -42,8 +41,6 @@ func TestServiceAccount(t *testing.T) {
 }
 
 var _ = Describe("Ensure", func() {
-	ctx := context.TODO()
-
 	var (
 		client     *k8sfake.Clientset
 		initalObjs []runtime.Object
@@ -58,7 +55,7 @@ var _ = Describe("Ensure", func() {
 	})
 
 	When("no resources exist", func() {
-		It("should create them and return true", func() {
+		It("should create them and return true", func(ctx SpecContext) {
 			created, err := serviceaccount.Ensure(ctx, client, constants.OperatorNamespace)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(created).To(BeTrue())
@@ -108,7 +105,7 @@ var _ = Describe("Ensure", func() {
 			})
 		})
 
-		It("should succeed and return false", func() {
+		It("should succeed and return false", func(ctx SpecContext) {
 			created, err := serviceaccount.Ensure(ctx, client, constants.OperatorNamespace)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(created).To(BeFalse())
@@ -121,7 +118,7 @@ var _ = Describe("Ensure", func() {
 				fake.FailOnAction(&client.Fake, strings.ToLower(resource)+"s", "create", nil, false)
 			})
 
-			It("should return an error", func() {
+			It("should return an error", func(ctx SpecContext) {
 				_, err := serviceaccount.Ensure(ctx, client, constants.OperatorNamespace)
 				Expect(err).To(HaveOccurred())
 			})

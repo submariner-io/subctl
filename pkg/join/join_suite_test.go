@@ -124,11 +124,11 @@ func newTestDriver() *testDriver {
 		}
 	})
 
-	JustBeforeEach(func() {
-		Expect(clustersetip.CreateConfigMap(context.TODO(), t.fakeProducer.GeneralClient, t.clustersetIPEnabled,
+	JustBeforeEach(func(ctx SpecContext) {
+		Expect(clustersetip.CreateConfigMap(ctx, t.fakeProducer.GeneralClient, t.clustersetIPEnabled,
 			clustersetip.DefaultCIDR, clustersetip.DefaultAllocationSize, brokerNamespace)).To(Succeed())
 
-		Expect(globalnet.CreateConfigMap(context.TODO(), t.fakeProducer.GeneralClient, t.globalnetEnabled,
+		Expect(globalnet.CreateConfigMap(ctx, t.fakeProducer.GeneralClient, t.globalnetEnabled,
 			globalnet.DefaultGlobalnetCIDR, globalnet.DefaultGlobalnetClusterSize, brokerNamespace)).To(Succeed())
 	})
 

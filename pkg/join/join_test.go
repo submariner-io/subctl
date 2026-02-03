@@ -19,7 +19,6 @@ limitations under the License.
 package join_test
 
 import (
-	"context"
 	"encoding/base64"
 	"fmt"
 
@@ -84,18 +83,18 @@ func testDeployment() {
 		}
 	})
 
-	It("should deploy the operator and Submariner resource", func() {
+	It("should deploy the operator and Submariner resource", func(ctx SpecContext) {
 		Expect(t.runJoinClusterToBroker()).To(Succeed())
 
 		saName := names.ForClusterSA(t.options.ClusterID)
 
-		_, err := t.fakeProducer.KubeClient.CoreV1().ServiceAccounts(brokerNamespace).Get(context.TODO(), saName, metav1.GetOptions{})
+		_, err := t.fakeProducer.KubeClient.CoreV1().ServiceAccounts(brokerNamespace).Get(ctx, saName, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
-		_, err = serviceaccount.GetTokenSecretFor(context.TODO(), t.fakeProducer.KubeClient, brokerNamespace, saName)
+		_, err = serviceaccount.GetTokenSecretFor(ctx, t.fakeProducer.KubeClient, brokerNamespace, saName)
 		Expect(err).NotTo(HaveOccurred())
 
-		secret, err := t.fakeProducer.KubeClient.CoreV1().Secrets(constants.OperatorNamespace).Get(context.TODO(),
+		secret, err := t.fakeProducer.KubeClient.CoreV1().Secrets(constants.OperatorNamespace).Get(ctx,
 			broker.LocalClientBrokerSecretName, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
@@ -160,10 +159,10 @@ func testDeployment() {
 			t.brokerInfo.Components = []string{component.ServiceDiscovery}
 		})
 
-		It("should only deploy the ServiceDiscovery resource", func() {
+		It("should only deploy the ServiceDiscovery resource", func(ctx SpecContext) {
 			Expect(t.runJoinClusterToBroker()).To(Succeed())
 
-			secret, err := t.fakeProducer.KubeClient.CoreV1().Secrets(constants.OperatorNamespace).Get(context.TODO(),
+			secret, err := t.fakeProducer.KubeClient.CoreV1().Secrets(constants.OperatorNamespace).Get(ctx,
 				broker.LocalClientBrokerSecretName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
@@ -216,8 +215,8 @@ func testGlobalnet() {
 			})
 
 			Context("but it overlaps", func() {
-				JustBeforeEach(func() {
-					err := globalnet.AllocateAndUpdateGlobalCIDRConfigMap(context.TODO(), t.fakeProducer.ForGeneral(), brokerNamespace,
+				JustBeforeEach(func(ctx SpecContext) {
+					err := globalnet.AllocateAndUpdateGlobalCIDRConfigMap(ctx, t.fakeProducer.ForGeneral(), brokerNamespace,
 						&globalnet.Config{
 							ClusterID:  "west",
 							GlobalCIDR: t.options.GlobalnetCIDR,
@@ -274,8 +273,8 @@ func testClustersetIP() {
 			})
 
 			Context("but it overlaps", func() {
-				JustBeforeEach(func() {
-					_, err := clustersetip.AllocateCIDRFromConfigMap(context.TODO(), t.fakeProducer.ForGeneral(), brokerNamespace,
+				JustBeforeEach(func(ctx SpecContext) {
+					_, err := clustersetip.AllocateCIDRFromConfigMap(ctx, t.fakeProducer.ForGeneral(), brokerNamespace,
 						&clustersetip.Config{
 							ClusterID:        "west",
 							ClustersetIPCIDR: t.options.ClustersetIPCIDR,
@@ -400,8 +399,8 @@ func testInvalidInput() {
 	t := newTestDriver()
 
 	When("the cluster ID isn't unique", func() {
-		BeforeEach(func() {
-			Expect(t.fakeProducer.GeneralClient.Create(context.TODO(), &submarinerv1.Cluster{
+		BeforeEach(func(ctx SpecContext) {
+			Expect(t.fakeProducer.GeneralClient.Create(ctx, &submarinerv1.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: brokerNamespace,
 					Name:      t.options.ClusterID,

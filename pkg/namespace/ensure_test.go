@@ -38,7 +38,6 @@ func TestNamespace(t *testing.T) {
 }
 
 var _ = Describe("Ensure", func() {
-	ctx := context.TODO()
 	testNS := "test-namespace"
 	testLabels := map[string]string{
 		"test-label1": "test-value1",
@@ -51,13 +50,13 @@ var _ = Describe("Ensure", func() {
 		kubeClient = k8sfake.NewClientset()
 	})
 
-	assertEnsure := func(labels map[string]string, expCreated bool) {
+	assertEnsure := func(ctx context.Context, labels map[string]string, expCreated bool) {
 		created, err := namespace.Ensure(ctx, kubeClient, testNS, labels)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(created).To(Equal(expCreated))
 	}
 
-	assertNamespace := func() *corev1.Namespace {
+	assertNamespace := func(ctx context.Context) *corev1.Namespace {
 		ns, err := kubeClient.CoreV1().Namespaces().Get(ctx, testNS, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
@@ -65,19 +64,19 @@ var _ = Describe("Ensure", func() {
 	}
 
 	When("creating a new namespace", func() {
-		It("should successfully create it with the specified labels", func() {
-			assertEnsure(testLabels, true)
-			Expect(assertNamespace().Labels).To(Equal(testLabels))
+		It("should successfully create it with the specified labels", func(ctx SpecContext) {
+			assertEnsure(ctx, testLabels, true)
+			Expect(assertNamespace(ctx).Labels).To(Equal(testLabels))
 		})
 
-		It("should successfully create it with nil labels", func() {
-			assertEnsure(nil, true)
-			Expect(assertNamespace().Labels).To(BeEmpty())
+		It("should successfully create it with nil labels", func(ctx SpecContext) {
+			assertEnsure(ctx, nil, true)
+			Expect(assertNamespace(ctx).Labels).To(BeEmpty())
 		})
 
-		It("should successfully create it with empty labels", func() {
-			assertEnsure(map[string]string{}, true)
-			Expect(assertNamespace().Labels).To(BeEmpty())
+		It("should successfully create it with empty labels", func(ctx SpecContext) {
+			assertEnsure(ctx, map[string]string{}, true)
+			Expect(assertNamespace(ctx).Labels).To(BeEmpty())
 		})
 	})
 
@@ -92,7 +91,7 @@ var _ = Describe("Ensure", func() {
 			}
 		})
 
-		JustBeforeEach(func() {
+		JustBeforeEach(func(ctx SpecContext) {
 			_, err := kubeClient.CoreV1().Namespaces().Create(ctx, existingNS, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
@@ -105,13 +104,13 @@ var _ = Describe("Ensure", func() {
 				}
 			})
 
-			It("should merge the new labels with the existing labels", func() {
-				assertEnsure(map[string]string{
+			It("should merge the new labels with the existing labels", func(ctx SpecContext) {
+				assertEnsure(ctx, map[string]string{
 					"new-label":    "new-value",
 					"common-label": "updated-value",
 				}, false)
 
-				Expect(assertNamespace().Labels).To(Equal(map[string]string{
+				Expect(assertNamespace(ctx).Labels).To(Equal(map[string]string{
 					"existing-label": "existing-value", // preserved
 					"new-label":      "new-value",      // added
 					"common-label":   "updated-value",  // updated
@@ -120,9 +119,9 @@ var _ = Describe("Ensure", func() {
 		})
 
 		Context("with nil existing labels", func() {
-			It("should add the new labels", func() {
-				assertEnsure(testLabels, false)
-				Expect(assertNamespace().Labels).To(Equal(testLabels))
+			It("should add the new labels", func(ctx SpecContext) {
+				assertEnsure(ctx, testLabels, false)
+				Expect(assertNamespace(ctx).Labels).To(Equal(testLabels))
 			})
 		})
 	})
@@ -132,7 +131,7 @@ var _ = Describe("Ensure", func() {
 			fake.FailOnAction(&kubeClient.Fake, "namespaces", "create", errors.New("creation failed"), false)
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			_, err := namespace.Ensure(ctx, kubeClient, testNS, testLabels)
 			Expect(err).To(HaveOccurred())
 		})

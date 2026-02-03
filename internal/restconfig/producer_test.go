@@ -868,8 +868,8 @@ func testIfServiceDiscoveryInstalled() {
 	})
 
 	When("the ServiceDiscovery resource is present", func() {
-		BeforeEach(func() {
-			Expect(t.fakeClients.GeneralClient.Create(context.TODO(), &v1alpha1.ServiceDiscovery{
+		BeforeEach(func(ctx SpecContext) {
+			Expect(t.fakeClients.GeneralClient.Create(ctx, &v1alpha1.ServiceDiscovery{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      opnames.ServiceDiscoveryCrName,
 					Namespace: constants.OperatorNamespace,
@@ -1018,13 +1018,13 @@ func newTestDriver() *testDriver {
 		t.flags = pflag.NewFlagSet("", pflag.ContinueOnError)
 	})
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		if t.setupKubeConfig {
 			os.Setenv("KUBECONFIG", clientfake.CreateKubeConfigFile(t.clientConfig))
 		}
 
 		if t.submariner != nil {
-			Expect(t.fakeClients.GeneralClient.Create(context.TODO(), t.submariner)).To(Succeed())
+			Expect(t.fakeClients.GeneralClient.Create(ctx, t.submariner)).To(Succeed())
 		}
 
 		t.producer.SetupFlags(t.flags)

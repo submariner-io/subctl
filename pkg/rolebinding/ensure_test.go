@@ -54,8 +54,8 @@ var _ = Describe("EnsureFromYAML", func() {
 		client = fakeclientset.NewClientset()
 	})
 
-	assertRoleBinding := func() {
-		r, err := client.RbacV1().RoleBindings(namespace).Get(context.TODO(), "test-rolebinding", metav1.GetOptions{})
+	assertRoleBinding := func(ctx context.Context) {
+		r, err := client.RbacV1().RoleBindings(namespace).Get(ctx, "test-rolebinding", metav1.GetOptions{})
 		Expect(err).To(Succeed())
 		Expect(r.RoleRef.APIGroup).To(Equal("rbac.authorization.k8s.io"))
 		Expect(r.RoleRef.Name).To(Equal("test-role"))
@@ -66,17 +66,17 @@ var _ = Describe("EnsureFromYAML", func() {
 	}
 
 	When("the RoleBinding doesn't exist", func() {
-		It("should create it", func() {
-			created, err := rolebinding.EnsureFromYAML(context.TODO(), client, namespace, []byte(roleBindingYAML))
+		It("should create it", func(ctx SpecContext) {
+			created, err := rolebinding.EnsureFromYAML(ctx, client, namespace, []byte(roleBindingYAML))
 			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
-			assertRoleBinding()
+			assertRoleBinding(ctx)
 		})
 	})
 
 	When("the RoleBinding already exists", func() {
-		It("should not update it", func() {
-			_, err := rolebinding.Ensure(context.TODO(), client, namespace, &rbacv1.RoleBinding{
+		It("should not update it", func(ctx SpecContext) {
+			_, err := rolebinding.Ensure(ctx, client, namespace, &rbacv1.RoleBinding{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "RoleBinding",
 					APIVersion: rbacv1.SchemeGroupVersion.String(),
@@ -97,9 +97,9 @@ var _ = Describe("EnsureFromYAML", func() {
 				},
 			})
 			Expect(err).To(Succeed())
-			assertRoleBinding()
+			assertRoleBinding(ctx)
 
-			created, err := rolebinding.EnsureFromYAML(context.TODO(), client, namespace, []byte(roleBindingYAML))
+			created, err := rolebinding.EnsureFromYAML(ctx, client, namespace, []byte(roleBindingYAML))
 			Expect(created).To(BeFalse())
 			Expect(err).To(Succeed())
 		})

@@ -52,8 +52,8 @@ var _ = Describe("EnsureFromYAML", func() {
 		client = fakeclientset.NewClientset()
 	})
 
-	assertClusterRole := func() {
-		r, err := client.RbacV1().ClusterRoles().Get(context.TODO(), "test-clusterrole", metav1.GetOptions{})
+	assertClusterRole := func(ctx context.Context) {
+		r, err := client.RbacV1().ClusterRoles().Get(ctx, "test-clusterrole", metav1.GetOptions{})
 		Expect(err).To(Succeed())
 		Expect(r.Rules).To(HaveLen(1))
 		Expect(r.Rules[0].APIGroups).To(Equal([]string{""}))
@@ -62,17 +62,17 @@ var _ = Describe("EnsureFromYAML", func() {
 	}
 
 	When("the ClusterRole doesn't exist", func() {
-		It("should create it", func() {
-			created, err := clusterrole.EnsureFromYAML(context.TODO(), client, []byte(clusterRoleYAML))
+		It("should create it", func(ctx SpecContext) {
+			created, err := clusterrole.EnsureFromYAML(ctx, client, []byte(clusterRoleYAML))
 			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
-			assertClusterRole()
+			assertClusterRole(ctx)
 		})
 	})
 
 	When("the ClusterRole already exists", func() {
-		It("should not update it", func() {
-			_, err := clusterrole.Ensure(context.TODO(), client, &rbacv1.ClusterRole{
+		It("should not update it", func(ctx SpecContext) {
+			_, err := clusterrole.Ensure(ctx, client, &rbacv1.ClusterRole{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ClusterRole",
 					APIVersion: rbacv1.SchemeGroupVersion.String(),
@@ -89,9 +89,9 @@ var _ = Describe("EnsureFromYAML", func() {
 				},
 			})
 			Expect(err).To(Succeed())
-			assertClusterRole()
+			assertClusterRole(ctx)
 
-			created, err := clusterrole.EnsureFromYAML(context.TODO(), client, []byte(clusterRoleYAML))
+			created, err := clusterrole.EnsureFromYAML(ctx, client, []byte(clusterRoleYAML))
 			Expect(created).To(BeFalse())
 			Expect(err).To(Succeed())
 		})

@@ -54,8 +54,8 @@ var _ = Describe("EnsureFromYAML", func() {
 		client = fakeclientset.NewClientset()
 	})
 
-	assertRole := func() {
-		r, err := client.RbacV1().Roles(namespace).Get(context.TODO(), "test-role", metav1.GetOptions{})
+	assertRole := func(ctx context.Context) {
+		r, err := client.RbacV1().Roles(namespace).Get(ctx, "test-role", metav1.GetOptions{})
 		Expect(err).To(Succeed())
 		Expect(r.Rules).To(HaveLen(1))
 		Expect(r.Rules[0].APIGroups).To(Equal([]string{""}))
@@ -64,17 +64,17 @@ var _ = Describe("EnsureFromYAML", func() {
 	}
 
 	When("the Role doesn't exist", func() {
-		It("should create it", func() {
-			created, err := role.EnsureFromYAML(context.TODO(), client, namespace, []byte(roleYAML))
+		It("should create it", func(ctx SpecContext) {
+			created, err := role.EnsureFromYAML(ctx, client, namespace, []byte(roleYAML))
 			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
-			assertRole()
+			assertRole(ctx)
 		})
 	})
 
 	When("the Role already exists", func() {
-		It("should not update it", func() {
-			_, err := role.Ensure(context.TODO(), client, namespace, &rbacv1.Role{
+		It("should not update it", func(ctx SpecContext) {
+			_, err := role.Ensure(ctx, client, namespace, &rbacv1.Role{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Role",
 					APIVersion: rbacv1.SchemeGroupVersion.String(),
@@ -91,9 +91,9 @@ var _ = Describe("EnsureFromYAML", func() {
 				},
 			})
 			Expect(err).To(Succeed())
-			assertRole()
+			assertRole(ctx)
 
-			created, err := role.EnsureFromYAML(context.TODO(), client, namespace, []byte(roleYAML))
+			created, err := role.EnsureFromYAML(ctx, client, namespace, []byte(roleYAML))
 			Expect(created).To(BeFalse())
 			Expect(err).To(Succeed())
 		})

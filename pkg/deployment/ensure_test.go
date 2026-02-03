@@ -47,27 +47,27 @@ var _ = Describe("Ensure", func() {
 		client = fakeclientset.NewClientset()
 	})
 
-	assertDeployment := func() {
-		d, err := client.AppsV1().Deployments(testDeployment.Namespace).Get(context.TODO(), testDeployment.Name, metav1.GetOptions{})
+	assertDeployment := func(ctx context.Context) {
+		d, err := client.AppsV1().Deployments(testDeployment.Namespace).Get(ctx, testDeployment.Name, metav1.GetOptions{})
 		Expect(err).To(Succeed())
 		Expect(d.Spec.Replicas).To(Equal(&replicas))
 	}
 
 	When("the Deployment doesn't exist", func() {
-		It("should create it", func() {
-			created, err := deployment.Ensure(context.TODO(), client, testDeployment.Namespace, testDeployment)
+		It("should create it", func(ctx SpecContext) {
+			created, err := deployment.Ensure(ctx, client, testDeployment.Namespace, testDeployment)
 			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
-			assertDeployment()
+			assertDeployment(ctx)
 		})
 	})
 
 	When("the Deployment already exists", func() {
-		It("should not update it", func() {
-			_, err := client.AppsV1().Deployments(testDeployment.Namespace).Create(context.TODO(), testDeployment, metav1.CreateOptions{})
+		It("should not update it", func(ctx SpecContext) {
+			_, err := client.AppsV1().Deployments(testDeployment.Namespace).Create(ctx, testDeployment, metav1.CreateOptions{})
 			Expect(err).To(Succeed())
 
-			created, err := deployment.Ensure(context.TODO(), client, testDeployment.Namespace, testDeployment)
+			created, err := deployment.Ensure(ctx, client, testDeployment.Namespace, testDeployment)
 			Expect(created).To(BeFalse())
 			Expect(err).To(Succeed())
 		})
