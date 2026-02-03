@@ -85,8 +85,8 @@ type testDriver struct {
 	statusTracker    *reportertest.Tracker
 }
 
-func (t *testDriver) createResource(obj controllerclient.Object) {
-	err := t.fakeProducer.GeneralClient.Create(context.TODO(), obj)
+func (t *testDriver) createResource(ctx context.Context, obj controllerclient.Object) {
+	err := t.fakeProducer.GeneralClient.Create(ctx, obj)
 	Expect(err).NotTo(HaveOccurred())
 }
 
@@ -100,18 +100,18 @@ func (t *testDriver) createServiceImport(si *mcsv1a1.ServiceImport) {
 		gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceimports")).Namespace(si.Namespace), si)
 }
 
-func (t *testDriver) createService(svc *corev1.Service) {
-	_, err := t.fakeProducer.KubeClient.CoreV1().Services(svc.Namespace).Create(context.TODO(), svc, metav1.CreateOptions{})
+func (t *testDriver) createService(ctx context.Context, svc *corev1.Service) {
+	_, err := t.fakeProducer.KubeClient.CoreV1().Services(svc.Namespace).Create(ctx, svc, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (t *testDriver) creatEndpointSlice(eps *discoveryv1.EndpointSlice) {
-	_, err := t.fakeProducer.KubeClient.DiscoveryV1().EndpointSlices(eps.Namespace).Create(context.TODO(), eps, metav1.CreateOptions{})
+func (t *testDriver) creatEndpointSlice(ctx context.Context, eps *discoveryv1.EndpointSlice) {
+	_, err := t.fakeProducer.KubeClient.DiscoveryV1().EndpointSlices(eps.Namespace).Create(ctx, eps, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (t *testDriver) createNamespace(name string) {
-	_, err := t.fakeProducer.KubeClient.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+func (t *testDriver) createNamespace(ctx context.Context, name string) {
+	_, err := t.fakeProducer.KubeClient.CoreV1().Namespaces().Create(ctx, &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
@@ -126,8 +126,8 @@ func (t *testDriver) createNamespace(name string) {
 		})
 }
 
-func (t *testDriver) createNode(name string) {
-	_, err := t.fakeProducer.KubeClient.CoreV1().Nodes().Create(context.TODO(), &corev1.Node{
+func (t *testDriver) createNode(ctx context.Context, name string) {
+	_, err := t.fakeProducer.KubeClient.CoreV1().Nodes().Create(ctx, &corev1.Node{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
@@ -135,8 +135,8 @@ func (t *testDriver) createNode(name string) {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (t *testDriver) createEndpoint(name, clusterID string, subnets []string) {
-	t.createResource(&submarinerv1.Endpoint{
+func (t *testDriver) createEndpoint(ctx context.Context, name, clusterID string, subnets []string) {
+	t.createResource(ctx, &submarinerv1.Endpoint{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: t.submariner.Spec.BrokerK8sRemoteNamespace,
@@ -148,7 +148,7 @@ func (t *testDriver) createEndpoint(name, clusterID string, subnets []string) {
 	})
 }
 
-func (t *testDriver) ensureDeployment(name string, desiredReplicas, availableReplicas int32) {
+func (t *testDriver) ensureDeployment(ctx context.Context, name string, desiredReplicas, availableReplicas int32) {
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -162,7 +162,7 @@ func (t *testDriver) ensureDeployment(name string, desiredReplicas, availableRep
 		},
 	}
 
-	_, err := util.CreateOrUpdate(context.TODO(), resource.ForDeployment(t.fakeProducer.KubeClient, constants.OperatorNamespace), deployment,
+	_, err := util.CreateOrUpdate(ctx, resource.ForDeployment(t.fakeProducer.KubeClient, constants.OperatorNamespace), deployment,
 		func(existing *appsv1.Deployment) (*appsv1.Deployment, error) {
 			existing.Spec = deployment.Spec
 			existing.Status = deployment.Status
@@ -172,7 +172,7 @@ func (t *testDriver) ensureDeployment(name string, desiredReplicas, availableRep
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (t *testDriver) ensureDaemonSet(name string, desired, current int32) {
+func (t *testDriver) ensureDaemonSet(ctx context.Context, name string, desired, current int32) {
 	daemonSet := &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -184,7 +184,7 @@ func (t *testDriver) ensureDaemonSet(name string, desired, current int32) {
 		},
 	}
 
-	_, err := util.CreateOrUpdate(context.TODO(), resource.ForDaemonSet(t.fakeProducer.KubeClient, constants.OperatorNamespace), daemonSet,
+	_, err := util.CreateOrUpdate(ctx, resource.ForDaemonSet(t.fakeProducer.KubeClient, constants.OperatorNamespace), daemonSet,
 		func(existing *appsv1.DaemonSet) (*appsv1.DaemonSet, error) {
 			existing.Status = daemonSet.Status
 			return existing, nil
@@ -193,7 +193,7 @@ func (t *testDriver) ensureDaemonSet(name string, desired, current int32) {
 }
 
 //nolint:gocritic // Ignore huge param
-func (t *testDriver) ensurePodWithStatus(name string, labels map[string]string, status corev1.PodStatus) {
+func (t *testDriver) ensurePodWithStatus(ctx context.Context, name string, labels map[string]string, status corev1.PodStatus) {
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -205,7 +205,7 @@ func (t *testDriver) ensurePodWithStatus(name string, labels map[string]string, 
 
 	maps.Copy(pod.Labels, labels)
 
-	_, err := util.CreateOrUpdate(context.TODO(), resource.ForPod(t.fakeProducer.KubeClient, constants.OperatorNamespace), pod,
+	_, err := util.CreateOrUpdate(ctx, resource.ForPod(t.fakeProducer.KubeClient, constants.OperatorNamespace), pod,
 		func(existing *corev1.Pod) (*corev1.Pod, error) {
 			existing.Status = pod.Status
 			return existing, nil
@@ -249,11 +249,11 @@ func newTestDriver() *testDriver {
 		fake.AddBasicReactors(&t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake)
 	})
 
-	JustBeforeEach(func() {
-		t.createNode("master")
+	JustBeforeEach(func(ctx SpecContext) {
+		t.createNode(ctx, "master")
 
 		if t.submariner != nil {
-			t.createResource(t.submariner)
+			t.createResource(ctx, t.submariner)
 		}
 	})
 

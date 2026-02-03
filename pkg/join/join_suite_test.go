@@ -135,8 +135,8 @@ func newTestDriver() *testDriver {
 	return t
 }
 
-func (t *testDriver) runJoinClusterToBroker() error {
-	return join.ClusterToBroker(context.TODO(), &t.brokerInfo, &t.options, t.fakeProducer, t.status)
+func (t *testDriver) runJoinClusterToBroker(ctx context.Context) error {
+	return join.ClusterToBroker(ctx, &t.brokerInfo, &t.options, t.fakeProducer, t.status)
 }
 
 func (t *testDriver) setFakedServerVersion(major, minor string) {
@@ -146,51 +146,51 @@ func (t *testDriver) setFakedServerVersion(major, minor string) {
 	}
 }
 
-func (t *testDriver) getSubmarinerResource() (*v1alpha1.Submariner, error) {
+func (t *testDriver) getSubmarinerResource(ctx context.Context) (*v1alpha1.Submariner, error) {
 	subm := &v1alpha1.Submariner{}
-	err := t.fakeProducer.GeneralClient.Get(context.TODO(), ctrlclient.ObjectKey{
+	err := t.fakeProducer.GeneralClient.Get(ctx, ctrlclient.ObjectKey{
 		Namespace: constants.OperatorNamespace, Name: names.SubmarinerCrName,
 	}, subm)
 
 	return subm, err
 }
 
-func (t *testDriver) assertSubmarinerResource() *v1alpha1.Submariner {
-	subm, err := t.getSubmarinerResource()
+func (t *testDriver) assertSubmarinerResource(ctx context.Context) *v1alpha1.Submariner {
+	subm, err := t.getSubmarinerResource(ctx)
 	Expect(err).NotTo(HaveOccurred())
 
 	return subm
 }
 
-func (t *testDriver) assertNoSubmarinerResource() {
-	_, err := t.getSubmarinerResource()
+func (t *testDriver) assertNoSubmarinerResource(ctx context.Context) {
+	_, err := t.getSubmarinerResource(ctx)
 	Expect(err).To(HaveOccurred())
 }
 
-func (t *testDriver) getServiceDiscoveryResource() (*v1alpha1.ServiceDiscovery, error) {
+func (t *testDriver) getServiceDiscoveryResource(ctx context.Context) (*v1alpha1.ServiceDiscovery, error) {
 	sd := &v1alpha1.ServiceDiscovery{}
-	err := t.fakeProducer.GeneralClient.Get(context.TODO(), ctrlclient.ObjectKey{
+	err := t.fakeProducer.GeneralClient.Get(ctx, ctrlclient.ObjectKey{
 		Namespace: constants.OperatorNamespace, Name: names.ServiceDiscoveryCrName,
 	}, sd)
 
 	return sd, err
 }
 
-func (t *testDriver) assertServiceDiscoveryResource() *v1alpha1.ServiceDiscovery {
-	sd, err := t.getServiceDiscoveryResource()
+func (t *testDriver) assertServiceDiscoveryResource(ctx context.Context) *v1alpha1.ServiceDiscovery {
+	sd, err := t.getServiceDiscoveryResource(ctx)
 	Expect(err).NotTo(HaveOccurred())
 
 	return sd
 }
 
-func (t *testDriver) assertNoServiceDiscoveryResource() {
-	_, err := t.getServiceDiscoveryResource()
+func (t *testDriver) assertNoServiceDiscoveryResource(ctx context.Context) {
+	_, err := t.getServiceDiscoveryResource(ctx)
 	Expect(err).To(HaveOccurred())
 }
 
-func (t *testDriver) getOperatorDeployment() *appsv1.Deployment {
+func (t *testDriver) getOperatorDeployment(ctx context.Context) *appsv1.Deployment {
 	deployment, err := t.fakeProducer.KubeClient.AppsV1().Deployments(constants.OperatorNamespace).Get(
-		context.TODO(), compnames.OperatorComponent, metav1.GetOptions{})
+		ctx, compnames.OperatorComponent, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	return deployment

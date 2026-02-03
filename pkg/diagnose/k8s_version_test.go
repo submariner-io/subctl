@@ -73,9 +73,9 @@ type k8sVersionTestDriver struct {
 func newK8sVersionTestDriver() *k8sVersionTestDriver {
 	t := &k8sVersionTestDriver{testDriver: newTestDriver()}
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		if t.serviceDiscovery != nil {
-			t.createResource(t.serviceDiscovery)
+			t.createResource(ctx, t.serviceDiscovery)
 		}
 	})
 

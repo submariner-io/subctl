@@ -116,21 +116,21 @@ func testExportedServices() {
 	})
 
 	When("a service is exported properly", func() {
-		JustBeforeEach(func() {
-			t.createService(service)
+		JustBeforeEach(func(ctx SpecContext) {
+			t.createService(ctx, service)
 			t.createServiceExport(serviceExport)
 			t.createServiceImport(localServiceImport)
 			t.createServiceImport(aggregatedServiceImport)
-			t.creatEndpointSlice(endpointSlice)
+			t.creatEndpointSlice(ctx, endpointSlice)
 		})
 
 		t.testSuccess(t.run)
 	})
 
 	When("a service is exported", func() {
-		JustBeforeEach(func() {
+		JustBeforeEach(func(ctx SpecContext) {
 			t.createServiceExport(serviceExport)
-			t.createService(service)
+			t.createService(ctx, service)
 		})
 
 		Context("but the ServiceExport Valid condition isn't present", func() {
@@ -175,9 +175,9 @@ func testExportedServices() {
 		})
 
 		Context("but no aggregate ServiceImport exists", func() {
-			BeforeEach(func() {
+			BeforeEach(func(ctx SpecContext) {
 				t.createServiceImport(localServiceImport)
-				t.creatEndpointSlice(endpointSlice)
+				t.creatEndpointSlice(ctx, endpointSlice)
 			})
 
 			t.testFailure(t.run, "ServiceImport", serviceName)
@@ -208,8 +208,8 @@ func testExportedServices() {
 	})
 
 	When("Service retrieval fails", func() {
-		BeforeEach(func() {
-			t.createService(service)
+		BeforeEach(func(ctx SpecContext) {
+			t.createService(ctx, service)
 			t.createServiceExport(serviceExport)
 			fake.FailOnAction(&t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake, "services", "get", errFake, false)
 		})
@@ -218,8 +218,8 @@ func testExportedServices() {
 	})
 
 	When("ServiceImport retrieval fails", func() {
-		BeforeEach(func() {
-			t.createService(service)
+		BeforeEach(func(ctx SpecContext) {
+			t.createService(ctx, service)
 			t.createServiceExport(serviceExport)
 			t.createServiceImport(localServiceImport)
 			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports", "list", errFake, true)
@@ -229,12 +229,12 @@ func testExportedServices() {
 	})
 
 	When("EndpointSlice retrieval fails", func() {
-		BeforeEach(func() {
-			t.createService(service)
+		BeforeEach(func(ctx SpecContext) {
+			t.createService(ctx, service)
 			t.createServiceExport(serviceExport)
 			t.createServiceImport(localServiceImport)
 			t.createServiceImport(aggregatedServiceImport)
-			t.creatEndpointSlice(endpointSlice)
+			t.creatEndpointSlice(ctx, endpointSlice)
 			fake.FailOnAction(&t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake, "endpointslices", "list", errFake, false)
 		})
 
@@ -249,8 +249,8 @@ func testImportedServices() {
 		fake.AddVerifyNamespaceReactor(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports")
 	})
 
-	JustBeforeEach(func() {
-		t.createNamespace(t.submariner.Spec.BrokerK8sRemoteNamespace)
+	JustBeforeEach(func(ctx SpecContext) {
+		t.createNamespace(ctx, t.submariner.Spec.BrokerK8sRemoteNamespace)
 
 		// Aggregated ServiceImport on the broker
 		t.createServiceImport(&mcsv1a1.ServiceImport{
@@ -279,8 +279,8 @@ func testImportedServices() {
 	})
 
 	When("an imported service's local ServiceImport exists", func() {
-		JustBeforeEach(func() {
-			t.createNamespace(serviceNamespace)
+		JustBeforeEach(func(ctx SpecContext) {
+			t.createNamespace(ctx, serviceNamespace)
 
 			// Local aggregated ServiceImport
 			t.createServiceImport(&mcsv1a1.ServiceImport{
@@ -299,8 +299,8 @@ func testImportedServices() {
 	})
 
 	When("an imported service's local ServiceImport doesn't exist", func() {
-		JustBeforeEach(func() {
-			t.createNamespace(serviceNamespace)
+		JustBeforeEach(func(ctx SpecContext) {
+			t.createNamespace(ctx, serviceNamespace)
 		})
 
 		t.testFailure(t.run, "No ServiceImport")

@@ -34,8 +34,8 @@ var _ = Describe("CheckGatewayConnections", func() {
 	}
 
 	When("all connections are established", func() {
-		BeforeEach(func() {
-			t.createResource(newGateway(submarinerv1.HAStatusActive, submarinerv1.Connection{
+		BeforeEach(func(ctx SpecContext) {
+			t.createResource(ctx, newGateway(submarinerv1.HAStatusActive, submarinerv1.Connection{
 				UsingIP: "1.2.3.4",
 				Status:  submarinerv1.Connected,
 			}))
@@ -45,8 +45,8 @@ var _ = Describe("CheckGatewayConnections", func() {
 	})
 
 	When("a connection is in progress", func() {
-		BeforeEach(func() {
-			t.createResource(newGateway(submarinerv1.HAStatusActive, submarinerv1.Connection{
+		BeforeEach(func(ctx SpecContext) {
+			t.createResource(ctx, newGateway(submarinerv1.HAStatusActive, submarinerv1.Connection{
 				UsingIP: "1.2.3.4",
 				Status:  submarinerv1.Connected,
 			}, submarinerv1.Connection{
@@ -60,8 +60,8 @@ var _ = Describe("CheckGatewayConnections", func() {
 	})
 
 	When("a connection is in error", func() {
-		BeforeEach(func() {
-			t.createResource(newGateway(submarinerv1.HAStatusActive, submarinerv1.Connection{
+		BeforeEach(func(ctx SpecContext) {
+			t.createResource(ctx, newGateway(submarinerv1.HAStatusActive, submarinerv1.Connection{
 				Endpoint:      submarinerv1.EndpointSpec{ClusterID: "west"},
 				UsingIP:       "2004:0:0:1234::",
 				Status:        submarinerv1.ConnectionError,
@@ -73,16 +73,16 @@ var _ = Describe("CheckGatewayConnections", func() {
 	})
 
 	When("there's no connections", func() {
-		BeforeEach(func() {
-			t.createResource(newGateway(submarinerv1.HAStatusActive))
+		BeforeEach(func(ctx SpecContext) {
+			t.createResource(ctx, newGateway(submarinerv1.HAStatusActive))
 		})
 
 		t.testFailure(run, "no", "connections")
 	})
 
 	When("there's no active Gateway", func() {
-		BeforeEach(func() {
-			t.createResource(newGateway(submarinerv1.HAStatusPassive))
+		BeforeEach(func(ctx SpecContext) {
+			t.createResource(ctx, newGateway(submarinerv1.HAStatusPassive))
 		})
 
 		t.testFailure(run, "active gateway")
@@ -101,8 +101,8 @@ var _ = Describe("CheckRouteAgentConnections", func() {
 	}
 
 	When("all connections are established", func() {
-		BeforeEach(func() {
-			t.createResource(newRouteAgent(submarinerv1.RemoteEndpoint{
+		BeforeEach(func(ctx SpecContext) {
+			t.createResource(ctx, newRouteAgent(submarinerv1.RemoteEndpoint{
 				Status: submarinerv1.Connected,
 			}))
 		})
@@ -111,8 +111,8 @@ var _ = Describe("CheckRouteAgentConnections", func() {
 	})
 
 	When("a connection is in progress", func() {
-		BeforeEach(func() {
-			t.createResource(newRouteAgent(
+		BeforeEach(func(ctx SpecContext) {
+			t.createResource(ctx, newRouteAgent(
 				submarinerv1.RemoteEndpoint{
 					Status: submarinerv1.Connected,
 				}, submarinerv1.RemoteEndpoint{
@@ -134,8 +134,8 @@ var _ = Describe("CheckRouteAgentConnections", func() {
 	})
 
 	When("a connection is in error", func() {
-		BeforeEach(func() {
-			t.createResource(newRouteAgent(
+		BeforeEach(func(ctx SpecContext) {
+			t.createResource(ctx, newRouteAgent(
 				submarinerv1.RemoteEndpoint{
 					Status:        submarinerv1.ConnectionError,
 					StatusMessage: "no initial handshake",
@@ -157,8 +157,8 @@ var _ = Describe("CheckRouteAgentConnections", func() {
 	})
 
 	When("there's no connections", func() {
-		BeforeEach(func() {
-			t.createResource(newRouteAgent())
+		BeforeEach(func(ctx SpecContext) {
+			t.createResource(ctx, newRouteAgent())
 		})
 
 		t.testSuccess(run)
@@ -177,13 +177,13 @@ var _ = Describe("Connections", func() {
 	}
 
 	When("all connections are established", func() {
-		BeforeEach(func() {
-			t.createResource(newGateway(submarinerv1.HAStatusActive, submarinerv1.Connection{
+		BeforeEach(func(ctx SpecContext) {
+			t.createResource(ctx, newGateway(submarinerv1.HAStatusActive, submarinerv1.Connection{
 				UsingIP: "1.2.3.4",
 				Status:  submarinerv1.Connected,
 			}))
 
-			t.createResource(newRouteAgent(submarinerv1.RemoteEndpoint{
+			t.createResource(ctx, newRouteAgent(submarinerv1.RemoteEndpoint{
 				Status: submarinerv1.Connected,
 			}))
 		})
@@ -192,8 +192,8 @@ var _ = Describe("Connections", func() {
 	})
 
 	When("there's a fully-connected RouteAgent but no Gateway", func() {
-		BeforeEach(func() {
-			t.createResource(newRouteAgent(submarinerv1.RemoteEndpoint{
+		BeforeEach(func(ctx SpecContext) {
+			t.createResource(ctx, newRouteAgent(submarinerv1.RemoteEndpoint{
 				Status: submarinerv1.Connected,
 			}))
 		})
@@ -202,8 +202,8 @@ var _ = Describe("Connections", func() {
 	})
 
 	When("there's a fully-connected Gateway but no RouteAgent", func() {
-		BeforeEach(func() {
-			t.createResource(newGateway(submarinerv1.HAStatusActive, submarinerv1.Connection{
+		BeforeEach(func(ctx SpecContext) {
+			t.createResource(ctx, newGateway(submarinerv1.HAStatusActive, submarinerv1.Connection{
 				UsingIP: "1.2.3.4",
 				Status:  submarinerv1.Connected,
 			}))
