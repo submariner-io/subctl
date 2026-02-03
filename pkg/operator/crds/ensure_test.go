@@ -50,8 +50,8 @@ var _ = Describe("Ensure", func() {
 		client = controllerfake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
 	})
 
-	It("should create operator CRDs", func() {
-		created, err := crds.Ensure(context.TODO(), crd.UpdaterFromControllerClient(client))
+	It("should create operator CRDs", func(ctx SpecContext) {
+		created, err := crds.Ensure(ctx, crd.UpdaterFromControllerClient(client))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(created).To(BeTrue())
 
@@ -60,10 +60,10 @@ var _ = Describe("Ensure", func() {
 			"servicediscoveries.submariner.io",
 			"submariners.submariner.io",
 		} {
-			Expect(client.Get(context.TODO(), controllerclient.ObjectKey{Name: name}, &apiextensions.CustomResourceDefinition{})).To(Succeed())
+			Expect(client.Get(ctx, controllerclient.ObjectKey{Name: name}, &apiextensions.CustomResourceDefinition{})).To(Succeed())
 		}
 
-		created, err = crds.Ensure(context.TODO(), crd.UpdaterFromControllerClient(client))
+		created, err = crds.Ensure(ctx, crd.UpdaterFromControllerClient(client))
 		Expect(err).NotTo(HaveOccurred())
 		Expect(created).To(BeFalse())
 	})
@@ -80,8 +80,8 @@ var _ = Describe("Ensure", func() {
 				}).Build()
 		})
 
-		It("should return an error", func() {
-			_, err := crds.Ensure(context.TODO(), crd.UpdaterFromControllerClient(client))
+		It("should return an error", func(ctx SpecContext) {
+			_, err := crds.Ensure(ctx, crd.UpdaterFromControllerClient(client))
 			Expect(err).To(HaveOccurred())
 		})
 	})

@@ -54,8 +54,8 @@ var _ = Describe("EnsureFromYAML", func() {
 		client = fakeclientset.NewClientset()
 	})
 
-	assertClusterRoleBinding := func() {
-		r, err := client.RbacV1().ClusterRoleBindings().Get(context.TODO(), "test-clusterrolebinding", metav1.GetOptions{})
+	assertClusterRoleBinding := func(ctx context.Context) {
+		r, err := client.RbacV1().ClusterRoleBindings().Get(ctx, "test-clusterrolebinding", metav1.GetOptions{})
 		Expect(err).To(Succeed())
 		Expect(r.RoleRef.APIGroup).To(Equal("rbac.authorization.k8s.io"))
 		Expect(r.RoleRef.Name).To(Equal("test-clusterrole"))
@@ -66,17 +66,17 @@ var _ = Describe("EnsureFromYAML", func() {
 	}
 
 	When("the ClusterRoleBinding doesn't exist", func() {
-		It("should create it", func() {
-			created, err := clusterrolebinding.EnsureFromYAML(context.TODO(), client, namespace, []byte(clusterRoleBindingYAML))
+		It("should create it", func(ctx SpecContext) {
+			created, err := clusterrolebinding.EnsureFromYAML(ctx, client, namespace, []byte(clusterRoleBindingYAML))
 			Expect(created).To(BeTrue())
 			Expect(err).To(Succeed())
-			assertClusterRoleBinding()
+			assertClusterRoleBinding(ctx)
 		})
 	})
 
 	When("the ClusterRoleBinding already exists", func() {
-		It("should not update it", func() {
-			_, err := clusterrolebinding.Ensure(context.TODO(), client, &rbacv1.ClusterRoleBinding{
+		It("should not update it", func(ctx SpecContext) {
+			_, err := clusterrolebinding.Ensure(ctx, client, &rbacv1.ClusterRoleBinding{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "ClusterRoleBinding",
 					APIVersion: rbacv1.SchemeGroupVersion.String(),
@@ -97,9 +97,9 @@ var _ = Describe("EnsureFromYAML", func() {
 				},
 			})
 			Expect(err).To(Succeed())
-			assertClusterRoleBinding()
+			assertClusterRoleBinding(ctx)
 
-			created, err := clusterrolebinding.EnsureFromYAML(context.TODO(), client, namespace, []byte(clusterRoleBindingYAML))
+			created, err := clusterrolebinding.EnsureFromYAML(ctx, client, namespace, []byte(clusterRoleBindingYAML))
 			Expect(created).To(BeFalse())
 			Expect(err).To(Succeed())
 		})

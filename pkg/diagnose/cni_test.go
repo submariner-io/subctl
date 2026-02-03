@@ -109,16 +109,16 @@ func (t *cniTestDriver) testOVNKubernetesCNIPlugin() {
 	})
 
 	Context("and the OVN version is supported", func() {
-		BeforeEach(func() {
-			t.createOVNPod(diagnose.MinOVNNBVersion.String(), "nb-ovsdb")
+		BeforeEach(func(ctx SpecContext) {
+			t.createOVNPod(ctx, diagnose.MinOVNNBVersion.String(), "nb-ovsdb")
 		})
 
 		t.testSuccess(t.run)
 	})
 
 	Context("and the OVN version is not supported", func() {
-		BeforeEach(func() {
-			t.createOVNPod("6.0.0", "nb-ovsdb")
+		BeforeEach(func(ctx SpecContext) {
+			t.createOVNPod(ctx, "6.0.0", "nb-ovsdb")
 		})
 
 		t.testFailure(t.run, "supported version")
@@ -129,16 +129,16 @@ func (t *cniTestDriver) testOVNKubernetesCNIPlugin() {
 	})
 
 	Context("and the OVN pod does not have the expected container", func() {
-		BeforeEach(func() {
-			t.createOVNPod(diagnose.MinOVNNBVersion.String(), "unexpected")
+		BeforeEach(func(ctx SpecContext) {
+			t.createOVNPod(ctx, diagnose.MinOVNNBVersion.String(), "unexpected")
 		})
 
 		t.testFailure(t.run, "container")
 	})
 
 	Context("and the output from the OVN pod command does not have the expected format", func() {
-		BeforeEach(func() {
-			t.createOVNPod(diagnose.MinOVNNBVersion.String(), "nbdb")
+		BeforeEach(func(ctx SpecContext) {
+			t.createOVNPod(ctx, diagnose.MinOVNNBVersion.String(), "nbdb")
 			fake.SetSPDYExecutor("invalid", "", nil)
 		})
 
@@ -146,8 +146,8 @@ func (t *cniTestDriver) testOVNKubernetesCNIPlugin() {
 	})
 
 	Context("and the OVN pod command execution fails", func() {
-		BeforeEach(func() {
-			t.createOVNPod(diagnose.MinOVNNBVersion.String(), "nbdb")
+		BeforeEach(func(ctx SpecContext) {
+			t.createOVNPod(ctx, diagnose.MinOVNNBVersion.String(), "nbdb")
 			fake.SetSPDYExecutor("", "", errors.New("mock error"))
 		})
 
@@ -192,9 +192,9 @@ func (t *cniTestDriver) testCalicoCNIPlugin() {
 	})
 
 	Context("and IPPools are configured correctly", func() {
-		BeforeEach(func() {
-			t.createCalicoIPPool("remote-pool", remoteSubnet, true, false, "Always")
-			t.createCalicoIPPool("local-pool", localSubnet, false, true, "Always")
+		BeforeEach(func(ctx SpecContext) {
+			t.createCalicoIPPool(ctx, "remote-pool", remoteSubnet, true, false, "Always")
+			t.createCalicoIPPool(ctx, "local-pool", localSubnet, false, true, "Always")
 		})
 
 		t.testSuccess(t.run)
@@ -230,32 +230,32 @@ func (t *cniTestDriver) testCalicoCNIPlugin() {
 	})
 
 	Context("and a remote subnet IPPool is not disabled", func() {
-		BeforeEach(func() {
-			t.createCalicoIPPool("invalid-pool", remoteSubnet, false, false, "")
+		BeforeEach(func(ctx SpecContext) {
+			t.createCalicoIPPool(ctx, "invalid-pool", remoteSubnet, false, false, "")
 		})
 
 		t.testFailure(t.run, "invalid-pool")
 	})
 
 	Context("and a remote subnet IPPool has natOutgoing enabled", func() {
-		BeforeEach(func() {
-			t.createCalicoIPPool("invalid-pool", remoteSubnet, true, true, "")
+		BeforeEach(func(ctx SpecContext) {
+			t.createCalicoIPPool(ctx, "invalid-pool", remoteSubnet, true, true, "")
 		})
 
 		t.testFailure(t.run, "natOutgoing")
 	})
 
 	Context("and an IPPool has no CIDR set", func() {
-		BeforeEach(func() {
-			t.createCalicoIPPool("invalid-pool", "", true, true, "")
+		BeforeEach(func(ctx SpecContext) {
+			t.createCalicoIPPool(ctx, "invalid-pool", "", true, true, "")
 		})
 
 		t.testFailure(t.run, "IPPool")
 	})
 
 	Context("and a local IPPool has incorrect vxlanMode", func() {
-		BeforeEach(func() {
-			t.createCalicoIPPool("local-pool", localSubnet, false, true, "Never")
+		BeforeEach(func(ctx SpecContext) {
+			t.createCalicoIPPool(ctx, "local-pool", localSubnet, false, true, "Never")
 		})
 
 		t.testFailure(t.run, "vxlanMode")
@@ -271,7 +271,7 @@ func (t *cniTestDriver) testCalicoCNIPlugin() {
 	})
 }
 
-func (t *cniTestDriver) createCalicoIPPool(name, cidr string, disabled, natOutgoing bool, vxlanMode string) {
+func (t *cniTestDriver) createCalicoIPPool(ctx context.Context, name, cidr string, disabled, natOutgoing bool, vxlanMode string) {
 	pool := &unstructured.Unstructured{
 		Object: map[string]any{
 			"apiVersion": diagnose.CalicoGVR.GroupVersion().String(),
@@ -288,11 +288,11 @@ func (t *cniTestDriver) createCalicoIPPool(name, cidr string, disabled, natOutgo
 		},
 	}
 
-	_, err := t.fakeProducer.DynamicClient.Resource(diagnose.CalicoGVR).Create(context.TODO(), pool, metav1.CreateOptions{})
+	_, err := t.fakeProducer.DynamicClient.Resource(diagnose.CalicoGVR).Create(ctx, pool, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (t *cniTestDriver) createOVNPod(version, containerName string) {
+func (t *cniTestDriver) createOVNPod(ctx context.Context, version, containerName string) {
 	// Create OVN pod with proper labels and container
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -314,7 +314,7 @@ func (t *cniTestDriver) createOVNPod(version, containerName string) {
 		},
 	}
 
-	_, err := t.fakeProducer.KubeClient.CoreV1().Pods(pod.Namespace).Create(context.TODO(), pod, metav1.CreateOptions{})
+	_, err := t.fakeProducer.KubeClient.CoreV1().Pods(pod.Namespace).Create(ctx, pod, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	fake.SetSPDYExecutor("DB Schema "+version, "", nil)

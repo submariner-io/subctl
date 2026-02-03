@@ -19,7 +19,6 @@ limitations under the License.
 package ocp_test
 
 import (
-	"context"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -52,7 +51,6 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = Describe("EnsureRBAC", func() {
-	ctx := context.TODO()
 	rbacResourceName := "ocp-submariner-operator"
 	rbacInfos := []ocp.RbacInfo{
 		{
@@ -73,7 +71,7 @@ var _ = Describe("EnsureRBAC", func() {
 	})
 
 	When("not running on OCP platform", func() {
-		It("should return false without creating RBAC resources", func() {
+		It("should return false without creating RBAC resources", func(ctx SpecContext) {
 			updated, err := ocp.EnsureRBAC(ctx, dynamicClient, kubeClient, testNamespace, rbacInfos)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(updated).To(BeFalse())
@@ -89,7 +87,7 @@ var _ = Describe("EnsureRBAC", func() {
 	})
 
 	When("running on OCP platform", func() {
-		BeforeEach(func() {
+		BeforeEach(func(ctx SpecContext) {
 			_, err := dynamicClient.Resource(securityv1.GroupVersion.WithResource("securitycontextconstraints")).Create(
 				ctx, resource.MustToUnstructuredUsingScheme(&securityv1.SecurityContextConstraints{
 					ObjectMeta: metav1.ObjectMeta{
@@ -100,7 +98,7 @@ var _ = Describe("EnsureRBAC", func() {
 		})
 
 		Context("and the RBAC resources don't exist", func() {
-			It("should create them and return true", func() {
+			It("should create them and return true", func(ctx SpecContext) {
 				updated, err := ocp.EnsureRBAC(ctx, dynamicClient, kubeClient, testNamespace, rbacInfos)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(updated).To(BeTrue())
@@ -133,7 +131,7 @@ var _ = Describe("EnsureRBAC", func() {
 				})
 			})
 
-			It("should return false", func() {
+			It("should return false", func(ctx SpecContext) {
 				updated, err := ocp.EnsureRBAC(ctx, dynamicClient, kubeClient, testNamespace, rbacInfos)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(updated).To(BeFalse())
@@ -145,7 +143,7 @@ var _ = Describe("EnsureRBAC", func() {
 				fake.FailOnAction(&kubeClient.Fake, "clusterroles", "create", nil, false)
 			})
 
-			It("should return an error", func() {
+			It("should return an error", func(ctx SpecContext) {
 				_, err := ocp.EnsureRBAC(ctx, dynamicClient, kubeClient, testNamespace, rbacInfos)
 				Expect(err).To(HaveOccurred())
 			})
@@ -156,7 +154,7 @@ var _ = Describe("EnsureRBAC", func() {
 				fake.FailOnAction(&kubeClient.Fake, "clusterrolebindings", "create", nil, false)
 			})
 
-			It("should return an error", func() {
+			It("should return an error", func(ctx SpecContext) {
 				_, err := ocp.EnsureRBAC(ctx, dynamicClient, kubeClient, testNamespace, rbacInfos)
 				Expect(err).To(HaveOccurred())
 			})

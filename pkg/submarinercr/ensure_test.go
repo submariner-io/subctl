@@ -53,7 +53,6 @@ var _ = Describe("Ensure", func() {
 		brokerURL = "https://test-broker:8443"
 	)
 
-	ctx := context.TODO()
 	submarinerKey := ctrlClient.ObjectKey{
 		Name:      names.SubmarinerCrName,
 		Namespace: constants.OperatorNamespace,
@@ -84,7 +83,7 @@ var _ = Describe("Ensure", func() {
 	})
 
 	When("the Submariner resource doesn't exist", func() {
-		It("should successfully create it with the correct properties", func() {
+		It("should successfully create it with the correct properties", func(ctx SpecContext) {
 			err := submarinercr.Ensure(ctx, client, constants.OperatorNamespace, submarinerSpec)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -111,7 +110,7 @@ var _ = Describe("Ensure", func() {
 			})
 		})
 
-		JustBeforeEach(func() {
+		JustBeforeEach(func(ctx SpecContext) {
 			existing := &operatorv1alpha1.Submariner{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      names.SubmarinerCrName,
@@ -127,7 +126,7 @@ var _ = Describe("Ensure", func() {
 			existingUID = existing.UID
 		})
 
-		It("should replace it with a new resource", func() {
+		It("should replace it with a new resource", func(ctx SpecContext) {
 			err := submarinercr.Ensure(ctx, client, constants.OperatorNamespace, submarinerSpec)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -150,7 +149,7 @@ var _ = Describe("Ensure", func() {
 			})
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			err := submarinercr.Ensure(ctx, client, constants.OperatorNamespace, submarinerSpec)
 			Expect(err).To(HaveOccurred())
 		})

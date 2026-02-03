@@ -19,7 +19,6 @@ limitations under the License.
 package submariner_test
 
 import (
-	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -46,8 +45,6 @@ func TestSubmariner(t *testing.T) {
 }
 
 var _ = Describe("Ensure", func() {
-	ctx := context.TODO()
-
 	var (
 		kubeClient     *k8sfake.Clientset
 		dynClient      *dynfake.FakeDynamicClient
@@ -65,7 +62,7 @@ var _ = Describe("Ensure", func() {
 	})
 
 	When("no resources exist", func() {
-		It("should create them and return true", func() {
+		It("should create them and return true", func(ctx SpecContext) {
 			Expect(submariner.Ensure(ctx, statusReporter, kubeClient, dynClient, constants.OperatorNamespace)).To(Succeed())
 
 			saList, err := kubeClient.CoreV1().ServiceAccounts(constants.OperatorNamespace).List(ctx, metav1.ListOptions{})
@@ -87,7 +84,7 @@ var _ = Describe("Ensure", func() {
 			fake.FailOnAction(&kubeClient.Fake, "serviceaccounts", "create", nil, false)
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			err := submariner.Ensure(ctx, statusReporter, kubeClient, dynClient, constants.OperatorNamespace)
 			Expect(err).To(HaveOccurred())
 		})
@@ -105,7 +102,7 @@ var _ = Describe("Ensure", func() {
 				})
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			err := submariner.Ensure(ctx, statusReporter, kubeClient, dynClient, constants.OperatorNamespace)
 			Expect(err).To(HaveOccurred())
 		})

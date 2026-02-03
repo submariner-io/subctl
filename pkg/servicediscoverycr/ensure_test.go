@@ -51,7 +51,6 @@ var _ = Describe("Ensure", func() {
 		brokerURL = "https://test-broker:8443"
 	)
 
-	ctx := context.TODO()
 	serviceDiscoveryKey := ctrlClient.ObjectKey{
 		Name:      names.ServiceDiscoveryCrName,
 		Namespace: constants.OperatorNamespace,
@@ -82,7 +81,7 @@ var _ = Describe("Ensure", func() {
 	})
 
 	When("the ServiceDiscovery resource doesn't exist", func() {
-		It("should successfully create it with the correct properties", func() {
+		It("should successfully create it with the correct properties", func(ctx SpecContext) {
 			err := servicediscoverycr.Ensure(ctx, client, constants.OperatorNamespace, serviceDiscoverySpec)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -114,7 +113,7 @@ var _ = Describe("Ensure", func() {
 			})
 		})
 
-		It("should update it", func() {
+		It("should update it", func(ctx SpecContext) {
 			err := servicediscoverycr.Ensure(ctx, client, constants.OperatorNamespace, serviceDiscoverySpec)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -135,7 +134,7 @@ var _ = Describe("Ensure", func() {
 			})
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			err := servicediscoverycr.Ensure(ctx, client, constants.OperatorNamespace, serviceDiscoverySpec)
 			Expect(err).To(HaveOccurred())
 		})

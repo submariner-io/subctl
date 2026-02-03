@@ -46,8 +46,6 @@ func TestSecret(t *testing.T) {
 }
 
 var _ = Describe("Ensure", func() {
-	ctx := context.TODO()
-
 	var (
 		kubeClient *fakeclientset.Clientset
 		testSecret *corev1.Secret
@@ -68,7 +66,7 @@ var _ = Describe("Ensure", func() {
 		}
 	})
 
-	assertEnsure := func() *corev1.Secret {
+	assertEnsure := func(ctx context.Context) *corev1.Secret {
 		created, err := secret.Ensure(ctx, kubeClient, namespace, testSecret)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(created).ToNot(BeNil())
@@ -85,15 +83,15 @@ var _ = Describe("Ensure", func() {
 	}
 
 	When("the Secret doesn't exist", func() {
-		It("should successfully create it with the correct properties", func() {
-			assertEnsure()
+		It("should successfully create it with the correct properties", func(ctx SpecContext) {
+			assertEnsure(ctx)
 		})
 	})
 
 	When("the Secret already exists", func() {
 		var existingUID types.UID
 
-		BeforeEach(func() {
+		BeforeEach(func(ctx SpecContext) {
 			s, err := kubeClient.CoreV1().Secrets(namespace).Create(ctx, testSecret, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
@@ -105,8 +103,8 @@ var _ = Describe("Ensure", func() {
 			fake.FailOnAction(&kubeClient.Fake, "secrets", "update", errors.New("updates not allowed"), false)
 		})
 
-		It("should replace it with the new Secret", func() {
-			actual := assertEnsure()
+		It("should replace it with the new Secret", func(ctx SpecContext) {
+			actual := assertEnsure(ctx)
 			Expect(actual.UID).NotTo(Equal(existingUID))
 		})
 	})
@@ -116,7 +114,7 @@ var _ = Describe("Ensure", func() {
 			fake.FailOnAction(&kubeClient.Fake, "secrets", "create", errors.New("creation failed"), false)
 		})
 
-		It("should return an error", func() {
+		It("should return an error", func(ctx SpecContext) {
 			_, err := secret.Ensure(ctx, kubeClient, namespace, testSecret)
 			Expect(err).To(HaveOccurred())
 		})

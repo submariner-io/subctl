@@ -19,7 +19,6 @@ limitations under the License.
 package operator_test
 
 import (
-	"context"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -57,14 +56,14 @@ var _ = Describe("Ensure", func() {
 		clientfake.AddDeploymentAvailableReactor(&fakeProducer.KubeClient.(*k8sfake.Clientset).Fake)
 	})
 
-	It("should create the operator components", func() {
+	It("should create the operator components", func(ctx SpecContext) {
 		proxyConfig := &httpproxy.Config{
 			HTTPProxy: "http://my-proxy",
 		}
 
 		operatorImage := "quay.io/submariner-operator"
 
-		Expect(operator.Ensure(context.TODO(), cli.NewReporter(), fakeProducer, constants.OperatorNamespace,
+		Expect(operator.Ensure(ctx, cli.NewReporter(), fakeProducer, constants.OperatorNamespace,
 			operatorImage, true, proxyConfig)).To(Succeed())
 
 		for _, name := range []string{
@@ -72,12 +71,12 @@ var _ = Describe("Ensure", func() {
 			"servicediscoveries.submariner.io",
 			"submariners.submariner.io",
 		} {
-			err := fakeProducer.GeneralClient.Get(context.TODO(), ctrlclient.ObjectKey{Name: name},
+			err := fakeProducer.GeneralClient.Get(ctx, ctrlclient.ObjectKey{Name: name},
 				&apiextensions.CustomResourceDefinition{})
 			Expect(err).NotTo(HaveOccurred())
 		}
 
-		_, err := fakeProducer.KubeClient.CoreV1().Namespaces().Get(context.TODO(), constants.OperatorNamespace, metav1.GetOptions{})
+		_, err := fakeProducer.KubeClient.CoreV1().Namespaces().Get(ctx, constants.OperatorNamespace, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 		for _, name := range []string{
@@ -89,12 +88,12 @@ var _ = Describe("Ensure", func() {
 			compnames.LighthouseCoreDNSComponent,
 		} {
 			_, err = fakeProducer.KubeClient.CoreV1().ServiceAccounts(constants.OperatorNamespace).Get(
-				context.TODO(), name, metav1.GetOptions{})
+				ctx, name, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		}
 
 		deployment, err := fakeProducer.KubeClient.AppsV1().Deployments(constants.OperatorNamespace).Get(
-			context.TODO(), compnames.OperatorComponent, metav1.GetOptions{})
+			ctx, compnames.OperatorComponent, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(deployment.Spec.Template.Spec.Containers[0].Env).To(ContainElement(corev1.EnvVar{
 			Name:  "HTTP_PROXY",
