@@ -117,7 +117,7 @@ func (c *DeployBrokerCommand) deployBrokerInContext(ctx context.Context, cluster
 ) error {
 	c.flags.BrokerNamespace = namespace
 
-	if err := DeployBroker(&c.flags, clusterInfo.ClientProducer, status); err != nil {
+	if err := DeployBroker(ctx, &c.flags, clusterInfo.ClientProducer, status); err != nil {
 		return err
 	}
 
@@ -141,6 +141,6 @@ func (c *DeployBrokerCommand) deployBrokerInContext(ctx context.Context, cluster
 	}
 
 	return WriteBrokerInfoToFile(
-		clusterInfo.RestConfig, namespace, c.flags.BrokerURL, ipsecPSK,
+		ctx, clusterInfo.RestConfig, namespace, c.flags.BrokerURL, ipsecPSK,
 		set.New(c.flags.BrokerSpec.Components...), c.flags.BrokerSpec.DefaultCustomDomains, status)
 }

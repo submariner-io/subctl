@@ -102,5 +102,5 @@ func (c *RecoverBrokerCommand) recoverBrokerInfo(ctx context.Context, submCluste
 		status.Success("Found Broker installed on a different cluster in namespace %s", brokerNamespace)
 	}
 
-	return status.Error(RecoverData(submCluster, brokerObj, brokerNamespace, c.brokerURL, brokerRestConfig, status), "")
+	return status.Error(RecoverData(ctx, submCluster, brokerObj, brokerNamespace, c.brokerURL, brokerRestConfig, status), "")
 }

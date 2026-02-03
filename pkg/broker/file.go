@@ -49,8 +49,8 @@ var (
 	}
 )
 
-func WriteInfoToFile(restConfig *rest.Config, brokerNamespace, brokerURL string, ipsecPSK []byte, components set.Set[string],
-	customDomains []string, status reporter.Interface,
+func WriteInfoToFile(ctx context.Context, restConfig *rest.Config, brokerNamespace, brokerURL string, ipsecPSK []byte,
+	components set.Set[string], customDomains []string, status reporter.Interface,
 ) error {
 	infoFileName := path.Join(InfoFileDir, InfoFileName)
 
@@ -73,7 +73,7 @@ func WriteInfoToFile(restConfig *rest.Config, brokerNamespace, brokerURL string,
 
 	data := &Info{}
 
-	data.ClientToken, err = serviceaccount.GetTokenSecretFor(context.TODO(), kubeClient, brokerNamespace, constants.SubmarinerBrokerAdminSA)
+	data.ClientToken, err = serviceaccount.GetTokenSecretFor(ctx, kubeClient, brokerNamespace, constants.SubmarinerBrokerAdminSA)
 	if err != nil {
 		return status.Error(err, "error getting broker client secret")
 	}

@@ -19,6 +19,7 @@ limitations under the License.
 package subctl_test
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -101,8 +102,8 @@ var _ = Describe("Recover Broker Info", func() {
 			},
 		}
 
-		subctl.RecoverData = func(submCluster *cluster.Info, broker *v1alpha1.Broker, brokerNamespace, brokerURL string,
-			brokerRestConfig *rest.Config, status reporter.Interface,
+		subctl.RecoverData = func(ctx context.Context, submCluster *cluster.Info, broker *v1alpha1.Broker, brokerNamespace,
+			brokerURL string, brokerRestConfig *rest.Config, status reporter.Interface,
 		) error {
 			recoverDataCalled = true
 			Expect(submCluster.Submariner.Spec).To(Equal(submarinerObj.Spec))
@@ -173,8 +174,8 @@ var _ = Describe("Recover Broker Info", func() {
 
 	When("recovery of the broker info fails", func() {
 		BeforeEach(func() {
-			subctl.RecoverData = func(submCluster *cluster.Info, broker *v1alpha1.Broker, brokerNamespace, brokerURL string,
-				brokerRestConfig *rest.Config, status reporter.Interface,
+			subctl.RecoverData = func(ctx context.Context, submCluster *cluster.Info, broker *v1alpha1.Broker, brokerNamespace,
+				brokerURL string, brokerRestConfig *rest.Config, status reporter.Interface,
 			) error {
 				return errors.New("the recovery failed")
 			}
@@ -189,8 +190,8 @@ var _ = Describe("Recover Broker Info", func() {
 		BeforeEach(func() {
 			t.args = []string{"--broker-url=" + customBrokerURL}
 
-			subctl.RecoverData = func(submCluster *cluster.Info, broker *v1alpha1.Broker, brokerNamespace, brokerURL string,
-				brokerRestConfig *rest.Config, status reporter.Interface,
+			subctl.RecoverData = func(ctx context.Context, submCluster *cluster.Info, broker *v1alpha1.Broker, brokerNamespace,
+				brokerURL string, brokerRestConfig *rest.Config, status reporter.Interface,
 			) error {
 				recoverDataCalled = true
 				Expect(brokerURL).To(Equal(customBrokerURL))

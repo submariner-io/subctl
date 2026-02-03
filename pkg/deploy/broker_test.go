@@ -54,7 +54,7 @@ var _ = Describe("Broker", func() {
 	t := newBrokerTestDriver()
 
 	It("should successfully deploy the operator and the Broker resource", func(ctx SpecContext) {
-		t.assertSuccess()
+		t.assertSuccess(ctx)
 
 		deployment, err := t.fakeProducer.KubeClient.AppsV1().Deployments(constants.OperatorNamespace).Get(
 			ctx, compnames.OperatorComponent, metav1.GetOptions{})
@@ -88,7 +88,7 @@ var _ = Describe("Broker", func() {
 		})
 
 		It("should deploy the Broker resource correctly", func(ctx SpecContext) {
-			t.assertSuccess()
+			t.assertSuccess(ctx)
 			t.assertBrokerResource(ctx)
 		})
 	})
@@ -118,7 +118,7 @@ var _ = Describe("Broker", func() {
 
 		Context("with a valid globalnet configuration", func() {
 			It("should create the globalnet ConfigMap correctly", func(ctx SpecContext) {
-				t.assertSuccess()
+				t.assertSuccess(ctx)
 
 				info, _, err := globalnet.GetGlobalNetworks(ctx, t.fakeProducer.ForGeneral(), testBrokerNamespace)
 				Expect(err).NotTo(HaveOccurred())
@@ -170,7 +170,7 @@ var _ = Describe("Broker", func() {
 
 		Context("with a valid clusterset IP configuration", func() {
 			It("should create the clusterset IP ConfigMap correctly", func(ctx SpecContext) {
-				t.assertSuccess()
+				t.assertSuccess(ctx)
 
 				info, _, err := clustersetip.GetClustersetIPNetworks(ctx, t.fakeProducer.ForGeneral(), testBrokerNamespace)
 				Expect(err).NotTo(HaveOccurred())
@@ -244,19 +244,19 @@ func newBrokerTestDriver() *brokerTestDriver {
 	return t
 }
 
-func (t *brokerTestDriver) run() error {
-	return deploy.Broker(&t.options, t.fakeProducer, t.statusReporter)
+func (t *brokerTestDriver) run(ctx context.Context) error {
+	return deploy.Broker(ctx, &t.options, t.fakeProducer, t.statusReporter)
 }
 
-func (t *brokerTestDriver) assertSuccess() {
-	Expect(t.run()).To(Succeed())
+func (t *brokerTestDriver) assertSuccess(ctx context.Context) {
+	Expect(t.run(ctx)).To(Succeed())
 	t.statusReporter.AssertWarningCount(0)
 	t.statusReporter.AssertFailureCount(0)
 }
 
 func (t *brokerTestDriver) testFailure(msgs ...string) {
-	It("should fail", func() {
-		Expect(t.run()).NotTo(Succeed())
+	It("should fail", func(ctx SpecContext) {
+		Expect(t.run(ctx)).NotTo(Succeed())
 		t.statusReporter.AssertFailureContainsStrings(msgs...)
 	})
 }

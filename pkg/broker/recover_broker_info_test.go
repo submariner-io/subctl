@@ -84,8 +84,8 @@ var _ = Describe("RecoverData", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	It("should write the recovered broker info to a file", func() {
-		Expect(broker.RecoverData(clusterInfo, brokerObj, testBrokerNamespace, testBrokerURL, brokerRestConfig,
+	It("should write the recovered broker info to a file", func(ctx SpecContext) {
+		Expect(broker.RecoverData(ctx, clusterInfo, brokerObj, testBrokerNamespace, testBrokerURL, brokerRestConfig,
 			t.statusReporter)).To(Succeed())
 
 		info, err := broker.ReadInfoFromFile(path.Join(broker.InfoFileDir, broker.InfoFileName))
@@ -105,8 +105,8 @@ var _ = Describe("RecoverData", func() {
 			clusterInfo.Submariner.Spec.CeIPSecPSK = "invalid"
 		})
 
-		It("should return an error", func() {
-			Expect(broker.RecoverData(clusterInfo, brokerObj, testBrokerNamespace,
+		It("should return an error", func(ctx SpecContext) {
+			Expect(broker.RecoverData(ctx, clusterInfo, brokerObj, testBrokerNamespace,
 				testBrokerURL, brokerRestConfig, t.statusReporter)).NotTo(Succeed())
 		})
 	})
