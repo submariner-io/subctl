@@ -86,9 +86,9 @@ func newGlobalnetTestDriver() *globalnetTestDriver {
 		}
 	})
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		if t.clusterGlobalEgressIP != nil {
-			t.createResource(t.clusterGlobalEgressIP)
+			t.createResource(ctx, t.clusterGlobalEgressIP)
 		}
 	})
 
@@ -123,8 +123,8 @@ func (t *globalnetTestDriver) testClusterGlobalEgressIPs() {
 	})
 
 	When("multiple instances exist", func() {
-		BeforeEach(func() {
-			t.createResource(&submarinerv1.ClusterGlobalEgressIP{
+		BeforeEach(func(ctx SpecContext) {
+			t.createResource(ctx, &submarinerv1.ClusterGlobalEgressIP{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "other-instance",
 				},
@@ -158,8 +158,8 @@ func (t *globalnetTestDriver) testGlobalEgressIPs() {
 		}
 	})
 
-	JustBeforeEach(func() {
-		t.createResource(globalEgressIP)
+	JustBeforeEach(func(ctx SpecContext) {
+		t.createResource(ctx, globalEgressIP)
 	})
 
 	When("a resource is properly configured", func() {
@@ -238,11 +238,11 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 	})
 
 	When("a resource is properly configured", func() {
-		JustBeforeEach(func() {
-			t.createService(service)
+		JustBeforeEach(func(ctx SpecContext) {
+			t.createService(ctx, service)
 			t.createServiceExport(serviceExport)
-			t.createResource(globalIngressIP)
-			t.createService(internalService)
+			t.createResource(ctx, globalIngressIP)
+			t.createService(ctx, internalService)
 		})
 
 		t.testSuccess(t.run)
@@ -294,8 +294,8 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 			service.Spec.Type = corev1.ServiceTypeExternalName
 		})
 
-		JustBeforeEach(func() {
-			t.createService(service)
+		JustBeforeEach(func(ctx SpecContext) {
+			t.createService(ctx, service)
 			t.createServiceExport(serviceExport)
 		})
 
@@ -303,8 +303,8 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 	})
 
 	When("no GlobalIngressIP exists for the exported service", func() {
-		JustBeforeEach(func() {
-			t.createService(service)
+		JustBeforeEach(func(ctx SpecContext) {
+			t.createService(ctx, service)
 			t.createServiceExport(serviceExport)
 		})
 
@@ -312,10 +312,10 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 	})
 
 	When("a service is exported", func() {
-		JustBeforeEach(func() {
-			t.createService(service)
+		JustBeforeEach(func(ctx SpecContext) {
+			t.createService(ctx, service)
 			t.createServiceExport(serviceExport)
-			t.createResource(globalIngressIP)
+			t.createResource(ctx, globalIngressIP)
 		})
 
 		Context("and no global IP was allocated", func() {
@@ -339,9 +339,9 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 		})
 
 		Context("and there's more than one internal service", func() {
-			JustBeforeEach(func() {
-				t.createService(internalService)
-				t.createService(&corev1.Service{
+			JustBeforeEach(func(ctx SpecContext) {
+				t.createService(ctx, internalService)
+				t.createService(ctx, &corev1.Service{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "other-internal",
 						Namespace: service.Namespace,
@@ -360,8 +360,8 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 				internalService.Spec.ExternalIPs = nil
 			})
 
-			JustBeforeEach(func() {
-				t.createService(internalService)
+			JustBeforeEach(func(ctx SpecContext) {
+				t.createService(ctx, internalService)
 			})
 
 			t.testFailure(t.run, "0 external IPs")
@@ -372,8 +372,8 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 				internalService.Spec.ExternalIPs = []string{"1.2.3.4"}
 			})
 
-			JustBeforeEach(func() {
-				t.createService(internalService)
+			JustBeforeEach(func(ctx SpecContext) {
+				t.createService(ctx, internalService)
 			})
 
 			t.testFailure(t.run, "match allocated IP")

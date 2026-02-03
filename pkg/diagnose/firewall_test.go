@@ -153,23 +153,23 @@ func newFirewallTestDriver() *firewallTestDriver {
 		t.remoteClusterInfo.Submariner.Status.ClusterID = remoteCluster
 
 		if t.workerNodeName != "" {
-			t.createNode(t.workerNodeName)
+			t.createNode(ctx, t.workerNodeName)
 		}
 
 		if t.localEndpoint != nil {
-			t.createResource(t.localEndpoint)
+			t.createResource(ctx, t.localEndpoint)
 		}
 
 		if t.localGatewayPod != nil {
-			t.ensurePodWithStatus(t.localGatewayPod.Name, t.localGatewayPod.Labels, t.localGatewayPod.Status)
+			t.ensurePodWithStatus(ctx, t.localGatewayPod.Name, t.localGatewayPod.Labels, t.localGatewayPod.Status)
 		}
 
 		if t.remoteGateway != nil {
-			t.createResource(t.remoteGateway)
+			t.createResource(ctx, t.remoteGateway)
 		}
 
 		if t.loadBalancerSvc != nil {
-			t.createService(t.loadBalancerSvc)
+			t.createService(ctx, t.loadBalancerSvc)
 		}
 	})
 

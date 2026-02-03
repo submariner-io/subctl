@@ -185,9 +185,9 @@ func (t *cniTestDriver) testCalicoCNIPlugin() {
 		}
 	})
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		if gateway != nil {
-			t.createResource(gateway)
+			t.createResource(ctx, gateway)
 		}
 	})
 
@@ -200,7 +200,7 @@ func (t *cniTestDriver) testCalicoCNIPlugin() {
 		t.testSuccess(t.run)
 
 		Context("and there's a passive gateway", func() {
-			BeforeEach(func() {
+			BeforeEach(func(ctx SpecContext) {
 				other := newGateway(submarinerv1.HAStatusPassive, submarinerv1.Connection{
 					Endpoint: submarinerv1.EndpointSpec{
 						CableName: "remote-endpoint2",
@@ -208,7 +208,7 @@ func (t *cniTestDriver) testCalicoCNIPlugin() {
 					},
 				})
 				other.Name = "other"
-				t.createResource(other)
+				t.createResource(ctx, other)
 			})
 
 			It("should ignore it and succeed", func(ctx SpecContext) {

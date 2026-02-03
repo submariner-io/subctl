@@ -100,9 +100,9 @@ func newVxLanFirewallTestDriver() *vxLanFirewallTestDriver {
 		}
 	})
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		if t.remoteEndpoint != nil {
-			t.createResource(t.remoteEndpoint)
+			t.createResource(ctx, t.remoteEndpoint)
 		}
 	})
 

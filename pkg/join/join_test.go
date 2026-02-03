@@ -84,7 +84,7 @@ func testDeployment() {
 	})
 
 	It("should deploy the operator and Submariner resource", func(ctx SpecContext) {
-		Expect(t.runJoinClusterToBroker()).To(Succeed())
+		Expect(t.runJoinClusterToBroker(ctx)).To(Succeed())
 
 		saName := names.ForClusterSA(t.options.ClusterID)
 
@@ -98,7 +98,7 @@ func testDeployment() {
 			broker.LocalClientBrokerSecretName, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
-		subm := t.assertSubmarinerResource()
+		subm := t.assertSubmarinerResource(ctx)
 		Expect(subm.Spec.CeIPSecUseOVNCertAuthMode).To(BeTrue())
 		Expect(subm.Spec.Namespace).To(Equal(constants.OperatorNamespace))
 		Expect(subm.Spec.ClusterID).To(Equal(t.options.ClusterID))
@@ -145,13 +145,13 @@ func testDeployment() {
 			ConfigMapName: t.options.CoreDNSCustomConfigMap,
 		}))
 
-		deployment := t.getOperatorDeployment()
+		deployment := t.getOperatorDeployment(ctx)
 		Expect(deployment.Spec.Template.Spec.Containers[0].Env).To(ContainElement(corev1.EnvVar{
 			Name:  "HTTP_PROXY",
 			Value: t.options.HTTPProxyConfig.HTTPProxy,
 		}))
 
-		t.assertNoServiceDiscoveryResource()
+		t.assertNoServiceDiscoveryResource(ctx)
 	})
 
 	When("only service discovery is enabled", func() {
@@ -160,13 +160,13 @@ func testDeployment() {
 		})
 
 		It("should only deploy the ServiceDiscovery resource", func(ctx SpecContext) {
-			Expect(t.runJoinClusterToBroker()).To(Succeed())
+			Expect(t.runJoinClusterToBroker(ctx)).To(Succeed())
 
 			secret, err := t.fakeProducer.KubeClient.CoreV1().Secrets(constants.OperatorNamespace).Get(ctx,
 				broker.LocalClientBrokerSecretName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			sd := t.assertServiceDiscoveryResource()
+			sd := t.assertServiceDiscoveryResource(ctx)
 			Expect(sd.Spec.Namespace).To(Equal(constants.OperatorNamespace))
 			Expect(sd.Spec.ClusterID).To(Equal(t.options.ClusterID))
 			Expect(sd.Spec.ClustersetIPEnabled).To(BeFalse())
@@ -183,7 +183,7 @@ func testDeployment() {
 				ConfigMapName: t.options.CoreDNSCustomConfigMap,
 			}))
 
-			t.assertNoSubmarinerResource()
+			t.assertNoSubmarinerResource(ctx)
 		})
 	})
 }
@@ -198,9 +198,9 @@ func testGlobalnet() {
 		})
 
 		Context("and no global CIDR is specified", func() {
-			It("should allocate a CIDR and set the GlobalCIDR field", func() {
-				Expect(t.runJoinClusterToBroker()).To(Succeed())
-				Expect(t.assertSubmarinerResource().Spec.GlobalCIDR).To(HavePrefix("242."))
+			It("should allocate a CIDR and set the GlobalCIDR field", func(ctx SpecContext) {
+				Expect(t.runJoinClusterToBroker(ctx)).To(Succeed())
+				Expect(t.assertSubmarinerResource(ctx).Spec.GlobalCIDR).To(HavePrefix("242."))
 			})
 		})
 
@@ -209,9 +209,9 @@ func testGlobalnet() {
 				t.options.GlobalnetCIDR = "242.0.0.0/32"
 			})
 
-			It("should use the specified CIDR to set the GlobalCIDR field", func() {
-				Expect(t.runJoinClusterToBroker()).To(Succeed())
-				Expect(t.assertSubmarinerResource().Spec.GlobalCIDR).To(Equal(t.options.GlobalnetCIDR))
+			It("should use the specified CIDR to set the GlobalCIDR field", func(ctx SpecContext) {
+				Expect(t.runJoinClusterToBroker(ctx)).To(Succeed())
+				Expect(t.assertSubmarinerResource(ctx).Spec.GlobalCIDR).To(Equal(t.options.GlobalnetCIDR))
 			})
 
 			Context("but it overlaps", func() {
@@ -224,8 +224,8 @@ func testGlobalnet() {
 					Expect(err).NotTo(HaveOccurred())
 				})
 
-				It("should fail", func() {
-					Expect(t.runJoinClusterToBroker()).NotTo(Succeed())
+				It("should fail", func(ctx SpecContext) {
+					Expect(t.runJoinClusterToBroker(ctx)).NotTo(Succeed())
 				})
 			})
 		})
@@ -235,9 +235,9 @@ func testGlobalnet() {
 				t.options.GlobalnetEnabled = false
 			})
 
-			It("should not set the GlobalCIDR field", func() {
-				Expect(t.runJoinClusterToBroker()).To(Succeed())
-				Expect(t.assertSubmarinerResource().Spec.GlobalCIDR).To(BeEmpty())
+			It("should not set the GlobalCIDR field", func(ctx SpecContext) {
+				Expect(t.runJoinClusterToBroker(ctx)).To(Succeed())
+				Expect(t.assertSubmarinerResource(ctx).Spec.GlobalCIDR).To(BeEmpty())
 			})
 		})
 	})
@@ -251,10 +251,10 @@ func testClustersetIP() {
 			t.clustersetIPEnabled = true
 		})
 
-		It("should set the ClustersetIPEnabled field to true", func() {
-			Expect(t.runJoinClusterToBroker()).To(Succeed())
+		It("should set the ClustersetIPEnabled field to true", func(ctx SpecContext) {
+			Expect(t.runJoinClusterToBroker(ctx)).To(Succeed())
 
-			subm := t.assertSubmarinerResource()
+			subm := t.assertSubmarinerResource(ctx)
 			Expect(subm.Spec.ClustersetIPEnabled).To(BeTrue())
 			Expect(subm.Spec.ClustersetIPCIDR).To(HavePrefix("243."))
 		})
@@ -264,10 +264,10 @@ func testClustersetIP() {
 				t.options.ClustersetIPCIDR = "243.1.0.0/16"
 			})
 
-			It("should use the specified CIDR to set the ClustersetIPCIDR field", func() {
-				Expect(t.runJoinClusterToBroker()).To(Succeed())
+			It("should use the specified CIDR to set the ClustersetIPCIDR field", func(ctx SpecContext) {
+				Expect(t.runJoinClusterToBroker(ctx)).To(Succeed())
 
-				subm := t.assertSubmarinerResource()
+				subm := t.assertSubmarinerResource(ctx)
 				Expect(subm.Spec.ClustersetIPEnabled).To(BeTrue())
 				Expect(subm.Spec.ClustersetIPCIDR).To(Equal(t.options.ClustersetIPCIDR))
 			})
@@ -282,8 +282,8 @@ func testClustersetIP() {
 					Expect(err).NotTo(HaveOccurred())
 				})
 
-				It("should fail", func() {
-					Expect(t.runJoinClusterToBroker()).NotTo(Succeed())
+				It("should fail", func(ctx SpecContext) {
+					Expect(t.runJoinClusterToBroker(ctx)).NotTo(Succeed())
 				})
 			})
 		})
@@ -293,10 +293,10 @@ func testClustersetIP() {
 				t.brokerInfo.Components = []string{component.Connectivity}
 			})
 
-			It("should set the ClustersetIPEnabled field to false and not allocate a CIDR", func() {
-				Expect(t.runJoinClusterToBroker()).To(Succeed())
+			It("should set the ClustersetIPEnabled field to false and not allocate a CIDR", func(ctx SpecContext) {
+				Expect(t.runJoinClusterToBroker(ctx)).To(Succeed())
 
-				subm := t.assertSubmarinerResource()
+				subm := t.assertSubmarinerResource(ctx)
 				Expect(subm.Spec.ServiceDiscoveryEnabled).To(BeFalse())
 				Expect(subm.Spec.ClustersetIPEnabled).To(BeFalse())
 				Expect(subm.Spec.ClustersetIPCIDR).To(BeEmpty())
@@ -309,9 +309,9 @@ func testClustersetIP() {
 			t.options.EnableClustersetIP = true
 		})
 
-		It("should set the ClustersetIPEnabled field to true", func() {
-			Expect(t.runJoinClusterToBroker()).To(Succeed())
-			Expect(t.assertSubmarinerResource().Spec.ClustersetIPEnabled).To(BeTrue())
+		It("should set the ClustersetIPEnabled field to true", func(ctx SpecContext) {
+			Expect(t.runJoinClusterToBroker(ctx)).To(Succeed())
+			Expect(t.assertSubmarinerResource(ctx).Spec.ClustersetIPEnabled).To(BeTrue())
 		})
 	})
 }
@@ -324,8 +324,8 @@ func testRequirements() {
 			t.setFakedServerVersion("1", "15")
 		})
 
-		It("should fail", func() {
-			Expect(t.runJoinClusterToBroker()).NotTo(Succeed())
+		It("should fail", func(ctx SpecContext) {
+			Expect(t.runJoinClusterToBroker(ctx)).NotTo(Succeed())
 		})
 
 		Context("but the IgnoreRequirements option is set to true", func() {
@@ -333,8 +333,8 @@ func testRequirements() {
 				t.options.IgnoreRequirements = true
 			})
 
-			It("should succeed and emit a warning", func() {
-				Expect(t.runJoinClusterToBroker()).To(Succeed())
+			It("should succeed and emit a warning", func(ctx SpecContext) {
+				Expect(t.runJoinClusterToBroker(ctx)).To(Succeed())
 				t.status.AssertWarningCount(1)
 			})
 		})
@@ -351,9 +351,9 @@ func testImageOverrides() {
 			t.options.ImageOverrideArr = []string{compnames.OperatorComponent + "=" + operatorImage}
 		})
 
-		It("should set the image in the deployment spec", func() {
-			Expect(t.runJoinClusterToBroker()).To(Succeed())
-			Expect(t.getOperatorDeployment().Spec.Template.Spec.Containers[0].Image).To(Equal(operatorImage))
+		It("should set the image in the deployment spec", func(ctx SpecContext) {
+			Expect(t.runJoinClusterToBroker(ctx)).To(Succeed())
+			Expect(t.getOperatorDeployment(ctx).Spec.Template.Spec.Containers[0].Image).To(Equal(operatorImage))
 		})
 	})
 
@@ -363,12 +363,12 @@ func testImageOverrides() {
 			t.options.ImageVersion = "0.20.0"
 		})
 
-		It("should set the correct operator image in the deployment spec", func() {
-			Expect(t.runJoinClusterToBroker()).To(Succeed())
-			Expect(t.getOperatorDeployment().Spec.Template.Spec.Containers[0].Image).To(
+		It("should set the correct operator image in the deployment spec", func(ctx SpecContext) {
+			Expect(t.runJoinClusterToBroker(ctx)).To(Succeed())
+			Expect(t.getOperatorDeployment(ctx).Spec.Template.Spec.Containers[0].Image).To(
 				Equal(fmt.Sprintf("%s/%s:%s", t.options.Repository, names.OperatorImage, t.options.ImageVersion)))
 
-			subm := t.assertSubmarinerResource()
+			subm := t.assertSubmarinerResource(ctx)
 			Expect(subm.Spec.Version).To(Equal(t.options.ImageVersion))
 			Expect(subm.Spec.Repository).To(Equal(t.options.Repository))
 		})
@@ -385,9 +385,9 @@ func testImageOverrides() {
 			}
 		})
 
-		It("should set the ImageOverrides field", func() {
-			Expect(t.runJoinClusterToBroker()).To(Succeed())
-			Expect(t.assertSubmarinerResource().Spec.ImageOverrides).To(Equal(map[string]string{
+		It("should set the ImageOverrides field", func(ctx SpecContext) {
+			Expect(t.runJoinClusterToBroker(ctx)).To(Succeed())
+			Expect(t.assertSubmarinerResource(ctx).Spec.ImageOverrides).To(Equal(map[string]string{
 				compnames.GatewayComponent:    gwImage,
 				compnames.RouteAgentComponent: raImage,
 			}))
@@ -408,8 +408,8 @@ func testInvalidInput() {
 			})).To(Succeed())
 		})
 
-		It("should fail", func() {
-			Expect(t.runJoinClusterToBroker()).NotTo(Succeed())
+		It("should fail", func(ctx SpecContext) {
+			Expect(t.runJoinClusterToBroker(ctx)).NotTo(Succeed())
 		})
 	})
 
@@ -418,8 +418,8 @@ func testInvalidInput() {
 			t.options.ImageOverrideArr = []string{"invalid=image"}
 		})
 
-		It("should fail", func() {
-			Expect(t.runJoinClusterToBroker()).NotTo(Succeed())
+		It("should fail", func(ctx SpecContext) {
+			Expect(t.runJoinClusterToBroker(ctx)).NotTo(Succeed())
 		})
 	})
 
@@ -428,8 +428,8 @@ func testInvalidInput() {
 			t.options.CoreDNSCustomConfigMap = "this/is/invalid"
 		})
 
-		It("should fail", func() {
-			Expect(t.runJoinClusterToBroker()).NotTo(Succeed())
+		It("should fail", func(ctx SpecContext) {
+			Expect(t.runJoinClusterToBroker(ctx)).NotTo(Succeed())
 		})
 	})
 }

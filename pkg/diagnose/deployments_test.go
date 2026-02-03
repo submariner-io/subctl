@@ -48,29 +48,29 @@ var _ = Describe("Deployments", func() {
 	t := newDeploymentTestDriver()
 
 	When("all connectivity components are healthy", func() {
-		JustBeforeEach(func() {
+		JustBeforeEach(func(ctx SpecContext) {
 			// Create non-overlapping endpoints for CIDR check
-			t.createEndpoint("endpoint1", "cluster1", []string{"10.0.0.0/16"})
-			t.createEndpoint("endpoint2", "cluster2", []string{"192.168.0.0/16"})
+			t.createEndpoint(ctx, "endpoint1", "cluster1", []string{"10.0.0.0/16"})
+			t.createEndpoint(ctx, "endpoint2", "cluster2", []string{"192.168.0.0/16"})
 		})
 
 		t.testSuccess(t.run)
 	})
 
 	When("overlapping CIDRs exist", func() {
-		JustBeforeEach(func() {
+		JustBeforeEach(func(ctx SpecContext) {
 			// Create overlapping endpoints
-			t.createEndpoint("endpoint1", "cluster1", []string{"10.0.0.0/16"})
-			t.createEndpoint("endpoint2", "cluster2", []string{"10.0.0.0/16"})
+			t.createEndpoint(ctx, "endpoint1", "cluster1", []string{"10.0.0.0/16"})
+			t.createEndpoint(ctx, "endpoint2", "cluster2", []string{"10.0.0.0/16"})
 		})
 
 		t.testFailure(t.run, "overlaps")
 	})
 
 	When("multiple endpoints exist for the same cluster", func() {
-		JustBeforeEach(func() {
-			t.createEndpoint("endpoint1", "cluster1", []string{"10.0.0.0/16"})
-			t.createEndpoint("endpoint2", "cluster1", []string{"192.168.0.0/16"})
+		JustBeforeEach(func(ctx SpecContext) {
+			t.createEndpoint(ctx, "endpoint1", "cluster1", []string{"10.0.0.0/16"})
+			t.createEndpoint(ctx, "endpoint2", "cluster1", []string{"192.168.0.0/16"})
 		})
 
 		t.testFailure(t.run, "multiple", "endpoints")
@@ -120,13 +120,13 @@ var _ = Describe("Deployments", func() {
 			t.submariner.Spec.GlobalCIDR = "242.0.0.0/8"
 		})
 
-		JustBeforeEach(func() {
-			t.ensureDaemonSet(names.GlobalnetComponent, 1, 1)
+		JustBeforeEach(func(ctx SpecContext) {
+			t.ensureDaemonSet(ctx, names.GlobalnetComponent, 1, 1)
 		})
 
 		Context("and the components are healthy", func() {
-			JustBeforeEach(func() {
-				t.ensurePodWithStatus(names.GlobalnetComponent, nil, corev1.PodStatus{Phase: corev1.PodRunning})
+			JustBeforeEach(func(ctx SpecContext) {
+				t.ensurePodWithStatus(ctx, names.GlobalnetComponent, nil, corev1.PodStatus{Phase: corev1.PodRunning})
 			})
 
 			t.testSuccess(t.run)
@@ -138,16 +138,16 @@ var _ = Describe("Deployments", func() {
 	})
 
 	Context("with service discovery enabled", func() {
-		JustBeforeEach(func() {
-			t.createResource(t.serviceDiscovery)
-			t.ensureDeployment(names.ServiceDiscoveryComponent, 1, 1)
-			t.ensureDeployment(names.LighthouseCoreDNSComponent, 1, 1)
+		JustBeforeEach(func(ctx SpecContext) {
+			t.createResource(ctx, t.serviceDiscovery)
+			t.ensureDeployment(ctx, names.ServiceDiscoveryComponent, 1, 1)
+			t.ensureDeployment(ctx, names.LighthouseCoreDNSComponent, 1, 1)
 		})
 
 		Context("and the components are healthy", func() {
-			JustBeforeEach(func() {
-				t.ensurePodWithStatus(names.ServiceDiscoveryComponent, nil, corev1.PodStatus{Phase: corev1.PodRunning})
-				t.ensurePodWithStatus(names.LighthouseCoreDNSComponent, nil, corev1.PodStatus{Phase: corev1.PodRunning})
+			JustBeforeEach(func(ctx SpecContext) {
+				t.ensurePodWithStatus(ctx, names.ServiceDiscoveryComponent, nil, corev1.PodStatus{Phase: corev1.PodRunning})
+				t.ensurePodWithStatus(ctx, names.LighthouseCoreDNSComponent, nil, corev1.PodStatus{Phase: corev1.PodRunning})
 			})
 
 			t.testSuccess(t.run)
@@ -213,21 +213,21 @@ func newDeploymentTestDriver() *deploymentTestDriver {
 		t.imageOverrides = []string{}
 	})
 
-	JustBeforeEach(func() {
+	JustBeforeEach(func(ctx SpecContext) {
 		if t.submariner == nil {
 			return
 		}
 
 		// Setup broker namespace for CIDR overlap checks.
-		t.createNamespace(t.submariner.Spec.BrokerK8sRemoteNamespace)
+		t.createNamespace(ctx, t.submariner.Spec.BrokerK8sRemoteNamespace)
 
 		// Create healthy daemonsets.
-		t.ensureDaemonSet(names.GatewayComponent, 1, 1)
-		t.ensureDaemonSet(names.RouteAgentComponent, 3, 3)
-		t.ensureDaemonSet(names.MetricsProxyComponent, 1, 1)
+		t.ensureDaemonSet(ctx, names.GatewayComponent, 1, 1)
+		t.ensureDaemonSet(ctx, names.RouteAgentComponent, 3, 3)
+		t.ensureDaemonSet(ctx, names.MetricsProxyComponent, 1, 1)
 
 		// Create healthy gateway pod.
-		t.ensurePodWithStatus(names.GatewayComponent, map[string]string{
+		t.ensurePodWithStatus(ctx, names.GatewayComponent, map[string]string{
 			diagnose.GatewayHAStatusLabel: string(submarinerv1.HAStatusActive),
 			diagnose.GatewayNodeLabel:     "node1",
 		}, corev1.PodStatus{Phase: corev1.PodRunning})
@@ -249,8 +249,8 @@ func (t *deploymentTestDriver) testMissingDaemonset(name string) {
 
 func (t *deploymentTestDriver) testUnhealthyDaemonset(name string) {
 	Context(fmt.Sprintf("and the %q daemonset has insufficient pods scheduled", name), func() {
-		JustBeforeEach(func() {
-			t.ensureDaemonSet(name, 2, 1)
+		JustBeforeEach(func(ctx SpecContext) {
+			t.ensureDaemonSet(ctx, name, 2, 1)
 		})
 
 		t.testFailure(t.run, "number of", "DaemonSet")
@@ -270,8 +270,8 @@ func (t *deploymentTestDriver) testMissingDeployment(name string) {
 
 func (t *deploymentTestDriver) testUnhealthyDeployment(name string) {
 	Context(fmt.Sprintf("and the %q deployment has insufficient replicas", name), func() {
-		JustBeforeEach(func() {
-			t.ensureDeployment(name, 2, 1)
+		JustBeforeEach(func(ctx SpecContext) {
+			t.ensureDeployment(ctx, name, 2, 1)
 		})
 
 		t.testFailure(t.run, "number of", "Deployment")
@@ -280,16 +280,16 @@ func (t *deploymentTestDriver) testUnhealthyDeployment(name string) {
 
 func (t *deploymentTestDriver) testUnhealthyPod(name string) {
 	Context(fmt.Sprintf("and the %q pod is not running", name), func() {
-		JustBeforeEach(func() {
-			t.ensurePodWithStatus(name, nil, corev1.PodStatus{Phase: corev1.PodFailed})
+		JustBeforeEach(func(ctx SpecContext) {
+			t.ensurePodWithStatus(ctx, name, nil, corev1.PodStatus{Phase: corev1.PodFailed})
 		})
 
 		t.testFailure(t.run, "Pod", "not running")
 	})
 
 	Context(fmt.Sprintf("and the %q pod has restarted excessively", name), func() {
-		JustBeforeEach(func() {
-			t.ensurePodWithStatus(name, nil, corev1.PodStatus{
+		JustBeforeEach(func(ctx SpecContext) {
+			t.ensurePodWithStatus(ctx, name, nil, corev1.PodStatus{
 				Phase: corev1.PodRunning,
 				ContainerStatuses: []corev1.ContainerStatus{
 					{
@@ -323,8 +323,8 @@ func (t *deploymentTestDriver) testMultipleNodes() {
 		}
 	})
 
-	JustBeforeEach(func() {
-		t.createNode("worker1")
+	JustBeforeEach(func(ctx SpecContext) {
+		t.createNode(ctx, "worker1")
 
 		t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake.PrependReactor("create", "pods",
 			func(action k8stesting.Action) (bool, runtime.Object, error) {
@@ -383,8 +383,8 @@ func (t *deploymentTestDriver) testMultipleNodes() {
 			t.submariner.Spec.GlobalCIDR = "242.0.0.0/8"
 		})
 
-		JustBeforeEach(func() {
-			t.ensureDaemonSet(names.GlobalnetComponent, 1, 1)
+		JustBeforeEach(func(ctx SpecContext) {
+			t.ensureDaemonSet(ctx, names.GlobalnetComponent, 1, 1)
 		})
 
 		It("should check for globalnet metrics accessibility", func(ctx SpecContext) {
