@@ -63,12 +63,12 @@ func testWriteInfoToFile() {
 		}
 	})
 
-	It("should correctly write the broker info to a file", func() {
+	It("should correctly write the broker info to a file", func(ctx SpecContext) {
 		components := set.New(component.Connectivity, component.ServiceDiscovery)
 		customDomains := []string{"acme.com"}
 		ipsecPSK := []byte{1, 2, 3}
 
-		Expect(broker.WriteInfoToFile(restConfig, testBrokerNamespace, "", ipsecPSK, components, customDomains,
+		Expect(broker.WriteInfoToFile(ctx, restConfig, testBrokerNamespace, "", ipsecPSK, components, customDomains,
 			t.statusReporter)).To(Succeed())
 		t.statusReporter.AssertFailureCount(0)
 
@@ -91,8 +91,8 @@ func testWriteInfoToFile() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("should back up the file", func() {
-			Expect(broker.WriteInfoToFile(restConfig, testBrokerNamespace, "", []byte{}, set.New(component.Connectivity), nil,
+		It("should back up the file", func(ctx SpecContext) {
+			Expect(broker.WriteInfoToFile(ctx, restConfig, testBrokerNamespace, "", []byte{}, set.New(component.Connectivity), nil,
 				t.statusReporter)).To(Succeed())
 			t.statusReporter.AssertFailureCount(0)
 
@@ -105,9 +105,9 @@ func testWriteInfoToFile() {
 	})
 
 	When("the broker URL is specified", func() {
-		It("should override the default URL", func() {
+		It("should override the default URL", func(ctx SpecContext) {
 			brokerURL := "https://acme.com"
-			Expect(broker.WriteInfoToFile(restConfig, testBrokerNamespace, brokerURL, nil, set.New(component.Connectivity), nil,
+			Expect(broker.WriteInfoToFile(ctx, restConfig, testBrokerNamespace, brokerURL, nil, set.New(component.Connectivity), nil,
 				t.statusReporter)).To(Succeed())
 			t.statusReporter.AssertFailureCount(0)
 
@@ -122,8 +122,8 @@ func testWriteInfoToFile() {
 			tokenSecret = nil
 		})
 
-		It("should return an error", func() {
-			Expect(broker.WriteInfoToFile(restConfig, testBrokerNamespace, "", []byte{}, set.New(component.Connectivity), nil,
+		It("should return an error", func(ctx SpecContext) {
+			Expect(broker.WriteInfoToFile(ctx, restConfig, testBrokerNamespace, "", []byte{}, set.New(component.Connectivity), nil,
 				t.statusReporter)).NotTo(Succeed())
 			t.statusReporter.AssertHasFailure()
 		})

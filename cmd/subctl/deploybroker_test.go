@@ -19,6 +19,7 @@ limitations under the License.
 package subctl_test
 
 import (
+	"context"
 	"errors"
 	"slices"
 	"strconv"
@@ -65,7 +66,7 @@ var _ = Describe("Deploy Broker", func() {
 			HTTPProxyConfig: httpproxy.Config{},
 		}
 
-		subctl.DeployBroker = func(options *deploy.BrokerOptions, clientProducer client.Producer,
+		subctl.DeployBroker = func(ctx context.Context, options *deploy.BrokerOptions, clientProducer client.Producer,
 			status reporter.Interface,
 		) error {
 			Expect(options.Repository).To(Equal(expectedBrokerOptions.Repository))
@@ -78,7 +79,7 @@ var _ = Describe("Deploy Broker", func() {
 			return nil
 		}
 
-		subctl.WriteBrokerInfoToFile = func(restConfig *rest.Config, namespace, brokerURL string, ipsecPSK []byte,
+		subctl.WriteBrokerInfoToFile = func(ctx context.Context, restConfig *rest.Config, namespace, brokerURL string, ipsecPSK []byte,
 			components set.Set[string], customDomains []string, status reporter.Interface,
 		) error {
 			Expect(namespace).To(Equal(expectedBrokerOptions.BrokerNamespace))
@@ -189,7 +190,7 @@ var _ = Describe("Deploy Broker", func() {
 
 	When("DeployBroker fails", func() {
 		BeforeEach(func() {
-			subctl.DeployBroker = func(options *deploy.BrokerOptions, clientProducer client.Producer,
+			subctl.DeployBroker = func(ctx context.Context, options *deploy.BrokerOptions, clientProducer client.Producer,
 				status reporter.Interface,
 			) error {
 				return errors.New("broker deploy error")

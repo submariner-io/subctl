@@ -19,6 +19,7 @@ limitations under the License.
 package broker
 
 import (
+	"context"
 	"encoding/base64"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -28,7 +29,7 @@ import (
 	"k8s.io/utils/set"
 )
 
-func RecoverData(submCluster *cluster.Info, broker *v1alpha1.Broker, brokerNamespace, brokerURL string,
+func RecoverData(ctx context.Context, submCluster *cluster.Info, broker *v1alpha1.Broker, brokerNamespace, brokerURL string,
 	brokerRestConfig *rest.Config, status reporter.Interface,
 ) error {
 	status.Start("Retrieving data to reconstruct broker-info.subm")
@@ -43,7 +44,7 @@ func RecoverData(submCluster *cluster.Info, broker *v1alpha1.Broker, brokerNames
 
 	status.Success("Successfully retrieved the data. Writing it to broker-info.subm")
 
-	err = WriteInfoToFile(brokerRestConfig, brokerNamespace, brokerURL, decodedPSKSecret,
+	err = WriteInfoToFile(ctx, brokerRestConfig, brokerNamespace, brokerURL, decodedPSKSecret,
 		set.New(broker.Spec.Components...), broker.Spec.DefaultCustomDomains, status)
 
 	return status.Error(err, "error reconstructing broker-info.subm")

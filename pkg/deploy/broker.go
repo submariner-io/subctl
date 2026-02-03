@@ -52,10 +52,9 @@ type BrokerOptions struct {
 
 var ValidComponents = []string{component.ServiceDiscovery, component.Connectivity}
 
-func Broker(options *BrokerOptions, clientProducer client.Producer, status reporter.Interface,
+func Broker(ctx context.Context, options *BrokerOptions, clientProducer client.Producer, status reporter.Interface,
 ) error {
 	componentSet := set.New(options.BrokerSpec.Components...)
-	ctx := context.TODO()
 
 	if err := isValidComponents(componentSet); err != nil {
 		return status.Error(err, "invalid components parameter")
