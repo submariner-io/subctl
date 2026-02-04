@@ -15,7 +15,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
-	github.com/submariner-io/admiral v0.23.0-m0.0.20260121163245-60a10fed6460
+	github.com/submariner-io/admiral v0.23.0-m0.0.20260204134520-d3ae434aba3a
 	github.com/submariner-io/cloud-prepare v0.23.0-m0.0.20260202140836-c66da8a934ff
 	github.com/submariner-io/lighthouse v0.23.0-m0.0.20260121165312-f5e8dcf01040
 	github.com/submariner-io/shipyard v0.23.0-m0.0.20260121161247-366b31d697ca

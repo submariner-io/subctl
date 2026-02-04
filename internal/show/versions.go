@@ -38,7 +38,10 @@ import (
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
-const maxLogLinesToScan = 20
+const (
+	maxLogLinesToScan = 20
+	Unavailable       = "Unavailable"
+)
 
 var componentCmd = map[string][]string{
 	names.RouteAgentComponent:        {"submariner-route-agent", "--version"},
@@ -134,7 +137,7 @@ func getVersionAndArchForComponent(ctx context.Context, clusterInfo *cluster.Inf
 		}
 	}
 
-	return "Unavailable", "Unavailable", nil
+	return Unavailable, Unavailable, nil
 }
 
 func getArchForPod(ctx context.Context, clusterInfo *cluster.Info, pod *corev1.Pod) (string, error) {
