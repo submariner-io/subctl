@@ -144,7 +144,7 @@ func getCredentials(ctx context.Context, credentialsFile string) (*google.Creden
 		return nil, errors.Wrapf(err, "error reading file %q", credentialsFile)
 	}
 
-	creds, err := google.CredentialsFromJSON(ctx, authJSON, dnsv1.CloudPlatformScope)
+	creds, err := google.CredentialsFromJSONWithType(ctx, authJSON, google.ServiceAccount, dnsv1.CloudPlatformScope)
 
 	return creds, errors.Wrapf(err, "error parsing credentials file")
 }
