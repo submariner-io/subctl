@@ -9,18 +9,18 @@ require (
 	github.com/go-logr/logr v1.4.3
 	github.com/gophercloud/utils/v2 v2.0.0-20260107124036-1d7954eb9711
 	github.com/mattn/go-isatty v0.0.20
-	github.com/onsi/ginkgo/v2 v2.27.5
-	github.com/onsi/gomega v1.39.0
+	github.com/onsi/ginkgo/v2 v2.28.1
+	github.com/onsi/gomega v1.39.1
 	github.com/openshift/api v0.0.0-20230714214528-de6ad7979b00
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
-	github.com/submariner-io/admiral v0.23.0-m0.0.20260204134520-d3ae434aba3a
-	github.com/submariner-io/cloud-prepare v0.23.0-m0.0.20260202140836-c66da8a934ff
-	github.com/submariner-io/lighthouse v0.23.0-m0.0.20260121165312-f5e8dcf01040
-	github.com/submariner-io/shipyard v0.23.0-m0.0.20260121161247-366b31d697ca
-	github.com/submariner-io/submariner v0.23.0-m0.0.20260121172227-ff8a89937f36
-	github.com/submariner-io/submariner-operator v0.23.0-m0.0.20260121174911-e1bff030a2de
+	github.com/submariner-io/admiral v0.24.0-m0
+	github.com/submariner-io/cloud-prepare v0.24.0-m0
+	github.com/submariner-io/lighthouse v0.24.0-m0
+	github.com/submariner-io/shipyard v0.24.0-m0
+	github.com/submariner-io/submariner v0.24.0-m0
+	github.com/submariner-io/submariner-operator v0.24.0-m0
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.49.0
 	golang.org/x/oauth2 v0.34.0
@@ -90,7 +90,7 @@ require (
 	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/licenseclassifier v0.0.0-20201113175434-78a70215ca36 // indirect
-	github.com/google/pprof v0.0.0-20250820193118-f64d9cf942d6 // indirect
+	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.11 // indirect
@@ -129,13 +129,13 @@ require (
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.47.0 // indirect
-	golang.org/x/mod v0.31.0 // indirect
+	golang.org/x/mod v0.32.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/term v0.39.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
-	golang.org/x/tools v0.40.0 // indirect
+	golang.org/x/tools v0.41.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260122232226-8e98ce8d340d // indirect
 	google.golang.org/grpc v1.78.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
