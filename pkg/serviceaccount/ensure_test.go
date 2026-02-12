@@ -55,6 +55,7 @@ var _ = Describe("Ensure", func() {
 				},
 			})
 			Expect(err).To(Succeed())
+
 			actual := t.assertServiceAccount(ctx)
 			Expect(created).To(Equal(actual))
 		})

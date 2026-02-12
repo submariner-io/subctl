@@ -102,6 +102,7 @@ var _ = Describe("Reporter", func() {
 				Expect(output.String()).NotTo(ContainSubstring(msg))
 
 				reporter.End()
+
 				s := strings.Split(output.String(), "\n")
 				Expect(s).To(ContainElements(ContainSubstring(completionStr+startMsg), ContainSubstring(completionStr+msg)))
 			})
