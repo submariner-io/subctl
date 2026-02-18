@@ -104,7 +104,7 @@ func (p *Printer) initTemplate() string {
 
 	var sprintfTemplate strings.Builder
 	for _, length := range columnLengths {
-		sprintfTemplate.WriteString(fmt.Sprintf("%%-%d.%ds", length+3, length))
+		fmt.Fprintf(&sprintfTemplate, "%%-%d.%ds", length+3, length)
 	}
 
 	sprintfTemplate.WriteString("\n")

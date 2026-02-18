@@ -215,7 +215,7 @@ func checkRequirements(kubeClient kubernetes.Interface, ignoreRequirements bool,
 		msg.WriteString("The target cluster fails to meet Submariner's version requirements:\n")
 
 		for i := range failedRequirements {
-			msg.WriteString(fmt.Sprintf("* %s\n", failedRequirements[i]))
+			fmt.Fprintf(&msg, "* %s\n", failedRequirements[i])
 		}
 
 		if !ignoreRequirements {
