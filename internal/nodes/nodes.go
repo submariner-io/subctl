@@ -40,20 +40,6 @@ func LabelAsGateway(ctx context.Context, clientset kubernetes.Interface, nodeNam
 	return addLabels(ctx, clientset, nodeName, map[string]string{constants.SubmarinerGatewayLabel: constants.TrueLabel})
 }
 
-// LabelAnyAsGateway labels any worker node as a gateway.
-func LabelAnyAsGateway(ctx context.Context, clientset kubernetes.Interface) (bool, error) {
-	workerNodes, err := GetAllWorkerNames(ctx, clientset)
-	if err != nil {
-		return false, err
-	}
-
-	if len(workerNodes) == 0 {
-		return false, nil
-	}
-
-	return true, LabelAsGateway(ctx, clientset, workerNodes[0])
-}
-
 // GetAllWorkerNames returns all worker nodes.
 func GetAllWorkerNames(ctx context.Context, clientset kubernetes.Interface) ([]string, error) {
 	workerNodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{LabelSelector: "node-role.kubernetes.io/worker"})
@@ -130,7 +116,7 @@ func addLabels(ctx context.Context, clientset kubernetes.Interface, nodeName str
 
 var nodeLabelBackoff wait.Backoff = wait.Backoff{
 	Steps:    10,
-	Duration: 1 * time.Second,
+	Duration: 100 * time.Millisecond,
 	Factor:   1.2,
 	Jitter:   1,
 }

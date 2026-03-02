@@ -29,6 +29,12 @@ import (
 	submv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 )
 
+const (
+	NoConnectionsMsg      = "There are no connections"
+	AllConnectionsFmt     = "All connections (%d) are established"
+	PartialConnectionsFmt = "%d connections out of %d are established"
+)
+
 func Gateways(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
 	status.Start("Showing Gateways")
 
@@ -62,11 +68,11 @@ func Gateways(ctx context.Context, clusterInfo *cluster.Info, _ string, status r
 		if gateway.Status.StatusFailure != "" {
 			summary = gateway.Status.StatusFailure
 		} else if totalConnections == 0 {
-			summary = "There are no connections"
+			summary = NoConnectionsMsg
 		} else if totalConnections == countConnected {
-			summary = fmt.Sprintf("All connections (%d) are established", totalConnections)
+			summary = fmt.Sprintf(AllConnectionsFmt, totalConnections)
 		} else {
-			summary = fmt.Sprintf("%d connections out of %d are established", countConnected, totalConnections)
+			summary = fmt.Sprintf(PartialConnectionsFmt, countConnected, totalConnections)
 		}
 
 		printer.Add(gateway.Status.LocalEndpoint.Hostname, gateway.Status.HAStatus, summary)

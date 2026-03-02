@@ -306,7 +306,7 @@ func checkNSLabels(ctx context.Context, config *Config) error {
 
 	var labels strings.Builder
 	for key, val := range expectedLabels {
-		labels.WriteString(fmt.Sprintf("  %s=%s\n", key, val))
+		fmt.Fprintf(&labels, "  %s=%s\n", key, val)
 	}
 
 	status := cli.NewReporter()
