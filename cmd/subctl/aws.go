@@ -88,7 +88,7 @@ func init() {
 	}
 
 	addGeneralAWSFlags(awsPrepareCmd)
-	awsPrepareCmd.Flags().StringVar(&awsConfig.GWInstanceType, "gateway-instance", "c5d.large", "Type of gateways instance machine")
+	awsPrepareCmd.Flags().StringVar(&awsConfig.GWInstanceType, "gateway-instance", "m5.xlarge", "Type of gateways instance machine")
 	awsPrepareCmd.Flags().IntVar(&awsConfig.Gateways, "gateways", defaultNumGateways,
 		"Number of dedicated gateways to deploy (Set to `0` when using --load-balancer mode)")
 
