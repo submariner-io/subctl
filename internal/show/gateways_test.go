@@ -73,7 +73,7 @@ var _ = Describe("Gateways", func() {
 
 		Expect(doGateways(ctx)).To(Succeed())
 
-		t.assertTableOutput(gatewayMatcher(gw, gw.Status.StatusFailure)) //nolint:govet // Ignore non-constant format string
+		t.assertTableOutput(gatewayMatcher(gw, "%s", gw.Status.StatusFailure))
 	})
 
 	When("no gateways exist", func() {
