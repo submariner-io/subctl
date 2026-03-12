@@ -151,7 +151,7 @@ func testReadInfoFromFile() {
 			Expect(err).NotTo(HaveOccurred())
 
 			DeferCleanup(func() {
-				_ = os.Remove(file.Name()) //nolint:gosec // Test cleanup of temp file we just created
+				_ = os.Remove(file.Name())
 			})
 		})
 

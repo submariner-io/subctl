@@ -69,7 +69,7 @@ func CreateKubeConfigFile(clientConfig *api.Config) string {
 	Expect(err).To(Succeed())
 
 	DeferCleanup(func() {
-		_ = os.Remove(file.Name()) //nolint:gosec // Test cleanup of temp file we just created
+		_ = os.Remove(file.Name())
 	})
 
 	Expect(clientcmd.WriteToFile(*clientConfig, file.Name())).To(Succeed())
