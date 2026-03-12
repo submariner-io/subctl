@@ -132,7 +132,7 @@ func initializeFromAuthFile(authFile string) (string, error) {
 
 	var authInfo struct {
 		ClientID       string
-		ClientSecret   string //nolint:gosec // Field name required by Azure auth file format
+		ClientSecret   string
 		SubscriptionID string
 		TenantID       string
 	}
