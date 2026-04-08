@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -128,15 +129,6 @@ var _ = Describe("Upgrade", func() {
 	When("the --to-version flag is specified", func() {
 		var toVersion string
 
-		BeforeEach(func() {
-			oldVersion := version.Version
-			version.Version = "100.0.0"
-
-			DeferCleanup(func() {
-				version.Version = oldVersion
-			})
-		})
-
 		Context("and the specified version is newer", func() {
 			BeforeEach(func() {
 				toVersion = "101.0.0"
@@ -222,6 +214,13 @@ func newUpgradeTestDriver() *upgradeTestDriver {
 	BeforeEach(func() {
 		t.cmd = subctl.NewUpgradeCmd()
 
+		oldVersion := version.Version
+		version.Version = "v100.0.0"
+
+		DeferCleanup(func() {
+			version.Version = oldVersion
+		})
+
 		t.httpHandler = func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			_, err := fmt.Fprintf(w, "{\"tag_name\": \"%s\"}", version.Version)
@@ -261,5 +260,5 @@ func (t *upgradeTestDriver) assertOperatorDeploymentUpgraded(ctx context.Context
 		ctx, names.OperatorComponent, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 	Expect(deployment.Spec.Template.Spec.Containers).To(HaveLen(1))
-	Expect(deployment.Spec.Template.Spec.Containers[0].Image).To(ContainSubstring(toVersion))
+	Expect(deployment.Spec.Template.Spec.Containers[0].Image).To(HaveSuffix(":" + strings.TrimPrefix(toVersion, "v")))
 }
