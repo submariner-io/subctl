@@ -130,14 +130,17 @@ func (c *upgradeCommand) upgradeSubctl(status reporter.Interface) (string, error
 		}
 	}
 
-	if c.subctlVersion == version.Version {
+	// Normalize versions by stripping 'v' prefix for comparison and further use
+	if c.subctlVersion != "" {
+		c.subctlVersion = strings.TrimPrefix(c.subctlVersion, "v")
+	}
+
+	if c.subctlVersion == strings.TrimPrefix(version.Version, "v") {
 		// Already running the right version
 		return "", nil
 	}
 
 	if c.subctlVersion != "" {
-		c.subctlVersion = strings.TrimPrefix(c.subctlVersion, "v")
-
 		toVersion, err := semver.NewVersion(c.subctlVersion)
 		if toVersion == nil {
 			return "", status.Error(err, "Invalid target version")
