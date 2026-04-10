@@ -929,8 +929,8 @@ func testForBroker() {
 	})
 
 	When("a Submariner resource is provided", func() {
-		It("should return a valid REST config", func() {
-			restConfig, ns, err := restconfig.ForBroker(&v1alpha1.Submariner{
+		It("should return a valid REST config", func(ctx context.Context) {
+			restConfig, ns, err := restconfig.ForBroker(ctx, &v1alpha1.Submariner{
 				Spec: v1alpha1.SubmarinerSpec{
 					BrokerK8sApiServer:       apiServer,
 					BrokerK8sApiServerToken:  apiServerToken,
@@ -948,8 +948,8 @@ func testForBroker() {
 	})
 
 	When("a ServiceDiscovery resource is provided", func() {
-		It("should return a valid REST config", func() {
-			restConfig, ns, err := restconfig.ForBroker(nil, &v1alpha1.ServiceDiscovery{
+		It("should return a valid REST config", func(ctx context.Context) {
+			restConfig, ns, err := restconfig.ForBroker(ctx, nil, &v1alpha1.ServiceDiscovery{
 				Spec: v1alpha1.ServiceDiscoverySpec{
 					BrokerK8sApiServer:       apiServer,
 					BrokerK8sApiServerToken:  apiServerToken,
@@ -967,8 +967,8 @@ func testForBroker() {
 	})
 
 	When("no resource is provided", func() {
-		It("should succeed", func() {
-			_, _, err := restconfig.ForBroker(nil, nil)
+		It("should succeed", func(ctx context.Context) {
+			_, _, err := restconfig.ForBroker(ctx, nil, nil)
 			Expect(err).To(Succeed())
 		})
 	})

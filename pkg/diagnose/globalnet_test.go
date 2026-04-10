@@ -240,7 +240,7 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 	When("a resource is properly configured", func() {
 		JustBeforeEach(func(ctx SpecContext) {
 			t.createService(ctx, service)
-			t.createServiceExport(serviceExport)
+			t.createServiceExport(ctx, serviceExport)
 			t.createResource(ctx, globalIngressIP)
 			t.createService(ctx, internalService)
 		})
@@ -282,8 +282,8 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 	})
 
 	When("the exported service doesn't exist", func() {
-		JustBeforeEach(func() {
-			t.createServiceExport(serviceExport)
+		JustBeforeEach(func(ctx context.Context) {
+			t.createServiceExport(ctx, serviceExport)
 		})
 
 		t.testSuccessWithWarning(t.run, "Service")
@@ -296,7 +296,7 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 
 		JustBeforeEach(func(ctx SpecContext) {
 			t.createService(ctx, service)
-			t.createServiceExport(serviceExport)
+			t.createServiceExport(ctx, serviceExport)
 		})
 
 		t.testSuccess(t.run)
@@ -305,7 +305,7 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 	When("no GlobalIngressIP exists for the exported service", func() {
 		JustBeforeEach(func(ctx SpecContext) {
 			t.createService(ctx, service)
-			t.createServiceExport(serviceExport)
+			t.createServiceExport(ctx, serviceExport)
 		})
 
 		t.testFailure(t.run, "No matching")
@@ -314,7 +314,7 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 	When("a service is exported", func() {
 		JustBeforeEach(func(ctx SpecContext) {
 			t.createService(ctx, service)
-			t.createServiceExport(serviceExport)
+			t.createServiceExport(ctx, serviceExport)
 			t.createResource(ctx, globalIngressIP)
 		})
 

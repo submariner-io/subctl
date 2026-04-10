@@ -23,6 +23,7 @@ package benchmark
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/onsi/gomega"
 	"github.com/submariner-io/shipyard/test/e2e/framework"
@@ -37,18 +38,14 @@ func StartThroughputTests(ctx context.Context, intraCluster, verbose bool) error
 		fmt.Printf("Performing throughput tests\n")
 	}
 
+	//nolint:contextcheck // Cleanup needs its own context as the passed ctx may have been canceled.
 	gomega.RegisterFailHandler(func(message string, _ ...int) {
-		if f != nil {
-			cleanupFramework(f)
-		} else {
-			framework.RunCleanupActions()
-		}
-
+		cleanupFramework(f)
 		panic(message)
 	})
 
-	f = initFramework("throughput", verbose)
-	defer cleanupFramework(f)
+	f = initFramework(ctx, "throughput", verbose)
+	defer cleanupFramework(f) //nolint:contextcheck // Cleanup needs its own context as the passed ctx may have been canceled.
 
 	clusterAName := framework.TestContext.ClusterIDs[framework.ClusterA]
 
@@ -86,7 +83,7 @@ func StartThroughputTests(ctx context.Context, intraCluster, verbose bool) error
 	return nil
 }
 
-func initFramework(baseName string, verbose bool) *framework.Framework {
+func initFramework(ctx context.Context, baseName string, verbose bool) *framework.Framework {
 	f := framework.NewBareFramework(baseName)
 	framework.SetStatusFunction(func(str string, _ ...func()) {
 		if verbose {
@@ -94,15 +91,21 @@ func initFramework(baseName string, verbose bool) *framework.Framework {
 		}
 	})
 
-	framework.BeforeSuite()
-	f.BeforeEach()
+	framework.BeforeSuite(ctx)
+	f.BeforeEach(ctx)
 
 	return f
 }
 
 func cleanupFramework(f *framework.Framework) {
-	f.AfterEach()
-	framework.RunCleanupActions()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if f != nil {
+		f.AfterEach(ctx)
+	}
+
+	framework.RunCleanupActions(ctx)
 }
 
 func runThroughputTest(ctx context.Context, f *framework.Framework, testParams benchmarkTestParams, verbose bool) {
@@ -114,7 +117,7 @@ func runThroughputTest(ctx context.Context, f *framework.Framework, testParams b
 
 	framework.By(fmt.Sprintf("Creating a Nettest Server Pod on %q", serverClusterName))
 
-	nettestServerPod := f.NewNetworkPod(&framework.NetworkPodConfig{
+	nettestServerPod := f.NewNetworkPod(ctx, &framework.NetworkPodConfig{
 		Type:               framework.ThroughputServerPod,
 		Cluster:            testParams.ServerCluster,
 		Scheduling:         testParams.ServerPodScheduling,
@@ -136,14 +139,14 @@ func runThroughputTest(ctx context.Context, f *framework.Framework, testParams b
 		framework.By(fmt.Sprintf("Pointing a ClusterIP service to the nettest server pod in cluster %q and exporting it",
 			framework.TestContext.ClusterIDs[testParams.ServerCluster]))
 
-		service = nettestServerPod.CreateService()
-		f.CreateServiceExport(testParams.ServerCluster, service.Name)
+		service = nettestServerPod.CreateService(ctx)
+		f.CreateServiceExport(ctx, testParams.ServerCluster, service.Name)
 
 		// Wait for the globalIP on the service.
-		remoteIP = f.AwaitGlobalIngressIP(testParams.ServerCluster, service.Name, service.Namespace)
+		remoteIP = f.AwaitGlobalIngressIP(ctx, testParams.ServerCluster, service.Name, service.Namespace)
 	}
 
-	nettestClientPod := f.NewNetworkPod(&framework.NetworkPodConfig{
+	nettestClientPod := f.NewNetworkPod(ctx, &framework.NetworkPodConfig{
 		Type:               framework.ThroughputClientPod,
 		Cluster:            testParams.ClientCluster,
 		Scheduling:         testParams.ClientPodScheduling,
@@ -158,7 +161,7 @@ func runThroughputTest(ctx context.Context, f *framework.Framework, testParams b
 
 	framework.By(fmt.Sprintf("Waiting for the client pod %q to exit, returning what client sent", nettestClientPod.Pod.Name))
 
-	nettestClientPod.AwaitFinishVerbose(verbose)
+	nettestClientPod.AwaitFinishVerbose(ctx, verbose)
 
 	if !verbose {
 		nettestClientPod.CheckSuccessfulFinish()
@@ -172,8 +175,8 @@ func runThroughputTest(ctx context.Context, f *framework.Framework, testParams b
 	// to remove this dependency with iptables-chain, lets delete the service after the nettest server Pod is terminated.
 	// [*] https://github.com/submariner-io/submariner/issues/1166
 	if framework.TestContext.GlobalnetEnabled && testParams.ClientCluster != testParams.ServerCluster {
-		f.DeletePod(testParams.ServerCluster, nettestServerPod.Pod.Name, f.Namespace)
-		f.DeleteService(testParams.ServerCluster, service.Name)
-		f.DeleteServiceExport(testParams.ServerCluster, service.Name)
+		f.DeletePod(ctx, testParams.ServerCluster, nettestServerPod.Pod.Name, f.Namespace)
+		f.DeleteService(ctx, testParams.ServerCluster, service.Name)
+		f.DeleteServiceExport(ctx, testParams.ServerCluster, service.Name)
 	}
 }
