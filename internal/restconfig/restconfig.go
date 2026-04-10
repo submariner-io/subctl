@@ -453,7 +453,7 @@ func (rcp *Producer) overrideContextAndRun(ctx context.Context, clusterName, con
 	return rcp.RunOnSelectedContext(ctx, function, status)
 }
 
-func ForBroker(submariner *v1alpha1.Submariner, serviceDisc *v1alpha1.ServiceDiscovery) (*rest.Config, string, error) {
+func ForBroker(ctx context.Context, submariner *v1alpha1.Submariner, serviceDisc *v1alpha1.ServiceDiscovery) (*rest.Config, string, error) {
 	var restConfig *rest.Config
 	var namespace string
 	var err error
@@ -462,7 +462,7 @@ func ForBroker(submariner *v1alpha1.Submariner, serviceDisc *v1alpha1.ServiceDis
 	if submariner != nil {
 		// Try to authorize against the submariner Cluster resource as we know the CRD should exist and the credentials
 		// should allow read access.
-		restConfig, _, err = resource.GetAuthorizedRestConfigFromData(submariner.Spec.BrokerK8sApiServer,
+		restConfig, _, err = resource.GetAuthorizedRestConfigFromData(ctx, submariner.Spec.BrokerK8sApiServer,
 			submariner.Spec.BrokerK8sApiServerToken,
 			submariner.Spec.BrokerK8sCA,
 			&rest.TLSClientConfig{},
@@ -472,7 +472,7 @@ func ForBroker(submariner *v1alpha1.Submariner, serviceDisc *v1alpha1.ServiceDis
 	} else if serviceDisc != nil {
 		// Try to authorize against the ServiceImport resource as we know the CRD should exist and the credentials
 		// should allow read access.
-		restConfig, _, err = resource.GetAuthorizedRestConfigFromData(serviceDisc.Spec.BrokerK8sApiServer,
+		restConfig, _, err = resource.GetAuthorizedRestConfigFromData(ctx, serviceDisc.Spec.BrokerK8sApiServer,
 			serviceDisc.Spec.BrokerK8sApiServerToken,
 			serviceDisc.Spec.BrokerK8sCA,
 			&rest.TLSClientConfig{},

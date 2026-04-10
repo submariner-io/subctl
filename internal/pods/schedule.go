@@ -173,8 +173,8 @@ func (np *Scheduled) Delete(ctx context.Context) {
 func (np *Scheduled) awaitUntilScheduled(ctx context.Context) error {
 	pods := np.Config.ClientSet.CoreV1().Pods(np.Config.Namespace)
 
-	pod, errmsg, err := framework.AwaitResultOrError("await pod ready",
-		func() (any, error) {
+	pod, errmsg, err := framework.AwaitResultOrError(ctx, "await pod ready",
+		func(ctx context.Context) (any, error) {
 			return pods.Get(ctx, np.Pod.Name, metav1.GetOptions{})
 		}, func(result any) (bool, string, error) {
 			pod := result.(*v1.Pod)
@@ -206,8 +206,8 @@ func (np *Scheduled) awaitUntilScheduled(ctx context.Context) error {
 func (np *Scheduled) AwaitCompletion(ctx context.Context) error {
 	pods := np.Config.ClientSet.CoreV1().Pods(np.Config.Namespace)
 
-	_, errorMsg, err := framework.AwaitResultOrError(
-		fmt.Sprintf("await pod %q finished", np.Pod.Name), func() (any, error) {
+	_, errorMsg, err := framework.AwaitResultOrError(ctx,
+		fmt.Sprintf("await pod %q finished", np.Pod.Name), func(ctx context.Context) (any, error) {
 			return pods.Get(ctx, np.Pod.Name, metav1.GetOptions{})
 		}, func(result any) (bool, string, error) {
 			np.Pod = result.(*v1.Pod)

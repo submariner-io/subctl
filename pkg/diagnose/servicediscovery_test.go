@@ -118,9 +118,9 @@ func testExportedServices() {
 	When("a service is exported properly", func() {
 		JustBeforeEach(func(ctx SpecContext) {
 			t.createService(ctx, service)
-			t.createServiceExport(serviceExport)
-			t.createServiceImport(localServiceImport)
-			t.createServiceImport(aggregatedServiceImport)
+			t.createServiceExport(ctx, serviceExport)
+			t.createServiceImport(ctx, localServiceImport)
+			t.createServiceImport(ctx, aggregatedServiceImport)
 			t.createEndpointSlice(ctx, endpointSlice)
 		})
 
@@ -129,7 +129,7 @@ func testExportedServices() {
 
 	When("a service is exported", func() {
 		JustBeforeEach(func(ctx SpecContext) {
-			t.createServiceExport(serviceExport)
+			t.createServiceExport(ctx, serviceExport)
 			t.createService(ctx, service)
 		})
 
@@ -162,9 +162,9 @@ func testExportedServices() {
 		})
 
 		Context("but no EndpointSlice exists", func() {
-			BeforeEach(func() {
-				t.createServiceImport(localServiceImport)
-				t.createServiceImport(aggregatedServiceImport)
+			BeforeEach(func(ctx context.Context) {
+				t.createServiceImport(ctx, localServiceImport)
+				t.createServiceImport(ctx, aggregatedServiceImport)
 			})
 
 			t.testFailure(t.run, "EndpointSlice", serviceName)
@@ -176,7 +176,7 @@ func testExportedServices() {
 
 		Context("but no aggregate ServiceImport exists", func() {
 			BeforeEach(func(ctx SpecContext) {
-				t.createServiceImport(localServiceImport)
+				t.createServiceImport(ctx, localServiceImport)
 				t.createEndpointSlice(ctx, endpointSlice)
 			})
 
@@ -185,10 +185,10 @@ func testExportedServices() {
 	})
 
 	When("a ServiceExport exists but the Service resource is missing", func() {
-		JustBeforeEach(func() {
+		JustBeforeEach(func(ctx context.Context) {
 			meta.FindStatusCondition(serviceExport.Status.Conditions,
 				string(mcsv1a1.ServiceExportConditionValid)).Status = metav1.ConditionFalse
-			t.createServiceExport(serviceExport)
+			t.createServiceExport(ctx, serviceExport)
 		})
 
 		t.testSuccessWithWarning(t.run, serviceName, "not found")
@@ -199,8 +199,8 @@ func testExportedServices() {
 	})
 
 	When("ServiceExports retrieval fails", func() {
-		BeforeEach(func() {
-			t.createServiceExport(serviceExport)
+		BeforeEach(func(ctx context.Context) {
+			t.createServiceExport(ctx, serviceExport)
 			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceexports", "list", errFake, false)
 		})
 
@@ -210,7 +210,7 @@ func testExportedServices() {
 	When("Service retrieval fails", func() {
 		BeforeEach(func(ctx SpecContext) {
 			t.createService(ctx, service)
-			t.createServiceExport(serviceExport)
+			t.createServiceExport(ctx, serviceExport)
 			fake.FailOnAction(&t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake, "services", "get", errFake, false)
 		})
 
@@ -220,8 +220,8 @@ func testExportedServices() {
 	When("ServiceImport retrieval fails", func() {
 		BeforeEach(func(ctx SpecContext) {
 			t.createService(ctx, service)
-			t.createServiceExport(serviceExport)
-			t.createServiceImport(localServiceImport)
+			t.createServiceExport(ctx, serviceExport)
+			t.createServiceImport(ctx, localServiceImport)
 			fake.FailOnAction(&t.fakeProducer.DynamicClient.(*dynamicfake.FakeDynamicClient).Fake, "serviceimports", "list", errFake, true)
 		})
 
@@ -231,9 +231,9 @@ func testExportedServices() {
 	When("EndpointSlice retrieval fails", func() {
 		BeforeEach(func(ctx SpecContext) {
 			t.createService(ctx, service)
-			t.createServiceExport(serviceExport)
-			t.createServiceImport(localServiceImport)
-			t.createServiceImport(aggregatedServiceImport)
+			t.createServiceExport(ctx, serviceExport)
+			t.createServiceImport(ctx, localServiceImport)
+			t.createServiceImport(ctx, aggregatedServiceImport)
 			t.createEndpointSlice(ctx, endpointSlice)
 			fake.FailOnAction(&t.fakeProducer.KubeClient.(*k8sfake.Clientset).Fake, "endpointslices", "list", errFake, false)
 		})
@@ -253,7 +253,7 @@ func testImportedServices() {
 		t.createNamespace(ctx, t.submariner.Spec.BrokerK8sRemoteNamespace)
 
 		// Aggregated ServiceImport on the broker
-		t.createServiceImport(&mcsv1a1.ServiceImport{
+		t.createServiceImport(ctx, &mcsv1a1.ServiceImport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      serviceName + "-" + serviceNamespace,
 				Namespace: t.submariner.Spec.BrokerK8sRemoteNamespace,
@@ -265,7 +265,7 @@ func testImportedServices() {
 		})
 
 		// Some cluster-local ServiceImport on the broker
-		t.createServiceImport(&mcsv1a1.ServiceImport{
+		t.createServiceImport(ctx, &mcsv1a1.ServiceImport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      serviceName + "-wdglkj",
 				Namespace: t.submariner.Spec.BrokerK8sRemoteNamespace,
@@ -283,7 +283,7 @@ func testImportedServices() {
 			t.createNamespace(ctx, serviceNamespace)
 
 			// Local aggregated ServiceImport
-			t.createServiceImport(&mcsv1a1.ServiceImport{
+			t.createServiceImport(ctx, &mcsv1a1.ServiceImport{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      serviceName,
 					Namespace: serviceNamespace,

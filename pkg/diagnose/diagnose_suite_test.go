@@ -90,13 +90,13 @@ func (t *testDriver) createResource(ctx context.Context, obj controllerclient.Ob
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (t *testDriver) createServiceExport(se *mcsv1a1.ServiceExport) {
-	test.CreateResource(t.fakeProducer.DynamicClient.Resource(
+func (t *testDriver) createServiceExport(ctx context.Context, se *mcsv1a1.ServiceExport) {
+	test.CreateResource(ctx, t.fakeProducer.DynamicClient.Resource(
 		gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports")).Namespace(se.Namespace), se)
 }
 
-func (t *testDriver) createServiceImport(si *mcsv1a1.ServiceImport) {
-	test.CreateResource(t.fakeProducer.DynamicClient.Resource(
+func (t *testDriver) createServiceImport(ctx context.Context, si *mcsv1a1.ServiceImport) {
+	test.CreateResource(ctx, t.fakeProducer.DynamicClient.Resource(
 		gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceimports")).Namespace(si.Namespace), si)
 }
 
@@ -118,7 +118,7 @@ func (t *testDriver) createNamespace(ctx context.Context, name string) {
 	}, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
-	test.CreateResource(t.fakeProducer.DynamicClient.Resource(corev1.SchemeGroupVersion.WithResource("namespaces")),
+	test.CreateResource(ctx, t.fakeProducer.DynamicClient.Resource(corev1.SchemeGroupVersion.WithResource("namespaces")),
 		&corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: name,

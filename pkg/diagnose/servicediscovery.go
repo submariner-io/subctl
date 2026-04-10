@@ -177,7 +177,7 @@ func verifyStatusCondition(se *mcsv1a1.ServiceExport, condType mcsv1a1.ServiceEx
 }
 
 func checkServiceImports(ctx context.Context, clusterInfo *cluster.Info, status reporter.Interface) {
-	brokerRestConfig, brokerNamespace, err := restconfig.ForBroker(clusterInfo.Submariner, nil)
+	brokerRestConfig, brokerNamespace, err := restconfig.ForBroker(ctx, clusterInfo.Submariner, nil)
 	if err != nil {
 		status.Failure("Error getting the Broker's REST config: %v", err)
 		return

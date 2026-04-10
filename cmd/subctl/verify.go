@@ -54,7 +54,7 @@ type VerifyOptions struct {
 	VerifyOnly                        string
 }
 
-var RunVerify func(options VerifyOptions, fromClusterInfo, toClusterInfo, extraClusterInfo *cluster.Info,
+var RunVerify func(ctx context.Context, options VerifyOptions, fromClusterInfo, toClusterInfo, extraClusterInfo *cluster.Info,
 	namespace string, specLabels []string) error
 
 type verifyCommand struct {
@@ -98,14 +98,14 @@ The following verifications are deemed disruptive:
 							extraContextPresent, err := verifyCmd.restConfigProducer.RunOnSelectedPrefixedContext(ctx,
 								"extra",
 								func(ctx context.Context, extraClusterInfo *cluster.Info, _ string, _ reporter.Interface) error {
-									return RunVerify(verifyCmd.flags, fromClusterInfo, toClusterInfo, extraClusterInfo, namespace,
+									return RunVerify(ctx, verifyCmd.flags, fromClusterInfo, toClusterInfo, extraClusterInfo, namespace,
 										verifyCmd.determineSpecLabelsToVerify())
 								}, status)
 							if extraContextPresent {
 								return err //nolint:wrapcheck // No need to wrap errors here.
 							}
 
-							return RunVerify(verifyCmd.flags, fromClusterInfo, toClusterInfo, nil, namespace,
+							return RunVerify(ctx, verifyCmd.flags, fromClusterInfo, toClusterInfo, nil, namespace,
 								verifyCmd.determineSpecLabelsToVerify())
 						}, status)
 

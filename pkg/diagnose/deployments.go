@@ -65,7 +65,7 @@ func checkOverlappingCIDRs(ctx context.Context, clusterInfo *cluster.Info, statu
 
 	defer status.End()
 
-	brokerRestConfig, brokerNamespace, err := restconfig.ForBroker(clusterInfo.Submariner, nil)
+	brokerRestConfig, brokerNamespace, err := restconfig.ForBroker(ctx, clusterInfo.Submariner, nil)
 	if err != nil {
 		return status.Error(err, "Error getting the Broker's REST config")
 	}

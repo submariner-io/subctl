@@ -19,6 +19,8 @@ limitations under the License.
 package subctl_test
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	lhlabels "github.com/submariner-io/lighthouse/test/e2e/labels"
@@ -208,8 +210,8 @@ func newVerifyTestDriver() *verifyTestDriver {
 		t.verifyOptions = subctl.VerifyOptions{}
 		t.specLabels = nil
 
-		subctl.RunVerify = func(options subctl.VerifyOptions, fromClusterInfo, toClusterInfo, extraClusterInfo *cluster.Info,
-			namespace string, specLabels []string,
+		subctl.RunVerify = func(ctx context.Context, options subctl.VerifyOptions, fromClusterInfo, toClusterInfo,
+			extraClusterInfo *cluster.Info, namespace string, specLabels []string,
 		) error {
 			t.runVerifyCalled = true
 			t.verifyOptions = options

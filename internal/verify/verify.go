@@ -19,6 +19,7 @@ limitations under the License.
 package verify
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -42,8 +43,8 @@ func init() {
 	subctl.RunVerify = runVerify
 }
 
-func runVerify(options subctl.VerifyOptions, fromClusterInfo, toClusterInfo, extraClusterInfo *cluster.Info, namespace string,
-	specLabels []string,
+func runVerify(ctx context.Context, options subctl.VerifyOptions, fromClusterInfo, toClusterInfo, extraClusterInfo *cluster.Info,
+	namespace string, specLabels []string,
 ) error {
 	framework.RestConfigs = []*rest.Config{fromClusterInfo.RestConfig, toClusterInfo.RestConfig}
 	framework.TestContext.ClusterIDs = []string{fromClusterInfo.Name, toClusterInfo.Name}
@@ -96,9 +97,14 @@ func runVerify(options subctl.VerifyOptions, fromClusterInfo, toClusterInfo, ext
 
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
-	framework.BeforeSuite()
+	framework.BeforeSuite(ctx)
 
-	defer framework.RunCleanupActions()
+	//nolint:contextcheck // Cleanup needs its own context as the passed ctx may have been canceled.
+	defer func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		framework.RunCleanupActions(cleanupCtx)
+	}()
 
 	if !ginkgo.RunSpecs(&testing.T{}, "Submariner E2E suite", suiteConfig, reporterConfig) {
 		return errors.New("E2E failed")

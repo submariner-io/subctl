@@ -42,18 +42,14 @@ func StartLatencyTests(ctx context.Context, intraCluster, verbose bool) error {
 		fmt.Printf("Performing latency tests\n")
 	}
 
+	//nolint:contextcheck // Cleanup needs its own context as the passed ctx may have been canceled.
 	gomega.RegisterFailHandler(func(message string, _ ...int) {
-		if f != nil {
-			cleanupFramework(f)
-		} else {
-			framework.RunCleanupActions()
-		}
-
+		cleanupFramework(f)
 		panic(message)
 	})
 
-	f = initFramework("latency", verbose)
-	defer cleanupFramework(f)
+	f = initFramework(ctx, "latency", verbose)
+	defer cleanupFramework(f) //nolint:contextcheck // Cleanup needs its own context as the passed ctx may have been canceled.
 
 	clusterAName := framework.TestContext.ClusterIDs[framework.ClusterA]
 
@@ -106,7 +102,7 @@ func runLatencyTest(ctx context.Context, f *framework.Framework, testParams benc
 
 	framework.By(fmt.Sprintf("Creating a Nettest Server Pod on %q", clusterBName))
 
-	nettestServerPod := f.NewNetworkPod(&framework.NetworkPodConfig{
+	nettestServerPod := f.NewNetworkPod(ctx, &framework.NetworkPodConfig{
 		Type:               framework.LatencyServerPod,
 		Cluster:            testParams.ServerCluster,
 		Scheduling:         testParams.ServerPodScheduling,
@@ -122,7 +118,7 @@ func runLatencyTest(ctx context.Context, f *framework.Framework, testParams benc
 
 	remoteIP := p1.Status.PodIP
 
-	nettestClientPod := f.NewNetworkPod(&framework.NetworkPodConfig{
+	nettestClientPod := f.NewNetworkPod(ctx, &framework.NetworkPodConfig{
 		Type:               framework.LatencyClientPod,
 		Cluster:            testParams.ClientCluster,
 		Scheduling:         testParams.ClientPodScheduling,
@@ -135,7 +131,7 @@ func runLatencyTest(ctx context.Context, f *framework.Framework, testParams benc
 		nettestClientPod.Pod.Name, clusterAName, nettestClientPod.Pod.Spec.NodeName, remoteIP))
 
 	framework.By(fmt.Sprintf("Waiting for the client pod %q to exit, returning what client sent", nettestClientPod.Pod.Name))
-	nettestClientPod.AwaitFinishVerbose(verbose)
+	nettestClientPod.AwaitFinishVerbose(ctx, verbose)
 	nettestClientPod.CheckSuccessfulFinish()
 	latencyHeaders := strings.Split(nettestClientPod.TerminationMessage, "\n")[1]
 	headers := strings.Split(latencyHeaders, ",")

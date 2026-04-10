@@ -180,7 +180,7 @@ func gatherDiscovery(ctx context.Context, dataType string, info Info) bool {
 func gatherBroker(ctx context.Context, dataType string, info Info) bool {
 	switch dataType {
 	case Resources:
-		brokerRestConfig, brokerNamespace, err := restconfig.ForBroker(info.Submariner, info.ServiceDiscovery)
+		brokerRestConfig, brokerNamespace, err := restconfig.ForBroker(ctx, info.Submariner, info.ServiceDiscovery)
 		if err != nil {
 			info.Status.Failure("Error getting the broker's rest config: %s", err)
 			return true
