@@ -55,6 +55,11 @@ var ipTablesCmds = map[string]string{
 	"iptables-save":   "iptables-save -c",
 }
 
+var nfTablesCmds = map[string]string{
+	"nftables-ruleset": "nft list ruleset",
+	"nftables-save":    "nft -a list ruleset",
+}
+
 var libreswanCmds = map[string]string{
 	"ip-xfrm-policy":      "ip xfrm policy",
 	"ip-xfrm-state":       "ip xfrm state",
@@ -102,6 +107,7 @@ func gatherCNIResources(ctx context.Context, info *Info, networkPlugin string) {
 		switch networkPluginCNIType[networkPlugin] {
 		case typeIPTables, typeOvn:
 			logIPTablesCmds(ctx, info, pod)
+			logNFTablesCmds(ctx, info, pod)
 		case typeUnknown:
 			info.Status.Failure("Unsupported CNI Type")
 		}
@@ -129,6 +135,12 @@ func logIPGatewayCmds(ctx context.Context, info *Info, pod *v1.Pod) {
 func logIPTablesCmds(ctx context.Context, info *Info, pod *v1.Pod) {
 	for name, cmd := range ipTablesCmds {
 		logCmdOutput(ctx, info, pod, cmd, name, false)
+	}
+}
+
+func logNFTablesCmds(ctx context.Context, info *Info, pod *v1.Pod) {
+	for name, cmd := range nfTablesCmds {
+		logCmdOutput(ctx, info, pod, cmd, name, true)
 	}
 }
 
