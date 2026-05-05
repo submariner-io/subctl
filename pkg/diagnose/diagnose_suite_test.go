@@ -53,7 +53,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	controllerclient "sigs.k8s.io/controller-runtime/pkg/client"
-	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+	mcsv1b1 "sigs.k8s.io/mcs-api/pkg/apis/v1beta1"
 )
 
 const (
@@ -66,7 +66,7 @@ var errFake = errors.New("fake error")
 var _ = BeforeSuite(func() {
 	Expect(v1alpha1.AddToScheme(scheme.Scheme)).To(Succeed())
 	Expect(submarinerv1.AddToScheme(scheme.Scheme)).To(Succeed())
-	Expect(mcsv1a1.Install(scheme.Scheme)).To(Succeed())
+	Expect(mcsv1b1.Install(scheme.Scheme)).To(Succeed())
 
 	scheme.Scheme.AddKnownTypeWithName(diagnose.CalicoGVR.GroupVersion().WithKind("IPPoolList"), &unstructured.UnstructuredList{})
 
@@ -90,14 +90,14 @@ func (t *testDriver) createResource(ctx context.Context, obj controllerclient.Ob
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func (t *testDriver) createServiceExport(ctx context.Context, se *mcsv1a1.ServiceExport) {
+func (t *testDriver) createServiceExport(ctx context.Context, se *mcsv1b1.ServiceExport) {
 	test.CreateResource(ctx, t.fakeProducer.DynamicClient.Resource(
-		gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports")).Namespace(se.Namespace), se)
+		gvr.FromMetaGroupVersion(mcsv1b1.GroupVersion, "serviceexports")).Namespace(se.Namespace), se)
 }
 
-func (t *testDriver) createServiceImport(ctx context.Context, si *mcsv1a1.ServiceImport) {
+func (t *testDriver) createServiceImport(ctx context.Context, si *mcsv1b1.ServiceImport) {
 	test.CreateResource(ctx, t.fakeProducer.DynamicClient.Resource(
-		gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceimports")).Namespace(si.Namespace), si)
+		gvr.FromMetaGroupVersion(mcsv1b1.GroupVersion, "serviceimports")).Namespace(si.Namespace), si)
 }
 
 func (t *testDriver) createService(ctx context.Context, svc *corev1.Service) {

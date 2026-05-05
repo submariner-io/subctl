@@ -33,7 +33,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
-	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+	mcsv1b1 "sigs.k8s.io/mcs-api/pkg/apis/v1beta1"
 )
 
 const (
@@ -49,9 +49,9 @@ var _ = Describe("ServiceDiscovery", func() {
 func testExportedServices() {
 	var (
 		service                 *corev1.Service
-		serviceExport           *mcsv1a1.ServiceExport
-		localServiceImport      *mcsv1a1.ServiceImport
-		aggregatedServiceImport *mcsv1a1.ServiceImport
+		serviceExport           *mcsv1b1.ServiceExport
+		localServiceImport      *mcsv1b1.ServiceImport
+		aggregatedServiceImport *mcsv1b1.ServiceImport
 		endpointSlice           *discoveryv1.EndpointSlice
 	)
 
@@ -65,19 +65,19 @@ func testExportedServices() {
 			},
 		}
 
-		serviceExport = &mcsv1a1.ServiceExport{
+		serviceExport = &mcsv1b1.ServiceExport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      serviceName,
 				Namespace: serviceNamespace,
 			},
-			Status: mcsv1a1.ServiceExportStatus{
+			Status: mcsv1b1.ServiceExportStatus{
 				Conditions: []metav1.Condition{
 					{
-						Type:   string(mcsv1a1.ServiceExportConditionValid),
+						Type:   string(mcsv1b1.ServiceExportConditionValid),
 						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   string(mcsv1a1.ServiceExportConditionReady),
+						Type:   string(mcsv1b1.ServiceExportConditionReady),
 						Status: metav1.ConditionTrue,
 					},
 				},
@@ -90,24 +90,24 @@ func testExportedServices() {
 				Namespace: serviceNamespace,
 				Labels: map[string]string{
 					discoveryv1.LabelManagedBy: lhconstants.LabelValueManagedBy,
-					mcsv1a1.LabelServiceName:   serviceName,
-					mcsv1a1.LabelSourceCluster: t.submariner.Spec.ClusterID,
+					mcsv1b1.LabelServiceName:   serviceName,
+					mcsv1b1.LabelSourceCluster: t.submariner.Spec.ClusterID,
 				},
 			},
 		}
 
-		localServiceImport = &mcsv1a1.ServiceImport{
+		localServiceImport = &mcsv1b1.ServiceImport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      fmt.Sprintf("%s-%s-%s", serviceName, serviceNamespace, t.submariner.Spec.ClusterID),
 				Namespace: constants.OperatorNamespace,
 				Labels: map[string]string{
-					mcsv1a1.LabelServiceName:         serviceName,
+					mcsv1b1.LabelServiceName:         serviceName,
 					lhconstants.LabelSourceNamespace: serviceNamespace,
 				},
 			},
 		}
 
-		aggregatedServiceImport = &mcsv1a1.ServiceImport{
+		aggregatedServiceImport = &mcsv1b1.ServiceImport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      serviceName,
 				Namespace: serviceNamespace,
@@ -135,30 +135,30 @@ func testExportedServices() {
 
 		Context("but the ServiceExport Valid condition isn't present", func() {
 			BeforeEach(func() {
-				meta.RemoveStatusCondition(&serviceExport.Status.Conditions, string(mcsv1a1.ServiceExportConditionValid))
-				meta.RemoveStatusCondition(&serviceExport.Status.Conditions, string(mcsv1a1.ServiceExportConditionReady))
+				meta.RemoveStatusCondition(&serviceExport.Status.Conditions, string(mcsv1b1.ServiceExportConditionValid))
+				meta.RemoveStatusCondition(&serviceExport.Status.Conditions, string(mcsv1b1.ServiceExportConditionReady))
 			})
 
-			t.testFailure(t.run, "missing", string(mcsv1a1.ServiceExportConditionValid))
+			t.testFailure(t.run, "missing", string(mcsv1b1.ServiceExportConditionValid))
 		})
 
 		Context("but the ServiceExport Valid condition status is False", func() {
 			BeforeEach(func() {
 				meta.FindStatusCondition(serviceExport.Status.Conditions,
-					string(mcsv1a1.ServiceExportConditionValid)).Status = metav1.ConditionFalse
-				meta.RemoveStatusCondition(&serviceExport.Status.Conditions, string(mcsv1a1.ServiceExportConditionReady))
+					string(mcsv1b1.ServiceExportConditionValid)).Status = metav1.ConditionFalse
+				meta.RemoveStatusCondition(&serviceExport.Status.Conditions, string(mcsv1b1.ServiceExportConditionReady))
 			})
 
-			t.testFailure(t.run, string(mcsv1a1.ServiceExportConditionValid), string(metav1.ConditionFalse))
+			t.testFailure(t.run, string(mcsv1b1.ServiceExportConditionValid), string(metav1.ConditionFalse))
 		})
 
 		Context("but the ServiceExport Ready condition status is False", func() {
 			BeforeEach(func() {
 				meta.FindStatusCondition(serviceExport.Status.Conditions,
-					string(mcsv1a1.ServiceExportConditionReady)).Status = metav1.ConditionFalse
+					string(mcsv1b1.ServiceExportConditionReady)).Status = metav1.ConditionFalse
 			})
 
-			t.testFailure(t.run, string(mcsv1a1.ServiceExportConditionReady), string(metav1.ConditionFalse))
+			t.testFailure(t.run, string(mcsv1b1.ServiceExportConditionReady), string(metav1.ConditionFalse))
 		})
 
 		Context("but no EndpointSlice exists", func() {
@@ -187,7 +187,7 @@ func testExportedServices() {
 	When("a ServiceExport exists but the Service resource is missing", func() {
 		JustBeforeEach(func(ctx context.Context) {
 			meta.FindStatusCondition(serviceExport.Status.Conditions,
-				string(mcsv1a1.ServiceExportConditionValid)).Status = metav1.ConditionFalse
+				string(mcsv1b1.ServiceExportConditionValid)).Status = metav1.ConditionFalse
 			t.createServiceExport(ctx, serviceExport)
 		})
 
@@ -253,26 +253,26 @@ func testImportedServices() {
 		t.createNamespace(ctx, t.submariner.Spec.BrokerK8sRemoteNamespace)
 
 		// Aggregated ServiceImport on the broker
-		t.createServiceImport(ctx, &mcsv1a1.ServiceImport{
+		t.createServiceImport(ctx, &mcsv1b1.ServiceImport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      serviceName + "-" + serviceNamespace,
 				Namespace: t.submariner.Spec.BrokerK8sRemoteNamespace,
 				Annotations: map[string]string{
-					mcsv1a1.LabelServiceName:         serviceName,
+					mcsv1b1.LabelServiceName:         serviceName,
 					lhconstants.LabelSourceNamespace: serviceNamespace,
 				},
 			},
 		})
 
 		// Some cluster-local ServiceImport on the broker
-		t.createServiceImport(ctx, &mcsv1a1.ServiceImport{
+		t.createServiceImport(ctx, &mcsv1b1.ServiceImport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      serviceName + "-wdglkj",
 				Namespace: t.submariner.Spec.BrokerK8sRemoteNamespace,
 				Labels: map[string]string{
-					mcsv1a1.LabelServiceName:         serviceName,
+					mcsv1b1.LabelServiceName:         serviceName,
 					lhconstants.LabelSourceNamespace: serviceNamespace,
-					mcsv1a1.LabelSourceCluster:       "west",
+					mcsv1b1.LabelSourceCluster:       "west",
 				},
 			},
 		})
@@ -283,7 +283,7 @@ func testImportedServices() {
 			t.createNamespace(ctx, serviceNamespace)
 
 			// Local aggregated ServiceImport
-			t.createServiceImport(ctx, &mcsv1a1.ServiceImport{
+			t.createServiceImport(ctx, &mcsv1b1.ServiceImport{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      serviceName,
 					Namespace: serviceNamespace,

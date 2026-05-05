@@ -9,8 +9,8 @@ require (
 	github.com/go-logr/logr v1.4.3
 	github.com/gophercloud/utils/v2 v2.0.0-20260107124036-1d7954eb9711
 	github.com/mattn/go-isatty v0.0.22
-	github.com/onsi/ginkgo/v2 v2.28.1
-	github.com/onsi/gomega v1.39.1
+	github.com/onsi/ginkgo/v2 v2.29.0
+	github.com/onsi/gomega v1.41.0
 	github.com/openshift/api v0.0.0-20230714214528-de6ad7979b00
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.10.2
@@ -18,20 +18,20 @@ require (
 	github.com/submariner-io/admiral v0.24.0-m0.0.20260414184357-802f5267fa1c
 	github.com/submariner-io/cloud-prepare v0.24.0-m0.0.20260410153137-2e5c93cd9a4c
 	github.com/submariner-io/lighthouse v0.24.0-m0.0.20260415135047-df78807113f5
-	github.com/submariner-io/shipyard v0.24.0-m0.0.20260414180153-71c0e5c1d177
+	github.com/submariner-io/shipyard v0.24.0-m0.0.20260520163211-1077a2e6a4e8
 	github.com/submariner-io/submariner v0.24.0-m0.0.20260415073342-e8b7fadb9ece
 	github.com/submariner-io/submariner-operator v0.24.0-m0.0.20260415154809-cd9d33918794
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.53.0
 	golang.org/x/oauth2 v0.36.0
 	google.golang.org/api v0.273.1
-	k8s.io/api v0.35.3
+	k8s.io/api v0.35.5
 	k8s.io/apiextensions-apiserver v0.35.3
-	k8s.io/apimachinery v0.35.3
-	k8s.io/client-go v0.35.3
+	k8s.io/apimachinery v0.35.5
+	k8s.io/client-go v0.35.5
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2
 	sigs.k8s.io/controller-runtime v0.23.3
-	sigs.k8s.io/mcs-api v0.4.1
+	sigs.k8s.io/mcs-api v0.5.0
 	sigs.k8s.io/yaml v1.6.0
 )
 
@@ -90,7 +90,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/licenseclassifier v0.0.0-20201113175434-78a70215ca36 // indirect
-	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
+	github.com/google/pprof v0.0.0-20260402051712-545e8a4df936 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.14 // indirect
@@ -129,13 +129,13 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.50.0 // indirect
-	golang.org/x/mod v0.34.0 // indirect
+	golang.org/x/mod v0.35.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/term v0.42.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	golang.org/x/tools v0.43.0 // indirect
+	golang.org/x/tools v0.44.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260319201613-d00831a3d3e7 // indirect
 	google.golang.org/grpc v1.79.3 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect

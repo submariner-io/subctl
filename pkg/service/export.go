@@ -29,7 +29,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/client"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+	mcsv1b1 "sigs.k8s.io/mcs-api/pkg/apis/v1beta1"
 )
 
 func Export(ctx context.Context, clientProducer client.Producer, serviceNamespace, svcName, useClustersetIP string,
@@ -40,7 +40,7 @@ func Export(ctx context.Context, clientProducer client.Producer, serviceNamespac
 		return status.Error(err, "Unable to find the Service %q in namespace %q", svcName, serviceNamespace)
 	}
 
-	mcsServiceExport := &mcsv1a1.ServiceExport{
+	mcsServiceExport := &mcsv1b1.ServiceExport{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      svcName,
 			Namespace: serviceNamespace,
@@ -62,7 +62,7 @@ func Export(ctx context.Context, clientProducer client.Producer, serviceNamespac
 		return status.Error(err, "Failed to convert to Unstructured")
 	}
 
-	serviceExportGVR := gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports")
+	serviceExportGVR := gvr.FromMetaGroupVersion(mcsv1b1.GroupVersion, "serviceexports")
 
 	_, err = clientProducer.ForDynamic().Resource(serviceExportGVR).Namespace(serviceNamespace).
 		Create(ctx, resourceServiceExport, metav1.CreateOptions{})

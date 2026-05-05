@@ -30,7 +30,7 @@ import (
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/service"
 	"k8s.io/client-go/kubernetes/scheme"
-	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+	mcsv1b1 "sigs.k8s.io/mcs-api/pkg/apis/v1beta1"
 )
 
 var (
@@ -61,7 +61,7 @@ var (
 )
 
 func init() {
-	err := mcsv1a1.Install(scheme.Scheme)
+	err := mcsv1b1.Install(scheme.Scheme)
 	exit.OnErrorWithMessage(err, "Failed to add to scheme")
 
 	addExportServiceFlags(exportServiceCmd)
