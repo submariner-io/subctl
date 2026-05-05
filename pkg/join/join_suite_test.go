@@ -51,7 +51,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
-	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+	mcsv1b1 "sigs.k8s.io/mcs-api/pkg/apis/v1beta1"
 )
 
 const (
@@ -64,7 +64,7 @@ var _ = BeforeSuite(func() {
 	Expect(submarinerv1.AddToScheme(scheme.Scheme)).To(Succeed())
 	Expect(submarinerv1.AddToScheme(scheme.Scheme)).To(Succeed())
 	Expect(apiextensions.AddToScheme(scheme.Scheme)).To(Succeed())
-	Expect(mcsv1a1.Install(scheme.Scheme)).To(Succeed())
+	Expect(mcsv1b1.Install(scheme.Scheme)).To(Succeed())
 })
 
 func TestJoin(t *testing.T) {

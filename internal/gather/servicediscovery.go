@@ -28,7 +28,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
-	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+	mcsv1b1 "sigs.k8s.io/mcs-api/pkg/apis/v1beta1"
 )
 
 const (
@@ -51,11 +51,11 @@ func gatherCoreDNSPodLogs(ctx context.Context, info *Info) {
 }
 
 func gatherServiceExports(ctx context.Context, info *Info, namespace string) {
-	ResourcesToYAMLFile(ctx, info, gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports"), namespace, metav1.ListOptions{})
+	ResourcesToYAMLFile(ctx, info, gvr.FromMetaGroupVersion(mcsv1b1.GroupVersion, "serviceexports"), namespace, metav1.ListOptions{})
 }
 
 func gatherServiceImports(ctx context.Context, info *Info, namespace string) {
-	ResourcesToYAMLFile(ctx, info, gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceimports"), namespace, metav1.ListOptions{})
+	ResourcesToYAMLFile(ctx, info, gvr.FromMetaGroupVersion(mcsv1b1.GroupVersion, "serviceimports"), namespace, metav1.ListOptions{})
 }
 
 func gatherEndpointSlices(ctx context.Context, info *Info, namespace string) {

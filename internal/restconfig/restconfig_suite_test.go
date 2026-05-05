@@ -28,13 +28,13 @@ import (
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+	mcsv1b1 "sigs.k8s.io/mcs-api/pkg/apis/v1beta1"
 )
 
 var _ = BeforeSuite(func() {
 	Expect(v1alpha1.AddToScheme(scheme.Scheme)).To(Succeed())
 	Expect(submarinerv1.AddToScheme(scheme.Scheme)).To(Succeed())
-	Expect(mcsv1a1.Install(scheme.Scheme)).To(Succeed())
+	Expect(mcsv1b1.Install(scheme.Scheme)).To(Succeed())
 
 	restconfig.GetInClusterConfig = func() (*rest.Config, error) {
 		return &rest.Config{}, nil

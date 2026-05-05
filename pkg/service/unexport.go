@@ -24,10 +24,10 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	mcs "sigs.k8s.io/mcs-api/pkg/client/clientset/versioned/typed/apis/v1alpha1"
+	mcs "sigs.k8s.io/mcs-api/pkg/client/clientset/versioned/typed/apis/v1beta1"
 )
 
-func Unexport(ctx context.Context, client *mcs.MulticlusterV1alpha1Client, namespace, svcName string, status reporter.Interface) error {
+func Unexport(ctx context.Context, client *mcs.MulticlusterV1beta1Client, namespace, svcName string, status reporter.Interface) error {
 	err := client.ServiceExports(namespace).Delete(ctx, svcName, metav1.DeleteOptions{})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {

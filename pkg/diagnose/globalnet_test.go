@@ -35,7 +35,7 @@ import (
 	"k8s.io/utils/ptr"
 	controllerfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
-	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+	mcsv1b1 "sigs.k8s.io/mcs-api/pkg/apis/v1beta1"
 )
 
 var _ = Describe("GlobalnetConfig", func() {
@@ -184,7 +184,7 @@ func (t *globalnetTestDriver) testGlobalEgressIPs() {
 func (t *globalnetTestDriver) testGlobalIngressIPs() {
 	var (
 		service         *corev1.Service
-		serviceExport   *mcsv1a1.ServiceExport
+		serviceExport   *mcsv1b1.ServiceExport
 		globalIngressIP *submarinerv1.GlobalIngressIP
 		internalService *corev1.Service
 	)
@@ -200,7 +200,7 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 			},
 		}
 
-		serviceExport = &mcsv1a1.ServiceExport{
+		serviceExport = &mcsv1b1.ServiceExport{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      service.Name,
 				Namespace: service.Namespace,

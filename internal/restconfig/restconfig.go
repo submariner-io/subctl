@@ -38,7 +38,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
-	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+	mcsv1b1 "sigs.k8s.io/mcs-api/pkg/apis/v1beta1"
 )
 
 const InCluster = "in-cluster"
@@ -476,7 +476,7 @@ func ForBroker(ctx context.Context, submariner *v1alpha1.Submariner, serviceDisc
 			serviceDisc.Spec.BrokerK8sApiServerToken,
 			serviceDisc.Spec.BrokerK8sCA,
 			&rest.TLSClientConfig{},
-			gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceimports"),
+			gvr.FromMetaGroupVersion(mcsv1b1.GroupVersion, "serviceimports"),
 			serviceDisc.Spec.BrokerK8sRemoteNamespace)
 		namespace = serviceDisc.Spec.BrokerK8sRemoteNamespace
 	}

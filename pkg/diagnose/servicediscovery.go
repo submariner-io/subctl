@@ -37,7 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+	mcsv1b1 "sigs.k8s.io/mcs-api/pkg/apis/v1beta1"
 )
 
 func ServiceDiscovery(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
@@ -58,7 +58,7 @@ func ServiceDiscovery(ctx context.Context, clusterInfo *cluster.Info, _ string, 
 
 // This function checks if all ServiceExports have a matching ServiceImport and if an EndpointSlice has been created for the service.
 func checkServiceExports(ctx context.Context, clusterInfo *cluster.Info, status reporter.Interface) {
-	serviceExportGVR := gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports")
+	serviceExportGVR := gvr.FromMetaGroupVersion(mcsv1b1.GroupVersion, "serviceexports")
 
 	serviceExports, err := clusterInfo.ClientProducer.ForDynamic().Resource(serviceExportGVR).Namespace(corev1.NamespaceAll).
 		List(ctx, metav1.ListOptions{})
@@ -68,12 +68,12 @@ func checkServiceExports(ctx context.Context, clusterInfo *cluster.Info, status 
 	}
 
 	for i := range serviceExports.Items {
-		se := resource.MustFromUnstructured(&serviceExports.Items[i], &mcsv1a1.ServiceExport{})
+		se := resource.MustFromUnstructured(&serviceExports.Items[i], &mcsv1b1.ServiceExport{})
 
 		_, err := clusterInfo.ClientProducer.ForKubernetes().CoreV1().Services(se.Namespace).Get(ctx, se.Name, metav1.GetOptions{})
 		if apierrors.IsNotFound(err) {
 			status.Warning("Exported Service \"%s/%s\" not found", se.Namespace, se.Name)
-			verifyStatusCondition(se, mcsv1a1.ServiceExportConditionValid, metav1.ConditionFalse, status)
+			verifyStatusCondition(se, mcsv1b1.ServiceExportConditionValid, metav1.ConditionFalse, status)
 
 			continue
 		}
@@ -83,12 +83,12 @@ func checkServiceExports(ctx context.Context, clusterInfo *cluster.Info, status 
 			return
 		}
 
-		if !verifyStatusCondition(se, mcsv1a1.ServiceExportConditionValid, metav1.ConditionTrue, status) {
+		if !verifyStatusCondition(se, mcsv1b1.ServiceExportConditionValid, metav1.ConditionTrue, status) {
 			continue
 		}
 
-		verifyStatusCondition(se, mcsv1a1.ServiceExportConditionReady, metav1.ConditionTrue, status)
-		verifyStatusCondition(se, mcsv1a1.ServiceExportConditionConflict, metav1.ConditionFalse, status)
+		verifyStatusCondition(se, mcsv1b1.ServiceExportConditionReady, metav1.ConditionTrue, status)
+		verifyStatusCondition(se, mcsv1b1.ServiceExportConditionConflict, metav1.ConditionFalse, status)
 
 		serviceImportClient := clusterInfo.ClientProducer.ForDynamic().Resource(serviceImportGVR())
 
@@ -110,8 +110,8 @@ func checkServiceExports(ctx context.Context, clusterInfo *cluster.Info, status 
 		epsList, err := ep.List(ctx, metav1.ListOptions{
 			LabelSelector: labels.SelectorFromSet(map[string]string{
 				discovery.LabelManagedBy:   lhconstants.LabelValueManagedBy,
-				mcsv1a1.LabelServiceName:   se.Name,
-				mcsv1a1.LabelSourceCluster: clusterInfo.Submariner.Spec.ClusterID,
+				mcsv1b1.LabelServiceName:   se.Name,
+				mcsv1b1.LabelSourceCluster: clusterInfo.Submariner.Spec.ClusterID,
 			}).String(),
 		})
 		if err != nil {
@@ -130,7 +130,7 @@ func localServiceImportExists(ctx context.Context, siClient dynamic.Namespaceabl
 ) bool {
 	list, err := siClient.Namespace(constants.OperatorNamespace).List(ctx, metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(map[string]string{
-			mcsv1a1.LabelServiceName:         serviceName,
+			mcsv1b1.LabelServiceName:         serviceName,
 			lhconstants.LabelSourceNamespace: serviceNamespace,
 		}).String(),
 	})
@@ -150,7 +150,7 @@ func localServiceImportExists(ctx context.Context, siClient dynamic.Namespaceabl
 	return false
 }
 
-func verifyStatusCondition(se *mcsv1a1.ServiceExport, condType mcsv1a1.ServiceExportConditionType, condStatus metav1.ConditionStatus,
+func verifyStatusCondition(se *mcsv1b1.ServiceExport, condType mcsv1b1.ServiceExportConditionType, condStatus metav1.ConditionStatus,
 	status reporter.Interface,
 ) bool {
 	for i := range se.Status.Conditions {
@@ -197,12 +197,12 @@ func checkServiceImports(ctx context.Context, clusterInfo *cluster.Info, status 
 	}
 
 	for i := range serviceImports.Items {
-		if _, ok := serviceImports.Items[i].GetAnnotations()[mcsv1a1.LabelServiceName]; !ok {
+		if _, ok := serviceImports.Items[i].GetAnnotations()[mcsv1b1.LabelServiceName]; !ok {
 			continue
 		}
 
 		// This is an aggregated ServiceImport on the broker - check for the local copy.
-		serviceName := serviceImports.Items[i].GetAnnotations()[mcsv1a1.LabelServiceName]
+		serviceName := serviceImports.Items[i].GetAnnotations()[mcsv1b1.LabelServiceName]
 		serviceNamespace := serviceImports.Items[i].GetAnnotations()[lhconstants.LabelSourceNamespace]
 
 		_, err = clusterInfo.ClientProducer.ForDynamic().Resource(serviceImportGVR()).Namespace(serviceNamespace).Get(
@@ -219,5 +219,5 @@ func checkServiceImports(ctx context.Context, clusterInfo *cluster.Info, status 
 }
 
 func serviceImportGVR() schema.GroupVersionResource {
-	return gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceimports")
+	return gvr.FromMetaGroupVersion(mcsv1b1.GroupVersion, "serviceimports")
 }

@@ -32,7 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
-	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
+	mcsv1b1 "sigs.k8s.io/mcs-api/pkg/apis/v1beta1"
 )
 
 func GlobalnetConfig(ctx context.Context, clusterInfo *cluster.Info, _ string, status reporter.Interface) error {
@@ -148,7 +148,7 @@ func checkGlobalEgressIPs(ctx context.Context, clusterInfo *cluster.Info, status
 }
 
 func checkGlobalIngressIPs(ctx context.Context, clusterInfo *cluster.Info, status reporter.Interface) {
-	serviceExportGVR := gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceexports")
+	serviceExportGVR := gvr.FromMetaGroupVersion(mcsv1b1.GroupVersion, "serviceexports")
 
 	serviceExports, err := clusterInfo.ClientProducer.ForDynamic().Resource(serviceExportGVR).Namespace(corev1.NamespaceAll).
 		List(ctx, metav1.ListOptions{})
