@@ -15,20 +15,20 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
-	github.com/submariner-io/admiral v0.24.0-rc0
-	github.com/submariner-io/cloud-prepare v0.24.0-rc0
-	github.com/submariner-io/lighthouse v0.24.0-rc0
-	github.com/submariner-io/shipyard v0.24.0-rc0
-	github.com/submariner-io/submariner v0.24.0-rc0
-	github.com/submariner-io/submariner-operator v0.24.0-rc0
+	github.com/submariner-io/admiral v0.24.0
+	github.com/submariner-io/cloud-prepare v0.24.0
+	github.com/submariner-io/lighthouse v0.24.0
+	github.com/submariner-io/shipyard v0.24.0
+	github.com/submariner-io/submariner v0.24.0
+	github.com/submariner-io/submariner-operator v0.24.0
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.52.0
 	golang.org/x/oauth2 v0.36.0
 	google.golang.org/api v0.273.1
-	k8s.io/api v0.35.3
-	k8s.io/apiextensions-apiserver v0.35.3
-	k8s.io/apimachinery v0.35.3
-	k8s.io/client-go v0.35.3
+	k8s.io/api v0.35.4
+	k8s.io/apiextensions-apiserver v0.35.4
+	k8s.io/apimachinery v0.35.4
+	k8s.io/client-go v0.35.4
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2
 	sigs.k8s.io/controller-runtime v0.23.3
 	sigs.k8s.io/mcs-api v0.4.1
