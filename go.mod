@@ -16,20 +16,20 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
-	github.com/submariner-io/admiral v0.21.2
-	github.com/submariner-io/cloud-prepare v0.21.2
-	github.com/submariner-io/lighthouse v0.21.2
-	github.com/submariner-io/shipyard v0.21.2
-	github.com/submariner-io/submariner v0.21.2
-	github.com/submariner-io/submariner-operator v0.21.2
+	github.com/submariner-io/admiral v0.21.3
+	github.com/submariner-io/cloud-prepare v0.21.3
+	github.com/submariner-io/lighthouse v0.21.3
+	github.com/submariner-io/shipyard v0.21.3
+	github.com/submariner-io/submariner v0.21.3
+	github.com/submariner-io/submariner-operator v0.21.3
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.48.0
 	golang.org/x/oauth2 v0.34.0
 	google.golang.org/api v0.239.0
-	k8s.io/api v0.33.5
-	k8s.io/apiextensions-apiserver v0.33.5
-	k8s.io/apimachinery v0.33.5
-	k8s.io/client-go v0.33.5
+	k8s.io/api v0.33.12
+	k8s.io/apiextensions-apiserver v0.33.12
+	k8s.io/apimachinery v0.33.12
+	k8s.io/client-go v0.33.12
 	k8s.io/utils v0.0.0-20241210054802-24370beab758
 	sigs.k8s.io/controller-runtime v0.20.4
 	sigs.k8s.io/mcs-api v0.2.0
@@ -117,8 +117,6 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0 // indirect
 	go.opentelemetry.io/otel v1.41.0 // indirect
 	go.opentelemetry.io/otel/metric v1.41.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.40.0 // indirect
-	go.opentelemetry.io/otel/sdk/metric v1.40.0 // indirect
 	go.opentelemetry.io/otel/trace v1.41.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	golang.org/x/crypto v0.46.0 // indirect
