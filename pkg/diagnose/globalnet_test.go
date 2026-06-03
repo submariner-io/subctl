@@ -32,7 +32,6 @@ import (
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/utils/ptr"
 	controllerfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 	mcsv1b1 "sigs.k8s.io/mcs-api/pkg/apis/v1beta1"
@@ -72,7 +71,7 @@ func newGlobalnetTestDriver() *globalnetTestDriver {
 				Name: constants.ClusterGlobalEgressIPName,
 			},
 			Spec: submarinerv1.ClusterGlobalEgressIPSpec{
-				NumberOfIPs: ptr.To(1),
+				NumberOfIPs: new(1),
 			},
 			Status: submarinerv1.GlobalEgressIPStatus{
 				AllocatedIPs: []string{"169.254.1.100"},
@@ -144,7 +143,7 @@ func (t *globalnetTestDriver) testGlobalEgressIPs() {
 				Name: "global-egress-ip",
 			},
 			Spec: submarinerv1.GlobalEgressIPSpec{
-				NumberOfIPs: ptr.To(1),
+				NumberOfIPs: new(1),
 			},
 			Status: submarinerv1.GlobalEgressIPStatus{
 				AllocatedIPs: []string{"242.10.1.1"},
