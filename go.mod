@@ -1,6 +1,6 @@
 module github.com/submariner-io/subctl
 
-go 1.25.8
+go 1.26.0
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -15,22 +15,22 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
-	github.com/submariner-io/admiral v0.25.0-m0
-	github.com/submariner-io/cloud-prepare v0.25.0-m0
-	github.com/submariner-io/lighthouse v0.25.0-m0
-	github.com/submariner-io/shipyard v0.25.0-m0
-	github.com/submariner-io/submariner v0.25.0-m0
-	github.com/submariner-io/submariner-operator v0.25.0-m0
+	github.com/submariner-io/admiral v0.25.0-m0.0.20260615091238-cc1624dc6245
+	github.com/submariner-io/cloud-prepare v0.25.0-m0.0.20260615092544-831fd3a22e0d
+	github.com/submariner-io/lighthouse v0.25.0-m0.0.20260615091628-1dc88624799c
+	github.com/submariner-io/shipyard v0.25.0-m0.0.20260615091025-eaa3e91ebbf5
+	github.com/submariner-io/submariner v0.25.0-m0.0.20260615091932-513276ea422e
+	github.com/submariner-io/submariner-operator v0.25.0-m0.0.20260615092313-1f97a80f3d77
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.55.0
 	golang.org/x/oauth2 v0.36.0
 	google.golang.org/api v0.282.0
-	k8s.io/api v0.35.5
-	k8s.io/apiextensions-apiserver v0.35.5
-	k8s.io/apimachinery v0.35.5
-	k8s.io/client-go v0.35.5
+	k8s.io/api v0.36.2
+	k8s.io/apiextensions-apiserver v0.36.2
+	k8s.io/apimachinery v0.36.2
+	k8s.io/client-go v0.36.2
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2
-	sigs.k8s.io/controller-runtime v0.23.3
+	sigs.k8s.io/controller-runtime v0.24.1
 	sigs.k8s.io/mcs-api v0.5.0
 	sigs.k8s.io/yaml v1.6.0
 )
@@ -112,7 +112,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/muesli/termenv v0.11.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rivo/uniseg v0.4.3 // indirect
@@ -138,13 +137,14 @@ require (
 	golang.org/x/tools v0.44.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260523011958-0a33c5d7ca68 // indirect
 	google.golang.org/grpc v1.81.1 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
+	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a // indirect
+	k8s.io/streaming v0.36.2 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.0 // indirect
