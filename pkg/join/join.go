@@ -219,12 +219,12 @@ func checkRequirements(kubeClient kubernetes.Interface, ignoreRequirements bool,
 		}
 
 		if !ignoreRequirements {
-			status.Failure(msg.String())
+			status.Failure("%s", msg.String())
 
 			return goerrors.New("version requirements not met")
 		}
 
-		status.Warning(msg.String())
+		status.Warning("%s", msg.String())
 	}
 
 	return status.Error(err, "unable to check version requirements")
