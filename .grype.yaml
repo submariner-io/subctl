@@ -20,3 +20,8 @@ ignore:
   - vulnerability: GO-2026-5856
     package:
       name: stdlib
+
+  # No fix version available
+  - vulnerability: GO-2026-5932
+    package:
+      name: golang.org/x/crypto
