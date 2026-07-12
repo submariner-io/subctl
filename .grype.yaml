@@ -14,3 +14,8 @@ ignore:
   - vulnerability: GHSA-hfvc-g4fc-pqhx
     package:
       name: go.opentelemetry.io/otel/sdk
+  # Package is deprecated by design; no fix version exists.
+  # Transitive dependency, not used directly.
+  - vulnerability: GO-2026-5932
+    package:
+      name: golang.org/x/crypto
