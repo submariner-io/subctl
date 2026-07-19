@@ -52,6 +52,7 @@ var _ = Describe("CNIConfig", func() {
 		Entry("the WeaveNet", cni.WeaveNet),
 		Entry("the OpenShiftSDN", cni.OpenShiftSDN),
 		Entry("the KindNet", cni.KindNet),
+		Entry("the Amazon VPC CNI", cni.AmazonVPCCNI),
 	)
 
 	When("the network plugin is Generic", func() {

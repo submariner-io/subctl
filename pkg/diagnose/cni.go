@@ -48,7 +48,7 @@ var MinOVNNBVersion = semver.New("6.1.0")
 var supportedNetworkPlugins = []string{
 	cni.Generic, cni.CanalFlannel, cni.WeaveNet,
 	cni.OpenShiftSDN, cni.OVNKubernetes, cni.Calico,
-	cni.KindNet,
+	cni.KindNet, cni.AmazonVPCCNI,
 }
 
 var CalicoGVR = schema.GroupVersionResource{
