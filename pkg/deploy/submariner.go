@@ -56,6 +56,7 @@ type SubmarinerOptions struct {
 	ClusterID                       string
 	CableDriver                     string
 	CoreDNSCustomConfigMap          string
+	CoreDNSCustomConfigKey          string
 	Repository                      string
 	ImageVersion                    string
 	ServiceCIDR                     string
@@ -137,6 +138,7 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 		submarinerSpec.CoreDNSCustomConfig = &operatorv1alpha1.CoreDNSCustomConfig{
 			ConfigMapName: name,
 			Namespace:     namespace,
+			Key:           options.CoreDNSCustomConfigKey,
 		}
 	}
 

@@ -153,11 +153,25 @@ func testSubmariner() {
 			options.CoreDNSCustomConfigMap = "test-namespace/test-configmap"
 		})
 
-		It("should set the CoreDNSCustomConfig field", func(ctx SpecContext) {
+		It("should set the CoreDNSCustomConfig field without a key", func(ctx SpecContext) {
 			Expect(expectDeploySuccess(ctx).CoreDNSCustomConfig).To(Equal(&operatorv1alpha1.CoreDNSCustomConfig{
 				ConfigMapName: "test-configmap",
 				Namespace:     "test-namespace",
 			}))
+		})
+
+		When("a custom config map key is provided", func() {
+			BeforeEach(func() {
+				options.CoreDNSCustomConfigKey = "Corefile"
+			})
+
+			It("should set the Key field", func(ctx SpecContext) {
+				Expect(expectDeploySuccess(ctx).CoreDNSCustomConfig).To(Equal(&operatorv1alpha1.CoreDNSCustomConfig{
+					ConfigMapName: "test-configmap",
+					Namespace:     "test-namespace",
+					Key:           "Corefile",
+				}))
+			})
 		})
 	})
 
