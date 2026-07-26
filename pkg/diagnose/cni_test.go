@@ -26,6 +26,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/submariner-io/admiral/pkg/fake"
 	"github.com/submariner-io/subctl/pkg/diagnose"
+	"github.com/submariner-io/submariner-operator/pkg/ciliumcm"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"github.com/submariner-io/submariner/pkg/cni"
 	corev1 "k8s.io/api/core/v1"
@@ -65,6 +66,8 @@ var _ = Describe("CNIConfig", func() {
 	When("the network plugin is OVNKubernetes", t.testOVNKubernetesCNIPlugin)
 
 	When("the network plugin is Calico", t.testCalicoCNIPlugin)
+
+	When("the network plugin is Cilium", t.testCiliumCNIPlugin)
 
 	When("the network plugin hasn't been determined", func() {
 		BeforeEach(func() {
@@ -318,6 +321,95 @@ func (t *cniTestDriver) createOVNPod(ctx context.Context, version, containerName
 	Expect(err).NotTo(HaveOccurred())
 
 	fake.SetSPDYExecutor("DB Schema "+version, "", nil)
+}
+
+func (t *cniTestDriver) testCiliumCNIPlugin() {
+	BeforeEach(func() {
+		t.submariner.Status.NetworkPlugin = "cilium"
+		t.submariner.Spec.CiliumNamespace = metav1.NamespaceSystem
+	})
+
+	Context("and publisher prerequisites are configured correctly", func() {
+		BeforeEach(func(ctx SpecContext) {
+			t.createCiliumPublisherWiring(ctx, true)
+		})
+
+		t.testSuccess(t.run)
+	})
+
+	Context("and spec.ciliumNamespace is empty", func() {
+		BeforeEach(func(ctx SpecContext) {
+			t.submariner.Spec.CiliumNamespace = ""
+			t.createCiliumPublisherWiring(ctx, true)
+		})
+
+		t.testFailure(t.run, "ciliumNamespace")
+	})
+
+	Context("and cilium-config cluster-id is 0", func() {
+		BeforeEach(func(ctx SpecContext) {
+			t.createCiliumPublisherWiring(ctx, false)
+		})
+
+		t.testFailure(t.run, "cluster-id")
+	})
+
+	Context("and cilium-config cluster-id is reserved for Submariner", func() {
+		BeforeEach(func(ctx SpecContext) {
+			t.createCiliumConfig(ctx, ciliumcm.DefaultClusterID, "test-cluster")
+			t.createCiliumClusterMeshSecret(ctx)
+		})
+
+		t.testFailure(t.run, "reserved")
+	})
+
+	Context("and the cilium-clustermesh peer is missing", func() {
+		BeforeEach(func(ctx SpecContext) {
+			t.createCiliumConfig(ctx, "1", "test-cluster")
+		})
+
+		t.testFailure(t.run, "cilium-clustermesh")
+	})
+}
+
+func (t *cniTestDriver) createCiliumPublisherWiring(ctx context.Context, validClusterID bool) {
+	clusterID := "1"
+	if !validClusterID {
+		clusterID = "0"
+	}
+
+	t.createCiliumConfig(ctx, clusterID, "test-cluster")
+	t.createCiliumClusterMeshSecret(ctx)
+}
+
+func (t *cniTestDriver) createCiliumConfig(ctx context.Context, clusterID, clusterName string) {
+	_, err := t.fakeProducer.KubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(ctx, &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cilium-config",
+			Namespace: metav1.NamespaceSystem,
+		},
+		Data: map[string]string{
+			"cluster-id":   clusterID,
+			"cluster-name": clusterName,
+		},
+	}, metav1.CreateOptions{})
+	Expect(err).NotTo(HaveOccurred())
+}
+
+func (t *cniTestDriver) createCiliumClusterMeshSecret(ctx context.Context) {
+	_, err := t.fakeProducer.KubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(ctx, &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "cilium-clustermesh",
+			Namespace: metav1.NamespaceSystem,
+		},
+		Data: map[string][]byte{
+			"submariner":                    []byte("endpoints:\n- https://127.0.0.1:12379\n"),
+			"submariner.etcd-client-ca.crt": []byte("ca"),
+			"submariner.etcd-client.crt":    []byte("crt"),
+			"submariner.etcd-client.key":    []byte("key"),
+		},
+	}, metav1.CreateOptions{})
+	Expect(err).NotTo(HaveOccurred())
 }
 
 func (t *cniTestDriver) run(ctx context.Context) error {

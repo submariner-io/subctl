@@ -48,7 +48,7 @@ var MinOVNNBVersion = semver.New("6.1.0")
 var supportedNetworkPlugins = []string{
 	cni.Generic, cni.CanalFlannel, cni.WeaveNet,
 	cni.OpenShiftSDN, cni.OVNKubernetes, cni.Calico,
-	cni.KindNet,
+	cni.KindNet, ciliumCNI,
 }
 
 var CalicoGVR = schema.GroupVersionResource{
@@ -95,7 +95,11 @@ func CNIConfig(ctx context.Context, clusterInfo *cluster.Info, _ string, status 
 		return checkOVNVersion(ctx, clusterInfo, status)
 	}
 
-	return checkCalicoIPPoolsIfCalicoCNI(ctx, clusterInfo, status)
+	if err := checkCalicoIPPoolsIfCalicoCNI(ctx, clusterInfo, status); err != nil {
+		return err
+	}
+
+	return checkCiliumClusterMeshPublisher(ctx, clusterInfo, status)
 }
 
 func checkCalicoIPPoolsIfCalicoCNI(ctx context.Context, info *cluster.Info, status reporter.Interface) error {

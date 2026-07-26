@@ -32,6 +32,8 @@ import (
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 	"github.com/submariner-io/submariner-operator/pkg/names"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	ctrlClient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -205,6 +207,40 @@ func testSubmariner() {
 		})
 	})
 }
+
+var _ = Describe("EnsureCiliumClusterMeshPrerequisites", func() {
+	t := newTestDriver()
+
+	It("should succeed when Cilium is not detected", func(ctx SpecContext) {
+		Expect(deploy.EnsureCiliumClusterMeshPrerequisites(ctx, t.fakeProducer.ForKubernetes(), "", "",
+			t.statusReporter)).To(Succeed())
+		t.statusReporter.AssertFailureCount(0)
+	})
+
+	It("should fail when Cilium is detected with an invalid cluster-id", func(ctx SpecContext) {
+		_, err := t.fakeProducer.KubeClient.CoreV1().ConfigMaps("kube-system").Create(ctx, &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{Name: "cilium-config", Namespace: "kube-system"},
+			Data:       map[string]string{"cluster-id": "0", "cluster-name": "default"},
+		}, metav1.CreateOptions{})
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(deploy.EnsureCiliumClusterMeshPrerequisites(ctx, t.fakeProducer.ForKubernetes(), "", "cilium",
+			t.statusReporter)).NotTo(Succeed())
+		t.statusReporter.AssertFailureContainsStrings("cluster-id")
+	})
+
+	It("should succeed with a valid local Cilium identity", func(ctx SpecContext) {
+		_, err := t.fakeProducer.KubeClient.CoreV1().ConfigMaps("kube-system").Create(ctx, &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{Name: "cilium-config", Namespace: "kube-system"},
+			Data:       map[string]string{"cluster-id": "1", "cluster-name": "test-cluster"},
+		}, metav1.CreateOptions{})
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(deploy.EnsureCiliumClusterMeshPrerequisites(ctx, t.fakeProducer.ForKubernetes(), "kube-system", "cilium",
+			t.statusReporter)).To(Succeed())
+		t.statusReporter.AssertFailureCount(0)
+	})
+})
 
 func testRemoveSchemaPrefix() {
 	DescribeTable("should correctly remove the schema prefix",

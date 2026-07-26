@@ -182,6 +182,10 @@ func (c *JoinCommand) joinInContext(ctx context.Context, brokerInfo *broker.Info
 	c.flags.ClusterCIDR = determineCIDR("Pod", c.flags.ClusterCIDR, networkDetails.PodCIDRs, status)
 	c.flags.ServiceCIDR = determineCIDR("Service", c.flags.ServiceCIDR, networkDetails.ServiceCIDRs, status)
 
+	if err := c.ensureCiliumClusterMeshPrerequisites(ctx, clusterInfo, networkDetails.NetworkPlugin, status); err != nil {
+		return err
+	}
+
 	if brokerInfo.IsConnectivityEnabled() && c.labelGateway {
 		possiblyLabelGateway(ctx, clusterInfo.ClientProducer.ForKubernetes(), status)
 	}

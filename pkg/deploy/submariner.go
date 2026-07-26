@@ -23,6 +23,7 @@ import (
 	"encoding/base64"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/broker"
@@ -31,9 +32,11 @@ import (
 	"github.com/submariner-io/subctl/pkg/secret"
 	"github.com/submariner-io/subctl/pkg/submarinercr"
 	operatorv1alpha1 "github.com/submariner-io/submariner-operator/api/v1alpha1"
+	"github.com/submariner-io/submariner-operator/pkg/ciliumcm"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/clustersetip"
 	"github.com/submariner-io/submariner-operator/pkg/discovery/globalnet"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes"
 	controllerClient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -74,9 +77,56 @@ func Submariner(ctx context.Context, clientProducer client.Producer, options *Su
 
 	submarinerSpec := populateSubmarinerSpec(options, brokerInfo, brokerSecret, pskSecret, netconfig, clustersetConfig, repositoryInfo)
 
+	if submarinerSpec.CiliumNamespace == "" {
+		ciliumNS, findErr := ciliumcm.FindUniqueCiliumConfigNamespace(ctx, clientProducer.ForKubernetes())
+		if findErr != nil {
+			return status.Error(findErr, "Error discovering Cilium namespace")
+		}
+
+		submarinerSpec.CiliumNamespace = ciliumNS
+	}
+
 	err = SubmarinerFromSpec(ctx, clientProducer.ForGeneral(), submarinerSpec)
 
 	return status.Error(err, "Submariner deployment failed")
+}
+
+// EnsureCiliumClusterMeshPrerequisites runs local Cilium identity checks when Cilium is
+// detected (by network plugin name and/or an already-known cilium namespace).
+func EnsureCiliumClusterMeshPrerequisites(ctx context.Context, kubeClient kubernetes.Interface, ciliumNS, networkPlugin string,
+	status reporter.Interface,
+) error {
+	ciliumDetected := strings.EqualFold(networkPlugin, "cilium") || ciliumNS != ""
+	if !ciliumDetected {
+		return nil
+	}
+
+	status.Start("Validating Cilium ClusterMesh prerequisites")
+	defer status.End()
+
+	if ciliumNS == "" {
+		var findErr error
+
+		ciliumNS, findErr = ciliumcm.FindUniqueCiliumConfigNamespace(ctx, kubeClient)
+		if findErr != nil {
+			return status.Error(findErr, "Error discovering Cilium namespace")
+		}
+	}
+
+	if ciliumNS == "" {
+		return status.Error(
+			errors.Errorf("no unique %q ConfigMap found; set a single cilium-config (and Spec.CiliumNamespace if needed)",
+				ciliumcm.CiliumConfigMapName),
+			"Cilium CNI detected; cannot validate ClusterMesh prerequisites")
+	}
+
+	if err := ciliumcm.LoadAndValidateLocalClusterIdentity(ctx, kubeClient, ciliumNS); err != nil {
+		return status.Error(err, "Cilium ClusterMesh prerequisites not met")
+	}
+
+	status.Success("Cilium ClusterMesh prerequisites OK (namespace %q)", ciliumNS)
+
+	return nil
 }
 
 func SubmarinerFromSpec(ctx context.Context, ctlClient controllerClient.Client, submarinerSpec *operatorv1alpha1.SubmarinerSpec) error {
