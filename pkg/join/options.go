@@ -47,6 +47,7 @@ type Options struct {
 	Repository                      string
 	ImageVersion                    string
 	CableDriver                     string
+	CableDriverOptions              map[string]string
 	CoreDNSCustomConfigMap          string
 	BrokerURL                       string
 	ClustersetIPCIDR                string
