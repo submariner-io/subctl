@@ -159,8 +159,7 @@ func (c *JoinCommand) addFlags() {
 		"Name of the custom CoreDNS configmap to configure forwarding to lighthouse. It should be in "+
 			"<namespace>/<name> format where <namespace> is optional and defaults to kube-system")
 	c.cmd.Flags().StringVar(&c.flags.CoreDNSCustomConfigKey, "coredns-custom-configmap-key", "",
-		"Data key in --coredns-custom-configmap for lighthouse forwarding (default lighthouse.server; "+
-			"use Corefile when CoreDNS imports a full Corefile snippet)")
+		"CoreDNS ConfigMap key where Lighthouse configuration is written (default lighthouse.server)")
 	c.cmd.Flags().BoolVar(&c.flags.IgnoreRequirements, "ignore-requirements", false, "ignore requirement failures (unsupported)")
 
 	c.cmd.Flags().BoolVar(&c.flags.BrokerK8sSecure, "check-broker-certificate", true,
