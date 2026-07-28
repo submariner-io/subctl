@@ -54,7 +54,7 @@ func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Opti
 		return err
 	}
 
-	err = isValidCustomCoreDNSConfig(options.CoreDNSCustomConfigMap, options.CoreDNSCustomConfigKey)
+	err = ValidateCustomCoreDNSConfig(options.CoreDNSCustomConfigMap, options.CoreDNSCustomConfigKey)
 	if err != nil {
 		return status.Error(err, "error validating custom CoreDNS config")
 	}
@@ -243,7 +243,7 @@ func populateBrokerSecret(brokerInfo *broker.Info) *v1.Secret {
 	}
 }
 
-func isValidCustomCoreDNSConfig(corednsCustomConfigMap, corednsCustomConfigKey string) error {
+func ValidateCustomCoreDNSConfig(corednsCustomConfigMap, corednsCustomConfigKey string) error {
 	if corednsCustomConfigMap != "" && strings.Count(corednsCustomConfigMap, "/") > 1 {
 		return errors.New("coredns-custom-configmap should be in <namespace>/<name> format, namespace is optional")
 	}

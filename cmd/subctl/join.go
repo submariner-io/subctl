@@ -102,6 +102,10 @@ func (c *JoinCommand) checkArguments(args []string) error {
 		return err
 	}
 
+	if err := join.ValidateCustomCoreDNSConfig(c.flags.CoreDNSCustomConfigMap, c.flags.CoreDNSCustomConfigKey); err != nil {
+		return err
+	}
+
 	return checkImageOverrides(c.flags.ImageOverrideArr)
 }
 
