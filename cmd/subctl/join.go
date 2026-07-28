@@ -137,6 +137,8 @@ func (c *JoinCommand) addFlags() {
 	c.cmd.Flags().BoolVar(&c.flags.OperatorDebug, "operator-debug", false, "enable operator debugging (verbose logging)")
 	c.cmd.Flags().BoolVar(&c.labelGateway, "label-gateway", true, "label gateways if necessary")
 	c.cmd.Flags().StringVar(&c.flags.CableDriver, "cable-driver", "libreswan", "cable driver implementation")
+	c.cmd.Flags().StringToStringVar(&c.flags.CableDriverOptions, "cable-driver-option", nil,
+		"cable driver options as key=value (can be repeated or comma-separated)")
 	c.cmd.Flags().UintVar(&c.flags.GlobalnetClusterSize, "globalnet-cluster-size", 0,
 		"cluster size for GlobalCIDR allocated to this cluster (amount of global IPs)")
 	c.cmd.Flags().StringVar(&c.flags.GlobalnetCIDR, "globalnet-cidr", "",

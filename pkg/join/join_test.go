@@ -74,6 +74,7 @@ func testDeployment() {
 			ServiceCIDR:                     "101.42.0.0/16",
 			ClusterCIDR:                     "201.67.0.0/16",
 			CableDriver:                     "vxlan",
+			CableDriverOptions:              map[string]string{"jc": "7"},
 			CoreDNSCustomConfigMap:          "my-map",
 			CustomDomains:                   []string{"my-domain"},
 			HTTPProxyConfig: httpproxy.Config{
@@ -106,6 +107,7 @@ func testDeployment() {
 		Expect(subm.Spec.ClusterCIDR).To(Equal(t.options.ClusterCIDR))
 		Expect(subm.Spec.GlobalCIDR).To(BeEmpty())
 		Expect(subm.Spec.CableDriver).To(Equal(t.options.CableDriver))
+		Expect(subm.Spec.CableDriverOptions).To(Equal(map[string]string{"jc": "7"}))
 
 		Expect(subm.Spec.NatEnabled).To(Equal(t.options.NATTraversal))
 		Expect(subm.Spec.AirGappedDeployment).To(Equal(t.options.AirGappedDeployment))

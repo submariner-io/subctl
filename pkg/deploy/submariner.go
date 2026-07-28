@@ -55,6 +55,7 @@ type SubmarinerOptions struct {
 	HealthCheckMaxPacketLossCount   uint
 	ClusterID                       string
 	CableDriver                     string
+	CableDriverOptions              map[string]string
 	CoreDNSCustomConfigMap          string
 	Repository                      string
 	ImageVersion                    string
@@ -116,6 +117,7 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 		ClusterCIDR:                     options.ClusterCIDR,
 		Namespace:                       constants.OperatorNamespace,
 		CableDriver:                     options.CableDriver,
+		CableDriverOptions:              options.CableDriverOptions,
 		ServiceDiscoveryEnabled:         brokerInfo.IsServiceDiscoveryEnabled(),
 		ImageOverrides:                  repositoryInfo.Overrides,
 		AirGappedDeployment:             options.AirGappedDeployment,
