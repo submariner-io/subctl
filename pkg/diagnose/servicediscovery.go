@@ -27,8 +27,6 @@ import (
 	lhconstants "github.com/submariner-io/lighthouse/pkg/constants"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/gvr"
-	"github.com/submariner-io/subctl/internal/restconfig"
-	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	corev1 "k8s.io/api/core/v1"
 	discovery "k8s.io/api/discovery/v1"
@@ -179,19 +177,13 @@ func verifyStatusCondition(se *mcsv1a1.ServiceExport, condType mcsv1a1.ServiceEx
 }
 
 func checkServiceImports(ctx context.Context, clusterInfo *cluster.Info, status reporter.Interface) {
-	brokerRestConfig, brokerNamespace, err := restconfig.ForBroker(clusterInfo.Submariner, nil)
-	if err != nil {
-		status.Failure("Error getting the Broker's REST config: %v", err)
-		return
-	}
-
-	clientProducer, err := client.NewProducerFromRestConfig(brokerRestConfig)
+	brokerProducer, brokerNamespace, err := clusterInfo.NewBrokerProducer(ctx)
 	if err != nil {
 		status.Failure("Error creating broker client Producer: %v", err)
 		return
 	}
 
-	serviceImports, err := clientProducer.ForDynamic().Resource(serviceImportGVR()).Namespace(brokerNamespace).List(
+	serviceImports, err := brokerProducer.ForDynamic().Resource(serviceImportGVR()).Namespace(brokerNamespace).List(
 		ctx, metav1.ListOptions{})
 	if err != nil {
 		status.Failure("Error listing ServiceImports on the broker: %v", err)
