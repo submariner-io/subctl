@@ -30,9 +30,7 @@ import (
 	"github.com/submariner-io/subctl/internal/component"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/exit"
-	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/brokercr"
-	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -180,21 +178,17 @@ func gatherDiscovery(ctx context.Context, dataType string, info Info) bool {
 func gatherBroker(ctx context.Context, dataType string, info Info) bool {
 	switch dataType {
 	case Resources:
-		brokerRestConfig, brokerNamespace, err := restconfig.ForBroker(info.Submariner, info.ServiceDiscovery)
+		brokerProducer, brokerNamespace, err := info.NewBrokerProducer(ctx)
 		if err != nil {
-			info.Status.Failure("Error getting the broker's rest config: %s", err)
+			info.Status.Failure("Error creating broker client Producer: %s", err)
 			return true
 		}
 
-		if brokerRestConfig != nil {
-			info.RestConfig = brokerRestConfig
-
-			info.ClientProducer, err = client.NewProducerFromRestConfig(brokerRestConfig)
-			if err != nil {
-				info.Status.Failure("Error creating broker client Producer: %s", err)
-				return true
-			}
+		if brokerProducer != nil {
+			// Successfully got broker producer - this cluster is connected to a remote broker
+			info.ClientProducer = brokerProducer
 		} else {
+			// No Submariner/ServiceDiscovery CR found - check if broker is installed locally
 			err = info.ClientProducer.ForGeneral().Get(ctx, controllerClient.ObjectKey{
 				Namespace: constants.OperatorNamespace,
 				Name:      brokercr.Name,

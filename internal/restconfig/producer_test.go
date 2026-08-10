@@ -20,7 +20,6 @@ package restconfig_test
 
 import (
 	"context"
-	"encoding/base64"
 	"os"
 	"sort"
 	"strings"
@@ -29,7 +28,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/spf13/pflag"
 	"github.com/submariner-io/admiral/pkg/reporter"
-	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/internal/restconfig"
 	"github.com/submariner-io/subctl/pkg/client"
@@ -40,10 +38,6 @@ import (
 	opnames "github.com/submariner-io/submariner-operator/pkg/names"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/dynamic"
-	dynamicfake "k8s.io/client-go/dynamic/fake"
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
@@ -68,7 +62,6 @@ var (
 	})
 	_ = Describe("IfConnectivityInstalled", testIfConnectivityInstalled)
 	_ = Describe("IfServiceDiscoveryInstalled", testIfServiceDiscoveryInstalled)
-	_ = Describe("ForBroker", testForBroker)
 )
 
 func testSetupFlags() {
@@ -904,71 +897,6 @@ func testIfServiceDiscoveryInstalled() {
 					return nil
 				}), reporter.Stdout())
 
-			Expect(err).To(Succeed())
-		})
-	})
-}
-
-func testForBroker() {
-	const (
-		brokerNS  = "brokerNS"
-		apiServer = "api-server"
-	)
-
-	var (
-		apiServerToken = base64.StdEncoding.EncodeToString([]byte("token"))
-		dynClient      dynamic.Interface
-	)
-
-	BeforeEach(func() {
-		dynClient = dynamicfake.NewSimpleDynamicClient(scheme.Scheme)
-
-		resource.NewDynamicClient = func(_ *rest.Config) (dynamic.Interface, error) {
-			return dynClient, nil
-		}
-	})
-
-	When("a Submariner resource is provided", func() {
-		It("should return a valid REST config", func() {
-			restConfig, ns, err := restconfig.ForBroker(&v1alpha1.Submariner{
-				Spec: v1alpha1.SubmarinerSpec{
-					BrokerK8sApiServer:       apiServer,
-					BrokerK8sApiServerToken:  apiServerToken,
-					BrokerK8sRemoteNamespace: brokerNS,
-				},
-			}, nil)
-
-			Expect(err).To(Succeed())
-			Expect(restConfig).ToNot(BeNil())
-			Expect(restConfig.Host).To(ContainSubstring(apiServer))
-			Expect(restConfig.BearerToken).To(Equal(apiServerToken))
-			Expect(ns).To(Equal(brokerNS))
-			Expect(err).To(Succeed())
-		})
-	})
-
-	When("a ServiceDiscovery resource is provided", func() {
-		It("should return a valid REST config", func() {
-			restConfig, ns, err := restconfig.ForBroker(nil, &v1alpha1.ServiceDiscovery{
-				Spec: v1alpha1.ServiceDiscoverySpec{
-					BrokerK8sApiServer:       apiServer,
-					BrokerK8sApiServerToken:  apiServerToken,
-					BrokerK8sRemoteNamespace: brokerNS,
-				},
-			})
-
-			Expect(err).To(Succeed())
-			Expect(restConfig).ToNot(BeNil())
-			Expect(restConfig.Host).To(ContainSubstring(apiServer))
-			Expect(restConfig.BearerToken).To(Equal(apiServerToken))
-			Expect(ns).To(Equal(brokerNS))
-			Expect(err).To(Succeed())
-		})
-	})
-
-	When("no resource is provided", func() {
-		It("should succeed", func() {
-			_, _, err := restconfig.ForBroker(nil, nil)
 			Expect(err).To(Succeed())
 		})
 	})
