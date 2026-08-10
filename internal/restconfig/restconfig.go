@@ -28,16 +28,12 @@ import (
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/internal/constants"
-	"github.com/submariner-io/subctl/internal/gvr"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/subctl/pkg/version"
-	"github.com/submariner-io/submariner-operator/api/v1alpha1"
-	subv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	k8serrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
-	mcsv1a1 "sigs.k8s.io/mcs-api/pkg/apis/v1alpha1"
 )
 
 const InCluster = "in-cluster"
@@ -447,37 +443,6 @@ func (rcp *Producer) overrideContextAndRun(clusterName, contextName string, func
 	rcp.defaultClientConfig.overrides.CurrentContext = contextName
 
 	return rcp.RunOnSelectedContext(function, status)
-}
-
-func ForBroker(submariner *v1alpha1.Submariner, serviceDisc *v1alpha1.ServiceDiscovery) (*rest.Config, string, error) {
-	var restConfig *rest.Config
-	var namespace string
-	var err error
-
-	// This is used in subctl; the broker secret isn't available mounted, so we use the old strings for now
-	if submariner != nil {
-		// Try to authorize against the submariner Cluster resource as we know the CRD should exist and the credentials
-		// should allow read access.
-		restConfig, _, err = resource.GetAuthorizedRestConfigFromData(submariner.Spec.BrokerK8sApiServer,
-			submariner.Spec.BrokerK8sApiServerToken,
-			submariner.Spec.BrokerK8sCA,
-			&rest.TLSClientConfig{},
-			subv1.SchemeGroupVersion.WithResource("clusters"),
-			submariner.Spec.BrokerK8sRemoteNamespace)
-		namespace = submariner.Spec.BrokerK8sRemoteNamespace
-	} else if serviceDisc != nil {
-		// Try to authorize against the ServiceImport resource as we know the CRD should exist and the credentials
-		// should allow read access.
-		restConfig, _, err = resource.GetAuthorizedRestConfigFromData(serviceDisc.Spec.BrokerK8sApiServer,
-			serviceDisc.Spec.BrokerK8sApiServerToken,
-			serviceDisc.Spec.BrokerK8sCA,
-			&rest.TLSClientConfig{},
-			gvr.FromMetaGroupVersion(mcsv1a1.GroupVersion, "serviceimports"),
-			serviceDisc.Spec.BrokerK8sRemoteNamespace)
-		namespace = serviceDisc.Spec.BrokerK8sRemoteNamespace
-	}
-
-	return restConfig, namespace, errors.Wrap(err, "error getting auth rest config")
 }
 
 func getRestConfigFromConfig(config clientcmd.ClientConfig, overrides *clientcmd.ConfigOverrides) (RestConfig, error) {
