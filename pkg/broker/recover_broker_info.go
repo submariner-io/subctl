@@ -22,9 +22,11 @@ import (
 	"context"
 	"encoding/base64"
 
+	"github.com/pkg/errors"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/utils/set"
 )
@@ -37,9 +39,21 @@ func RecoverData(ctx context.Context, submCluster *cluster.Info, broker *v1alpha
 
 	status.Success("Retrieving IPSec PSK secret from Submariner found on cluster %s", submCluster.Name)
 
-	decodedPSKSecret, err := base64.StdEncoding.DecodeString(submCluster.Submariner.Spec.CeIPSecPSK)
-	if err != nil {
-		return status.Error(err, "error decoding the secret")
+	var decodedPSKSecret []byte
+	var err error
+
+	// Read PSK from Secret if configured, otherwise fall back to CR field
+	if submCluster.Submariner.Spec.CeIPSecPSKSecret != "" {
+		decodedPSKSecret, err = readIPSecPSKFromSecret(ctx, submCluster, submCluster.Submariner.Spec.CeIPSecPSKSecret)
+		if err != nil {
+			return status.Error(err, "error reading IPSec PSK from secret %q", submCluster.Submariner.Spec.CeIPSecPSKSecret)
+		}
+	} else {
+		// Fall back to reading from CR field for backwards compatibility
+		decodedPSKSecret, err = base64.StdEncoding.DecodeString(submCluster.Submariner.Spec.CeIPSecPSK)
+		if err != nil {
+			return status.Error(err, "error decoding the secret")
+		}
 	}
 
 	status.Success("Successfully retrieved the data. Writing it to broker-info.subm")
@@ -48,4 +62,20 @@ func RecoverData(ctx context.Context, submCluster *cluster.Info, broker *v1alpha
 		set.New(broker.Spec.Components...), broker.Spec.DefaultCustomDomains, status)
 
 	return status.Error(err, "error reconstructing broker-info.subm")
+}
+
+func readIPSecPSKFromSecret(ctx context.Context, submCluster *cluster.Info, secretName string) ([]byte, error) {
+	secret, err := submCluster.ClientProducer.ForKubernetes().CoreV1().Secrets(submCluster.Submariner.Namespace).Get(
+		ctx, secretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrapf(err, "error reading IPSec PSK secret %s/%s", submCluster.OperatorNamespace(), secretName)
+	}
+
+	pskData, ok := secret.Data["psk"]
+	if !ok || len(pskData) == 0 {
+		return nil, errors.Errorf("IPSec PSK secret %s/%s missing 'psk' data", submCluster.OperatorNamespace(), secretName)
+	}
+
+	// Secret.Data is already decoded from base64 by Kubernetes API client
+	return pskData, nil
 }
