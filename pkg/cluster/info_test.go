@@ -19,18 +19,25 @@ limitations under the License.
 package cluster_test
 
 import (
+	"encoding/base64"
+	"errors"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/submariner-io/admiral/pkg/fake"
 	"github.com/submariner-io/admiral/pkg/names"
+	"github.com/submariner-io/admiral/pkg/resource"
 	"github.com/submariner-io/subctl/internal/constants"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	"github.com/submariner-io/submariner-operator/api/v1alpha1"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	controllerfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -45,6 +52,7 @@ var _ = Describe("Info", func() {
 	Describe("OperatorNamespace", testOperatorNamespace)
 	Describe("GetClusters", testGetClusters)
 	Describe("MergeImageOverrides", testMergeImageOverrides)
+	Describe("NewBrokerRestConfig", testNewBrokerRestConfig)
 })
 
 func testNewInfo() {
@@ -541,5 +549,127 @@ func testMergeImageOverrides() {
 		})
 
 		Expect(err).To(HaveOccurred())
+	})
+}
+
+func testNewBrokerRestConfig() {
+	const (
+		brokerNamespace  = "broker-ns"
+		brokerAPIServer  = "broker-api-server:6443"
+		brokerSecretName = "broker-secret"
+		secretToken      = "secret-token"
+		secretCA         = "secret-ca-cert" //nolint:gosec // For testing
+		clearTextCA      = "clear-text-ca"
+	)
+
+	t := newTestDriver()
+
+	BeforeEach(func() {
+		resource.NewDynamicClient = func(_ *rest.Config) (dynamic.Interface, error) {
+			return t.clients.ForDynamic(), nil
+		}
+
+		t.submariner.Spec.BrokerK8sApiServer = brokerAPIServer
+		t.submariner.Spec.BrokerK8sRemoteNamespace = brokerNamespace
+		t.submariner.Spec.BrokerK8sApiServerToken = base64.StdEncoding.EncodeToString([]byte("cr-token"))
+		t.submariner.Spec.BrokerK8sCA = base64.StdEncoding.EncodeToString([]byte(clearTextCA))
+	})
+
+	When("Submariner CR has broker credentials in Secret", func() {
+		BeforeEach(func(ctx SpecContext) {
+			t.submariner.Spec.BrokerK8sSecret = brokerSecretName
+
+			// Create the broker secret
+			Expect(t.clients.ForGeneral().Create(ctx, &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      brokerSecretName,
+					Namespace: constants.OperatorNamespace,
+				},
+				Data: map[string][]byte{
+					"token":  []byte(secretToken),
+					"ca.crt": []byte(secretCA),
+				},
+			})).To(Succeed())
+		})
+
+		It("should return broker rest config using Secret credentials", func(ctx SpecContext) {
+			restConfig, ns, err := t.newInfo(ctx).NewBrokerRestConfig(ctx)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(restConfig).NotTo(BeNil())
+			Expect(restConfig.Host).To(ContainSubstring(brokerAPIServer))
+			Expect(restConfig.BearerToken).To(Equal(secretToken))
+			Expect(restConfig.TLSClientConfig.CAData).To(Equal([]byte(secretCA)))
+			Expect(ns).To(Equal(brokerNamespace))
+		})
+	})
+
+	When("Submariner CR has broker credentials in CR fields", func() {
+		It("should return broker rest config using CR field credentials", func(ctx SpecContext) {
+			restConfig, ns, err := t.newInfo(ctx).NewBrokerRestConfig(ctx)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(restConfig).NotTo(BeNil())
+			Expect(restConfig.Host).To(ContainSubstring(brokerAPIServer))
+			Expect(restConfig.BearerToken).To(Equal(t.submariner.Spec.BrokerK8sApiServerToken))
+			Expect(restConfig.TLSClientConfig.CAData).To(Equal([]byte(clearTextCA)))
+			Expect(ns).To(Equal(brokerNamespace))
+		})
+	})
+
+	When("ServiceDiscovery CR has broker credentials in CR fields", func() {
+		BeforeEach(func() {
+			t.serviceDisc.Spec.BrokerK8sApiServer = brokerAPIServer
+			t.serviceDisc.Spec.BrokerK8sRemoteNamespace = brokerNamespace
+			t.serviceDisc.Spec.BrokerK8sApiServerToken = t.submariner.Spec.BrokerK8sApiServerToken
+			t.serviceDisc.Spec.BrokerK8sCA = t.submariner.Spec.BrokerK8sCA
+
+			t.submariner = nil
+		})
+
+		It("should return broker rest config using ServiceDiscovery credentials", func(ctx SpecContext) {
+			restConfig, ns, err := t.newInfo(ctx).NewBrokerRestConfig(ctx)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(restConfig).NotTo(BeNil())
+			Expect(restConfig.Host).To(ContainSubstring(brokerAPIServer))
+			Expect(restConfig.BearerToken).To(Equal(t.serviceDisc.Spec.BrokerK8sApiServerToken))
+			Expect(restConfig.TLSClientConfig.CAData).To(Equal([]byte(clearTextCA)))
+			Expect(ns).To(Equal(brokerNamespace))
+		})
+	})
+
+	When("broker Secret is configured but not found", func() {
+		BeforeEach(func() {
+			t.submariner.Spec.BrokerK8sSecret = brokerSecretName
+		})
+
+		It("should return an error", func(ctx SpecContext) {
+			_, _, err := t.newInfo(ctx).NewBrokerRestConfig(ctx)
+			Expect(err).To(HaveOccurred())
+		})
+	})
+
+	When("neither Submariner nor ServiceDiscovery CR exists", func() {
+		BeforeEach(func() {
+			t.submariner = nil
+			t.serviceDisc = nil
+		})
+
+		It("should succeed with nil rest config", func(ctx SpecContext) {
+			restConfig, _, err := t.newInfo(ctx).NewBrokerRestConfig(ctx)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(restConfig).To(BeNil())
+		})
+	})
+
+	When("REST config creation fails", func() {
+		It("should return an error", func(ctx SpecContext) {
+			info := t.newInfo(ctx)
+
+			resource.NewDynamicClient = func(_ *rest.Config) (dynamic.Interface, error) {
+				return nil, errors.New("fake error")
+			}
+
+			_, _, err := info.NewBrokerRestConfig(ctx)
+			Expect(err).To(HaveOccurred())
+		})
 	})
 }
