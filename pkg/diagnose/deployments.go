@@ -26,8 +26,6 @@ import (
 	"github.com/submariner-io/admiral/pkg/names"
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
-	"github.com/submariner-io/subctl/internal/restconfig"
-	"github.com/submariner-io/subctl/pkg/client"
 	"github.com/submariner-io/subctl/pkg/cluster"
 	submarinerv1 "github.com/submariner-io/submariner/pkg/apis/submariner.io/v1"
 	"github.com/submariner-io/submariner/pkg/cidr"
@@ -65,19 +63,14 @@ func checkOverlappingCIDRs(ctx context.Context, clusterInfo *cluster.Info, statu
 
 	defer status.End()
 
-	brokerRestConfig, brokerNamespace, err := restconfig.ForBroker(ctx, clusterInfo.Submariner, nil)
-	if err != nil {
-		return status.Error(err, "Error getting the Broker's REST config")
-	}
-
-	clientProducer, err := client.NewProducerFromRestConfig(brokerRestConfig)
+	brokerProducer, brokerNamespace, err := clusterInfo.NewBrokerProducer(ctx)
 	if err != nil {
 		return status.Error(err, "Error creating broker client Producer")
 	}
 
 	endpointList := &submarinerv1.EndpointList{}
 
-	err = clientProducer.ForGeneral().List(ctx, endpointList,
+	err = brokerProducer.ForGeneral().List(ctx, endpointList,
 		controllerClient.InNamespace(brokerNamespace))
 	if err != nil {
 		return status.Error(err, "Error listing the Submariner endpoints from the Broker cluster")

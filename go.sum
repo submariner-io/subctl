@@ -287,8 +287,8 @@ github.com/submariner-io/shipyard v0.25.0-m0.0.20260720121336-f93811d249ff h1:Fb
 github.com/submariner-io/shipyard v0.25.0-m0.0.20260720121336-f93811d249ff/go.mod h1:HMntb7UlPZ2u6Fg3UykcE9Get//ujNh8gqXXmPLm2+Y=
 github.com/submariner-io/submariner v0.25.0-m0.0.20260720170504-eaebb7c69ac6 h1:XAULTv2PoEDjccYSk9wwiXpZf8EOFO4pNaRew4c/L/4=
 github.com/submariner-io/submariner v0.25.0-m0.0.20260720170504-eaebb7c69ac6/go.mod h1:j6Wc1xX87W+Q3YQaFNlPxT9CIaPVSTHr34M0px07+u8=
-github.com/submariner-io/submariner-operator v0.25.0-m0.0.20260801124230-f2a7d029c7c1 h1:/LkmEnfR0EF38o8+VukSriphKZkqum1x6fuBsbNJEOg=
-github.com/submariner-io/submariner-operator v0.25.0-m0.0.20260801124230-f2a7d029c7c1/go.mod h1:tb9Kues5bZ/CM3onehooPV8Q5N0Ui7BvCaVTOxaYSx8=
+github.com/submariner-io/submariner-operator v0.25.0-m0.0.20260811120816-8bef08878f9c h1:rkbzdfoW1eezM30sTLR6Sjw+PAR1itG0gTdNbGwixKM=
+github.com/submariner-io/submariner-operator v0.25.0-m0.0.20260811120816-8bef08878f9c/go.mod h1:oxefChQltKYPZldnUBdBqOnvwgbwY1uJO3XNHituzVA=
 github.com/tidwall/gjson v1.18.0 h1:FIDeeyB800efLX89e5a8Y0BNH+LOngJyGrIWxG2FKQY=
 github.com/tidwall/gjson v1.18.0/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=
 github.com/tidwall/match v1.1.1 h1:+Ho715JplO36QYgwN9PGYNhgZvoUSc9X2c80KVTi+GA=

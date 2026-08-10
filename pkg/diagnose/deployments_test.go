@@ -173,14 +173,14 @@ var _ = Describe("Deployments", func() {
 
 	Context("with a multiple node environment", t.testMultipleNodes)
 
-	When("creation of broker REST config fails", func() {
+	When("creation of broker client Producer fails", func() {
 		BeforeEach(func() {
 			resource.NewDynamicClient = func(_ *rest.Config) (dynamic.Interface, error) {
 				return nil, errFake
 			}
 		})
 
-		t.testFailure(t.run, "REST config", errFake.Error())
+		t.testFailure(t.run, "broker client Producer", errFake.Error())
 	})
 
 	When("listing of Endpoint resources fails", func() {
