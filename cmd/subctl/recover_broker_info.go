@@ -85,9 +85,9 @@ func (c *RecoverBrokerCommand) recoverBrokerInfo(ctx context.Context, submCluste
 	if !found {
 		status.Warning("Broker not found. Trying to connect to the Broker installed on a different cluster")
 
-		brokerRestConfig, brokerNamespace, err = restconfig.ForBroker(submCluster.Submariner, submCluster.ServiceDiscovery)
+		brokerRestConfig, brokerNamespace, err = submCluster.NewBrokerRestConfig(ctx)
 		if err != nil {
-			return status.Error(err, "Error getting the Broker's REST config")
+			return status.Error(err, "Error creating broker REST config")
 		}
 
 		brokerObj, found, err = getBroker(ctx, brokerRestConfig, brokerNamespace)
