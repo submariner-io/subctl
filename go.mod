@@ -20,18 +20,18 @@ require (
 	github.com/submariner-io/lighthouse v0.24.0
 	github.com/submariner-io/shipyard v0.24.0
 	github.com/submariner-io/submariner v0.24.0
-	github.com/submariner-io/submariner-operator v0.24.0
+	github.com/submariner-io/submariner-operator v0.24.1-0.20260812134559-318021ac895c
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.52.0
 	golang.org/x/oauth2 v0.36.0
 	google.golang.org/api v0.273.1
-	k8s.io/api v0.35.4
-	k8s.io/apiextensions-apiserver v0.35.4
-	k8s.io/apimachinery v0.35.4
-	k8s.io/client-go v0.35.4
+	k8s.io/api v0.35.7
+	k8s.io/apiextensions-apiserver v0.35.7
+	k8s.io/apimachinery v0.35.7
+	k8s.io/client-go v0.35.7
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2
 	sigs.k8s.io/controller-runtime v0.23.3
-	sigs.k8s.io/mcs-api v0.4.1
+	sigs.k8s.io/mcs-api v0.5.2
 	sigs.k8s.io/yaml v1.6.0
 )
 
@@ -138,7 +138,7 @@ require (
 	golang.org/x/tools v0.42.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260319201613-d00831a3d3e7 // indirect
 	google.golang.org/grpc v1.79.3 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
+	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
