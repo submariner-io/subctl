@@ -10,8 +10,8 @@ ignore:
   - vulnerability: CVE-2021-22570
     package:
       name: google.golang.org/protobuf
-  # Update requires Go 1.25, incompatible with release-0.22's Go 1.24.
-  - vulnerability: GHSA-hfvc-g4fc-pqhx
+  # No fix available as of 2026-08-13. Latest x/crypto v0.55.0 still affected.
+  - vulnerability: GO-2026-5932
     package:
       name: go.opentelemetry.io/otel/sdk
   # Package is deprecated by design; no fix version exists.
