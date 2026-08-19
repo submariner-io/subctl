@@ -20,7 +20,6 @@ package deploy_test
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -75,9 +74,9 @@ var _ = Describe("ServiceDiscovery", func() {
 		spec := expectServiceDiscoverySuccess(ctx)
 		Expect(spec.Repository).To(Equal(options.Repository))
 		Expect(spec.Version).To(Equal(options.ImageVersion))
-		Expect(spec.BrokerK8sCA).To(Equal(base64.StdEncoding.EncodeToString(t.brokerSecret.Data["ca.crt"])))
+		Expect(spec.BrokerK8sCA).To(BeEmpty())
 		Expect(spec.BrokerK8sRemoteNamespace).To(Equal(string(t.brokerSecret.Data["namespace"])))
-		Expect(spec.BrokerK8sApiServerToken).To(Equal(string(t.brokerSecret.Data["token"])))
+		Expect(spec.BrokerK8sApiServerToken).To(BeEmpty())
 		Expect(spec.BrokerK8sApiServer).To(Equal("broker.example.com:8443"))
 		Expect(spec.BrokerK8sSecret).To(Equal(t.brokerSecret.ObjectMeta.Name))
 		Expect(spec.BrokerK8sInsecure).To(Equal(options.BrokerK8sInsecure))
