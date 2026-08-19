@@ -33,7 +33,7 @@ jobs:
         run: |
           gh release delete ${{ env.RELEASE }} -y || true
           git push -d origin ${{ env.RELEASE }} || true
-          gh release create ${{ env.RELEASE }} dist/*.tar.xz --prerelease \
+          gh release create ${{ env.RELEASE }} dist/*.tar.xz dist/subctl-checksums.txt --prerelease \
             --title "Cutting Edge: ${{ env.BRANCH }}" \
             --notes "Cutting edge binaries of \`subctl\` for '${{ env.BRANCH }}' branch, always updated to the latest merged code." \
             --target ${GITHUB_SHA}
