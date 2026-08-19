@@ -20,7 +20,6 @@ package deploy
 
 import (
 	"context"
-	"encoding/base64"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
 	"github.com/submariner-io/subctl/internal/constants"
@@ -76,9 +75,7 @@ func populateServiceDiscoverySpec(options *ServiceDiscoveryOptions, brokerInfo *
 	serviceDiscoverySpec := operatorv1alpha1.ServiceDiscoverySpec{
 		Repository:               options.Repository,
 		Version:                  options.ImageVersion,
-		BrokerK8sCA:              base64.StdEncoding.EncodeToString(brokerSecret.Data["ca.crt"]),
 		BrokerK8sRemoteNamespace: string(brokerSecret.Data["namespace"]),
-		BrokerK8sApiServerToken:  string(brokerSecret.Data["token"]),
 		BrokerK8sApiServer:       brokerURL,
 		BrokerK8sSecret:          brokerSecret.ObjectMeta.Name,
 		BrokerK8sInsecure:        options.BrokerK8sInsecure,

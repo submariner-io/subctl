@@ -69,8 +69,7 @@ var _ = Describe("Ensure", func() {
 		serviceDiscoverySpec = &operatorv1alpha1.ServiceDiscoverySpec{
 			ClusterID:                clusterID,
 			BrokerK8sApiServer:       brokerURL,
-			BrokerK8sApiServerToken:  "test-token",
-			BrokerK8sCA:              "test-ca",
+			BrokerK8sSecret:          "test-secret",
 			BrokerK8sRemoteNamespace: "test-broker-namespace",
 			Repository:               operatorv1alpha1.DefaultRepo,
 			Version:                  operatorv1alpha1.DefaultSubmarinerVersion,
@@ -109,7 +108,7 @@ var _ = Describe("Ensure", func() {
 					Namespace: serviceDiscoveryKey.Namespace,
 				},
 				Spec: operatorv1alpha1.ServiceDiscoverySpec{
-					BrokerK8sApiServerToken: "existing-token",
+					BrokerK8sSecret: "existing-secret",
 				},
 			})
 		})
