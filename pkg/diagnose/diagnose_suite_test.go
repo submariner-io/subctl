@@ -20,7 +20,6 @@ package diagnose_test
 
 import (
 	"context"
-	"encoding/base64"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -119,7 +118,6 @@ func newTestDriver() *testDriver {
 			Spec: v1alpha1.SubmarinerSpec{
 				ClusterID:                "east",
 				BrokerK8sApiServer:       "api-server",
-				BrokerK8sApiServerToken:  base64.StdEncoding.EncodeToString([]byte("token")),
 				BrokerK8sRemoteNamespace: constants.DefaultBrokerNamespace,
 			},
 		}

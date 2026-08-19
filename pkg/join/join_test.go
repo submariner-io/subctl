@@ -20,7 +20,6 @@ package join_test
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -95,10 +94,6 @@ func testDeployment() {
 		_, err = serviceaccount.GetTokenSecretFor(context.TODO(), t.fakeProducer.KubeClient, brokerNamespace, saName)
 		Expect(err).NotTo(HaveOccurred())
 
-		secret, err := t.fakeProducer.KubeClient.CoreV1().Secrets(constants.OperatorNamespace).Get(context.TODO(),
-			broker.LocalClientBrokerSecretName, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
-
 		subm := t.assertSubmarinerResource()
 		Expect(subm.Spec.CeIPSecUseOVNCertAuthMode).To(BeTrue())
 		Expect(subm.Spec.Namespace).To(Equal(constants.OperatorNamespace))
@@ -129,7 +124,8 @@ func testDeployment() {
 		Expect(subm.Spec.ImageOverrides).To(BeEmpty())
 
 		Expect(subm.Spec.BrokerK8sRemoteNamespace).To(Equal(brokerNamespace))
-		Expect(subm.Spec.BrokerK8sApiServerToken).To(Equal(string(secret.Data["token"])))
+		Expect(subm.Spec.BrokerK8sApiServerToken).To(BeEmpty())
+		Expect(subm.Spec.BrokerK8sCA).To(BeEmpty())
 		Expect(subm.Spec.BrokerK8sApiServer).To(Equal(brokerApiServer))
 		Expect(subm.Spec.BrokerK8sSecret).To(Equal(broker.LocalClientBrokerSecretName))
 		Expect(subm.Spec.BrokerK8sInsecure).To(BeTrue())
@@ -138,7 +134,7 @@ func testDeployment() {
 		Expect(subm.Spec.CeIPSecDebug).To(Equal(t.options.IPSecDebug))
 		Expect(subm.Spec.CeIPSecForceUDPEncaps).To(Equal(t.options.ForceUDPEncaps))
 		Expect(subm.Spec.CeIPSecPreferredServer).To(Equal(t.options.PreferredServer))
-		Expect(subm.Spec.CeIPSecPSK).To(Equal(base64.StdEncoding.EncodeToString(t.brokerInfo.IPSecPSK.Data["psk"])))
+		Expect(subm.Spec.CeIPSecPSK).To(BeEmpty())
 		Expect(subm.Spec.CeIPSecPSKSecret).To(Equal(t.brokerInfo.IPSecPSK.Name))
 
 		Expect(subm.Spec.CustomDomains).To(Equal(t.options.CustomDomains))
@@ -163,10 +159,6 @@ func testDeployment() {
 		It("should only deploy the ServiceDiscovery resource", func() {
 			Expect(t.runJoinClusterToBroker()).To(Succeed())
 
-			secret, err := t.fakeProducer.KubeClient.CoreV1().Secrets(constants.OperatorNamespace).Get(context.TODO(),
-				broker.LocalClientBrokerSecretName, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred())
-
 			sd := t.assertServiceDiscoveryResource()
 			Expect(sd.Spec.Namespace).To(Equal(constants.OperatorNamespace))
 			Expect(sd.Spec.ClusterID).To(Equal(t.options.ClusterID))
@@ -174,7 +166,7 @@ func testDeployment() {
 			Expect(sd.Spec.ClustersetIPCIDR).To(HavePrefix("243."))
 
 			Expect(sd.Spec.BrokerK8sRemoteNamespace).To(Equal(brokerNamespace))
-			Expect(sd.Spec.BrokerK8sApiServerToken).To(Equal(string(secret.Data["token"])))
+			Expect(sd.Spec.BrokerK8sApiServerToken).To(BeEmpty())
 			Expect(sd.Spec.BrokerK8sApiServer).To(Equal(brokerApiServer))
 			Expect(sd.Spec.BrokerK8sSecret).To(Equal(broker.LocalClientBrokerSecretName))
 			Expect(sd.Spec.BrokerK8sInsecure).To(BeTrue())

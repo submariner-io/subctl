@@ -71,8 +71,7 @@ var _ = Describe("Ensure", func() {
 		submarinerSpec = &operatorv1alpha1.SubmarinerSpec{
 			ClusterID:                clusterID,
 			BrokerK8sApiServer:       brokerURL,
-			BrokerK8sApiServerToken:  "test-token",
-			BrokerK8sCA:              "test-ca",
+			BrokerK8sSecret:          "test-secret",
 			BrokerK8sRemoteNamespace: "test-broker-namespace",
 			Repository:               operatorv1alpha1.DefaultRepo,
 			Version:                  operatorv1alpha1.DefaultSubmarinerVersion,
@@ -118,7 +117,7 @@ var _ = Describe("Ensure", func() {
 					Namespace: constants.OperatorNamespace,
 				},
 				Spec: operatorv1alpha1.SubmarinerSpec{
-					BrokerK8sApiServerToken: "existing-token",
+					BrokerK8sSecret: "existing-secret",
 				},
 			}
 

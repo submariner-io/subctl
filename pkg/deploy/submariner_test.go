@@ -20,7 +20,6 @@ package deploy_test
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -111,11 +110,12 @@ func testSubmariner() {
 		Expect(spec.CeIPSecDebug).To(Equal(options.IPSecDebug))
 		Expect(spec.CeIPSecForceUDPEncaps).To(Equal(options.ForceUDPEncaps))
 		Expect(spec.CeIPSecPreferredServer).To(Equal(options.PreferredServer))
-		Expect(spec.CeIPSecPSK).To(Equal(base64.StdEncoding.EncodeToString(t.brokerInfo.IPSecPSK.Data["psk"])))
+		Expect(spec.CeIPSecPSK).To(BeEmpty())
 		Expect(spec.CeIPSecPSKSecret).To(Equal(t.brokerInfo.IPSecPSK.Name))
-		Expect(spec.BrokerK8sCA).To(Equal(base64.StdEncoding.EncodeToString(t.brokerSecret.Data["ca.crt"])))
+		Expect(spec.BrokerK8sCA).To(BeEmpty())
 		Expect(spec.BrokerK8sRemoteNamespace).To(Equal(string(t.brokerSecret.Data["namespace"])))
-		Expect(spec.BrokerK8sApiServerToken).To(Equal(string(t.brokerSecret.Data["token"])))
+		Expect(spec.BrokerK8sApiServerToken).To(BeEmpty())
+		Expect(spec.BrokerK8sCA).To(BeEmpty())
 		Expect(spec.BrokerK8sApiServer).To(Equal("broker.example.com:8443"))
 		Expect(spec.BrokerK8sSecret).To(Equal(t.brokerSecret.ObjectMeta.Name))
 		Expect(spec.BrokerK8sInsecure).To(Equal(options.BrokerK8sInsecure))
