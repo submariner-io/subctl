@@ -21,7 +21,7 @@ require (
 	github.com/submariner-io/lighthouse v0.20.3
 	github.com/submariner-io/shipyard v0.20.3
 	github.com/submariner-io/submariner v0.20.3
-	github.com/submariner-io/submariner-operator v0.20.4-0.20260812143745-ad262e7afc0f
+	github.com/submariner-io/submariner-operator v0.20.4-0.20260821040444-5bbc877350d5
 	github.com/uw-labs/lichen v0.1.7
 	golang.org/x/net v0.55.0
 	golang.org/x/oauth2 v0.34.0
