@@ -1,15 +1,5 @@
 ---
 ignore:
-  # Requires Go 1.25.12; build environment has 1.25.11
-  - vulnerability: GO-2026-4970
-    package:
-      name: stdlib
-
-  # Requires Go 1.25.12; build environment has 1.25.11
-  - vulnerability: GO-2026-5856
-    package:
-      name: stdlib
-
   # No fix available
   - vulnerability: GO-2026-5932
     fix-state: unknown
