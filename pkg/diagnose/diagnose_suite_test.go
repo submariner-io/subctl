@@ -20,7 +20,6 @@ package diagnose_test
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"maps"
 	"testing"
@@ -227,7 +226,6 @@ func newTestDriver() *testDriver {
 			Spec: v1alpha1.SubmarinerSpec{
 				ClusterID:                localCluster,
 				BrokerK8sApiServer:       "api-server",
-				BrokerK8sApiServerToken:  base64.StdEncoding.EncodeToString([]byte("token")),
 				BrokerK8sRemoteNamespace: constants.DefaultBrokerNamespace,
 				CeIPSecNATTPort:          7319,
 			},
