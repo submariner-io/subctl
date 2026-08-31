@@ -20,7 +20,6 @@ package deploy
 
 import (
 	"context"
-	"encoding/base64"
 	"strings"
 
 	"github.com/submariner-io/admiral/pkg/reporter"
@@ -100,11 +99,8 @@ func populateSubmarinerSpec(options *SubmarinerOptions, brokerInfo *broker.Info,
 		CeIPSecDebug:                    options.IPSecDebug,
 		CeIPSecForceUDPEncaps:           options.ForceUDPEncaps,
 		CeIPSecPreferredServer:          options.PreferredServer,
-		CeIPSecPSK:                      base64.StdEncoding.EncodeToString(brokerInfo.IPSecPSK.Data["psk"]),
 		CeIPSecPSKSecret:                pskSecret.ObjectMeta.Name,
-		BrokerK8sCA:                     base64.StdEncoding.EncodeToString(brokerSecret.Data["ca.crt"]),
 		BrokerK8sRemoteNamespace:        string(brokerSecret.Data["namespace"]),
-		BrokerK8sApiServerToken:         string(brokerSecret.Data["token"]),
 		BrokerK8sApiServer:              brokerURL,
 		BrokerK8sSecret:                 brokerSecret.ObjectMeta.Name,
 		BrokerK8sInsecure:               options.BrokerK8sInsecure,
