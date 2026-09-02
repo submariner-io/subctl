@@ -426,4 +426,15 @@ func testInvalidInput() {
 			Expect(t.runJoinClusterToBroker(ctx)).NotTo(Succeed())
 		})
 	})
+
+	When("a CoreDNS custom config key is specified without a ConfigMap", func() {
+		BeforeEach(func() {
+			t.options.CoreDNSCustomConfigMap = ""
+			t.options.CoreDNSCustomConfigKey = "Corefile"
+		})
+
+		It("should fail", func(ctx SpecContext) {
+			Expect(t.runJoinClusterToBroker(ctx)).NotTo(Succeed())
+		})
+	})
 }

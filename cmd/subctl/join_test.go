@@ -361,4 +361,11 @@ func testCheckArguments() {
 			Expect(cmd.Args(cmd, []string{"broker-info.subm"})).NotTo(Succeed())
 		})
 	})
+
+	When("a CoreDNS custom config key is specified without a ConfigMap", func() {
+		It("should fail", func() {
+			Expect(cmd.Flags().Set("coredns-custom-configmap-key", "Corefile")).To(Succeed())
+			Expect(cmd.Args(cmd, []string{"broker-info.subm"})).NotTo(Succeed())
+		})
+	})
 }

@@ -49,6 +49,7 @@ type Options struct {
 	CableDriver                     string
 	CableDriverOptions              map[string]string
 	CoreDNSCustomConfigMap          string
+	CoreDNSCustomConfigKey          string
 	BrokerURL                       string
 	ClustersetIPCIDR                string
 	CustomDomains                   []string

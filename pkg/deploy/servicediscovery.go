@@ -39,6 +39,7 @@ type ServiceDiscoveryOptions struct {
 	ClustersetIPEnabled    bool
 	ClusterID              string
 	CoreDNSCustomConfigMap string
+	CoreDNSCustomConfigKey string
 	Repository             string
 	ImageVersion           string
 	CustomDomains          []string
@@ -92,6 +93,7 @@ func populateServiceDiscoverySpec(options *ServiceDiscoveryOptions, brokerInfo *
 		serviceDiscoverySpec.CoreDNSCustomConfig = &operatorv1alpha1.CoreDNSCustomConfig{
 			ConfigMapName: name,
 			Namespace:     namespace,
+			Key:           options.CoreDNSCustomConfigKey,
 		}
 	}
 

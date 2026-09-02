@@ -54,7 +54,7 @@ func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Opti
 		return err
 	}
 
-	err = isValidCustomCoreDNSConfig(options.CoreDNSCustomConfigMap)
+	err = ValidateCustomCoreDNSConfig(options.CoreDNSCustomConfigMap, options.CoreDNSCustomConfigKey)
 	if err != nil {
 		return status.Error(err, "error validating custom CoreDNS config")
 	}
@@ -183,6 +183,7 @@ func submarinerOptionsFrom(joinOptions *Options) *deploy.SubmarinerOptions {
 		CableDriver:                     joinOptions.CableDriver,
 		CableDriverOptions:              joinOptions.CableDriverOptions,
 		CoreDNSCustomConfigMap:          joinOptions.CoreDNSCustomConfigMap,
+		CoreDNSCustomConfigKey:          joinOptions.CoreDNSCustomConfigKey,
 		Repository:                      joinOptions.Repository,
 		ImageVersion:                    joinOptions.ImageVersion,
 		CustomDomains:                   joinOptions.CustomDomains,
@@ -200,6 +201,7 @@ func serviceDiscoveryOptionsFrom(joinOptions *Options) *deploy.ServiceDiscoveryO
 		SubmarinerDebug:        joinOptions.SubmarinerDebug,
 		ClusterID:              joinOptions.ClusterID,
 		CoreDNSCustomConfigMap: joinOptions.CoreDNSCustomConfigMap,
+		CoreDNSCustomConfigKey: joinOptions.CoreDNSCustomConfigKey,
 		Repository:             joinOptions.Repository,
 		ImageVersion:           joinOptions.ImageVersion,
 		CustomDomains:          joinOptions.CustomDomains,
@@ -242,9 +244,13 @@ func populateBrokerSecret(brokerInfo *broker.Info) *v1.Secret {
 	}
 }
 
-func isValidCustomCoreDNSConfig(corednsCustomConfigMap string) error {
+func ValidateCustomCoreDNSConfig(corednsCustomConfigMap, corednsCustomConfigKey string) error {
 	if corednsCustomConfigMap != "" && strings.Count(corednsCustomConfigMap, "/") > 1 {
 		return errors.New("coredns-custom-configmap should be in <namespace>/<name> format, namespace is optional")
+	}
+
+	if corednsCustomConfigKey != "" && corednsCustomConfigMap == "" {
+		return errors.New("--coredns-custom-configmap-key requires --coredns-custom-configmap")
 	}
 
 	return nil

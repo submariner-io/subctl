@@ -102,6 +102,10 @@ func (c *JoinCommand) checkArguments(args []string) error {
 		return err
 	}
 
+	if err := join.ValidateCustomCoreDNSConfig(c.flags.CoreDNSCustomConfigMap, c.flags.CoreDNSCustomConfigKey); err != nil {
+		return err
+	}
+
 	return checkImageOverrides(c.flags.ImageOverrideArr)
 }
 
@@ -156,6 +160,8 @@ func (c *JoinCommand) addFlags() {
 	c.cmd.Flags().StringVar(&c.flags.CoreDNSCustomConfigMap, "coredns-custom-configmap", "",
 		"Name of the custom CoreDNS configmap to configure forwarding to lighthouse. It should be in "+
 			"<namespace>/<name> format where <namespace> is optional and defaults to kube-system")
+	c.cmd.Flags().StringVar(&c.flags.CoreDNSCustomConfigKey, "coredns-custom-configmap-key", "",
+		"CoreDNS ConfigMap key where Lighthouse configuration is written (default lighthouse.server)")
 	c.cmd.Flags().BoolVar(&c.flags.IgnoreRequirements, "ignore-requirements", false, "ignore requirement failures (unsupported)")
 
 	c.cmd.Flags().BoolVar(&c.flags.BrokerK8sSecure, "check-broker-certificate", true,
