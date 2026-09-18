@@ -1,11 +1,6 @@
 ---
 ignore:
-  # No fix available
-  - vulnerability: GO-2026-5932
-    fix-state: not-fixed
-    package:
-      name: golang.org/x/crypto
-  # No fix available for golang.org/x/crypto.
+  # No fix is published; openpgp is not imported or called by this repository.
   - vulnerability: GO-2026-5932
     fix-state: unknown
     package:
