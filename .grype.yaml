@@ -14,3 +14,9 @@ ignore:
   - vulnerability: GHSA-hfvc-g4fc-pqhx
     package:
       name: go.opentelemetry.io/otel/sdk
+  # No fix available for golang.org/x/crypto.
+  - vulnerability: GO-2026-5932
+    fix-state: unknown
+    package:
+      name: golang.org/x/crypto
+      location: /go.mod
