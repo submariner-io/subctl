@@ -32,7 +32,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/utils/ptr"
 )
 
 // Ensure the operator is deployed, and running.
@@ -75,8 +74,8 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace, ima
 							Args:            args,
 							ImagePullPolicy: imagePullPolicy,
 							SecurityContext: &v1.SecurityContext{
-								RunAsNonRoot:             ptr.To(true),
-								AllowPrivilegeEscalation: ptr.To(false),
+								RunAsNonRoot:             new(true),
+								AllowPrivilegeEscalation: new(false),
 							},
 							Env: addHTTPProxyEnvVars(proxyConfig, []v1.EnvVar{
 								{
