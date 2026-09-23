@@ -329,7 +329,7 @@ spec:
         - name: name
           value: clair-scan
         - name: bundle
-          value: quay.io/konflux-ci/tekton-catalog/task-clair-scan:0.4.1@sha256:219964897ac4d5a9473ec297a1b39ae078a34b76b45d04c4672bd569cc295c29
+          value: quay.io/konflux-ci/tekton-catalog/task-clair-scan:0.4.1@sha256:c2c9fc4910699930da02a63bb85e0ae5833de39da55b706b6f1b8eb21c9deb03
         - name: kind
           value: task
         resolver: bundles
@@ -399,7 +399,7 @@ spec:
         - name: name
           value: clamav-scan
         - name: bundle
-          value: quay.io/konflux-ci/tekton-catalog/task-clamav-scan:0.3.3@sha256:9df272d2180bd67e6a3e04d5cd30ffa7ba27af4e599a1922f7069f5c89888e5b
+          value: quay.io/konflux-ci/tekton-catalog/task-clamav-scan:0.3.3@sha256:398514b0b561a75595714aac1c43967b94e077da30f827a0129240f1e24bd735
         - name: kind
           value: task
         resolver: bundles
