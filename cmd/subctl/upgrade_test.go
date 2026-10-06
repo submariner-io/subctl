@@ -129,6 +129,27 @@ var _ = Describe("Upgrade", func() {
 	When("the --to-version flag is specified", func() {
 		var toVersion string
 
+		Context("and it targets the running development build", func() {
+			BeforeEach(func() {
+				version.Version = "release-0.22-test-build"
+				t.args = []string{"--to-version=" + version.Version, "--to-operator-version=release-0.22",
+					"--to-submariner-version=release-0.22"}
+				t.serviceDiscoverySpec = &v1alpha1.ServiceDiscoverySpec{}
+				t.httpHandler = func(w http.ResponseWriter, _ *http.Request) {
+					_, err := fmt.Fprint(w, `{"tag_name":"v0.24.2"}`)
+					Expect(err).NotTo(HaveOccurred())
+				}
+			})
+
+			It("should keep subctl and upgrade installed components to branch images", func(ctx SpecContext) {
+				t.assertCmdSuccess()
+				t.cmdExecutor.EnsureNoCommand(nil)
+				t.assertOperatorDeploymentUpgraded(ctx, "release-0.22")
+				Expect(t.getSubmariner(ctx).Spec.Version).To(Equal("release-0.22"))
+				Expect(t.getServiceDiscovery(ctx).Spec.Version).To(Equal("release-0.22"))
+			})
+		})
+
 		Context("and the specified version is newer", func() {
 			BeforeEach(func() {
 				toVersion = "101.0.0"
