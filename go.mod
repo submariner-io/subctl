@@ -22,7 +22,7 @@ require (
 	github.com/submariner-io/submariner v0.26.0-m0
 	github.com/submariner-io/submariner-operator v0.26.0-m0
 	github.com/uw-labs/lichen v0.1.7
-	golang.org/x/net v0.59.0
+	golang.org/x/net v0.60.0
 	golang.org/x/oauth2 v0.37.0
 	google.golang.org/api v0.299.0
 	k8s.io/api v0.37.1
