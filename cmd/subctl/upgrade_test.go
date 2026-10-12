@@ -132,8 +132,10 @@ var _ = Describe("Upgrade", func() {
 		Context("and it targets the running development build", func() {
 			BeforeEach(func() {
 				version.Version = "release-0.22-test-build"
-				t.args = []string{"--to-version=" + version.Version, "--to-operator-version=release-0.22",
-					"--to-submariner-version=release-0.22"}
+				t.args = []string{
+					"--to-version=" + version.Version, "--to-operator-version=release-0.22",
+					"--to-submariner-version=release-0.22",
+				}
 				t.serviceDiscoverySpec = &v1alpha1.ServiceDiscoverySpec{}
 				t.httpHandler = func(w http.ResponseWriter, _ *http.Request) {
 					_, err := fmt.Fprint(w, `{"tag_name":"v0.24.2"}`)
