@@ -24,6 +24,8 @@ jobs:
 
       - name: Install an old cluster, upgrade it and check it
         uses: submariner-io/shipyard/gh-actions/upgrade-e2e@release-0.22
+        with:
+          image-version: ${{ github.base_ref }}
 
       - name: Post mortem
         if: failure()
