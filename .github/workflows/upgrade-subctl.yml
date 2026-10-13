@@ -27,17 +27,33 @@ jobs:
           path: shipyard
           ref: ${{ github.base_ref }}
 
+      - name: Check upgrade deployment build rules
+        run: scripts/test/upgrade-build.sh
+
       - name: Deploy old environment
-        run: make deploy-latest using="${{ matrix.using }}"
+        run: |
+          make deploy-latest using="${{ matrix.using }}"
+          test -x output/released-subctl/bin/subctl
 
       - name: Build new subctl
         run: make cmd/bin/subctl
 
       - name: Run upgrade command and check versions after upgrade
+        env:
+          TARGET_BRANCH: ${{ github.base_ref }}
         run: |
           export KUBECONFIG=$(find $(git rev-parse --show-toplevel)/output/kubeconfigs/ -type f -printf %p:)
-          cmd/bin/subctl upgrade
+          target_version=$(cmd/bin/subctl version | sed -n 's/^subctl version: //p')
+          test -n "$target_version"
+          binary_checksum=$(sha256sum cmd/bin/subctl)
+          cmd/bin/subctl upgrade --to-version="$target_version" \
+            --to-operator-version="$TARGET_BRANCH" --to-submariner-version="$TARGET_BRANCH"
+          test "$(cmd/bin/subctl version)" = "subctl version: $target_version"
+          test "$(sha256sum cmd/bin/subctl)" = "$binary_checksum"
           cmd/bin/subctl version && cmd/bin/subctl show versions
+          for kubeconfig in output/kubeconfigs/*; do
+            KUBECONFIG="$kubeconfig" shipyard/scripts/shared/check-deployed-version.sh "$TARGET_BRANCH"
+          done
 
       - name: Run e2e tests
         run: make e2e
