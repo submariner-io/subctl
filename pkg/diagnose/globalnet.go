@@ -173,7 +173,8 @@ func checkGlobalIngressIPs(ctx context.Context, clusterInfo *cluster.Info, statu
 			continue
 		}
 
-		if svc.Spec.Type != corev1.ServiceTypeClusterIP {
+		// Globalnet allocates a GlobalIngressIP per backing pod for a headless Service, not one named after the Service.
+		if svc.Spec.Type != corev1.ServiceTypeClusterIP || svc.Spec.ClusterIP == corev1.ClusterIPNone {
 			continue
 		}
 
