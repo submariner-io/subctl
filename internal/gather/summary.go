@@ -117,9 +117,9 @@ func getVersions(ctx context.Context, info *Info) version {
 	if err != nil {
 		fmt.Println("error in getting k8s server version", err)
 		Versions.K8sServer = err.Error()
+	} else {
+		Versions.K8sServer = k8sServerVersion.String()
 	}
-
-	Versions.K8sServer = k8sServerVersion.String()
 
 	Versions.Subm = "Not installed"
 	if info.Submariner != nil {
