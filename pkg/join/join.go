@@ -49,7 +49,7 @@ import (
 func ClusterToBroker(ctx context.Context, brokerInfo *broker.Info, options *Options,
 	clientProducer client.Producer, status reporter.Interface,
 ) error {
-	err := checkRequirements(clientProducer.ForKubernetes(), options.IgnoreRequirements, brokerInfo, status)
+	err := checkRequirements(ctx, clientProducer.ForKubernetes(), options.IgnoreRequirements, brokerInfo, status)
 	if err != nil {
 		return err
 	}
@@ -208,8 +208,10 @@ func serviceDiscoveryOptionsFrom(joinOptions *Options) *deploy.ServiceDiscoveryO
 	}
 }
 
-func checkRequirements(kubeClient kubernetes.Interface, ignoreRequirements bool, brokerInfo *broker.Info, status reporter.Interface) error {
-	_, failedRequirements, err := version.CheckRequirements(kubeClient, brokerInfo.ServiceDiscovery)
+func checkRequirements(
+	ctx context.Context, kubeClient kubernetes.Interface, ignoreRequirements bool, brokerInfo *broker.Info, status reporter.Interface,
+) error {
+	_, failedRequirements, err := version.CheckRequirements(ctx, kubeClient, brokerInfo.ServiceDiscovery)
 
 	if len(failedRequirements) > 0 {
 		var msg strings.Builder
