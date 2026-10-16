@@ -47,7 +47,7 @@ func gatherClusterSummary(ctx context.Context, info *Info) {
 }
 
 func getClusterInfo(ctx context.Context, info *Info) data {
-	versions := getVersions(info)
+	versions := getVersions(ctx, info)
 	config := getClusterConfig(ctx, info)
 
 	nConfig, err := getNodeConfig(ctx, info)
@@ -108,12 +108,12 @@ func getClusterConfig(ctx context.Context, info *Info) clusterConfig {
 	return config
 }
 
-func getVersions(info *Info) version {
+func getVersions(ctx context.Context, info *Info) version {
 	Versions := version{
 		Subctl: subctlversion.Version,
 	}
 
-	k8sServerVersion, err := info.ClientProducer.ForKubernetes().Discovery().ServerVersion()
+	k8sServerVersion, err := info.ClientProducer.ForKubernetes().Discovery().ServerVersionWithContext(ctx)
 	if err != nil {
 		fmt.Println("error in getting k8s server version", err)
 		Versions.K8sServer = err.Error()
