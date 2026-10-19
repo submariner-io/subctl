@@ -159,10 +159,8 @@ func isNonInteractive(err error) bool {
 		return true
 	}
 
-	var pathError *os.PathError
-	if errors.As(err, &pathError) {
-		var syserr syscall.Errno
-		if errors.As(pathError, &syserr) {
+	if pathError, ok := errors.AsType[*os.PathError](err); ok {
+		if syserr, ok := errors.AsType[syscall.Errno](pathError); ok {
 			if pathError.Path == "/dev/stdin" && (errors.Is(syserr, syscall.EBADF) || errors.Is(syserr, syscall.EINVAL)) {
 				return true
 			}
