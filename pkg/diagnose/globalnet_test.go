@@ -301,6 +301,19 @@ func (t *globalnetTestDriver) testGlobalIngressIPs() {
 		t.testSuccess(t.run)
 	})
 
+	When("the exported service is headless", func() {
+		BeforeEach(func() {
+			service.Spec.ClusterIP = corev1.ClusterIPNone
+		})
+
+		JustBeforeEach(func(ctx SpecContext) {
+			t.createService(ctx, service)
+			t.createServiceExport(ctx, serviceExport)
+		})
+
+		t.testSuccess(t.run)
+	})
+
 	When("no GlobalIngressIP exists for the exported service", func() {
 		JustBeforeEach(func(ctx SpecContext) {
 			t.createService(ctx, service)
