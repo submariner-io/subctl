@@ -19,6 +19,7 @@ limitations under the License.
 package version
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strconv"
@@ -41,10 +42,10 @@ func PrintSubctlVersion(w io.Writer) {
 	fmt.Fprintf(w, "subctl version: %s\n", Version)
 }
 
-func CheckRequirements(k8sclient kubernetes.Interface, serviceDiscovery bool) (string, []string, error) {
+func CheckRequirements(ctx context.Context, k8sclient kubernetes.Interface, serviceDiscovery bool) (string, []string, error) {
 	failedRequirements := []string{}
 
-	serverVersion, err := k8sclient.Discovery().ServerVersion()
+	serverVersion, err := k8sclient.Discovery().ServerVersionWithContext(ctx)
 	if err != nil {
 		return "", failedRequirements, errors.WithMessage(err, "error obtaining API server version")
 	}

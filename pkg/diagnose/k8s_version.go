@@ -31,7 +31,7 @@ func K8sVersion(ctx context.Context, clusterInfo *cluster.Info, _ string, status
 	status.Start("Checking Submariner support for the Kubernetes version")
 	defer status.End()
 
-	k8sVersion, failedRequirements, err := version.CheckRequirements(clusterInfo.ClientProducer.ForKubernetes(),
+	k8sVersion, failedRequirements, err := version.CheckRequirements(ctx, clusterInfo.ClientProducer.ForKubernetes(),
 		clusterInfo.ServiceDiscovery != nil)
 	if err != nil {
 		return status.Error(err, "Error checking the version requirements")
