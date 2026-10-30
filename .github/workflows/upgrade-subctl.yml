@@ -27,13 +27,11 @@ jobs:
           path: shipyard
           ref: ${{ github.base_ref }}
 
-      - name: Increase inotify settings
-        run: |
-          echo "Before: nofile=$(ulimit -n) $(sysctl fs.inotify.max_user_watches fs.inotify.max_user_instances | tr '\n' ' ')"
-          sudo sysctl -w fs.inotify.max_user_watches=524288 fs.inotify.max_user_instances=512
-
       - name: Deploy old environment
-        run: make deploy-latest using="${{ matrix.using }}"
+        uses: submariner-io/shipyard/gh-actions/deploy@release-0.25
+        with:
+          target: deploy-latest
+          using: ${{ matrix.using }}
 
       - name: Build new subctl
         run: make cmd/bin/subctl
