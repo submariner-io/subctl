@@ -28,7 +28,10 @@ jobs:
           ref: ${{ github.base_ref }}
 
       - name: Deploy old environment
-        run: make deploy-latest using="${{ matrix.using }}"
+        uses: submariner-io/shipyard/gh-actions/deploy@release-0.24
+        with:
+          target: deploy-latest
+          using: ${{ matrix.using }}
 
       - name: Build new subctl
         run: make cmd/bin/subctl
