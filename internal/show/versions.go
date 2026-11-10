@@ -41,15 +41,16 @@ import (
 const (
 	maxLogLinesToScan = 20
 	Unavailable       = "Unavailable"
+	stdVersionFlag    = "--version"
 )
 
 var componentCmd = map[string][]string{
-	names.RouteAgentComponent:        {"submariner-route-agent", "--version"},
-	names.GatewayComponent:           {"submariner-gateway", "--version"},
-	names.GlobalnetComponent:         {"submariner-globalnet", "--version"},
-	names.ServiceDiscoveryComponent:  {"lighthouse-agent", "--version"},
+	names.RouteAgentComponent:        {"submariner-route-agent", stdVersionFlag},
+	names.GatewayComponent:           {"submariner-gateway", stdVersionFlag},
+	names.GlobalnetComponent:         {"submariner-globalnet", stdVersionFlag},
+	names.ServiceDiscoveryComponent:  {"lighthouse-agent", stdVersionFlag},
 	names.LighthouseCoreDNSComponent: {"lighthouse-coredns", "--subm-version"},
-	names.OperatorComponent:          {"submariner-operator", "--version"},
+	names.OperatorComponent:          {"submariner-operator", stdVersionFlag},
 	names.MetricsProxyComponent:      {"cat", "/app/version"},
 }
 
