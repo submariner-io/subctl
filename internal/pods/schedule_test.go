@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
+	podsecurity "k8s.io/pod-security-admission/api"
 	"k8s.io/utils/ptr"
 )
 
@@ -120,7 +121,7 @@ func testSchedule() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "custom-namespace",
 					Labels: map[string]string{
-						"pod-security.kubernetes.io/enforce": "privileged",
+						podsecurity.EnforceLevelLabel: string(podsecurity.LevelPrivileged),
 					},
 				},
 			}

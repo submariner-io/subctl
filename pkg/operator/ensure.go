@@ -34,6 +34,7 @@ import (
 	submarineroperator "github.com/submariner-io/submariner-operator/config/rbac/submariner-operator"
 	"github.com/submariner-io/submariner-operator/pkg/crd"
 	"golang.org/x/net/http/httpproxy"
+	podsecurity "k8s.io/pod-security-admission/api"
 )
 
 //nolint:wrapcheck // No need to wrap errors here.
@@ -47,7 +48,7 @@ func Ensure(ctx context.Context, status reporter.Interface, clientProducer clien
 	}
 
 	operatorNamespaceLabels := map[string]string{
-		"pod-security.kubernetes.io/enforce": "privileged",
+		podsecurity.EnforceLevelLabel: string(podsecurity.LevelPrivileged),
 	}
 
 	if created, err := namespace.Ensure(ctx, clientProducer.ForKubernetes(), operatorNamespace, operatorNamespaceLabels); err != nil {
