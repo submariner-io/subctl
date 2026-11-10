@@ -78,7 +78,7 @@ func gatherConfigMapCoreDNS(ctx context.Context, info *Info) {
 	}
 
 	fieldMap := map[string]string{
-		"metadata.name": name,
+		metav1.ObjectNameField: name,
 	}
 
 	fieldSelector := fields.Set(fieldMap).String()
@@ -94,7 +94,7 @@ func gatherConfigMapCoreDNS(ctx context.Context, info *Info) {
 		}
 
 		fieldMap := map[string]string{
-			"metadata.name": name,
+			metav1.ObjectNameField: name,
 		}
 
 		fieldSelector := fields.Set(fieldMap).String()
