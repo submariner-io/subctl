@@ -33,6 +33,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	podsecurity "k8s.io/pod-security-admission/api"
 )
 
 type schedulingType int
@@ -284,9 +285,9 @@ func checkNSLabels(ctx context.Context, config *Config) error {
 	}
 
 	expectedLabels := map[string]string{
-		"pod-security.kubernetes.io/enforce": "privileged",
-		"pod-security.kubernetes.io/audit":   "privileged",
-		"pod-security.kubernetes.io/warn":    "privileged",
+		podsecurity.EnforceLevelLabel: string(podsecurity.LevelPrivileged),
+		podsecurity.AuditLevelLabel:   string(podsecurity.LevelPrivileged),
+		podsecurity.WarnLevelLabel:    string(podsecurity.LevelPrivileged),
 	}
 
 	foundOne := false
