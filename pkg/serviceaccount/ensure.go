@@ -137,6 +137,7 @@ func GetTokenSecretFor(ctx context.Context, kubeClient kubernetes.Interface, nam
 		}
 	}
 
+	//nolint:wrapcheck // This is the error we want
 	return nil, apierrors.NewNotFound(schema.GroupResource{
 		Group:    corev1.SchemeGroupVersion.Group,
 		Resource: "secrets",
