@@ -19,6 +19,9 @@ linters:
     errchkjson:
       check-error-free-encoding: true
       report-no-exported: true
+    goconst:
+      ignore-string-values:
+        - '^udp$'
     gocritic:
       disabled-checks:
         - ifElseChain
@@ -223,7 +226,7 @@ linters:
       # minor optimisation)
       - linters:
           - govet
-        text: pointer bytes could be
+        text: leading bytes of pointer data but optimal value is
       # Full text of the error is "do not define dynamic errors, use wrapped static errors instead". See
       # https://github.com/Djarvur/go-err113/issues/10 for an interesting discussion of this error. While there are cases
       # where wrapped sentinel errors are useful, it seems a bit pedantic to force that pattern in all cases.
@@ -235,6 +238,7 @@ linters:
           - err113
           - errname
           - gochecknoinits
+          - goconst
           - wrapcheck
         path: _test\.go|test/|fake/
       # Ignore header linting for internal files copied from Kubernetes
