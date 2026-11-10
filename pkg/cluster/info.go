@@ -156,6 +156,7 @@ func (c *Info) GetLocalEndpoint(ctx context.Context) (*submarinerv1.Endpoint, er
 		}
 	}
 
+	//nolint:wrapcheck // This is the error we want
 	return nil, apierrors.NewNotFound(schema.GroupResource{
 		Group:    submarinerv1.SchemeGroupVersion.Group,
 		Resource: "endpoints",
@@ -176,6 +177,7 @@ func (c *Info) GetAnyRemoteEndpoint(ctx context.Context) (*submarinerv1.Endpoint
 		}
 	}
 
+	//nolint:wrapcheck // This is the error we want
 	return nil, apierrors.NewNotFound(schema.GroupResource{
 		Group:    submarinerv1.SchemeGroupVersion.Group,
 		Resource: "endpoints",

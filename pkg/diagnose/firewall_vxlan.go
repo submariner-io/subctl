@@ -75,7 +75,7 @@ func checkFWConfig(ctx context.Context, clusterInfo *cluster.Info, namespace str
 
 	defer sPod.Delete(context.Background()) //nolint:contextcheck // Ensure deletion if ctx is cancelled
 
-	remoteClusterIP := strings.Split(remoteEndpoint.Spec.Subnets[0], "/")[0]
+	remoteClusterIP, _, _ := strings.Cut(remoteEndpoint.Spec.Subnets[0], "/")
 	podCommand = fmt.Sprintf("nc -w %d %s 8080", options.ValidationTimeout/2, remoteClusterIP)
 
 	cPod, err := spawnClientPodOnNonGatewayNode(ctx, clusterInfo.ClientProducer.ForKubernetes(), namespace, podCommand, repositoryInfo)
