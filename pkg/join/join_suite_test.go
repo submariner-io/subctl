@@ -140,7 +140,7 @@ func (t *testDriver) runJoinClusterToBroker(ctx context.Context) error {
 }
 
 func (t *testDriver) setFakedServerVersion(major, minor string) {
-	(t.fakeProducer.KubeClient.Discovery().(*fakedisc.FakeDiscovery)).FakedServerVersion = &version.Info{
+	t.fakeProducer.KubeClient.Discovery().(*fakedisc.FakeDiscovery).FakedServerVersion = &version.Info{
 		Major: major,
 		Minor: minor,
 	}
