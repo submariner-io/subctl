@@ -87,7 +87,7 @@ func Ensure(ctx context.Context, kubeClient kubernetes.Interface, namespace, ima
 								}, {
 									Name: "POD_NAME", ValueFrom: &v1.EnvVarSource{
 										FieldRef: &v1.ObjectFieldSelector{
-											FieldPath: "metadata.name",
+											FieldPath: metav1.ObjectNameField,
 										},
 									},
 								}, {

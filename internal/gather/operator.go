@@ -38,7 +38,7 @@ func gatherServiceDiscoveries(ctx context.Context, info *Info, namespace string)
 
 func gatherSubmarinerOperatorDeployment(ctx context.Context, info *Info, namespace string) {
 	gatherDeployment(ctx, info, namespace, metav1.ListOptions{FieldSelector: fields.Set(map[string]string{
-		"metadata.name": names.OperatorComponent,
+		metav1.ObjectNameField: names.OperatorComponent,
 	}).String()})
 }
 
@@ -48,7 +48,7 @@ func gatherGatewayDaemonSet(ctx context.Context, info *Info, namespace string) {
 
 func gatherGatewayLBService(ctx context.Context, info *Info, namespace string) {
 	gatherService(ctx, info, namespace, metav1.ListOptions{FieldSelector: fields.Set(map[string]string{
-		"metadata.name": names.GatewayComponent,
+		metav1.ObjectNameField: names.GatewayComponent,
 	}).String()})
 }
 

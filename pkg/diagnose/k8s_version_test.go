@@ -87,7 +87,7 @@ func (t *k8sVersionTestDriver) run(ctx context.Context) error {
 }
 
 func (t *k8sVersionTestDriver) setK8sVersion(minor string) {
-	(t.fakeProducer.KubeClient.Discovery().(*fakediscovery.FakeDiscovery)).FakedServerVersion = &version.Info{
+	t.fakeProducer.KubeClient.Discovery().(*fakediscovery.FakeDiscovery).FakedServerVersion = &version.Info{
 		Major:      "1",
 		Minor:      minor,
 		GitVersion: fmt.Sprintf("1.%s.0", minor),
