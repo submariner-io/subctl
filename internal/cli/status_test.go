@@ -86,7 +86,7 @@ var _ = Describe("Reporter", func() {
 			otherMsg := "Starting something else"
 
 			reporter.Start(startMsg)
-			reporter.Start(otherMsg)
+			reporter.Start("%s", otherMsg)
 
 			out := output.String()
 			Expect(out).To(ContainSubstring(successStr + startMsg))

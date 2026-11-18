@@ -190,7 +190,7 @@ func verifyConnectivity(ctx context.Context, localClusterInfo, remoteClusterInfo
 	mustHaveSubmariner(localClusterInfo)
 	mustHaveSubmariner(remoteClusterInfo)
 
-	status.Start(message)
+	status.Start("%s", message)
 	defer status.End()
 
 	return runIfSingleNode(ctx, remoteClusterInfo, status, func(ctx context.Context) error {

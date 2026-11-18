@@ -40,7 +40,7 @@ func K8sVersion(ctx context.Context, clusterInfo *cluster.Info, _ string, status
 	tracker := reporter.NewTracker(status)
 
 	for i := range failedRequirements {
-		tracker.Failure(failedRequirements[i])
+		tracker.Failure("%s", failedRequirements[i])
 	}
 
 	if tracker.HasFailures() {
