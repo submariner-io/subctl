@@ -78,13 +78,17 @@ func getClusterConfig(ctx context.Context, info *Info) clusterConfig {
 		fmt.Println(err)
 	}
 
+	totalNodes := 0
+
 	allNodes, err := listNodes(ctx, info, metav1.ListOptions{})
 	if err != nil {
 		fmt.Println(err)
+	} else {
+		totalNodes = len(allNodes.Items)
 	}
 
 	config := clusterConfig{
-		TotalNode:        len(allNodes.Items),
+		TotalNode:        totalNodes,
 		GatewayNode:      gwNodes,
 		GWNodeNumber:     len(gwNodes),
 		MasterNode:       mNodes,
